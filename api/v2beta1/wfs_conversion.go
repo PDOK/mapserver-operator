@@ -70,7 +70,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
-		Fees:              Pointer(""),
+		Fees:              nil,
 		AccessConstraints: src.Spec.Service.AccessConstraints,
 		DefaultCrs:        src.Spec.Service.DataEPSG,
 		OtherCrs:          []string{},
