@@ -1,0 +1,9 @@
+apiVersion: pdok.nl/v2beta1
+kind: WMS
+metadata:
+  labels:
+    app.kubernetes.io/name: mapserver-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: wms-sample
+spec:
+  # TODO(user): Add fields here

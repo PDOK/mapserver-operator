@@ -25,37 +25,30 @@ SOFTWARE.
 package v3
 
 import (
+	shared_model "github.com/pdok/smooth-operator/model"
+	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// WFSSpec defines the desired state of WFS.
-type WFSSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of WFS. Edit wfs_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
-}
-
-// WFSStatus defines the observed state of WFS.
-type WFSStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-}
-
 // +kubebuilder:object:root=true
+// +kubebuilder:storageversion
+// +kubebuilder:conversion:hub
 // +kubebuilder:subresource:status
+// versionName=v3
+// +kubebuilder:resource:categories=pdok
+// +kubebuilder:resource:path=wfs
 
 // WFS is the Schema for the wfs API.
 type WFS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   WFSSpec   `json:"spec,omitempty"`
-	Status WFSStatus `json:"status,omitempty"`
+	Spec   WFSSpec                     `json:"spec,omitempty"`
+	Status shared_model.OperatorStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -69,4 +62,62 @@ type WFSList struct {
 
 func init() {
 	SchemeBuilder.Register(&WFS{}, &WFSList{})
+}
+
+// WFSSpec vertegenwoordigt de hoofdstruct voor de YAML-configuratie
+type WFSSpec struct {
+	Lifecycle *shared_model.Lifecycle `json:"lifecycle"`
+	// +kubebuilder:validation:Type=object
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
+	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
+	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
+	Options                      *Options                                   `json:"options"`
+	Service                      Service                                    `json:"service"`
+}
+
+type Service struct {
+	Prefix            string   `json:"prefix"`
+	BaseURL           string   `json:"baseUrl"`
+	Inspire           *Inspire `json:"inspire,omitempty"`
+	Mapfile           *Mapfile `json:"mapfile,omitempty"`
+	OwnerInfoRef      string   `json:"ownerInfoRef"`
+	Title             string   `json:"title"`
+	Abstract          string   `json:"abstract"`
+	Keywords          []string `json:"keywords"`
+	Fees              *string  `json:"fees"`
+	AccessConstraints string   `json:"accessConstraints"`
+	DefaultCrs        string   `json:"defaultCrs"`
+	OtherCrs          []string `json:"otherCrs,omitempty"`
+	Bbox              Bbox     `json:"bbox"`
+	// CountDefault -> wfs_maxfeatures in mapfile
+	CountDefault *string       `json:"countDefault"`
+	FeatureTypes []FeatureType `json:"featureTypes"`
+}
+
+type Mapfile struct {
+	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
+}
+
+type Bbox struct {
+	// EXTENT/wfs_extent in mapfile
+	//nolint:tagliatelle
+	DefaultCRS shared_model.BBox `json:"defaultCRS"`
+}
+
+type FeatureType struct {
+	Name               string       `json:"name"`
+	Title              string       `json:"title"`
+	Abstract           string       `json:"abstract"`
+	Keywords           []string     `json:"keywords"`
+	DatasetMetadataURL MetadataURL  `json:"datasetMetadataUrl"`
+	Bbox               *FeatureBbox `json:"bbox,omitempty"`
+	Data               Data         `json:"data"`
+}
+
+type FeatureBbox struct {
+	//nolint:tagliatelle
+	DefaultCRS shared_model.BBox  `json:"defaultCRS"`
+	WGS84      *shared_model.BBox `json:"wgs84,omitempty"`
 }

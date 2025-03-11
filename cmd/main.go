@@ -37,8 +37,10 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller"
+	webhookpdoknlv3 "github.com/pdok/mapserver-operator/internal/webhook/v3"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -51,10 +53,11 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(pdoknlv3.AddToScheme(scheme))
+	utilruntime.Must(pdoknlv2beta1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
-// nolint:gocyclo
+//nolint:gocyclo
 func main() {
 	var metricsAddr string
 	var metricsCertPath, metricsCertName, metricsCertKey string
@@ -215,6 +218,20 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WFS")
 		os.Exit(1)
+	}
+
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")
+			os.Exit(1)
+		}
+	}
+
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = webhookpdoknlv3.SetupWMSWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "WMS")
+			os.Exit(1)
+		}
 	}
 	// +kubebuilder:scaffold:builder
 

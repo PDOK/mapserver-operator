@@ -16,6 +16,11 @@ resources:
   kind: WMS
   path: github.com/pdok/mapserver-operator/api/v3
   version: v3
+  webhooks:
+    conversion: true
+    spoke:
+    - v2beta1
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -24,4 +29,23 @@ resources:
   kind: WFS
   path: github.com/pdok/mapserver-operator/api/v3
   version: v3
+  webhooks:
+    conversion: true
+    spoke:
+    - v2beta1
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: pdok.nl
+  kind: WFS
+  path: github.com/pdok/mapserver-operator/api/v2beta1
+  version: v2beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: pdok.nl
+  kind: WMS
+  path: github.com/pdok/mapserver-operator/api/v2beta1
+  version: v2beta1
 version: "3"
