@@ -90,7 +90,7 @@ type Service struct {
 	AccessConstraints string   `json:"accessConstraints"`
 	DefaultCrs        string   `json:"defaultCrs"`
 	OtherCrs          []string `json:"otherCrs,omitempty"`
-	Bbox              Bbox     `json:"bbox"`
+	Bbox              *Bbox    `json:"bbox"`
 	// CountDefault -> wfs_maxfeatures in mapfile
 	CountDefault *string       `json:"countDefault"`
 	FeatureTypes []FeatureType `json:"featureTypes"`

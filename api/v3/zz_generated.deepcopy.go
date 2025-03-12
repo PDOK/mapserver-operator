@@ -318,7 +318,11 @@ func (in *Service) DeepCopyInto(out *Service) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	out.Bbox = in.Bbox
+	if in.Bbox != nil {
+		in, out := &in.Bbox, &out.Bbox
+		*out = new(Bbox)
+		**out = **in
+	}
 	if in.CountDefault != nil {
 		in, out := &in.CountDefault, &out.CountDefault
 		*out = new(string)
