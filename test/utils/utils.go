@@ -54,7 +54,7 @@ func Run(cmd *exec.Cmd) (string, error) {
 	_, _ = fmt.Fprintf(GinkgoWriter, "running: %s\n", command)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return string(output), fmt.Errorf("%s failed with error: (%v) %s", command, err, string(output))
+		return string(output), fmt.Errorf("%s failed with error: (%w) %s", command, err, string(output))
 	}
 
 	return string(output), nil
@@ -205,7 +205,6 @@ func GetProjectDir() (string, error) {
 // of the target content. The target content may span multiple lines.
 func UncommentCode(filename, target, prefix string) error {
 	// false positive
-	// nolint:gosec
 	content, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -246,6 +245,6 @@ func UncommentCode(filename, target, prefix string) error {
 		return err
 	}
 	// false positive
-	// nolint:gosec
+	//nolint:gosec
 	return os.WriteFile(filename, out.Bytes(), 0644)
 }

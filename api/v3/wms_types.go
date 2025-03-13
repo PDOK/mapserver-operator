@@ -47,7 +47,12 @@ type WMSStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:storageversion
+// +kubebuilder:conversion:hub
 // +kubebuilder:subresource:status
+// versionName=v3
+// +kubebuilder:resource:categories=pdok
+// +kubebuilder:resource:path=wms
 
 // WMS is the Schema for the wms API.
 type WMS struct {

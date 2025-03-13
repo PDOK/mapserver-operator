@@ -26,6 +26,8 @@ package controller
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -48,7 +50,7 @@ var _ = Describe("WFS Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		wfs := &pdoknlv3.WFS{}
+		wfs := readV3Sample()
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind WFS")
@@ -59,6 +61,7 @@ var _ = Describe("WFS Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
+					Spec: wfs.Spec,
 					// TODO(user): Specify other spec details if needed.
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
@@ -67,7 +70,9 @@ var _ = Describe("WFS Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &pdoknlv3.WFS{}
+			resource := &pdoknlv3.WFS{
+				Spec: wfs.Spec,
+			}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -90,3 +95,18 @@ var _ = Describe("WFS Controller", func() {
 		})
 	})
 })
+
+func readV3Sample() *pdoknlv3.WFS {
+	yamlFile, err := os.ReadFile("../../config/samples/v3_wfs.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	wfs := &pdoknlv3.WFS{}
+	err = yaml.Unmarshal(yamlFile, wfs)
+	if err != nil {
+		panic(err)
+	}
+
+	return wfs
+}

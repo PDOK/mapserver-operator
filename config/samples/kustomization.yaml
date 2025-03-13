@@ -2,4 +2,6 @@
 resources:
 - v3_wms.yaml
 - v3_wfs.yaml
+- v2beta1_wfs.yaml
+- v2beta1_wms.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
