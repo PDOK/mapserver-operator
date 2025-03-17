@@ -74,10 +74,10 @@ type WFSSpec struct {
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
 	Options                      *Options                                   `json:"options"`
-	Service                      Service                                    `json:"service"`
+	Service                      WFSService                                 `json:"service"`
 }
 
-type Service struct {
+type WFSService struct {
 	Prefix            string   `json:"prefix"`
 	BaseURL           string   `json:"baseUrl"`
 	Inspire           *Inspire `json:"inspire,omitempty"`

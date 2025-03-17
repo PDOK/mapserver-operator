@@ -54,22 +54,21 @@ type WMSSpec struct {
 
 // WMSService is the struct for all service level fields
 type WMSService struct {
-	Inspire            bool       `json:"inspire"`
-	Title              string     `json:"title"`
-	Abstract           string     `json:"abstract"`
-	AccessConstraints  string     `json:"accessConstraints"`
-	Keywords           []string   `json:"keywords"`
-	MetadataIdentifier string     `json:"metadataIdentifier"`
-	Authority          Authority  `json:"authority"`
-	Layers             []WMSLayer `json:"layers"`
-	//nolint:tagliatelle
-	DataEPSG      string         `json:"dataEPSG"`
-	Extent        *string        `json:"extent,omitempty"`
-	Maxsize       *string        `json:"maxSize,omitempty"`
-	Resolution    *int           `json:"resolution,omitempty"`
-	DefResolution *int           `json:"defResolution,omitempty"`
-	StylingAssets *StylingAssets `json:"stylingAssets,omitempty"`
-	Mapfile       *Mapfile       `json:"mapfile,omitempty"`
+	Inspire            bool           `json:"inspire"`
+	Title              string         `json:"title"`
+	Abstract           string         `json:"abstract"`
+	AccessConstraints  string         `json:"accessConstraints"`
+	Keywords           []string       `json:"keywords"`
+	MetadataIdentifier string         `json:"metadataIdentifier"`
+	Authority          Authority      `json:"authority"`
+	Layers             []WMSLayer     `json:"layers"`
+	DataEPSG           string         `json:"dataEPSG"`
+	Extent             *string        `json:"extent,omitempty"`
+	Maxsize            *float64       `json:"maxSize,omitempty"`
+	Resolution         *int           `json:"resolution,omitempty"`
+	DefResolution      *int           `json:"defResolution,omitempty"`
+	StylingAssets      *StylingAssets `json:"stylingAssets,omitempty"`
+	Mapfile            *Mapfile       `json:"mapfile,omitempty"`
 }
 
 // WMSLayer is the struct for all layer level fields
@@ -84,9 +83,9 @@ type WMSLayer struct {
 	SourceMetadataIdentifier  *string  `json:"sourceMetadataIdentifier,omitempty"`
 	Styles                    []Style  `json:"styles"`
 	Extent                    *string  `json:"extent,omitempty"`
-	MinScale                  *string  `json:"minScale,omitempty"`
-	MaxScale                  *string  `json:"maxScale,omitempty"`
-	LabelNoClip               bool     `json:"labelNoClip,omitempty"`
+	MinScale                  *float64 `json:"minScale,omitempty"`
+	MaxScale                  *float64 `json:"maxScale,omitempty"`
+	LabelNoClip               bool     `json:"labelNoClip"`
 	Data                      *Data    `json:"data,omitempty"`
 }
 
@@ -96,7 +95,7 @@ type Style struct {
 	Title         *string     `json:"title,omitempty"`
 	Abstract      *string     `json:"abstract,omitempty"`
 	Visualization *string     `json:"visualization,omitempty"`
-	LegendFile    *LegendFile `json:"legendfile,omitempty"`
+	LegendFile    *LegendFile `json:"legendFile,omitempty"`
 }
 
 // LegendFile is the struct containing the location of the legendfile
@@ -107,7 +106,7 @@ type LegendFile struct {
 // StylingAssets is the struct containing the location of styling assets
 type StylingAssets struct {
 	ConfigMapRefs []ConfigMapRef `json:"configMapRefs,omitempty"`
-	BlobKeys      []string       `json:"blobKeys"`
+	BlobKeys      []string       `json:"blobKeys,omitempty"`
 }
 
 // ConfigMapRef contains all the config map name and all keys in that configmap that are relevant

@@ -7,11 +7,13 @@ type Mapfile struct {
 }
 
 type Options struct {
-	AutomaticCasing          bool `json:"automaticCasing"`
-	PrefetchData             bool `json:"prefetchData"`
-	IncludeIngress           bool `json:"includeIngress"`
-	DisableWebserviceProxy   bool `json:"disableWebserviceProxy"`
-	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers"`
+	IncludeIngress              bool  `json:"includeIngress"`
+	AutomaticCasing             bool  `json:"automaticCasing"`
+	ValidateRequests            *bool `json:"validateRequests,omitempty"`
+	RewriteGroupToDataLayers    *bool `json:"rewriteGroupToDataLayers,omitempty"`
+	DisableWebserviceProxy      *bool `json:"disableWebserviceProxy,omitempty"`
+	PrefetchData                *bool `json:"prefetchData,omitempty"`
+	ValidateChildStyleNameEqual *bool `json:"validateChildStyleNameEqual,omitempty"`
 }
 
 type Inspire struct {
@@ -55,10 +57,10 @@ type Postgis struct {
 }
 
 type TIF struct {
-	BlobKey                     string `json:"blobKey"`
-	Resample                    string `json:"resample"`
-	Offsite                     string `json:"offsite"`
-	GetFeatureInfoIncludesClass bool   `json:"getFeatureInfoIncludesClass"`
+	BlobKey                     string  `json:"blobKey"`
+	Resample                    *string `json:"resample,omitempty"`
+	Offsite                     *string `json:"offsite,omitepty"`
+	GetFeatureInfoIncludesClass *bool   `json:"getFeatureInfoIncludesClass,omitempty"`
 }
 
 type Columns struct {

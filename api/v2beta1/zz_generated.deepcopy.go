@@ -749,12 +749,12 @@ func (in *WMSLayer) DeepCopyInto(out *WMSLayer) {
 	}
 	if in.MinScale != nil {
 		in, out := &in.MinScale, &out.MinScale
-		*out = new(string)
+		*out = new(float64)
 		**out = **in
 	}
 	if in.MaxScale != nil {
 		in, out := &in.MaxScale, &out.MaxScale
-		*out = new(string)
+		*out = new(float64)
 		**out = **in
 	}
 	if in.Data != nil {
@@ -829,7 +829,7 @@ func (in *WMSService) DeepCopyInto(out *WMSService) {
 	}
 	if in.Maxsize != nil {
 		in, out := &in.Maxsize, &out.Maxsize
-		*out = new(string)
+		*out = new(float64)
 		**out = **in
 	}
 	if in.Resolution != nil {

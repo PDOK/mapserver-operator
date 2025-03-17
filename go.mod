@@ -8,7 +8,7 @@ require (
 	github.com/cbroglie/mustache v1.4.0
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
-	github.com/pdok/smooth-operator v0.0.2-0.20250311150606-315e84363ede
+	github.com/pdok/smooth-operator v0.0.2
 	k8s.io/api v0.32.0
 	k8s.io/apimachinery v0.32.0
 	k8s.io/client-go v0.32.0

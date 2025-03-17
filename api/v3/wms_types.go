@@ -51,42 +51,51 @@ type WMSSpec struct {
 }
 
 type WMSService struct {
-	BaseURL           string        `json:"baseUrl"`
-	Title             string        `json:"title"`
-	Abstract          string        `json:"abstract"`
-	Keywords          []string      `json:"keywords"`
-	OwnerInfoRef      string        `json:"ownerInfoRef"`
-	Fees              *string       `json:"fees"`
-	AccessConstraints string        `json:"accessConstraints"`
-	MaxSize           int32         `json:"maxSize"`
-	Inspire           *Inspire      `json:"inspire,omitempty"`
-	DataEPSG          string        `json:"dataEPSG"`
-	Resolution        float32       `json:"resolution"`
-	DefResolution     float32       `json:"defResolution"`
-	StylingAssets     StylingAssets `json:"stylingAssets"`
-	Mapfile           *Mapfile      `json:"mapfile"`
-	Layer             Layer         `json:"layer"`
+	BaseURL           string         `json:"baseUrl"`
+	Title             string         `json:"title"`
+	Abstract          string         `json:"abstract"`
+	Keywords          []string       `json:"keywords"`
+	OwnerInfoRef      string         `json:"ownerInfoRef"`
+	Fees              *string        `json:"fees,omitempty"`
+	AccessConstraints string         `json:"accessConstraints"`
+	MaxSize           *int32         `json:"maxSize,omitempty"`
+	Inspire           *Inspire       `json:"inspire,omitempty"`
+	DataEPSG          string         `json:"dataEPSG"`
+	Resolution        *int32         `json:"resolution,omitempty"`
+	DefResolution     *int32         `json:"defResolution,omitempty"`
+	StylingAssets     *StylingAssets `json:"stylingAssets,omitempty"`
+	Mapfile           *Mapfile       `json:"mapfile,omitempty"`
+	Layer             Layer          `json:"layer"`
 }
 
 type StylingAssets struct {
-	BlobKeys      []string                      `json:"blobKeys"`
-	ConfigMapRefs []corev1.ConfigMapKeySelector `json:"configMapRefs"`
+	BlobKeys      []string       `json:"blobKeys"`
+	ConfigMapRefs []ConfigMapRef `json:"configMapRefs"`
+}
+
+type ConfigMapRef struct {
+	Name string   `json:"name"`
+	Keys []string `json:"keys,omitempty"`
 }
 
 type Layer struct {
 	Name                string           `json:"name"`
-	Title               string           `json:"title"`
-	Abstract            string           `json:"abstract"`
+	Title               *string          `json:"title,omitempty"`
+	Abstract            *string          `json:"abstract,omitempty"`
 	Keywords            []string         `json:"keywords"`
 	BoundingBoxes       []WMSBoundingBox `json:"boundingBoxes"`
-	Authority           Authority        `json:"authority"`
-	DatasetMetadataURL  MetadataURL      `json:"datasetMetadataUrl"`
-	MinScaleDenominator float32          `json:"minscaledenominator"`
-	MaxScaleDenominator float32          `json:"maxscaledenominator"`
-	Style               Style            `json:"style"`
+	Visible             *bool            `json:"visible,omitempty"`
+	Authority           *Authority       `json:"authority,omitempty"`
+	DatasetMetadataURL  *MetadataURL     `json:"datasetMetadataUrl,omitempty"`
+	MinScaleDenominator *string          `json:"minscaledenominator,omitempty"`
+	MaxScaleDenominator *string          `json:"maxscaledenominator,omitempty"`
+	Styles              []Style          `json:"styles"`
 	LabelNoClip         bool             `json:"labelNoClip"`
-	Data                Data             `json:"data"`
-	Layers              []Layer          `json:"layers"`
+	Data                *Data            `json:"data,omitempty"`
+	// Nested structs do not work in crd generation
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	Layers *[]Layer `json:"layers,omitempty"`
 }
 
 type WMSBoundingBox struct {
@@ -101,11 +110,11 @@ type Authority struct {
 }
 
 type Style struct {
-	Name          string `json:"name"`
-	Title         string `json:"title"`
-	Abstract      string `json:"abstract"`
-	Visualization string `json:"visualization"`
-	Legend        Legend `json:"legend"`
+	Name          string  `json:"name"`
+	Title         *string `json:"title"`
+	Abstract      *string `json:"abstract"`
+	Visualization *string `json:"visualization"`
+	Legend        *Legend `json:"legend"`
 }
 
 type Legend struct {
@@ -113,12 +122,6 @@ type Legend struct {
 	Height  int32  `json:"height"`
 	Format  string `json:"format"`
 	BlobKey string `json:"blobKey"`
-}
-
-// WMSStatus defines the observed state of WMS.
-type WMSStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true
@@ -158,12 +161,32 @@ func (wms *WMS) GetUniqueTiffBlobKeys() []string {
 		blobKeys[wms.Spec.Service.Layer.Data.TIF.BlobKey] = true
 	}
 
-	if len(wms.Spec.Service.Layer.Layers) > 0 {
-		for _, layer := range wms.Spec.Service.Layer.Layers {
+	if wms.Spec.Service.Layer.Layers != nil && len(*wms.Spec.Service.Layer.Layers) > 0 {
+		for _, layer := range *wms.Spec.Service.Layer.Layers {
 			if layer.Data.TIF != nil && layer.Data.TIF.BlobKey != "" {
 				blobKeys[layer.Data.TIF.BlobKey] = true
 			}
 		}
 	}
 	return slices.Collect(maps.Keys(blobKeys))
+}
+
+func (wms *WMS) GetAuthority() *Authority {
+	if wms.Spec.Service.Layer.Authority != nil {
+		return wms.Spec.Service.Layer.Authority
+	} else {
+		for _, childLayer := range *wms.Spec.Service.Layer.Layers {
+			if childLayer.Authority != nil {
+				return childLayer.Authority
+			} else if childLayer.Layers != nil {
+				for _, grandChildLayer := range *childLayer.Layers {
+					if grandChildLayer.Authority != nil {
+						return grandChildLayer.Authority
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }
