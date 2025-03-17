@@ -847,14 +847,20 @@ spec:
                 properties:
                   automaticCasing:
                     type: boolean
+                  disableWebserviceProxy:
+                    type: boolean
                   includeIngress:
                     type: boolean
                   prefetchData:
                     type: boolean
+                  rewriteGroupToDataLayers:
+                    type: boolean
                 required:
                 - automaticCasing
+                - disableWebserviceProxy
                 - includeIngress
                 - prefetchData
+                - rewriteGroupToDataLayers
                 type: object
               podSpecPatch:
                 description: Optional strategic merge patch for the pod in the deployment.
@@ -1014,6 +1020,22 @@ spec:
                               - columns
                               - geometryType
                               - tableName
+                              type: object
+                            tif:
+                              properties:
+                                blobKey:
+                                  type: string
+                                getFeatureInfoIncludesClass:
+                                  type: boolean
+                                offsite:
+                                  type: string
+                                resample:
+                                  type: string
+                              required:
+                              - blobKey
+                              - getFeatureInfoIncludesClass
+                              - offsite
+                              - resample
                               type: object
                           type: object
                         datasetMetadataUrl:
