@@ -35,6 +35,8 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
 
+const SERVICE_METADATA_IDENTIFIER_ANNOTATION = "pdok.nl/wms-service-metadata-uuid"
+
 // ConvertTo converts this WMS (v2beta1) to the Hub version (v3).
 func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WMS)
@@ -42,6 +44,7 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
 
 	dst.ObjectMeta = src.ObjectMeta
+	dst.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION] = src.Spec.Service.MetadataIdentifier
 
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
@@ -74,8 +77,7 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 		DefResolution:     nil,
 		Inspire:           nil,
 		DataEPSG:          src.Spec.Service.DataEPSG,
-		//StylingAssets:     src.Spec.Service.StylingAssets,
-		Layer: src.Spec.Service.MapLayersToV3(),
+		Layer:             src.Spec.Service.MapLayersToV3(),
 	}
 
 	if src.Spec.Service.Maxsize != nil {
@@ -96,7 +98,6 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 		}
 	}
 
-	// TODO - where to place the MetadataIdentifier and FeatureTypes[0].SourceMetadataIdentifier if the service is not inspire?
 	if src.Spec.Service.Inspire {
 		service.Inspire = &pdoknlv3.Inspire{
 			ServiceMetadataURL: pdoknlv3.MetadataURL{
@@ -147,13 +148,14 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	service := WMSService{
-		Title:             src.Spec.Service.Title,
-		Abstract:          src.Spec.Service.Abstract,
-		Keywords:          src.Spec.Service.Keywords,
-		AccessConstraints: src.Spec.Service.AccessConstraints,
-		Extent:            nil,
-		DataEPSG:          src.Spec.Service.DataEPSG,
-		Layers:            []WMSLayer{},
+		Title:              src.Spec.Service.Title,
+		Abstract:           src.Spec.Service.Abstract,
+		Keywords:           src.Spec.Service.Keywords,
+		AccessConstraints:  src.Spec.Service.AccessConstraints,
+		Extent:             nil,
+		DataEPSG:           src.Spec.Service.DataEPSG,
+		Layers:             []WMSLayer{},
+		MetadataIdentifier: "00000000-0000-0000-0000-000000000000",
 	}
 
 	if src.Spec.Service.Mapfile != nil {
@@ -168,6 +170,11 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	} else {
 		service.Inspire = false
 		// TODO unable to fill in MetadataIdentifier here untill we know how to handle non inspire services
+	}
+
+	uuid, ok := src.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION]
+	if service.MetadataIdentifier == "00000000-0000-0000-0000-000000000000" && ok {
+		service.MetadataIdentifier = uuid
 	}
 
 	if src.Spec.Service.DefResolution != nil {

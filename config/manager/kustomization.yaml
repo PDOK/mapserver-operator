@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: local-registry:5000/wfs-wms-operator
-  newTag: v3.0.16
+  newTag: v3.0.17
