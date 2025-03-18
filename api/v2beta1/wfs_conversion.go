@@ -80,9 +80,18 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 		}
 	}
 
-	if src.Spec.Service.Extent != nil {
-		service.Bbox = pdoknlv3.Bbox{
+	if src.Spec.Service.Extent != nil && *src.Spec.Service.Extent != "" {
+		service.Bbox = &pdoknlv3.Bbox{
 			DefaultCRS: sharedModel.ExtentToBBox(*src.Spec.Service.Extent),
+		}
+	} else {
+		service.Bbox = &pdoknlv3.Bbox{
+			DefaultCRS: sharedModel.BBox{
+				MinX: "-25000",
+				MaxX: "280000",
+				MinY: "250000",
+				MaxY: "860000",
+			},
 		}
 	}
 
@@ -125,7 +134,6 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 	if src.Extent != nil {
 		featureTypeV3.Bbox = &pdoknlv3.FeatureBbox{
 			DefaultCRS: sharedModel.ExtentToBBox(*src.Extent),
-			// TODO do we need Wgs84?
 		}
 	}
 
@@ -157,13 +165,18 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
 		AccessConstraints: src.Spec.Service.AccessConstraints,
-		Extent:            Pointer(src.Spec.Service.Bbox.DefaultCRS.ToExtent()),
 		DataEPSG:          src.Spec.Service.DefaultCrs,
 		Maxfeatures:       src.Spec.Service.CountDefault,
 		Authority: Authority{
 			Name: "",
 			URL:  "",
 		},
+	}
+
+	if src.Spec.Service.Bbox != nil {
+		service.Extent = Pointer(src.Spec.Service.Bbox.DefaultCRS.ToExtent())
+	} else {
+		service.Extent = Pointer("-25000 250000 280000 860000")
 	}
 
 	if src.Spec.Service.Mapfile != nil {
