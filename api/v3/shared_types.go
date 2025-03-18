@@ -1,9 +1,17 @@
 package v3
 
+import corev1 "k8s.io/api/core/v1"
+
+type Mapfile struct {
+	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
+}
+
 type Options struct {
-	AutomaticCasing bool `json:"automaticCasing"`
-	PrefetchData    bool `json:"prefetchData"`
-	IncludeIngress  bool `json:"includeIngress"`
+	AutomaticCasing          bool `json:"automaticCasing"`
+	PrefetchData             bool `json:"prefetchData"`
+	IncludeIngress           bool `json:"includeIngress"`
+	DisableWebserviceProxy   bool `json:"disableWebserviceProxy"`
+	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers"`
 }
 
 type Inspire struct {
@@ -29,6 +37,7 @@ type Custom struct {
 type Data struct {
 	Gpkg    *Gpkg    `json:"gpkg,omitempty"`
 	Postgis *Postgis `json:"postgis,omitempty"`
+	TIF     *TIF     `json:"tif,omitempty"`
 }
 
 type Gpkg struct {
@@ -43,6 +52,13 @@ type Postgis struct {
 	TableName    string    `json:"tableName"`
 	GeometryType string    `json:"geometryType"`
 	Columns      []Columns `json:"columns"`
+}
+
+type TIF struct {
+	BlobKey                     string `json:"blobKey"`
+	Resample                    string `json:"resample"`
+	Offsite                     string `json:"offsite"`
+	GetFeatureInfoIncludesClass bool   `json:"getFeatureInfoIncludesClass"`
 }
 
 type Columns struct {

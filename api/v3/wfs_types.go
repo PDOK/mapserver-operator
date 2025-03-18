@@ -96,10 +96,6 @@ type Service struct {
 	FeatureTypes []FeatureType `json:"featureTypes"`
 }
 
-type Mapfile struct {
-	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
-}
-
 type Bbox struct {
 	// EXTENT/wfs_extent in mapfile
 	//nolint:tagliatelle
