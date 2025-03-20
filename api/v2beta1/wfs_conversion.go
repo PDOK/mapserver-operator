@@ -61,7 +61,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 
 	service := pdoknlv3.WFSService{
 		Prefix:            "",
-		BaseURL:           "https://service.pdok.nl",
+		BaseURL:           CreateBaseURL("https://service.pdok.nl", "wfs", src.Spec.General),
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
