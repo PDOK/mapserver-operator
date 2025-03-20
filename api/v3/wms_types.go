@@ -25,7 +25,12 @@ SOFTWARE.
 package v3
 
 import (
+	shared_model "github.com/pdok/smooth-operator/model"
+	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"maps"
+	"slices"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -33,17 +38,90 @@ import (
 
 // WMSSpec defines the desired state of WMS.
 type WMSSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Lifecycle *shared_model.Lifecycle `json:"lifecycle"`
 
-	// Foo is an example field of WMS. Edit wms_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// +kubebuilder:validation:Type=object
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
+	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
+	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
+	Options                      *Options                                   `json:"options"`
+	Service                      WMSService                                 `json:"service"`
 }
 
-// WMSStatus defines the observed state of WMS.
-type WMSStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+type WMSService struct {
+	BaseURL           string         `json:"baseUrl"`
+	Title             string         `json:"title"`
+	Abstract          string         `json:"abstract"`
+	Keywords          []string       `json:"keywords"`
+	OwnerInfoRef      string         `json:"ownerInfoRef"`
+	Fees              *string        `json:"fees,omitempty"`
+	AccessConstraints string         `json:"accessConstraints"`
+	MaxSize           *int32         `json:"maxSize,omitempty"`
+	Inspire           *Inspire       `json:"inspire,omitempty"`
+	DataEPSG          string         `json:"dataEPSG"`
+	Resolution        *int32         `json:"resolution,omitempty"`
+	DefResolution     *int32         `json:"defResolution,omitempty"`
+	StylingAssets     *StylingAssets `json:"stylingAssets,omitempty"`
+	Mapfile           *Mapfile       `json:"mapfile,omitempty"`
+	Layer             Layer          `json:"layer"`
+}
+
+type StylingAssets struct {
+	BlobKeys      []string       `json:"blobKeys"`
+	ConfigMapRefs []ConfigMapRef `json:"configMapRefs"`
+}
+
+type ConfigMapRef struct {
+	Name string   `json:"name"`
+	Keys []string `json:"keys,omitempty"`
+}
+
+type Layer struct {
+	Name                string           `json:"name"`
+	Title               *string          `json:"title,omitempty"`
+	Abstract            *string          `json:"abstract,omitempty"`
+	Keywords            []string         `json:"keywords"`
+	BoundingBoxes       []WMSBoundingBox `json:"boundingBoxes"`
+	Visible             *bool            `json:"visible,omitempty"`
+	Authority           *Authority       `json:"authority,omitempty"`
+	DatasetMetadataURL  *MetadataURL     `json:"datasetMetadataUrl,omitempty"`
+	MinScaleDenominator *string          `json:"minscaledenominator,omitempty"`
+	MaxScaleDenominator *string          `json:"maxscaledenominator,omitempty"`
+	Styles              []Style          `json:"styles"`
+	LabelNoClip         bool             `json:"labelNoClip"`
+	Data                *Data            `json:"data,omitempty"`
+	// Nested structs do not work in crd generation
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	Layers *[]Layer `json:"layers,omitempty"`
+}
+
+type WMSBoundingBox struct {
+	CRS  string            `json:"crs"`
+	BBox shared_model.BBox `json:"bbox"`
+}
+
+type Authority struct {
+	Name                     string `json:"name"`
+	URL                      string `json:"url"`
+	SpatialDatasetIdentifier string `json:"spatialDatasetIdentifier"`
+}
+
+type Style struct {
+	Name          string  `json:"name"`
+	Title         *string `json:"title"`
+	Abstract      *string `json:"abstract"`
+	Visualization *string `json:"visualization"`
+	Legend        *Legend `json:"legend"`
+}
+
+type Legend struct {
+	Width   int32  `json:"width"`
+	Height  int32  `json:"height"`
+	Format  string `json:"format"`
+	BlobKey string `json:"blobKey"`
 }
 
 // +kubebuilder:object:root=true
@@ -59,8 +137,8 @@ type WMS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   WMSSpec   `json:"spec,omitempty"`
-	Status WMSStatus `json:"status,omitempty"`
+	Spec   WMSSpec                     `json:"spec,omitempty"`
+	Status shared_model.OperatorStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -74,4 +152,41 @@ type WMSList struct {
 
 func init() {
 	SchemeBuilder.Register(&WMS{}, &WMSList{})
+}
+
+func (wms *WMS) GetUniqueTiffBlobKeys() []string {
+	blobKeys := map[string]bool{}
+
+	if wms.Spec.Service.Layer.Data.TIF != nil && wms.Spec.Service.Layer.Data.TIF.BlobKey != "" {
+		blobKeys[wms.Spec.Service.Layer.Data.TIF.BlobKey] = true
+	}
+
+	if wms.Spec.Service.Layer.Layers != nil && len(*wms.Spec.Service.Layer.Layers) > 0 {
+		for _, layer := range *wms.Spec.Service.Layer.Layers {
+			if layer.Data.TIF != nil && layer.Data.TIF.BlobKey != "" {
+				blobKeys[layer.Data.TIF.BlobKey] = true
+			}
+		}
+	}
+	return slices.Collect(maps.Keys(blobKeys))
+}
+
+func (wms *WMS) GetAuthority() *Authority {
+	if wms.Spec.Service.Layer.Authority != nil {
+		return wms.Spec.Service.Layer.Authority
+	} else {
+		for _, childLayer := range *wms.Spec.Service.Layer.Layers {
+			if childLayer.Authority != nil {
+				return childLayer.Authority
+			} else if childLayer.Layers != nil {
+				for _, grandChildLayer := range *childLayer.Layers {
+					if grandChildLayer.Authority != nil {
+						return grandChildLayer.Authority
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }
