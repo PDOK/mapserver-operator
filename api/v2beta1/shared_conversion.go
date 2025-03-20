@@ -1,6 +1,7 @@
 package v2beta1
 
 import (
+	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	shared_model "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
@@ -238,4 +239,18 @@ func LabelsToV2General(labels map[string]string) General {
 	}
 
 	return general
+}
+
+func CreateBaseURL(host string, kind string, general General) string {
+	URI := fmt.Sprintf("%s/%s", general.DatasetOwner, general.Dataset)
+	if general.Theme != nil {
+		URI += "/" + *general.Theme
+	}
+	URI += "/" + kind
+
+	if general.ServiceVersion != nil {
+		URI += "/" + *general.ServiceVersion
+	}
+
+	return fmt.Sprintf("%s/%s", host, URI)
 }
