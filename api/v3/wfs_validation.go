@@ -34,6 +34,11 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 		reasons = append(reasons, fmt.Sprintf("%v", err))
 	}
 
+	// Check service.baseURL did not change
+	if wfs.Spec.Service.BaseURL != wfsOld.Spec.Service.BaseURL {
+		reasons = append(reasons, fmt.Sprintf("service.baseURL is immutable"))
+	}
+
 	if (wfs.Spec.Service.Inspire == nil && wfsOld.Spec.Service.Inspire != nil) || (wfs.Spec.Service.Inspire != nil && wfsOld.Spec.Service.Inspire == nil) {
 		reasons = append(reasons, fmt.Sprintf("services cannot change from inspire to not inspire or the other way around"))
 	}
