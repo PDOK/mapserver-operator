@@ -1,29 +1,5 @@
 #!/bin/bash
 
-function wait_for_resource() {
-  local sleep=3
-  local resource="$1"
-  local name="$2"
-  local namespace="${3:-}"
-  local jsonpath="${4:-}"
-  local grep="${5:-}"
-  args=("$resource" "$name")
-  if [ "$namespace" == "all" ]; then
-    args+=("--all-namespaces")
-  elif [ -n "$namespace" ]; then
-    args+=("-n" "$namespace")
-  fi
-  if [ -n "$jsonpath" ]; then
-    args+=("-o" "jsonpath=$jsonpath")
-  fi
-  echo "Polling for $resource $name in $namespace"
-  if [ -z "$grep" ]; then
-    until kubectl get "${args[@]}"; do echo "..." && sleep "$sleep"; done
-  else
-    until kubectl get "${args[@]}" | grep -q -- "$grep"; do echo "..." && sleep "$sleep"; done
-  fi
-}
-
 TAG=$1
 
 echo "Running: make generate"

@@ -4,10 +4,6 @@ go 1.23.0
 
 godebug default=go1.23
 
-replace (
-	github.com/pdok/smooth-operator v0.0.2 => ../smooth-operator
-)
-
 require (
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
