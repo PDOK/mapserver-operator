@@ -25,21 +25,141 @@ SOFTWARE.
 package v3
 
 import (
+	"context"
+	"fmt"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+
+	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 )
 
+// nolint:unused
 // log is for logging in this package.
-//
-//nolint:unused
 var wfslog = logf.Log.WithName("wfs-resource")
 
 // SetupWFSWebhookWithManager registers the webhook for WFS in the manager.
 func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).For(&pdoknlv3.WFS{}).
+		WithValidator(&WFSCustomValidator{}).
 		Complete()
 }
 
 // TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
+
+// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
+// NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
+// Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
+// +kubebuilder:webhook:path=/validate-pdok-nl-v3-wfs,mutating=false,failurePolicy=fail,sideEffects=None,groups=pdok.nl,resources=wfs,verbs=create;update,versions=v3,name=vwfs-v3.kb.io,admissionReviewVersions=v1
+
+// WFSCustomValidator struct is responsible for validating the WFS resource
+// when it is created, updated, or deleted.
+//
+// NOTE: The +kubebuilder:object:generate=false marker prevents controller-gen from generating DeepCopy methods,
+// as this struct is used only for temporary operations and does not need to be deeply copied.
+type WFSCustomValidator struct {
+	// TODO(user): Add more fields as needed for validation
+}
+
+var _ webhook.CustomValidator = &WFSCustomValidator{}
+
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
+func (v *WFSCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	wfs, ok := obj.(*pdoknlv3.WFS)
+	if !ok {
+		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
+	}
+	wfslog.Info("Validation for WFS upon creation", "name", wfs.GetName())
+
+	warnings := admission.Warnings{}
+	reasons := make([]string, 0)
+
+	err := sharedValidation.ValidateLabelsOnCreate(wfs.Labels)
+	if err != nil {
+		reasons = append(reasons, fmt.Sprintf("%v", err))
+	}
+
+	validateWFS(wfs, &warnings, &reasons)
+
+	if len(reasons) > 0 {
+		return warnings, fmt.Errorf("%s", strings.Join(reasons, "\n"))
+	} else {
+		return warnings, nil
+	}
+}
+
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
+func (v *WFSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	wfs, ok := newObj.(*pdoknlv3.WFS)
+	if !ok {
+		return nil, fmt.Errorf("expected a WFS object for the newObj but got %T", newObj)
+	}
+	wfsOld, ok := oldObj.(*pdoknlv3.WFS)
+	if !ok {
+		return nil, fmt.Errorf("expected a WFS object for the oldObj but got %T", newObj)
+	}
+	wfslog.Info("Validation for WFS upon update", "name", wfs.GetName())
+
+	warnings := admission.Warnings{}
+	reasons := make([]string, 0)
+
+	// Check labels did not change
+	err := sharedValidation.ValidateLabelsOnUpdate(wfsOld.Labels, wfs.Labels)
+	if err != nil {
+		reasons = append(reasons, fmt.Sprintf("%v", err))
+	}
+
+	if (wfs.Spec.Service.Inspire == nil && wfsOld.Spec.Service.Inspire != nil) || (wfs.Spec.Service.Inspire != nil && wfsOld.Spec.Service.Inspire == nil) {
+		reasons = append(reasons, fmt.Sprintf("services cannot change from inspire to not inspire or the other way around"))
+	}
+
+	validateWFS(wfs, &warnings, &reasons)
+
+	if len(reasons) > 0 {
+		return warnings, fmt.Errorf("%s", strings.Join(reasons, "\n"))
+	} else {
+		return warnings, nil
+	}
+}
+
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type WFS.
+func (v *WFSCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	wfs, ok := obj.(*pdoknlv3.WFS)
+	if !ok {
+		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
+	}
+	wfslog.Info("Validation for WFS upon deletion", "name", wfs.GetName())
+
+	// TODO(user): fill in your validation logic upon object deletion.
+
+	return nil, nil
+}
+
+func validateWFS(wfs *pdoknlv3.WFS, warnings *admission.Warnings, reasons *[]string) {
+	if strings.Contains(wfs.GetName(), "wfs") {
+		*warnings = append(*warnings, sharedValidation.FormatValidationWarning("name should not contain wfs", wfs.GroupVersionKind(), wfs.GetName()))
+	}
+
+	service := wfs.Spec.Service
+
+	err := sharedValidation.ValidateBaseURL(service.BaseURL)
+	if err != nil {
+		*reasons = append(*reasons, fmt.Sprintf("%v", err))
+	}
+
+	if service.Mapfile == nil && service.DefaultCrs != "EPSG:28992" && service.Bbox == nil {
+		*reasons = append(*reasons, fmt.Sprintf("service.bbox.defaultCRS is required when service.defaultCRS is not 'EPSG:28992'"))
+	}
+
+	if service.Mapfile != nil {
+		if service.Bbox != nil {
+			*warnings = append(*warnings, sharedValidation.FormatValidationWarning("service.bbox is not used when service.mapfile is configured", wfs.GroupVersionKind(), wfs.GetName()))
+		}
+	}
+}
