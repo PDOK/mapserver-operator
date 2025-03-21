@@ -33,6 +33,7 @@ resources:
     conversion: true
     spoke:
     - v2beta1
+    validation: true
     webhookVersion: v1
 - api:
     crdVersion: v1

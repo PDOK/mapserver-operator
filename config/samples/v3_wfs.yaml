@@ -37,7 +37,7 @@ spec:
     includeIngress: false
   service:
     prefix: ""
-    baseUrl: https://service.pdok.nl
+    baseUrl: https://service.pdok.nl/test
     inspire:
       serviceMetadataUrl:
         csw:

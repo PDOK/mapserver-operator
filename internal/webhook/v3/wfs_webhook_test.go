@@ -25,39 +25,133 @@ SOFTWARE.
 package v3
 
 import (
+	"encoding/json"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/yaml"
+
+	"os"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	// TODO (user): Add any additional imports if needed
 )
 
+func readSample(v *pdoknlv3.WFS) error {
+	sampleYaml, err := os.ReadFile("../../../config/samples/v3_wfs.yaml")
+	if err != nil {
+		return err
+	}
+	sampleJson, err := yaml.YAMLToJSONStrict(sampleYaml)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(sampleJson, v)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var _ = Describe("WFS Webhook", func() {
 	var (
-		obj    *pdoknlv3.WFS
-		oldObj *pdoknlv3.WFS
+		obj       *pdoknlv3.WFS
+		oldObj    *pdoknlv3.WFS
+		validator WFSCustomValidator
 	)
 
 	BeforeEach(func() {
-		obj = &pdoknlv3.WFS{}
-		oldObj = &pdoknlv3.WFS{}
-		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
+		validator = WFSCustomValidator{}
+		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
+
+		sample := &pdoknlv3.WFS{}
+		err := readSample(sample)
+		Expect(err).To(BeNil(), "Reading and parsing the WFS V3 sample failed")
+
+		obj = sample.DeepCopy()
+		oldObj = sample.DeepCopy()
+
 		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")
-		// TODO (user): Add any setup logic common to all tests
+		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
 	})
 
 	AfterEach(func() {
-		// TODO (user): Add any teardown logic common to all tests
+
 	})
 
-	Context("When creating WFS under Conversion Webhook", func() {
-		// TODO (user): Add logic to convert the object to the desired version and verify the conversion
-		// Example:
-		// It("Should convert the object correctly", func() {
-		//     convertedObj := &pdoknlv3.WFS{}
-		//     Expect(obj.ConvertTo(convertedObj)).To(Succeed())
-		//     Expect(convertedObj).ToNot(BeNil())
-		// })
+	Context("When creating or updating WFS under Validating Webhook", func() {
+		It("Creates the WFS from the sample", func() {
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(BeNil())
+		})
+
+		It("Warns if the name contains WFS", func() {
+			obj.Name = obj.Name + "-wfs"
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(BeNil())
+			Expect(len(warnings)).To(BeNumerically(">", 0))
+		})
+
+		It("Should deny creation if the baseUrl is not https", func() {
+			obj.Spec.Service.BaseURL = "http://pdok.nl/wfs-test"
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if the baseUrl does not have a path", func() {
+			obj.Spec.Service.BaseURL = "https://pdok.nl/"
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if there are no labels", func() {
+			obj.Labels = map[string]string{}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if there is no bounding box and the defaultCRS is not EPSG:28992", func() {
+			obj.Spec.Service.DefaultCrs = "EPSG:1234"
+			obj.Spec.Service.Bbox = nil
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if a label changed", func() {
+			for label, val := range obj.Labels {
+				obj.Labels[label] = val + "-newval"
+				break
+			}
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if a label was removed", func() {
+			for label, _ := range obj.Labels {
+				delete(obj.Labels, label)
+				break
+			}
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if a label was added", func() {
+			obj.Labels["new-label"] = "test"
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if an inspire block was added", func() {
+			oldObj.Spec.Service.Inspire = nil
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if an inspire block was removed", func() {
+			obj.Spec.Service.Inspire = nil
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
 	})
 
 })
