@@ -1,5 +1,5 @@
 resources:
-#- manifests.yaml see https://github.com/kubernetes-sigs/kubebuilder/issues/2231
+- manifests.yaml
 - service.yaml
 
 configurations:

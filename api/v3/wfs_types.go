@@ -86,13 +86,13 @@ type WFSService struct {
 	Title             string   `json:"title"`
 	Abstract          string   `json:"abstract"`
 	Keywords          []string `json:"keywords"`
-	Fees              *string  `json:"fees"`
+	Fees              *string  `json:"fees,omitempty"`
 	AccessConstraints string   `json:"accessConstraints"`
 	DefaultCrs        string   `json:"defaultCrs"`
 	OtherCrs          []string `json:"otherCrs,omitempty"`
-	Bbox              *Bbox    `json:"bbox"`
+	Bbox              *Bbox    `json:"bbox,omitempty"`
 	// CountDefault -> wfs_maxfeatures in mapfile
-	CountDefault *string       `json:"countDefault"`
+	CountDefault *string       `json:"countDefault,omitempty"`
 	FeatureTypes []FeatureType `json:"featureTypes"`
 }
 
