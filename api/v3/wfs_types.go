@@ -74,10 +74,10 @@ type WFSSpec struct {
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
 	Options                      *Options                                   `json:"options"`
-	Service                      Service                                    `json:"service"`
+	Service                      WFSService                                 `json:"service"`
 }
 
-type Service struct {
+type WFSService struct {
 	Prefix            string   `json:"prefix"`
 	BaseURL           string   `json:"baseUrl"`
 	Inspire           *Inspire `json:"inspire,omitempty"`
@@ -86,13 +86,13 @@ type Service struct {
 	Title             string   `json:"title"`
 	Abstract          string   `json:"abstract"`
 	Keywords          []string `json:"keywords"`
-	Fees              *string  `json:"fees"`
+	Fees              *string  `json:"fees,omitempty"`
 	AccessConstraints string   `json:"accessConstraints"`
 	DefaultCrs        string   `json:"defaultCrs"`
 	OtherCrs          []string `json:"otherCrs,omitempty"`
-	Bbox              Bbox     `json:"bbox"`
+	Bbox              *Bbox    `json:"bbox,omitempty"`
 	// CountDefault -> wfs_maxfeatures in mapfile
-	CountDefault *string       `json:"countDefault"`
+	CountDefault *string       `json:"countDefault,omitempty"`
 	FeatureTypes []FeatureType `json:"featureTypes"`
 }
 

@@ -57,15 +57,11 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.PodSpecPatch = ConverseResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = &pdoknlv3.Options{
-		AutomaticCasing: src.Spec.Options.AutomaticCasing,
-		PrefetchData:    PointerValWithDefault(src.Spec.Options.PrefetchData, false),
-		IncludeIngress:  src.Spec.Options.IncludeIngress,
-	}
+	dst.Spec.Options = ConverseOptionsV2ToV3(src.Spec.Options)
 
-	service := pdoknlv3.Service{
+	service := pdoknlv3.WFSService{
 		Prefix:            "",
-		BaseURL:           "https://service.pdok.nl",
+		BaseURL:           CreateBaseURL("https://service.pdok.nl", "wfs", src.Spec.General),
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
@@ -84,9 +80,18 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 		}
 	}
 
-	if src.Spec.Service.Extent != nil {
-		service.Bbox = pdoknlv3.Bbox{
+	if src.Spec.Service.Extent != nil && *src.Spec.Service.Extent != "" {
+		service.Bbox = &pdoknlv3.Bbox{
 			DefaultCRS: sharedModel.ExtentToBBox(*src.Spec.Service.Extent),
+		}
+	} else {
+		service.Bbox = &pdoknlv3.Bbox{
+			DefaultCRS: sharedModel.BBox{
+				MinX: "-25000",
+				MaxX: "280000",
+				MinY: "250000",
+				MaxY: "860000",
+			},
 		}
 	}
 
@@ -129,32 +134,10 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 	if src.Extent != nil {
 		featureTypeV3.Bbox = &pdoknlv3.FeatureBbox{
 			DefaultCRS: sharedModel.ExtentToBBox(*src.Extent),
-			// TODO do we need Wgs84?
 		}
 	}
 
-	if src.Data.GPKG != nil {
-		featureTypeV3.Data.Gpkg = &pdoknlv3.Gpkg{
-			BlobKey:      src.Data.GPKG.BlobKey,
-			TableName:    src.Data.GPKG.Table,
-			GeometryType: src.Data.GPKG.GeometryType,
-			Columns: ConverseColumnAndAliasesV2ToColumnsWithAliasV3(
-				src.Data.GPKG.Columns,
-				src.Data.GPKG.Aliases,
-			),
-		}
-	}
-
-	if src.Data.Postgis != nil {
-		featureTypeV3.Data.Postgis = &pdoknlv3.Postgis{
-			TableName:    src.Data.Postgis.Table,
-			GeometryType: src.Data.Postgis.GeometryType,
-			Columns: ConverseColumnAndAliasesV2ToColumnsWithAliasV3(
-				src.Data.Postgis.Columns,
-				src.Data.Postgis.Aliases,
-			),
-		}
-	}
+	featureTypeV3.Data = ConverseV2DataToV3(src.Data)
 
 	return featureTypeV3
 }
@@ -169,55 +152,12 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.ObjectMeta = src.ObjectMeta
 
-	dst.Spec.General = General{
-		Dataset:      src.ObjectMeta.Labels["dataset"],
-		DatasetOwner: src.ObjectMeta.Labels["dataset-owner"],
-		DataVersion:  nil,
-	}
+	dst.Spec.General = LabelsToV2General(src.ObjectMeta.Labels)
 
-	if serviceVersion, ok := src.ObjectMeta.Labels["service-version"]; ok {
-		dst.Spec.General.ServiceVersion = &serviceVersion
-	}
+	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
-	if theme, ok := src.ObjectMeta.Labels["theme"]; ok {
-		dst.Spec.General.Theme = &theme
-	}
-
-	dst.Spec.Kubernetes = Kubernetes{}
-
-	if src.Spec.Lifecycle != nil && src.Spec.Lifecycle.TTLInDays != nil {
-		dst.Spec.Kubernetes.Lifecycle = &Lifecycle{
-			TTLInDays: Pointer(int(*src.Spec.Lifecycle.TTLInDays)),
-		}
-	}
-
-	// TODO - healthcheck
-	if src.Spec.PodSpecPatch != nil {
-		dst.Spec.Kubernetes.Resources = &src.Spec.PodSpecPatch.Containers[0].Resources
-	}
-
-	if src.Spec.HorizontalPodAutoscalerPatch != nil {
-		dst.Spec.Kubernetes.Autoscaling = &Autoscaling{
-			MaxReplicas: Pointer(int(src.Spec.HorizontalPodAutoscalerPatch.MaxReplicas)),
-		}
-
-		if src.Spec.HorizontalPodAutoscalerPatch.MinReplicas != nil {
-			dst.Spec.Kubernetes.Autoscaling.MinReplicas = Pointer(int(*src.Spec.HorizontalPodAutoscalerPatch.MinReplicas))
-		}
-
-		if src.Spec.HorizontalPodAutoscalerPatch.Metrics != nil {
-			dst.Spec.Kubernetes.Autoscaling.AverageCPUUtilization = Pointer(
-				int(*src.Spec.HorizontalPodAutoscalerPatch.Metrics[0].Resource.TargetAverageUtilization),
-			)
-		}
-	}
-
-	if src.Spec.Options == nil {
-		dst.Spec.Options = WMSWFSOptions{
-			AutomaticCasing: src.Spec.Options.AutomaticCasing,
-			PrefetchData:    &src.Spec.Options.PrefetchData,
-			IncludeIngress:  src.Spec.Options.IncludeIngress,
-		}
+	if src.Spec.Options != nil {
+		dst.Spec.Options = ConverseOptionsV3ToV2(src.Spec.Options)
 	}
 
 	service := WFSService{
@@ -225,13 +165,18 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
 		AccessConstraints: src.Spec.Service.AccessConstraints,
-		Extent:            Pointer(src.Spec.Service.Bbox.DefaultCRS.ToExtent()),
 		DataEPSG:          src.Spec.Service.DefaultCrs,
 		Maxfeatures:       src.Spec.Service.CountDefault,
 		Authority: Authority{
 			Name: "",
 			URL:  "",
 		},
+	}
+
+	if src.Spec.Service.Bbox != nil {
+		service.Extent = Pointer(src.Spec.Service.Bbox.DefaultCRS.ToExtent())
+	} else {
+		service.Extent = Pointer("-25000 250000 280000 860000")
 	}
 
 	if src.Spec.Service.Mapfile != nil {
@@ -245,6 +190,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 		service.MetadataIdentifier = src.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
 	} else {
 		service.Inspire = false
+		// TODO unable to fill in MetadataIdentifier here untill we know how to handle non inspire services
 	}
 
 	for _, featureType := range src.Spec.Service.FeatureTypes {
@@ -255,7 +201,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 			Keywords:                  featureType.Keywords,
 			DatasetMetadataIdentifier: featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
 			SourceMetadataIdentifier:  "",
-			Data:                      Data{},
+			Data:                      ConverseV3DataToV2(featureType.Data),
 		}
 
 		if src.Spec.Service.Inspire != nil {
@@ -264,27 +210,6 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 
 		if featureType.Bbox != nil {
 			featureTypeV2.Extent = Pointer(featureType.Bbox.DefaultCRS.ToExtent())
-		}
-
-		if featureType.Data.Gpkg != nil {
-			columns, aliases := ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(featureType.Data.Gpkg.Columns)
-			featureTypeV2.Data.GPKG = &GPKG{
-				BlobKey:      featureType.Data.Gpkg.BlobKey,
-				Table:        featureType.Data.Gpkg.TableName,
-				GeometryType: featureType.Data.Gpkg.GeometryType,
-				Columns:      columns,
-				Aliases:      aliases,
-			}
-		}
-
-		if featureType.Data.Postgis != nil {
-			columns, aliases := ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(featureType.Data.Postgis.Columns)
-			featureTypeV2.Data.Postgis = &Postgis{
-				Table:        featureType.Data.Postgis.TableName,
-				GeometryType: featureType.Data.Postgis.GeometryType,
-				Columns:      columns,
-				Aliases:      aliases,
-			}
 		}
 
 		service.FeatureTypes = append(service.FeatureTypes, featureTypeV2)

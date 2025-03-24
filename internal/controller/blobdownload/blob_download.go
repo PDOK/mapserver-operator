@@ -31,13 +31,13 @@ func GetArgs[W pdoknlv3.WFS | pdoknlv3.WMS](webservice W) (args string, err erro
 	case pdoknlv3.WFS:
 		if WFS, ok := any(webservice).(pdoknlv3.WFS); ok {
 			createConfig(&sb)
-			downloadGeopackage(&sb, WFS.Spec.Options.PrefetchData)
+			downloadGeopackage(&sb, *WFS.Spec.Options.PrefetchData)
 			// In case of WFS no downloads are needed for TIFFs, styling assets and legends
 		}
 	case pdoknlv3.WMS:
 		if WMS, ok := any(webservice).(pdoknlv3.WMS); ok {
 			createConfig(&sb)
-			downloadGeopackage(&sb, WMS.Spec.Options.PrefetchData)
+			downloadGeopackage(&sb, *WMS.Spec.Options.PrefetchData)
 			if err = downloadTiffs(&sb, &WMS); err != nil {
 				return "", err
 			}
@@ -67,7 +67,7 @@ func downloadGeopackage(sb *strings.Builder, prefetchData bool) {
 }
 
 func downloadTiffs(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	if !WMS.Spec.Options.PrefetchData {
+	if !*WMS.Spec.Options.PrefetchData {
 		return nil
 	}
 
@@ -109,12 +109,14 @@ func downloadStylingAssets(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
 func downloadLegends(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
 	for _, layer := range WMS.GetAllLayersWithLegend() {
 		writeLine(sb, "mkdir -p %s/%s;", legendPath, layer.Name)
-		writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", layer.Style.Legend.BlobKey, legendPath, layer.Name, layer.Style.Name)
-		fileName, err := getFilenameFromBlobKey(layer.Style.Legend.BlobKey)
-		if err != nil {
-			return err
+		for _, style := range layer.Styles {
+			writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, layer.Name, style.Name)
+			fileName, err := getFilenameFromBlobKey(style.Legend.BlobKey)
+			if err != nil {
+				return err
+			}
+			writeLine(sb, "Copied legend %s to %s/%s/%s.png;", fileName, legendPath, layer.Name, style.Name)
 		}
-		writeLine(sb, "Copied legend %s to %s/%s/%s.png;", fileName, legendPath, layer.Name, layer.Style.Name)
 	}
 	writeLine(sb, "chown -R 999:999 %s", legendPath)
 	return nil

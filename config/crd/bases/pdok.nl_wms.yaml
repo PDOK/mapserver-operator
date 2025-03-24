@@ -293,9 +293,9 @@ spec:
                         labelNoClip:
                           type: boolean
                         maxScale:
-                          type: string
+                          type: number
                         minScale:
-                          type: string
+                          type: number
                         name:
                           type: string
                         sourceMetadataIdentifier:
@@ -306,7 +306,7 @@ spec:
                             properties:
                               abstract:
                                 type: string
-                              legendfile:
+                              legendFile:
                                 description: LegendFile is the struct containing the
                                   location of the legendfile
                                 properties:
@@ -330,6 +330,7 @@ spec:
                         visible:
                           type: boolean
                       required:
+                      - labelNoClip
                       - name
                       - styles
                       - visible
@@ -366,7 +367,7 @@ spec:
                     - configMapKeyRef
                     type: object
                   maxSize:
-                    type: string
+                    type: number
                   metadataIdentifier:
                     type: string
                   resolution:
@@ -395,8 +396,6 @@ spec:
                           - name
                           type: object
                         type: array
-                    required:
-                    - blobKeys
                     type: object
                   title:
                     type: string
@@ -916,12 +915,13 @@ spec:
                     type: boolean
                   rewriteGroupToDataLayers:
                     type: boolean
+                  validateChildStyleNameEqual:
+                    type: boolean
+                  validateRequests:
+                    type: boolean
                 required:
                 - automaticCasing
-                - disableWebserviceProxy
                 - includeIngress
-                - prefetchData
-                - rewriteGroupToDataLayers
                 type: object
               podSpecPatch:
                 description: Optional strategic merge patch for the pod in the deployment.
@@ -939,7 +939,8 @@ spec:
                   dataEPSG:
                     type: string
                   defResolution:
-                    type: number
+                    format: int32
+                    type: integer
                   fees:
                     type: string
                   inspire:
@@ -1094,9 +1095,7 @@ spec:
                                 type: string
                             required:
                             - blobKey
-                            - getFeatureInfoIncludesClass
                             - offsite
-                            - resample
                             type: object
                         type: object
                       datasetMetadataUrl:
@@ -1128,65 +1127,61 @@ spec:
                       labelNoClip:
                         type: boolean
                       layers:
-                        items: {}
-                        type: array
+                        description: Nested structs do not work in crd generation
+                        x-kubernetes-preserve-unknown-fields: true
                       maxscaledenominator:
-                        type: number
+                        type: string
                       minscaledenominator:
-                        type: number
+                        type: string
                       name:
                         type: string
-                      style:
-                        properties:
-                          abstract:
-                            type: string
-                          legend:
-                            properties:
-                              blobKey:
-                                type: string
-                              format:
-                                type: string
-                              height:
-                                format: int32
-                                type: integer
-                              width:
-                                format: int32
-                                type: integer
-                            required:
-                            - blobKey
-                            - format
-                            - height
-                            - width
-                            type: object
-                          name:
-                            type: string
-                          title:
-                            type: string
-                          visualization:
-                            type: string
-                        required:
-                        - abstract
-                        - legend
-                        - name
-                        - title
-                        - visualization
-                        type: object
+                      styles:
+                        items:
+                          properties:
+                            abstract:
+                              type: string
+                            legend:
+                              properties:
+                                blobKey:
+                                  type: string
+                                format:
+                                  type: string
+                                height:
+                                  format: int32
+                                  type: integer
+                                width:
+                                  format: int32
+                                  type: integer
+                              required:
+                              - blobKey
+                              - format
+                              - height
+                              - width
+                              type: object
+                            name:
+                              type: string
+                            title:
+                              type: string
+                            visualization:
+                              type: string
+                          required:
+                          - abstract
+                          - legend
+                          - name
+                          - title
+                          - visualization
+                          type: object
+                        type: array
                       title:
                         type: string
+                      visible:
+                        type: boolean
                     required:
-                    - abstract
-                    - authority
                     - boundingBoxes
-                    - data
-                    - datasetMetadataUrl
                     - keywords
                     - labelNoClip
-                    - layers
-                    - maxscaledenominator
-                    - minscaledenominator
                     - name
-                    - style
-                    - title
+                    - styles
                     type: object
                   mapfile:
                     properties:
@@ -1222,7 +1217,8 @@ spec:
                   ownerInfoRef:
                     type: string
                   resolution:
-                    type: number
+                    format: int32
+                    type: integer
                   stylingAssets:
                     properties:
                       blobKeys:
@@ -1231,28 +1227,16 @@ spec:
                         type: array
                       configMapRefs:
                         items:
-                          description: Selects a key from a ConfigMap.
                           properties:
-                            key:
-                              description: The key to select.
-                              type: string
+                            keys:
+                              items:
+                                type: string
+                              type: array
                             name:
-                              default: ""
-                              description: |-
-                                Name of the referent.
-                                This field is effectively required, but due to backwards compatibility is
-                                allowed to be empty. Instances of this type with an empty value here are
-                                almost certainly wrong.
-                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                               type: string
-                            optional:
-                              description: Specify whether the ConfigMap or its key
-                                must be defined
-                              type: boolean
                           required:
-                          - key
+                          - name
                           type: object
-                          x-kubernetes-map-type: atomic
                         type: array
                     required:
                     - blobKeys
@@ -1265,15 +1249,9 @@ spec:
                 - accessConstraints
                 - baseUrl
                 - dataEPSG
-                - defResolution
-                - fees
                 - keywords
                 - layer
-                - mapfile
-                - maxSize
                 - ownerInfoRef
-                - resolution
-                - stylingAssets
                 - title
                 type: object
             required:

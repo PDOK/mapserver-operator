@@ -855,12 +855,13 @@ spec:
                     type: boolean
                   rewriteGroupToDataLayers:
                     type: boolean
+                  validateChildStyleNameEqual:
+                    type: boolean
+                  validateRequests:
+                    type: boolean
                 required:
                 - automaticCasing
-                - disableWebserviceProxy
                 - includeIngress
-                - prefetchData
-                - rewriteGroupToDataLayers
                 type: object
               podSpecPatch:
                 description: Optional strategic merge patch for the pod in the deployment.
@@ -1033,9 +1034,7 @@ spec:
                                   type: string
                               required:
                               - blobKey
-                              - getFeatureInfoIncludesClass
                               - offsite
-                              - resample
                               type: object
                           type: object
                         datasetMetadataUrl:
@@ -1158,11 +1157,8 @@ spec:
                 - abstract
                 - accessConstraints
                 - baseUrl
-                - bbox
-                - countDefault
                 - defaultCrs
                 - featureTypes
-                - fees
                 - keywords
                 - ownerInfoRef
                 - prefix
