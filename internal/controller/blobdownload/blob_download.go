@@ -107,7 +107,7 @@ func downloadStylingAssets(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
 }
 
 func downloadLegends(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	for _, layer := range WMS.Spec.Service.Layer.Layers {
+	for _, layer := range WMS.GetAllLayersWithLegend() {
 		writeLine(sb, "mkdir -p %s/%s;", legendPath, layer.Name)
 		writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", layer.Style.Legend.BlobKey, legendPath, layer.Name, layer.Style.Name)
 		fileName, err := getFilenameFromBlobKey(layer.Style.Legend.BlobKey)

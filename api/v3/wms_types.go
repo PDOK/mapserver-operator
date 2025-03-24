@@ -151,18 +151,42 @@ func init() {
 	SchemeBuilder.Register(&WMS{}, &WMSList{})
 }
 
+func (layer *Layer) getAllLayers() (layers []Layer) {
+	layers = append(layers, *layer)
+	for _, childLayer := range layer.Layers {
+		layers = append(layers, childLayer.getAllLayers()...)
+	}
+	return
+}
+
+func (layer *Layer) hasData() bool {
+	switch {
+	case layer.Data.Gpkg != nil:
+		return true
+	case layer.Data.Postgis != nil:
+		return true
+	case layer.Data.TIF != nil:
+		return true
+	default:
+		return false
+	}
+}
+
+func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
+	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+		if layer.hasData() && layer.Style.Legend.BlobKey != "" {
+			layers = append(layers, layer)
+		}
+	}
+	return
+}
+
 func (wms *WMS) GetUniqueTiffBlobKeys() []string {
 	blobKeys := map[string]bool{}
 
-	if wms.Spec.Service.Layer.Data.TIF != nil && wms.Spec.Service.Layer.Data.TIF.BlobKey != "" {
-		blobKeys[wms.Spec.Service.Layer.Data.TIF.BlobKey] = true
-	}
-
-	if len(wms.Spec.Service.Layer.Layers) > 0 {
-		for _, layer := range wms.Spec.Service.Layer.Layers {
-			if layer.Data.TIF != nil && layer.Data.TIF.BlobKey != "" {
-				blobKeys[layer.Data.TIF.BlobKey] = true
-			}
+	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+		if layer.Data.TIF != nil && layer.Data.TIF.BlobKey != "" {
+			blobKeys[layer.Data.TIF.BlobKey] = true
 		}
 	}
 	return slices.Collect(maps.Keys(blobKeys))
