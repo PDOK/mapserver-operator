@@ -1,6 +1,11 @@
 package v3
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	corev1 "k8s.io/api/core/v1"
+	"strings"
+)
+
+var baseURL string
 
 type Mapfile struct {
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
@@ -66,4 +71,12 @@ type TIF struct {
 type Columns struct {
 	Name  string  `json:"name"`
 	Alias *string `json:"alias,omitempty"`
+}
+
+func SetBaseURL(url string) {
+	baseURL = strings.TrimSuffix(url, "/")
+}
+
+func GetBaseURL() string {
+	return baseURL
 }
