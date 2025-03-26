@@ -4,6 +4,7 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	shared_model "github.com/pdok/smooth-operator/model"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
@@ -11,7 +12,7 @@ import (
 const (
 	WFSConfig = `{
     "service_title": "some Service title",
-    "service_abstract": "some \"Service\" abstract",
+    "service_abstract": "some \\\"Service\\\" abstract",
     "service_keywords": "service-keyword-1,service-keyword-2,infoFeatureAccessService",
     "service_accessconstraints": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
     "service_extent": "0.0 2.0 1.0 3.0",
@@ -21,8 +22,6 @@ const (
     "service_onlineresource": "http://localhost",
     "service_path": "/datasetOwner/dataset/theme/wfs/v1_0",
     "service_metadata_id": "metameta-meta-meta-meta-metametameta",
-    "dataset_owner": "",
-    "authority_url": "",
     "automatic_casing": true,
     "data_epsg": "EPSG:28992",
     "epsg_list": [
@@ -37,17 +36,49 @@ const (
     ],
     "layers": [
         {
-            "name": "",
-            "title": "",
-            "abstract": "",
-            "keywords": "",
-            "layer_extent": "",
-            "dataset_metadata_id": "",
-            "dataset_source_id": "",
-            "columns": null,
-            "geometry_type": "",
-            "gpkg_path": "",
-            "tablename": ""
+            "name": "featuretype-1-name",
+            "title": "featuretype-1-title",
+            "abstract": "feature \\\"1\\\" abstract",
+            "keywords": "featuretype-1-keyword-1,featuretype-1-keyword-2",
+            "layer_extent": "0.0 2.0 1.0 3.0",
+            "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "featuretype-1-column-1"
+                },
+                {
+                    "name": "featuretype-1-column-2"
+                }
+            ],
+            "geometry_type": "Point",
+            "gpkg_path": "/srv/data/gpkg/file-1.gpkg",
+            "tablename": "featuretype-1"
+        },
+        {
+            "name": "featuretype-2-name",
+            "title": "featuretype-2-title",
+            "abstract": "feature \\\"2\\\" abstract",
+            "keywords": "featuretype-2-keyword-1,featuretype-2-keyword-2",
+            "layer_extent": "0.0 2.0 1.0 3.0",
+            "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "featuretype-2-column-1",
+                    "alias": "alias_featuretype-2-column-1"
+                },
+                {
+                    "name": "featuretype-2-column-2"
+                }
+            ],
+            "geometry_type": "MultiLine",
+            "tablename": "featuretype-2",
+            "postgis": true
         }
     ]
 }`
@@ -114,7 +145,63 @@ func TestGetConfigForWFS(t *testing.T) {
 							},
 							FeatureTypes: []pdoknlv3.FeatureType{
 								{
-									Title: "featuretype-1-name",
+									Name:     "featuretype-1-name",
+									Title:    "featuretype-1-title",
+									Abstract: "feature \"1\" abstract",
+									Keywords: []string{"featuretype-1-keyword-1", "featuretype-1-keyword-2"},
+									DatasetMetadataURL: pdoknlv3.MetadataURL{
+										CSW: &pdoknlv3.Metadata{
+											MetadataIdentifier: "datadata-data-data-data-datadatadata",
+										},
+									},
+									Bbox: &pdoknlv3.FeatureBbox{
+										DefaultCRS: shared_model.BBox{
+											MinX: "0.0",
+											MaxX: "1.0",
+											MinY: "2.0",
+											MaxY: "3.0",
+										},
+									},
+									Data: pdoknlv3.Data{
+										Gpkg: &pdoknlv3.Gpkg{
+											TableName:    "featuretype-1",
+											GeometryType: "Point",
+											BlobKey:      "public/testme/gpkg/file-1.gpkg",
+											Columns: []pdoknlv3.Column{
+												{Name: "featuretype-1-column-1"},
+												{Name: "featuretype-1-column-2"},
+											},
+										},
+									},
+								},
+								{
+									Name:     "featuretype-2-name",
+									Title:    "featuretype-2-title",
+									Abstract: "feature \"2\" abstract",
+									Keywords: []string{"featuretype-2-keyword-1", "featuretype-2-keyword-2"},
+									DatasetMetadataURL: pdoknlv3.MetadataURL{
+										CSW: &pdoknlv3.Metadata{
+											MetadataIdentifier: "datadata-data-data-data-datadatadata",
+										},
+									},
+									Bbox: &pdoknlv3.FeatureBbox{
+										DefaultCRS: shared_model.BBox{
+											MinX: "0.0",
+											MaxX: "1.0",
+											MinY: "2.0",
+											MaxY: "3.0",
+										},
+									},
+									Data: pdoknlv3.Data{
+										Postgis: &pdoknlv3.Postgis{
+											TableName:    "featuretype-2",
+											GeometryType: "MultiLine",
+											Columns: []pdoknlv3.Column{
+												{Name: "featuretype-2-column-1", Alias: smoothoperatorutils.Pointer("alias_featuretype-2-column-1")},
+												{Name: "featuretype-2-column-2"},
+											},
+										},
+									},
 								},
 							},
 							Prefix: "prefix",

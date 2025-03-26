@@ -4,18 +4,20 @@ import (
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"strconv"
 	"strings"
 )
 
 const (
 	defaultMaxFeatures = 1000
+	geopackagePath     = "/srv/data/gpkg"
 )
 
 func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (Input, error) {
 	input := Input{
-		Title:             wfs.Spec.Service.Title,
-		Abstract:          wfs.Spec.Service.Abstract,
+		Title:             escapeQuotes(wfs.Spec.Service.Title),
+		Abstract:          escapeQuotes(wfs.Spec.Service.Abstract),
 		Keywords:          strings.Join(wfs.Spec.Service.Keywords, ","),
 		AccessConstraints: wfs.Spec.Service.AccessConstraints,
 		Extent:            wfs.Spec.Service.Bbox.DefaultCRS.ToExtent(),
@@ -25,8 +27,6 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 		OnlineResource:    pdoknlv3.GetBaseURL(),
 		Path:              getPath(wfs),
 		MetadataId:        wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
-		DatasetOwner:      "", // Todo
-		AuthorityURL:      "", // Todo
 		AutomaticCasing:   wfs.Spec.Options.AutomaticCasing,
 		DataEPSG:          wfs.Spec.Service.DefaultCrs,
 		EPSGList:          wfs.Spec.Service.OtherCrs,
@@ -79,13 +79,44 @@ func getPath(WFS *pdoknlv3.WFS) (path string) {
 func getLayers(featureTypes []pdoknlv3.FeatureType) (layers []Layer) {
 	for _, featureType := range featureTypes {
 		layer := Layer{
-			Name:     featureType.Name,
-			Title:    featureType.Name,
-			Abstract: featureType.Abstract,
-			// Todo expand
+			Name:           featureType.Name,
+			Title:          escapeQuotes(featureType.Title),
+			Abstract:       escapeQuotes(featureType.Abstract),
+			Keywords:       strings.Join(featureType.Keywords, ","),
+			Extent:         featureType.Bbox.DefaultCRS.ToExtent(),
+			MetadataId:     featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
+			Columns:        getColumns(featureType),
+			TableName:      featureType.Data.GetTableName(),
+			GeometryType:   featureType.Data.GetGeometryType(),
+			GeopackagePath: getGeopackagePath(featureType),
 		}
+		if featureType.Data.Postgis != nil {
+			layer.Postgis = smoothoperatorutils.Pointer(true)
+		}
+
 		layers = append(layers, layer)
 	}
 
 	return
+}
+
+func getColumns(featureType pdoknlv3.FeatureType) []Column {
+	columns := []Column{{Name: "fuuid"}}
+	for _, column := range *featureType.Data.GetColumns() {
+		columns = append(columns, Column{Name: column.Name, Alias: column.Alias})
+	}
+	return columns
+}
+
+func getGeopackagePath(featureType pdoknlv3.FeatureType) *string {
+	if featureType.Data.Gpkg == nil {
+		return nil
+	}
+	index := strings.LastIndex(featureType.Data.Gpkg.BlobKey, "/") + 1
+	blobName := featureType.Data.Gpkg.BlobKey[index:]
+	return smoothoperatorutils.Pointer(geopackagePath + "/" + blobName)
+}
+
+func escapeQuotes(s string) string {
+	return strings.ReplaceAll(s, "\"", "\\\"")
 }

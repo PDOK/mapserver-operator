@@ -12,8 +12,8 @@ type Input struct {
 	OnlineResource    string   `json:"service_onlineresource"`
 	Path              string   `json:"service_path"`
 	MetadataId        string   `json:"service_metadata_id"`
-	DatasetOwner      string   `json:"dataset_owner"`
-	AuthorityURL      string   `json:"authority_url"`
+	DatasetOwner      *string  `json:"dataset_owner,omitempty"`
+	AuthorityURL      *string  `json:"authority_url,omitempty"`
 	AutomaticCasing   bool     `json:"automatic_casing"`
 	DataEPSG          string   `json:"data_epsg"`
 	EPSGList          []string `json:"epsg_list"`
@@ -27,13 +27,14 @@ type Layer struct {
 	Keywords       string   `json:"keywords"`
 	Extent         string   `json:"layer_extent"`
 	MetadataId     string   `json:"dataset_metadata_id"`
-	SourceId       string   `json:"dataset_source_id"`
 	Columns        []Column `json:"columns"`
-	GeometryType   string   `json:"geometry_type"`
-	GeopackagePath string   `json:"gpkg_path"`
-	TableName      string   `json:"tablename"`
+	GeometryType   *string  `json:"geometry_type,omitempty"`
+	GeopackagePath *string  `json:"gpkg_path,omitempty"`
+	TableName      *string  `json:"tablename,omitempty"`
+	Postgis        *bool    `json:"postgis,omitempty"`
 }
 
 type Column struct {
-	Name string `json:"name"`
+	Name  string  `json:"name"`
+	Alias *string `json:"alias,omitempty"`
 }

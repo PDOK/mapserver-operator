@@ -14,7 +14,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
-require github.com/pdok/smooth-operator v0.0.5
+require github.com/pdok/smooth-operator v0.0.6
 
 require (
 	cel.dev/expr v0.18.0 // indirect
