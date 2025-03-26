@@ -44,6 +44,10 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
+const (
+	defaultMultitoolImage = "docker.io/pdok/docker-multitool:0.9.1"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -67,6 +71,7 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
+	var multitoolImage string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -84,6 +89,7 @@ func main() {
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.StringVar(&multitoolImage, "multitool-image", defaultMultitoolImage, "The image to use in the blob download init-container.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -213,8 +219,9 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.WFSReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		MultitoolImage: multitoolImage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WFS")
 		os.Exit(1)

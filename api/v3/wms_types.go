@@ -31,6 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
 	"slices"
+	"sort"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -154,21 +155,63 @@ func init() {
 	SchemeBuilder.Register(&WMS{}, &WMSList{})
 }
 
-func (wms *WMS) GetUniqueTiffBlobKeys() []string {
-	blobKeys := map[string]bool{}
-
-	if wms.Spec.Service.Layer.Data.TIF != nil && wms.Spec.Service.Layer.Data.TIF.BlobKey != "" {
-		blobKeys[wms.Spec.Service.Layer.Data.TIF.BlobKey] = true
+func (layer *Layer) getAllLayers() (layers []Layer) {
+	layers = append(layers, *layer)
+	if layer.Layers != nil {
+		for _, childLayer := range *layer.Layers {
+			layers = append(layers, childLayer.getAllLayers()...)
+		}
 	}
+	return
+}
 
-	if wms.Spec.Service.Layer.Layers != nil && len(*wms.Spec.Service.Layer.Layers) > 0 {
-		for _, layer := range *wms.Spec.Service.Layer.Layers {
-			if layer.Data.TIF != nil && layer.Data.TIF.BlobKey != "" {
-				blobKeys[layer.Data.TIF.BlobKey] = true
+func (layer *Layer) hasData() bool {
+	switch {
+	case layer.Data == nil:
+		return false
+	case layer.Data.Gpkg != nil:
+		return true
+	case layer.Data.Postgis != nil:
+		return true
+	case layer.Data.TIF != nil:
+		return true
+	default:
+		return false
+	}
+}
+
+func (layer *Layer) hasTIFData() bool {
+	if !layer.hasData() {
+		return false
+	}
+	return layer.Data.TIF != nil && layer.Data.TIF.BlobKey != ""
+}
+
+func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
+	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+		if !layer.hasData() || len(layer.Styles) == 0 {
+			continue
+		}
+		for _, style := range layer.Styles {
+			if style.Legend != nil && style.Legend.BlobKey != "" {
+				layers = append(layers, layer)
+				break
 			}
 		}
 	}
-	return slices.Collect(maps.Keys(blobKeys))
+	return
+}
+
+func (wms *WMS) GetUniqueTiffBlobKeys() []string {
+	blobKeys := map[string]bool{}
+	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+		if layer.hasTIFData() {
+			blobKeys[layer.Data.TIF.BlobKey] = true
+		}
+	}
+	keys := slices.Collect(maps.Keys(blobKeys))
+	sort.Strings(keys) // This is only needed for the unit test
+	return keys
 }
 
 func (wms *WMS) GetAuthority() *Authority {
