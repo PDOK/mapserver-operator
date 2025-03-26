@@ -7,6 +7,20 @@ rules:
 - apiGroups:
   - pdok.nl
   resources:
+  - ownerinfo
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - pdok.nl
+  resources:
+  - ownerinfo/status
+  verbs:
+  - get
+- apiGroups:
+  - pdok.nl
+  resources:
   - wfs
   - wms
   verbs:
