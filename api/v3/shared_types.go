@@ -17,6 +17,7 @@ const (
 	ServiceTypeWFS ServiceType = "WFS"
 )
 
+// +kubebuilder:object:generate=false
 type WMSWFS interface {
 	*WFS | *WMS
 	metav1.Object

@@ -65,7 +65,7 @@ chown -R 999:999 /var/www/legend
 
 func TestGetArgsForWFS(t *testing.T) {
 	type args struct {
-		WFS v3.WFS
+		WFS *v3.WFS
 	}
 	tests := []struct {
 		name     string
@@ -76,7 +76,7 @@ func TestGetArgsForWFS(t *testing.T) {
 		{
 			name: "GetArgs for WFS with prefetchData",
 			args: args{
-				WFS: v3.WFS{
+				WFS: &v3.WFS{
 					Spec: v3.WFSSpec{
 						Service: v3.WFSService{
 							Title: "wfs-prefetch-service-title",
@@ -93,7 +93,7 @@ func TestGetArgsForWFS(t *testing.T) {
 		{
 			name: "GetArgs for WFS without prefetchData",
 			args: args{
-				WFS: v3.WFS{
+				WFS: &v3.WFS{
 					Spec: v3.WFSSpec{
 						Service: v3.WFSService{
 							Title: "wfs-noprefetch-service-title",
@@ -283,7 +283,7 @@ func TestGetArgsForWMS(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			args, err := GetArgs(tt.args.WMS)
+			args, err := GetArgs(&tt.args.WMS)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetArgs() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -18,7 +18,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		Global: Global{
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
-			OnlineResourceurl: pdoknlv3.GetBaseURL(),
+			OnlineResourceurl: pdoknlv3.GetHost(),
 			Path:              mapperutils.GetPath(wfs),
 			Version:           *mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version"),
 		},
@@ -36,7 +36,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 							Href string
 						}{
 							Type: "simple",
-							Href: pdoknlv3.GetBaseURL(),
+							Href: pdoknlv3.GetHost(),
 						}),
 					},
 					ServiceIdentification: wfs200.ServiceIdentification{
