@@ -26,7 +26,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
@@ -40,7 +39,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
@@ -207,16 +205,11 @@ func (r *WFSReconciler) mutateConfigMapCapabilitiesGenerator(WFS *pdoknlv3.WFS, 
 	}
 
 	if len(configMap.Data) == 0 {
-		input, err := capabilitiesgenerator.MapWFSToCapabilitiesGeneratorInput(WFS, ownerInfo)
+		input, err := capabilitiesgenerator.GetInput(WFS, ownerInfo)
 		if err != nil {
 			return err
 		}
-		yamlInput, err := yaml.Marshal(&input)
-		if err != nil {
-			return fmt.Errorf("failed to marshal the capabilities generator input to yaml: %w", err)
-		}
-
-		configMap.Data = map[string]string{capabilitiesGeneratorInput: string(yamlInput)}
+		configMap.Data = map[string]string{capabilitiesGeneratorInput: string(input)}
 
 	}
 	configMap.Immutable = smoothoperatorutils.Pointer(true)

@@ -1,7 +1,6 @@
 package capabilitiesgenerator
 
 import (
-	"encoding/xml"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	"github.com/pdok/ogc-specifications/pkg/wfs200"
@@ -24,7 +23,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 			Version:           *mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version"),
 		},
 		Services: Services{
-			WFS200Config: WFS200Config{
+			WFS200Config: &WFS200Config{
 				Filename: capabilitiesFilename,
 				Wfs200: wfs200.GetCapabilitiesResponse{
 
@@ -48,23 +47,8 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 							Keyword: wfs.Spec.Service.Keywords,
 						},
 					},
-
 					Capabilities: wfs200.Capabilities{
 						FeatureTypeList: getFeatureTypeList(wfs),
-					},
-					XMLName: xml.Name{},
-					Namespaces: wfs200.Namespaces{ // TODO
-						XmlnsGML:           "",
-						XmlnsWFS:           "",
-						XmlnsOWS:           "",
-						XmlnsXlink:         "",
-						XmlnsXSI:           "",
-						XmlnsFes:           "",
-						XmlnsInspireCommon: "",
-						XmlnsInspireDls:    "",
-						XmlnsPrefix:        "",
-						Version:            "",
-						SchemaLocation:     "",
 					},
 				},
 			},
@@ -75,7 +59,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
 
 		// Todo set extended capabilities
-		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = wfs200.OperationsMetadata{}
+		//config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = wfs200.OperationsMetadata{}
 	}
 
 	return config, nil
