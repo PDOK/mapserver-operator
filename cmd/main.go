@@ -46,8 +46,9 @@ import (
 )
 
 const (
-	defaultMultitoolImage        = "docker.io/pdok/docker-multitool:0.9.1"
-	defaultMapfileGeneratorImage = "docker.io/pdok/mapfile-generator:1.9.3"
+	defaultMultitoolImage             = "docker.io/pdok/docker-multitool:0.9.1"
+	defaultMapfileGeneratorImage      = "docker.io/pdok/mapfile-generator:1.9.3"
+	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/pdok/ogc-capabilities-generator:0.2.7"
 )
 
 var (
@@ -76,6 +77,7 @@ func main() {
 	var baseURL string
 	var multitoolImage string
 	var mapfileGeneratorImage string
+	var capabilitiesGeneratorImage string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -96,6 +98,7 @@ func main() {
 	flag.StringVar(&baseURL, "baseurl", "", "The base url which is used in the mapserver service.")
 	flag.StringVar(&multitoolImage, "multitool-image", defaultMultitoolImage, "The image to use in the blob download init-container.")
 	flag.StringVar(&mapfileGeneratorImage, "mapfile-generator-image", defaultMapfileGeneratorImage, "The image to use in the mapfile generator init-container.")
+	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", defaultCapabilitiesGeneratorImage, "The image to use in the capabilities generator init-container.")
 
 	opts := zap.Options{
 		Development: true,
@@ -232,10 +235,11 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.WFSReconciler{
-		Client:                mgr.GetClient(),
-		Scheme:                mgr.GetScheme(),
-		MultitoolImage:        multitoolImage,
-		MapfileGeneratorImage: mapfileGeneratorImage,
+		Client:                     mgr.GetClient(),
+		Scheme:                     mgr.GetScheme(),
+		MultitoolImage:             multitoolImage,
+		MapfileGeneratorImage:      mapfileGeneratorImage,
+		CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WFS")
 		os.Exit(1)

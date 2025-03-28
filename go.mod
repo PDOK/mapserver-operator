@@ -1,20 +1,22 @@
 module github.com/pdok/mapserver-operator
 
-go 1.23.0
+go 1.24
+
+toolchain go1.24.1
 
 godebug default=go1.23
 
 require (
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
+	github.com/pdok/ogc-specifications v1.0.0-beta2
+	github.com/pdok/smooth-operator v0.0.6
 	k8s.io/api v0.32.0
 	k8s.io/apimachinery v0.32.0
 	k8s.io/client-go v0.32.0
 	sigs.k8s.io/controller-runtime v0.20.0
 	sigs.k8s.io/yaml v1.4.0
 )
-
-require github.com/pdok/smooth-operator v0.0.6
 
 require (
 	cel.dev/expr v0.18.0 // indirect
