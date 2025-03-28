@@ -14,7 +14,7 @@ spec:
     ttlInDays: 21
   podSpecPatch:
     containers:
-      - name: configmap_files
+      - name: mapserver
         resources:
           limits:
             memory: 12M

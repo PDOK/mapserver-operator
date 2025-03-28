@@ -126,3 +126,23 @@ func (wfs *WFS) HasPostgisData() bool {
 	}
 	return false
 }
+
+func (wfs *WFS) Mapfile() *Mapfile {
+	return wfs.Spec.Service.Mapfile
+}
+
+func (wfs *WFS) Type() ServiceType {
+	return ServiceTypeWFS
+}
+
+func (wfs *WFS) PodSpecPatch() *corev1.PodSpec {
+	return wfs.Spec.PodSpecPatch
+}
+
+func (wfs *WFS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec {
+	return wfs.Spec.HorizontalPodAutoscalerPatch
+}
+
+func (wfs *WFS) Options() *Options {
+	return wfs.Spec.Options
+}

@@ -48,6 +48,8 @@ var (
 	namespace             = "default"
 	testImageName1        = "test.test/image:test1"
 	testImageName2        = "test.test/image:test2"
+	testImageName3        = "test.test/image:test1"
+	testImageName4        = "test.test/image:test2"
 )
 
 var _ = Describe("WFS Controller", func() {
@@ -121,10 +123,7 @@ var _ = Describe("WFS Controller", func() {
 
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &WFSReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
+			controllerReconciler := getReconciler()
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: typeNamespacedNameWfs,
@@ -135,12 +134,7 @@ var _ = Describe("WFS Controller", func() {
 		})
 
 		//It("Should create correct configMap manifest.", func() {
-		//	controllerReconciler := &WFSReconciler{
-		//		Client:                k8sClient,
-		//		Scheme:                k8sClient.Scheme(),
-		//		MultitoolImage:        testImageName1,
-		//		MapfileGeneratorImage: testImageName2,
-		//	}
+		//	controllerReconciler := getReconciler()
 		//
 		//	By("Reconciling the WFS and checking the configMap")
 		//	_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWfs})
@@ -161,12 +155,7 @@ var _ = Describe("WFS Controller", func() {
 		//})
 
 		It("Should create correct middlewareCorsHeaders manifest.", func() {
-			controllerReconciler := &WFSReconciler{
-				Client:                k8sClient,
-				Scheme:                k8sClient.Scheme(),
-				MultitoolImage:        testImageName1,
-				MapfileGeneratorImage: testImageName2,
-			}
+			controllerReconciler := getReconciler()
 
 			By("Reconciling the WFS and checking the middlewareCorsHeaders")
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWfs})
@@ -197,12 +186,7 @@ var _ = Describe("WFS Controller", func() {
 		})
 
 		It("Should create correct podDisruptionBudget manifest.", func() {
-			controllerReconciler := &WFSReconciler{
-				Client:                k8sClient,
-				Scheme:                k8sClient.Scheme(),
-				MultitoolImage:        testImageName1,
-				MapfileGeneratorImage: testImageName2,
-			}
+			controllerReconciler := getReconciler()
 
 			By("Reconciling the WFS and checking the podDisruptionBudget")
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWfs})
@@ -223,12 +207,7 @@ var _ = Describe("WFS Controller", func() {
 		})
 
 		It("Should create correct horizontalPodAutoScaler manifest.", func() {
-			controllerReconciler := &WFSReconciler{
-				Client:                k8sClient,
-				Scheme:                k8sClient.Scheme(),
-				MultitoolImage:        testImageName1,
-				MapfileGeneratorImage: testImageName2,
-			}
+			controllerReconciler := getReconciler()
 
 			By("Reconciling the WFS and checking the horizontalPodAutoScaler")
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWfs})
@@ -270,6 +249,19 @@ func getUniqueWfsTypeNamespacedName(counter int) types.NamespacedName {
 func getUniqueWfsResourceName(counter int) string {
 	return fmt.Sprintf("%s-%v", wfsResourceName, counter)
 }
+
+func getReconciler() *WFSReconciler {
+	return &WFSReconciler{
+		Client:                     k8sClient,
+		Scheme:                     k8sClient.Scheme(),
+		MultitoolImage:             testImageName1,
+		MapfileGeneratorImage:      testImageName2,
+		MapserverImage:             testImageName3,
+		CapabilitiesGeneratorImage: testImageName4,
+	}
+}
+
+func
 
 func readV3Sample() *pdoknlv3.WFS {
 	yamlFile, err := os.ReadFile("../../config/samples/v3_wfs.yaml")

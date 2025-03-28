@@ -31,16 +31,16 @@ import (
 )
 
 // namespace where the project is deployed in
-const namespace = "configmap_files-operator-system"
+const namespace = "mapserver-operator-system"
 
 // serviceAccountName created for the project
-const serviceAccountName = "configmap_files-operator-controller-manager"
+const serviceAccountName = "mapserver-operator-controller-manager"
 
 // metricsServiceName is the name of the metrics service of the project
-const metricsServiceName = "configmap_files-operator-controller-manager-metrics-service"
+const metricsServiceName = "mapserver-operator-controller-manager-metrics-service"
 
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
-const metricsRoleBindingName = "configmap_files-operator-metrics-binding"
+const metricsRoleBindingName = "mapserver-operator-metrics-binding"
 
 var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
@@ -174,7 +174,7 @@ var _ = Describe("Manager", Ordered, func() {
 			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
 			//nolint:gosec
 			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName,
-				"--clusterrole=configmap_files-operator-metrics-reader",
+				"--clusterrole=mapserver-operator-metrics-reader",
 				fmt.Sprintf("--serviceaccount=%s:%s", namespace, serviceAccountName),
 			)
 			_, err := utils.Run(cmd)
@@ -305,7 +305,7 @@ var _ = Describe("Manager", Ordered, func() {
 			verifyCAInjection := func(g Gomega) {
 				cmd := exec.Command("kubectl", "get",
 					"validatingwebhookconfigurations.admissionregistration.k8s.io",
-					"configmap_files-operator-validating-webhook-configuration",
+					"mapserver-operator-validating-webhook-configuration",
 					"-o", "go-template={{ range .webhooks }}{{ .clientConfig.caBundle }}{{ end }}")
 				vwhOutput, err := utils.Run(cmd)
 				g.Expect(err).NotTo(HaveOccurred())

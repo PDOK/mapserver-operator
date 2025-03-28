@@ -233,3 +233,23 @@ func (wms *WMS) GetAuthority() *Authority {
 
 	return nil
 }
+
+func (wms *WMS) Mapfile() *Mapfile {
+	return wms.Spec.Service.Mapfile
+}
+
+func (wms *WMS) Type() ServiceType {
+	return ServiceTypeWMS
+}
+
+func (wms *WMS) PodSpecPatch() *corev1.PodSpec {
+	return wms.Spec.PodSpecPatch
+}
+
+func (wms *WMS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec {
+	return wms.Spec.HorizontalPodAutoscalerPatch
+}
+
+func (wms *WMS) Options() *Options {
+	return wms.Spec.Options
+}

@@ -2,10 +2,11 @@ package controller
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/static_files"
 	"github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	traefikdynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -31,9 +32,6 @@ const (
 	reconciledConditionReasonError   = "Error"
 )
 
-//go:embed static_files
-var staticFiles embed.FS
-
 var (
 	AppLabelKey   = "app"
 	MapserverName = "mapserver"
@@ -50,10 +48,6 @@ var (
 type Reconciler interface {
 	*WFSReconciler | *WMSReconciler
 	Status() client.SubResourceWriter
-}
-
-type WMSWFS interface {
-	*pdoknlv3.WFS | pdoknlv3.WMS
 }
 
 func GetReconcilerClient[R Reconciler](r R) client.Client {
@@ -80,12 +74,43 @@ func GetReconcilerScheme[R Reconciler](r R) *runtime.Scheme {
 
 func GetSharedBareObjects(obj metav1.Object) []client.Object {
 	return []client.Object{
+		mapserver.GetBareDeployment(obj, MapserverName),
+		GetBareIngressRoute(obj),
 		GetBareHorizontalPodAutoScaler(obj),
 		GetBareConfigMapBlobDownload(obj),
 		GetBareConfigMap(obj),
 		GetBareService(obj),
 		GetBareCorsHeadersMiddleware(obj),
 		GetBarePodDisruptionBudget(obj),
+		GetBareConfigMapMapfileGenerator(obj),
+		GetBareConfigMapCapabilitiesGenerator(obj),
+	}
+}
+
+func GetBareIngressRoute(obj metav1.Object) *traefikiov1alpha1.IngressRoute {
+	return &traefikiov1alpha1.IngressRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      obj.GetName() + "-" + MapserverName,
+			Namespace: obj.GetNamespace(),
+		},
+	}
+}
+
+func GetBareConfigMapMapfileGenerator(obj metav1.Object) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      mapserver.GetBareDeployment(obj, MapserverName).GetName() + "-mapfile-generator",
+			Namespace: obj.GetNamespace(),
+		},
+	}
+}
+
+func GetBareConfigMapCapabilitiesGenerator(obj metav1.Object) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      mapserver.GetBareDeployment(obj, MapserverName).GetName() + "-capabilities-generator",
+			Namespace: obj.GetNamespace(),
+		},
 	}
 }
 
@@ -98,24 +123,15 @@ func GetBareHorizontalPodAutoScaler(obj metav1.Object) *autoscalingv2.Horizontal
 	}
 }
 
-func MutateHorizontalPodAutoscaler[R Reconciler](r R, obj metav1.Object, autoscaler *autoscalingv2.HorizontalPodAutoscaler) error {
+func MutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, autoscaler *autoscalingv2.HorizontalPodAutoscaler) error {
 	name := obj.GetName()
 	labels := obj.GetLabels()
 
-	var autoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec
-	var podSpecPatch *corev1.PodSpec
+	autoscalerPatch := obj.HorizontalPodAutoscalerPatch()
+	podSpecPatch := obj.PodSpecPatch()
 	var behaviourStabilizationWindowSeconds int32 = 0
-
-	switch any(obj).(type) {
-	case *pdoknlv3.WFS:
-		wfs := any(obj).(*pdoknlv3.WFS)
-		autoscalerPatch = wfs.Spec.HorizontalPodAutoscalerPatch
-		podSpecPatch = wfs.Spec.PodSpecPatch
+	if obj.Type() == pdoknlv3.ServiceTypeWFS {
 		behaviourStabilizationWindowSeconds = 300
-	case *pdoknlv3.WMS:
-		wms := any(obj).(*pdoknlv3.WMS)
-		autoscalerPatch = wms.Spec.HorizontalPodAutoscalerPatch
-		podSpecPatch = wms.Spec.PodSpecPatch
 	}
 
 	labels[AppLabelKey] = MapserverName
@@ -133,7 +149,10 @@ func MutateHorizontalPodAutoscaler[R Reconciler](r R, obj metav1.Object, autosca
 		maxReplicas = autoscalerPatch.MaxReplicas
 	}
 
-	metrics := autoscalerPatch.Metrics
+	metrics := []autoscalingv2.MetricSpec{}
+	if autoscalerPatch != nil {
+		metrics = autoscalerPatch.Metrics
+	}
 	if len(metrics) == 0 {
 		var avgU int32 = 90
 		if podSpecPatch != nil && podSpecPatch.Resources.Requests.Cpu() != nil {
@@ -363,7 +382,7 @@ func MutateConfigMap[R Reconciler](r R, obj metav1.Object, configMap *corev1.Con
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 	configMap.Data = map[string]string{}
 
-	for name, content := range GetStaticFiles() {
+	for name, content := range static_files.GetStaticFiles() {
 		configMap.Data[name] = fmt.Sprintf("|-\n%s", content)
 	}
 
@@ -374,18 +393,6 @@ func MutateConfigMap[R Reconciler](r R, obj metav1.Object, configMap *corev1.Con
 		return err
 	}
 	return smoothoperatorutils.AddHashSuffix(configMap)
-}
-
-func GetStaticFiles() map[string][]byte {
-	result := map[string][]byte{}
-
-	files, _ := staticFiles.ReadDir("static_files")
-	for _, f := range files {
-		content, _ := staticFiles.ReadFile(fmt.Sprintf("static_files/%s", f.Name()))
-		result[f.Name()] = content
-	}
-
-	return result
 }
 
 func LogAndUpdateStatusError[R Reconciler](ctx context.Context, r R, obj client.Object, err error) {

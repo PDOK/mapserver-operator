@@ -1,12 +1,32 @@
 package v3
 
 import (
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/url"
 	"strings"
 )
 
 var host string
+
+type ServiceType string
+
+const (
+	ServiceTypeWMS ServiceType = "WMS"
+	ServiceTypeWFS ServiceType = "WFS"
+)
+
+type WMSWFS interface {
+	*WFS | *WMS
+	metav1.Object
+
+	Mapfile() *Mapfile
+	PodSpecPatch() *corev1.PodSpec
+	HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec
+	Type() ServiceType
+	Options() *Options
+}
 
 type Mapfile struct {
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
