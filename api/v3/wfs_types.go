@@ -26,7 +26,7 @@ package v3
 
 import (
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -79,7 +79,7 @@ type WFSSpec struct {
 
 type WFSService struct {
 	Prefix            string   `json:"prefix"`
-	BaseURL           string   `json:"baseUrl"`
+	URL               string   `json:"url"`
 	Inspire           *Inspire `json:"inspire,omitempty"`
 	Mapfile           *Mapfile `json:"mapfile,omitempty"`
 	OwnerInfoRef      string   `json:"ownerInfoRef"`

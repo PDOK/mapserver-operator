@@ -26,7 +26,7 @@ package v3
 
 import (
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
@@ -52,7 +52,7 @@ type WMSSpec struct {
 }
 
 type WMSService struct {
-	BaseURL           string         `json:"baseUrl"`
+	URL               string         `json:"url"`
 	Title             string         `json:"title"`
 	Abstract          string         `json:"abstract"`
 	Keywords          []string       `json:"keywords"`

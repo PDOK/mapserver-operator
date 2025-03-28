@@ -22,7 +22,7 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 		WFSMaxFeatures:    getMaxFeatures(wfs.Spec.Service.CountDefault),
 		NamespacePrefix:   wfs.Spec.Service.Prefix,
 		NamespaceURI:      getNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
-		OnlineResource:    pdoknlv3.GetBaseURL(),
+		OnlineResource:    pdoknlv3.GetHost(),
 		Path:              getPath(wfs),
 		MetadataId:        wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
 		DatasetOwner:      "", // Todo

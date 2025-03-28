@@ -1,27 +1,25 @@
 package blobdownload
 
 import (
+	_ "embed"
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"os"
 	"regexp"
 	"strings"
 )
 
 const (
-	scriptPath = "./gpkg_download.sh"
 	tifPath    = "/srv/data/tif"
 	imagesPath = "/srv/data/images"
 	fontsPath  = "/srv/data/config/fonts"
 	legendPath = "/var/www/legend"
 )
 
-func GetScript() (config string, err error) {
-	content, err := os.ReadFile(scriptPath)
-	if err != nil {
-		return "", err
-	}
-	return string(content), nil
+//go:embed gpkg_download.sh
+var GpkgDownloadScript string
+
+func GetScript() string {
+	return GpkgDownloadScript
 }
 
 func GetArgs[W pdoknlv3.WFS | pdoknlv3.WMS](webservice W) (args string, err error) {

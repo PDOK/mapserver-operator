@@ -24,4 +24,4 @@ spec:
   selector:
     matchLabels:
       control-plane: controller-manager
-      app.kubernetes.io/name: mapserver-operator
+      app.kubernetes.io/name: configmap_files-operator

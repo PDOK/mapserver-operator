@@ -4,7 +4,7 @@ import (
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -60,8 +60,11 @@ func ConverseAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscaler
 		metrics = append(metrics, autoscalingv2.MetricSpec{
 			Type: autoscalingv2.ResourceMetricSourceType,
 			Resource: &autoscalingv2.ResourceMetricSource{
-				Name:                     corev1.ResourceCPU,
-				TargetAverageUtilization: Pointer(int32(*src.AverageCPUUtilization)),
+				Name: corev1.ResourceCPU,
+				Target: autoscalingv2.MetricTarget{
+					Type:               autoscalingv2.UtilizationMetricType,
+					AverageUtilization: Pointer(int32(*src.AverageCPUUtilization)),
+				},
 			},
 		})
 	}
@@ -215,7 +218,7 @@ func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *core
 
 		if scalingSpec.Metrics != nil {
 			kub.Autoscaling.AverageCPUUtilization = Pointer(
-				int(*scalingSpec.Metrics[0].Resource.TargetAverageUtilization),
+				int(*scalingSpec.Metrics[0].Resource.Target.AverageUtilization),
 			)
 		}
 	}

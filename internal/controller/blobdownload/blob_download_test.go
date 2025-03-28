@@ -312,11 +312,7 @@ func TestGetScript(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			script, err := GetScript()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetScript() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			script := GetScript()
 			if !strings.HasPrefix(script, tt.wantHeader) {
 				t.Errorf("The returned script doesn't contain the expected header `%v`, got = %v", tt.wantHeader, script)
 			}

@@ -35,7 +35,7 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 	}
 
 	// Check service.baseURL did not change
-	if wfs.Spec.Service.BaseURL != wfsOld.Spec.Service.BaseURL {
+	if wfs.Spec.Service.URL != wfsOld.Spec.Service.URL {
 		reasons = append(reasons, fmt.Sprintf("service.baseURL is immutable"))
 	}
 
@@ -59,7 +59,7 @@ func validateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
 
 	service := wfs.Spec.Service
 
-	err := sharedValidation.ValidateBaseURL(service.BaseURL)
+	err := sharedValidation.ValidateBaseURL(service.URL)
 	if err != nil {
 		*reasons = append(*reasons, fmt.Sprintf("%v", err))
 	}

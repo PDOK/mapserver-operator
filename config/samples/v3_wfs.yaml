@@ -14,7 +14,7 @@ spec:
     ttlInDays: 21
   podSpecPatch:
     containers:
-      - name: mapserver
+      - name: configmap_files
         resources:
           limits:
             memory: 12M
@@ -27,17 +27,19 @@ spec:
     maxReplicas: 5
     minReplicas: 2
     metrics:
-      - type: "resource"
+      - type: "Resource"
         resource:
           name: cpu
-          targetAverageUtilization: 60
+          target:
+            type: Utilization
+            averageUtilization: 60
   options:
     automaticCasing: true
     prefetchData: false
     includeIngress: false
   service:
     prefix: ""
-    baseUrl: https://service.pdok.nl/test
+    url: https://service.pdok.nl/test
     inspire:
       serviceMetadataUrl:
         csw:

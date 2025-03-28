@@ -109,7 +109,7 @@ type StylingAssets struct {
 	BlobKeys      []string       `json:"blobKeys,omitempty"`
 }
 
-// ConfigMapRef contains all the config map name and all keys in that configmap that are relevant
+// ConfigMapRef contains all the config map name and all keys in that configmap_files that are relevant
 // the Keys can be empty, so that the v1 WMS can convert to the v2beta1 WMS
 type ConfigMapRef struct {
 	Name string   `json:"name"`
