@@ -117,3 +117,12 @@ type FeatureBbox struct {
 	DefaultCRS shared_model.BBox  `json:"defaultCRS"`
 	WGS84      *shared_model.BBox `json:"wgs84,omitempty"`
 }
+
+func (wfs *WFS) HasPostgisData() bool {
+	for _, featureType := range wfs.Spec.Service.FeatureTypes {
+		if featureType.Data.Postgis != nil {
+			return true
+		}
+	}
+	return false
+}

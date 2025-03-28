@@ -25,16 +25,14 @@ func GetConfig[W *pdoknlv3.WFS | *pdoknlv3.WMS](webservice W, ownerInfo *smootho
 }
 
 func createConfigForWFS(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
-
 	input, err := MapWFSToMapfileGeneratorInput(wfs, ownerInfo)
 	if err != nil {
 		return "", err
 	}
 
-	u, err := json.MarshalIndent(input, "", "    ")
+	jsonConfig, err := json.MarshalIndent(input, "", "    ")
 	if err != nil {
 		return "", err
 	}
-	return string(u), nil
-
+	return string(jsonConfig), nil
 }

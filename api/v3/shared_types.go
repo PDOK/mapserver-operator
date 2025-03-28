@@ -49,17 +49,17 @@ type Data struct {
 }
 
 type Gpkg struct {
-	BlobKey      string    `json:"blobKey"`
-	TableName    string    `json:"tableName"`
-	GeometryType string    `json:"geometryType"`
-	Columns      []Columns `json:"columns"`
+	BlobKey      string   `json:"blobKey"`
+	TableName    string   `json:"tableName"`
+	GeometryType string   `json:"geometryType"`
+	Columns      []Column `json:"columns"`
 }
 
 // Postgis - reference to table in a Postgres database
 type Postgis struct {
-	TableName    string    `json:"tableName"`
-	GeometryType string    `json:"geometryType"`
-	Columns      []Columns `json:"columns"`
+	TableName    string   `json:"tableName"`
+	GeometryType string   `json:"geometryType"`
+	Columns      []Column `json:"columns"`
 }
 
 type TIF struct {
@@ -69,7 +69,7 @@ type TIF struct {
 	GetFeatureInfoIncludesClass *bool   `json:"getFeatureInfoIncludesClass,omitempty"`
 }
 
-type Columns struct {
+type Column struct {
 	Name  string  `json:"name"`
 	Alias *string `json:"alias,omitempty"`
 }
@@ -97,4 +97,37 @@ func GetBaseURLPath[T *WFS | *WMS](o T) string {
 
 	parsed, _ := url.Parse(serviceUrl)
 	return strings.TrimPrefix(parsed.Path, "/")
+}
+
+func (d *Data) GetColumns() *[]Column {
+	switch {
+	case d.Gpkg != nil:
+		return &d.Gpkg.Columns
+	case d.Postgis != nil:
+		return &d.Postgis.Columns
+	default:
+		return nil
+	}
+}
+
+func (d *Data) GetTableName() *string {
+	switch {
+	case d.Gpkg != nil:
+		return &d.Gpkg.TableName
+	case d.Postgis != nil:
+		return &d.Postgis.TableName
+	default:
+		return nil
+	}
+}
+
+func (d *Data) GetGeometryType() *string {
+	switch {
+	case d.Gpkg != nil:
+		return &d.Gpkg.GeometryType
+	case d.Postgis != nil:
+		return &d.Postgis.GeometryType
+	default:
+		return nil
+	}
 }

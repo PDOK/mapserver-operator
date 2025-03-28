@@ -29,6 +29,7 @@ import (
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
+	//"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -47,13 +48,17 @@ import (
 )
 
 const (
-	appLabelKey           = "app"
-	WFSName               = "mapserver"
-	downloadScriptName    = "gpkg_download.sh"
-	mapfileGeneratorInput = "input.json"
-	srvDir                = "/srv"
-	blobsConfigName       = "blobsConfig"
-	blobsSecretName       = "blobsSecret"
+	appLabelKey                = "app"
+	WFSName                    = "mapserver"
+	downloadScriptName         = "gpkg_download.sh"
+	mapfileGeneratorInput      = "input.json"
+	srvDir                     = "/srv"
+	blobsConfigName            = "blobsConfig"
+	blobsSecretName            = "blobsSecret"
+	capabilitiesGeneratorInput = "input.yaml"
+	inputDir                   = "/input"
+	postgisConfigName          = "postgisConfig"
+	postgisSecretName          = "postgisSecret"
 )
 
 var (
@@ -63,10 +68,11 @@ var (
 // WFSReconciler reconciles a WFS object
 type WFSReconciler struct {
 	client.Client
-	Scheme                *runtime.Scheme
-	MapserverImage		  string
-	MultitoolImage        string
-	MapfileGeneratorImage string
+	Scheme                     *runtime.Scheme
+	MapserverImage             string
+	MultitoolImage             string
+	MapfileGeneratorImage      string
+	CapabilitiesGeneratorImage string
 }
 
 type HashedConfigMapNames struct {
@@ -302,10 +308,33 @@ func (r *WFSReconciler) deleteAllForWFS(ctx context.Context, wfs *pdoknlv3.WFS, 
 	return smoothoperatorutils.DeleteObjects(ctx, r.Client, objects)
 }
 
+func (r *WFSReconciler) mutateConfigMapBlobDownload(WFS *pdoknlv3.WFS, configMap *corev1.ConfigMap) error {
+	labels := smoothoperatorutils.CloneOrEmptyMap(WFS.GetLabels())
+	labels[appLabelKey] = WFSName
+	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
+		return err
+	}
+
+	if len(configMap.Data) == 0 {
+		downloadScript := blobdownload.GetScript()
+		configMap.Data = map[string]string{downloadScriptName: downloadScript}
+
+	}
+	configMap.Immutable = smoothoperatorutils.Pointer(true)
+
+	if err := smoothoperatorutils.EnsureSetGVK(r.Client, configMap, configMap); err != nil {
+		return err
+	}
+	if err := ctrl.SetControllerReference(WFS, configMap, r.Scheme); err != nil {
+		return err
+	}
+	return smoothoperatorutils.AddHashSuffix(configMap)
+}
+
 func getBareConfigMapMapfileGenerator(obj metav1.Object) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-mapfile-generator",
+			Name:      getBareDeployment(obj).GetName() + "-mapfile-generator",
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -319,7 +348,6 @@ func (r *WFSReconciler) mutateConfigMapMapfileGenerator(WFS *pdoknlv3.WFS, confi
 	}
 
 	if len(configMap.Data) == 0 {
-
 		mapfileGeneratorConfig, err := mapfilegenerator.GetConfig(WFS, ownerInfo)
 		if err != nil {
 			return err
@@ -341,7 +369,7 @@ func (r *WFSReconciler) mutateConfigMapMapfileGenerator(WFS *pdoknlv3.WFS, confi
 func getBareConfigMapCapabilitiesGenerator(obj metav1.Object) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-capabilities-generator",
+			Name:      getBareDeployment(obj).GetName() + "-capabilities-generator",
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -354,8 +382,19 @@ func (r *WFSReconciler) mutateConfigMapCapabilitiesGenerator(WFS *pdoknlv3.WFS, 
 		return err
 	}
 
-	// TODO set data
-
+	//if len(configMap.Data) == 0 {
+	//	input, err := capabilitiesgenerator.MapWFSToCapabilitiesGeneratorInput(WFS, ownerInfo)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	yamlInput, err := yaml.Marshal(&input)
+	//	if err != nil {
+	//		return fmt.Errorf("failed to marshal the capabilities generator input to yaml: %w", err)
+	//	}
+	//
+	//	configMap.Data = map[string]string{capabilitiesGeneratorInput: string(yamlInput)}
+	//
+	//}
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 
 	if err := smoothoperatorutils.EnsureSetGVK(r.Client, configMap, configMap); err != nil {
@@ -389,9 +428,6 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 		MatchLabels: matchLabels,
 	}
 
-	initContainers := []corev1.Container{
-		r.getMapfileGeneratorInitContainer(),
-	}
 	volumes := []corev1.Volume{
 		{
 			Name: "mapfile-generator-config",
@@ -401,12 +437,29 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 				},
 			},
 		},
+		{
+			Name: "capabilities-generator-config",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.CapabilitiesGenerator},
+				},
+			},
+		},
 	}
 
-	blobDownloadInitContainer, err := r.getBlobDownloadInitContainer(wfs)
+	blobDownloadInitContainer, err := getBlobDownloadInitContainer(wfs, r.MultitoolImage)
 	if err != nil {
 		return err
 	}
+	mapfileGeneratorInitContainer, err := getMapfileGeneratorInitContainer(wfs, r.MapfileGeneratorImage)
+	if err != nil {
+		return err
+	}
+	capabilitiesGeneratorInitContainer, err := getCapabilitiesGeneratorInitContainer(wfs, r.CapabilitiesGeneratorImage)
+	if err != nil {
+		return err
+	}
+
 	if *wfs.Spec.Options.PrefetchData {
 		mount := corev1.VolumeMount{
 			Name:      "init-scripts",
@@ -425,7 +478,12 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 		}
 		volumes = append(volumes, volume)
 	}
-	initContainers = append(initContainers, blobDownloadInitContainer)
+
+	initContainers := []corev1.Container{
+		*blobDownloadInitContainer,
+		*mapfileGeneratorInitContainer,
+		*capabilitiesGeneratorInitContainer,
+	}
 
 	// Todo Mutate the other deployment parts, these are only the init-containers for blob-download and mapfile-generator
 	deployment.Spec.Template = corev1.PodTemplateSpec{
@@ -438,11 +496,9 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 			Volumes:        volumes,
 			Containers: []corev1.Container{
 				{
-					Name: MapserverName,
+					Name:  MapserverName,
 					Image: r.MapserverImage,
-					Env: []corev1.EnvVar{
-
-					}
+					Env:   []corev1.EnvVar{},
 				},
 			},
 		},
@@ -452,6 +508,112 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 		return err
 	}
 	return ctrl.SetControllerReference(wfs, deployment, r.Scheme)
+}
+
+func getBlobDownloadInitContainer(wfs *pdoknlv3.WFS, image string) (*corev1.Container, error) {
+	initContainer := corev1.Container{
+		Name:            "blob-download",
+		Image:           image,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		EnvFrom: []corev1.EnvFromSource{
+			{
+				ConfigMapRef: &corev1.ConfigMapEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: blobsConfigName, // Todo add this ConfigMap
+					},
+				},
+				SecretRef: &corev1.SecretEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: blobsSecretName, // Todo add this Secret
+					},
+				},
+			},
+		},
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("0.15"),
+			},
+		},
+		Command: []string{"/bin/sh", "-c"},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
+			{Name: "data", MountPath: "/var/www", ReadOnly: false},
+		},
+	}
+
+	// Additional blob-download configuration
+	args, err := blobdownload.GetArgs(*wfs)
+	if err != nil {
+		return nil, err
+	}
+	initContainer.Args = []string{args}
+
+	resourceCPU := resource.MustParse("0.2")
+	if useEphemeralVolume(wfs) {
+		resourceCPU = resource.MustParse("1")
+	}
+	initContainer.Resources.Limits = corev1.ResourceList{
+		corev1.ResourceCPU: resourceCPU,
+	}
+
+	return &initContainer, nil
+}
+
+func getMapfileGeneratorInitContainer(wfs *pdoknlv3.WFS, image string) (*corev1.Container, error) {
+	initContainer := corev1.Container{
+		Name:            "mapfile-generator",
+		Image:           image,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Command:         []string{"generate-mapfile"},
+		Args: []string{
+			"--not-include",
+			"wfs",
+			"/input/input.json",
+			"/srv/data/config/mapfile",
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
+			{Name: "data", MountPath: "/var/www", ReadOnly: false},
+		},
+	}
+
+	// Additional mapfile-generator configuration
+	if wfs.HasPostgisData() {
+		initContainer.EnvFrom = []corev1.EnvFromSource{
+			{
+				ConfigMapRef: &corev1.ConfigMapEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: postgisConfigName, // Todo add this ConfigMap
+					},
+				},
+				SecretRef: &corev1.SecretEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: postgisSecretName, // Todo add this Secret
+					},
+				},
+			},
+		}
+	}
+	return &initContainer, nil
+}
+
+func getCapabilitiesGeneratorInitContainer(wfs *pdoknlv3.WFS, image string) (*corev1.Container, error) {
+	initContainer := corev1.Container{
+		Name:            "capabilities-generator",
+		Image:           image,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Env: []corev1.EnvVar{
+			{
+				Name:  "SERVICECONFIG",
+				Value: "/input/input.yaml",
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "data", MountPath: "/var/www", ReadOnly: false},
+			{Name: "capabilities-generator-config", MountPath: inputDir, ReadOnly: true},
+		},
+	}
+	return &initContainer, nil
 }
 
 // Use ephemeral volume when ephemeral storage is greater then 10Gi

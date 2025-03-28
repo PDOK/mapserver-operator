@@ -82,7 +82,7 @@ func TestGetArgsForWFS(t *testing.T) {
 							Title: "wfs-prefetch-service-title",
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(true),
+							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},
 				},
@@ -99,7 +99,7 @@ func TestGetArgsForWFS(t *testing.T) {
 							Title: "wfs-noprefetch-service-title",
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(false),
+							PrefetchData: smoothoperatorutils.Pointer(false),
 						},
 					},
 				},
@@ -205,7 +205,7 @@ func TestGetArgsForWMS(t *testing.T) {
 							},
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(true),
+							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},
 				},
@@ -272,7 +272,7 @@ func TestGetArgsForWMS(t *testing.T) {
 							},
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(true),
+							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},
 				},

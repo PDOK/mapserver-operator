@@ -86,10 +86,10 @@ func ConverseResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 	}
 }
 
-func ConverseColumnAndAliasesV2ToColumnsWithAliasV3(columns []string, aliases map[string]string) []pdoknlv3.Columns {
-	v3Columns := make([]pdoknlv3.Columns, 0)
+func ConverseColumnAndAliasesV2ToColumnsWithAliasV3(columns []string, aliases map[string]string) []pdoknlv3.Column {
+	v3Columns := make([]pdoknlv3.Column, 0)
 	for _, column := range columns {
-		col := pdoknlv3.Columns{
+		col := pdoknlv3.Column{
 			Name: column,
 		}
 
@@ -104,7 +104,7 @@ func ConverseColumnAndAliasesV2ToColumnsWithAliasV3(columns []string, aliases ma
 	return v3Columns
 }
 
-func ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(columns []pdoknlv3.Columns) ([]string, map[string]string) {
+func ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(columns []pdoknlv3.Column) ([]string, map[string]string) {
 	v2Columns := make([]string, 0)
 	v2Aliases := make(map[string]string)
 
