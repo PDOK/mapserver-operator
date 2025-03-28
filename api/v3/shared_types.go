@@ -1,11 +1,32 @@
 package v3
 
 import (
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"net/url"
 	"strings"
 )
 
-var baseURL string
+var host string
+
+type ServiceType string
+
+const (
+	ServiceTypeWMS ServiceType = "WMS"
+	ServiceTypeWFS ServiceType = "WFS"
+)
+
+type WMSWFS interface {
+	*WFS | *WMS
+	metav1.Object
+
+	Mapfile() *Mapfile
+	PodSpecPatch() *corev1.PodSpec
+	HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec
+	Type() ServiceType
+	Options() *Options
+}
 
 type Mapfile struct {
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
@@ -73,12 +94,29 @@ type Column struct {
 	Alias *string `json:"alias,omitempty"`
 }
 
-func SetBaseURL(url string) {
-	baseURL = strings.TrimSuffix(url, "/")
+func SetHost(url string) {
+	host = strings.TrimSuffix(url, "/")
 }
 
-func GetBaseURL() string {
-	return baseURL
+func GetHost() string {
+	return host
+}
+
+func GetBaseURLPath[T *WFS | *WMS](o T) string {
+	var serviceUrl string
+	switch any(o).(type) {
+	case *WFS:
+		if WFS, ok := any(o).(*WFS); ok {
+			serviceUrl = WFS.Spec.Service.URL
+		}
+	case *WMS:
+		if WMS, ok := any(o).(*WMS); ok {
+			serviceUrl = WMS.Spec.Service.URL
+		}
+	}
+
+	parsed, _ := url.Parse(serviceUrl)
+	return strings.TrimPrefix(parsed.Path, "/")
 }
 
 func (d *Data) GetColumns() *[]Column {

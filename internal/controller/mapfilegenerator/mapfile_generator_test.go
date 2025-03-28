@@ -89,7 +89,7 @@ func TestGetConfigForWFS(t *testing.T) {
 		WFS       *pdoknlv3.WFS
 		ownerInfo *smoothoperatorv1.OwnerInfo
 	}
-	pdoknlv3.SetBaseURL("http://localhost")
+	pdoknlv3.SetHost("http://localhost")
 	tests := []struct {
 		name       string
 		args       args

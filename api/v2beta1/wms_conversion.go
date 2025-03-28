@@ -65,7 +65,7 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Options = ConverseOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WMSService{
-		BaseURL:           CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
+		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
