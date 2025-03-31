@@ -29,7 +29,7 @@ func createInputForWFS(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo)
 	if err != nil {
 		return "", err
 	}
-	yamlInput, err := yaml.Marshal(&input)
+	yamlInput, err := yaml.Marshal(input)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal the capabilities generator input to yaml: %w", err)
 	}

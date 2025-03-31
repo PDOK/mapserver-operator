@@ -86,7 +86,7 @@ type Postgis struct {
 type TIF struct {
 	BlobKey                     string  `json:"blobKey"`
 	Resample                    *string `json:"resample,omitempty"`
-	Offsite                     *string `json:"offsite,omitepty"`
+	Offsite                     *string `json:"offsite,omitempty"`
 	GetFeatureInfoIncludesClass *bool   `json:"getFeatureInfoIncludesClass,omitempty"`
 }
 
