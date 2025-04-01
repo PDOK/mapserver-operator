@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
 	github.com/pdok/ogc-specifications v1.0.0-beta1.0.20250331144105-1d17d84aff4d
-	github.com/pdok/smooth-operator v0.0.7-0.20250331135951-fb803e7f70e9
+	github.com/pdok/smooth-operator v0.0.9
 	github.com/traefik/traefik/v3 v3.3.4
 	k8s.io/api v0.32.0
 	k8s.io/apimachinery v0.32.0
