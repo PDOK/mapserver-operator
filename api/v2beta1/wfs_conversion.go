@@ -190,7 +190,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 		service.MetadataIdentifier = src.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
 	} else {
 		service.Inspire = false
-		// TODO unable to fill in MetadataIdentifier here untill we know how to handle non inspire services
+		// TODO unable to fill in MetadataIdentifier here until we know how to handle non inspire services
 	}
 
 	for _, featureType := range src.Spec.Service.FeatureTypes {

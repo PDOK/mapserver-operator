@@ -110,7 +110,7 @@ func TestGetArgsForWFS(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			args, err := GetArgs(&tt.args.WFS)
+			args, err := GetArgs(tt.args.WFS)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetArgs() error = %v, wantErr %v", err, tt.wantErr)
 				return

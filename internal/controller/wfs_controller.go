@@ -185,11 +185,11 @@ func (r *WFSReconciler) createOrUpdateAllForWFS(ctx context.Context, wfs *pdoknl
 	// region ConfigMap-CapabilitieGenerator
 	{
 		configMapCg := GetBareConfigMapCapabilitiesGenerator(wfs)
-		if err = r.mutateConfigMapCapabilitiesGenerator(wfs, configMapCg, ownerInfo); err != nil {
+		if err = MutateConfigMapCapabilitiesGenerator(r, wfs, configMapCg, ownerInfo); err != nil {
 			return operationResults, err
 		}
 		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, configMapCg)], err = controllerutil.CreateOrUpdate(ctx, r.Client, configMapCg, func() error {
-			return r.mutateConfigMapCapabilitiesGenerator(wfs, configMapCg, ownerInfo)
+			return MutateConfigMapCapabilitiesGenerator(r, wfs, configMapCg, ownerInfo)
 		})
 		if err != nil {
 			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, configMapCg), err)
@@ -318,7 +318,7 @@ func (r *WFSReconciler) deleteAllForWFS(ctx context.Context, wfs *pdoknlv3.WFS, 
 
 	// ConfigMap-CapabilitiesGenerator
 	cmCg := GetBareConfigMapCapabilitiesGenerator(wfs)
-	err = r.mutateConfigMapCapabilitiesGenerator(wfs, cmCg, ownerInfo)
+	err = MutateConfigMapCapabilitiesGenerator(r, wfs, cmCg, ownerInfo)
 	if err != nil {
 		return err
 	}
@@ -335,38 +335,10 @@ func (r *WFSReconciler) deleteAllForWFS(ctx context.Context, wfs *pdoknlv3.WFS, 
 	return smoothoperatorutils.DeleteObjects(ctx, r.Client, objects)
 }
 
-// TODO make generic for WMS
-func (r *WFSReconciler) mutateConfigMapCapabilitiesGenerator(WFS *pdoknlv3.WFS, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
-	labels := smoothoperatorutils.CloneOrEmptyMap(WFS.GetLabels())
-	labels[AppLabelKey] = MapserverName
-	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
-		return err
-	}
-
-	if len(configMap.Data) == 0 {
-		input, err := capabilitiesgenerator.GetInput(WFS, ownerInfo)
-		if err != nil {
-			return err
-		}
-		configMap.Data = map[string]string{capabilitiesGeneratorInput: string(input)}
-
-	}
-	configMap.Immutable = smoothoperatorutils.Pointer(true)
-
-	if err := smoothoperatorutils.EnsureSetGVK(r.Client, configMap, configMap); err != nil {
-		return err
-	}
-	if err := ctrl.SetControllerReference(WFS, configMap, r.Scheme); err != nil {
-		return err
-	}
-	return smoothoperatorutils.AddHashSuffix(configMap)
-}
-
 // TODO Rename configMapnames
 // TODO Make generic for WMS -> move to mapserver package
 func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
-	labels := smoothoperatorutils.CloneOrEmptyMap(wfs.GetLabels())
-	labels[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(wfs, smoothoperatorutils.CloneOrEmptyMap(wfs.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(r.Client, deployment, labels); err != nil {
 		return err
 	}

@@ -121,12 +121,12 @@ func downloadGeopackage(sb *strings.Builder, prefetchData bool) {
 	}
 }
 
-func downloadTiffs(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	if !*WMS.Spec.Options.PrefetchData {
+func downloadTiffs(sb *strings.Builder, wms *pdoknlv3.WMS) error {
+	if !*wms.Spec.Options.PrefetchData {
 		return nil
 	}
 
-	for _, blobKey := range WMS.GetUniqueTiffBlobKeys() {
+	for _, blobKey := range wms.GetUniqueTiffBlobKeys() {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {
 			return err
@@ -136,14 +136,15 @@ func downloadTiffs(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
 	return nil
 }
 
-func downloadStylingAssets(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	for _, blobKey := range WMS.Spec.Service.StylingAssets.BlobKeys {
+func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
+	re := regexp.MustCompile(".*\\.(ttf)$")
+	for _, blobKey := range wms.Spec.Service.StylingAssets.BlobKeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {
 			return err
 		}
 		path := imagesPath
-		isTTF, _ := regexp.MatchString(".*\\.(ttf)$", fileName)
+		isTTF := re.MatchString(fileName)
 		if isTTF {
 			path = fontsPath
 		}
@@ -161,8 +162,8 @@ func downloadStylingAssets(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
 	return nil
 }
 
-func downloadLegends(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	for _, layer := range WMS.GetAllLayersWithLegend() {
+func downloadLegends(sb *strings.Builder, wms *pdoknlv3.WMS) error {
+	for _, layer := range wms.GetAllLayersWithLegend() {
 		writeLine(sb, "mkdir -p %s/%s;", legendPath, layer.Name)
 		for _, style := range layer.Styles {
 			writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, layer.Name, style.Name)

@@ -57,13 +57,13 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 
 	if wfs.Spec.Service.Inspire != nil {
 		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
-		metadataUrl, _ := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
+		metadataURL, _ := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
 
 		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = &wfs200.OperationsMetadata{
 			ExtendedCapabilities: &wfs200.ExtendedCapabilities{
 				ExtendedCapabilities: wfs200.NestedExtendedCapabilities{
 					MetadataURL: wfs200.MetadataURL{
-						URL:       metadataUrl,
+						URL:       metadataURL,
 						MediaType: metadataMediaType,
 					},
 					SupportedLanguages: wfs200.SupportedLanguages{
@@ -101,7 +101,7 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 			otherCRS = append(otherCRS, CRS)
 		}
 
-		metadataUrl, err := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
+		metadataURL, err := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 				},
 			},
 			MetadataURL: wfs200.MetadataHref{
-				Href: metadataUrl,
+				Href: metadataURL,
 			},
 			DefaultCRS: defaultCRS,
 			OtherCRS:   otherCRS,
@@ -196,5 +196,6 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 			}
 		}
 	}
-	return
+
+	return serviceProvider
 }

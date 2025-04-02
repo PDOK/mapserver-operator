@@ -169,7 +169,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 		service.MetadataIdentifier = src.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
 	} else {
 		service.Inspire = false
-		// TODO unable to fill in MetadataIdentifier here untill we know how to handle non inspire services
+		// TODO unable to fill in MetadataIdentifier here until we know how to handle non inspire services
 	}
 
 	uuid, ok := src.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION]

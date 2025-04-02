@@ -36,7 +36,6 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
 
-// nolint:unused
 // log is for logging in this package.
 var wfslog = logf.Log.WithName("wfs-resource")
 

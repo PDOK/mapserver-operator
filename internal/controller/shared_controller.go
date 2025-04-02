@@ -2,9 +2,10 @@ package controller
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
+	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
@@ -26,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -104,32 +106,28 @@ func GetBareIngressRoute(obj metav1.Object) *traefikiov1alpha1.IngressRoute {
 func MutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRoute *traefikiov1alpha1.IngressRoute) error {
 	reconcilerClient := GetReconcilerClient(r)
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
 		return err
 	}
 
-	uptimeTags := []string{"public-stats", strings.ToLower(string(obj.Type()))}
-	var uptimeUrl string
+	var uptimeURL string
 	switch any(obj).(type) {
 	case *pdoknlv3.WFS:
-		wfs, _ := any(obj).(*pdoknlv3.WFS)
-		if wfs.Spec.Service.Inspire != nil {
-			uptimeTags = append(uptimeTags, "inspire")
-		}
-		uptimeUrl = wfs.Spec.Service.URL // TODO add healthcheck query
+		uptimeURL = any(obj).(*pdoknlv3.WFS).Spec.Service.URL // TODO add healthcheck query
 	case *pdoknlv3.WMS:
-		wms, _ := any(obj).(*pdoknlv3.WMS)
-		if wms.Spec.Service.Inspire != nil {
-			uptimeTags = append(uptimeTags, "inspire")
-		}
-		uptimeUrl = wms.Spec.Service.URL // TODO add healthcheck query
+		uptimeURL = any(obj).(*pdoknlv3.WMS).Spec.Service.URL // TODO add healthcheck query
+	}
+
+	uptimeName, err := makeUptimeName(obj)
+	if err != nil {
+		return err
 	}
 	annotations := smoothoperatorutils.CloneOrEmptyMap(obj.GetAnnotations())
-	annotations["uptime.pdok.nl/id"] = obj.Id()
-	annotations["uptime.pdok.nl/name"] = obj.GetName() // TODO make uptime name
-	annotations["uptime.pdok.nl/url"] = uptimeUrl
-	annotations["uptime.pdok.nl/tags"] = strings.Join(uptimeTags, ",")
+	annotations["uptime.pdok.nl/id"] = obj.ID()
+	annotations["uptime.pdok.nl/name"] = uptimeName
+	annotations["uptime.pdok.nl/url"] = uptimeURL
+	annotations["uptime.pdok.nl/tags"] = strings.Join(makeUptimeTags(obj), ",")
 	ingressRoute.SetAnnotations(annotations)
 
 	mapserverService := traefikiov1alpha1.Service{
@@ -168,7 +166,7 @@ func MutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 			Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
 		}}
 
-		if obj.Options() != nil && (obj.Options().DisableWebserviceProxy == nil || *obj.Options().DisableWebserviceProxy == false) {
+		if obj.Options() != nil && (obj.Options().DisableWebserviceProxy == nil || !*obj.Options().DisableWebserviceProxy) {
 			ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, traefikiov1alpha1.Route{
 				Kind:        "Rule",
 				Match:       getMatchRule(obj),
@@ -198,6 +196,68 @@ func MutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 	return ctrl.SetControllerReference(obj, ingressRoute, GetReconcilerScheme(r))
 }
 
+func makeUptimeTags[O pdoknlv3.WMSWFS](obj O) []string {
+	tags := []string{"public-stats", strings.ToLower(string(obj.Type()))}
+
+	switch any(obj).(type) {
+	case *pdoknlv3.WFS:
+		wfs, _ := any(obj).(*pdoknlv3.WFS)
+		if wfs.Spec.Service.Inspire != nil {
+			tags = append(tags, "inspire")
+		}
+	case *pdoknlv3.WMS:
+		wms, _ := any(obj).(*pdoknlv3.WMS)
+		if wms.Spec.Service.Inspire != nil {
+			tags = append(tags, "inspire")
+		}
+	}
+
+	return tags
+}
+
+func makeUptimeName[O pdoknlv3.WMSWFS](obj O) (string, error) {
+	parts := []string{}
+
+	inspire := false
+	switch any(obj).(type) {
+	case *pdoknlv3.WFS:
+		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
+	case *pdoknlv3.WMS:
+		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
+	}
+
+	ownerID, ok := obj.GetLabels()["dataset-owner"]
+	if !ok {
+		return "", errors.New("dataset-owner label not found in object")
+	}
+	parts = append(parts, strings.ToUpper(strings.ReplaceAll(ownerID, "-", "")))
+
+	datasetID, ok := obj.GetLabels()["dataset"]
+	if !ok {
+		return "", errors.New("dataset label not found in object")
+	}
+	parts = append(parts, strings.ReplaceAll(datasetID, "-", ""))
+
+	theme, ok := obj.GetLabels()["theme"]
+	if ok {
+		parts = append(parts, strings.ReplaceAll(theme, "-", ""))
+	}
+
+	version, ok := obj.GetLabels()["service-version"]
+	if !ok {
+		return "", errors.New("service-version label not found in object")
+	}
+	parts = append(parts, version)
+
+	if inspire {
+		parts = append(parts, "INSPIRE")
+	}
+
+	parts = append(parts, string(obj.Type()))
+
+	return strings.Join(parts, " "), nil
+}
+
 func getMatchRule[O pdoknlv3.WMSWFS](obj O) string {
 	return "Host(`" + pdoknlv3.GetHost() + "`) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
 }
@@ -224,11 +284,36 @@ func GetBareConfigMapCapabilitiesGenerator(obj metav1.Object) *corev1.ConfigMap 
 	}
 }
 
+func MutateConfigMapCapabilitiesGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
+	reconcilerClient := GetReconcilerClient(r)
+
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
+	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
+		return err
+	}
+
+	if len(configMap.Data) == 0 {
+		input, err := capabilitiesgenerator.GetInput(obj, ownerInfo)
+		if err != nil {
+			return err
+		}
+		configMap.Data = map[string]string{capabilitiesGeneratorInput: input}
+	}
+	configMap.Immutable = smoothoperatorutils.Pointer(true)
+
+	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, configMap, configMap); err != nil {
+		return err
+	}
+	if err := ctrl.SetControllerReference(obj, configMap, GetReconcilerScheme(r)); err != nil {
+		return err
+	}
+	return smoothoperatorutils.AddHashSuffix(configMap)
+}
+
 func MutateConfigMapMapfileGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
 	reconcilerClient := GetReconcilerClient(r)
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	labels[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
 		return err
 	}
@@ -268,8 +353,7 @@ func MutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 		behaviourStabilizationWindowSeconds = 300
 	}
 
-	labels := obj.GetLabels()
-	labels[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(GetReconcilerClient(r), autoscaler, labels); err != nil {
 		return err
 	}
@@ -359,11 +443,10 @@ func GetBareConfigMapBlobDownload(obj metav1.Object) *corev1.ConfigMap {
 	}
 }
 
-func MutateConfigMapBlobDownload[R Reconciler](r R, obj metav1.Object, configMap *corev1.ConfigMap) error {
+func MutateConfigMapBlobDownload[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap) error {
 	reconcilerClient := GetReconcilerClient(r)
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	labels[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
 		return err
 	}
@@ -395,9 +478,8 @@ func GetBareService(obj metav1.Object) *corev1.Service {
 func MutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.Service) error {
 	reconcilerClient := GetReconcilerClient(r)
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	selector := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	selector[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
+	selector := smoothoperatorutils.CloneOrEmptyMap(labels)
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, service, labels); err != nil {
 		return err
 	}
@@ -417,7 +499,7 @@ func MutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		// options.disableWebserviceProxy not set or false
-		if obj.Options() != nil && (obj.Options().DisableWebserviceProxy == nil || *obj.Options().DisableWebserviceProxy == false) {
+		if obj.Options() != nil && (obj.Options().DisableWebserviceProxy == nil || !*obj.Options().DisableWebserviceProxy) {
 			ports = append(ports, corev1.ServicePort{
 				Name: "ogc-webservice-proxy",
 				Port: 9111,
@@ -446,11 +528,10 @@ func GetBareCorsHeadersMiddleware(obj metav1.Object) *traefikiov1alpha1.Middlewa
 	}
 }
 
-func MutateCorsHeadersMiddleware[R Reconciler](r R, obj metav1.Object, middleware *traefikiov1alpha1.Middleware) error {
+func MutateCorsHeadersMiddleware[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, middleware *traefikiov1alpha1.Middleware) error {
 	reconcilerClient := GetReconcilerClient(r)
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	labels[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, middleware, labels); err != nil {
 		return err
 	}
@@ -483,11 +564,10 @@ func GetBarePodDisruptionBudget(obj metav1.Object) *v1.PodDisruptionBudget {
 	}
 }
 
-func MutatePodDisruptionBudget[R Reconciler](r R, obj metav1.Object, podDisruptionBudget *v1.PodDisruptionBudget) error {
+func MutatePodDisruptionBudget[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, podDisruptionBudget *v1.PodDisruptionBudget) error {
 	reconcilerClient := GetReconcilerClient(r)
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	labels[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, podDisruptionBudget, labels); err != nil {
 		return err
 	}
@@ -518,8 +598,7 @@ func GetBareConfigMap(obj metav1.Object) *corev1.ConfigMap {
 func MutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap) error {
 	reconcilerClient := GetReconcilerClient(r)
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	labels[AppLabelKey] = MapserverName
+	labels := AddCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
 		return err
 	}
@@ -541,6 +620,22 @@ func MutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 		return err
 	}
 	return smoothoperatorutils.AddHashSuffix(configMap)
+}
+
+func AddCommonLabels[O pdoknlv3.WMSWFS](obj O, labels map[string]string) map[string]string {
+	labels[AppLabelKey] = MapserverName
+
+	inspire := false
+	switch any(obj).(type) {
+	case *pdoknlv3.WFS:
+		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
+	case *pdoknlv3.WMS:
+		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
+	}
+
+	labels["inspire"] = strconv.FormatBool(inspire)
+
+	return labels
 }
 
 func LogAndUpdateStatusError[R Reconciler](ctx context.Context, r R, obj client.Object, err error) {
@@ -592,12 +687,12 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 		return
 	}
 
-	var status model.OperatorStatus
+	var status *model.OperatorStatus
 	switch any(obj).(type) {
 	case *pdoknlv3.WFS:
-		status = any(obj).(*pdoknlv3.WFS).Status
+		status = &any(obj).(*pdoknlv3.WFS).Status
 	case *pdoknlv3.WMS:
-		status = any(obj).(*pdoknlv3.WMS).Status
+		status = &any(obj).(*pdoknlv3.WMS).Status
 	}
 
 	changed := false
@@ -613,7 +708,6 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 	if !changed {
 		return
 	}
-	fmt.Println("Changed", status.OperationResults)
 	if err := r.Status().Update(ctx, obj); err != nil {
 		lgr.Error(err, "unable to update status")
 	}

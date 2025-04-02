@@ -133,7 +133,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 		},
 	}
 
-	for name, _ := range static_files.GetStaticFiles() {
+	for name := range static_files.GetStaticFiles() {
 		volumeMounts = append(volumeMounts, v1.VolumeMount{
 			Name:      "mapserver",
 			MountPath: srvDir + "/mapserver/config/" + name,

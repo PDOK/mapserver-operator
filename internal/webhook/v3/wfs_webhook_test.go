@@ -41,11 +41,11 @@ func readSample(v *pdoknlv3.WFS) error {
 	if err != nil {
 		return err
 	}
-	sampleJson, err := yaml.YAMLToJSONStrict(sampleYaml)
+	sampleJSON, err := yaml.YAMLToJSONStrict(sampleYaml)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(sampleJson, v)
+	err = json.Unmarshal(sampleJSON, v)
 	if err != nil {
 		return err
 	}
@@ -93,13 +93,13 @@ var _ = Describe("WFS Webhook", func() {
 		})
 
 		It("Should deny creation if the baseUrl is not https", func() {
-			obj.Spec.Service.BaseURL = "http://pdok.nl/wfs-test"
+			obj.Spec.Service.URL = "http://pdok.nl/wfs-test"
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Should deny creation if the baseUrl does not have a path", func() {
-			obj.Spec.Service.BaseURL = "https://pdok.nl/"
+			obj.Spec.Service.URL = "https://pdok.nl/"
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 		})

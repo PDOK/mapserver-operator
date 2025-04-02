@@ -217,15 +217,15 @@ func (wms *WMS) GetUniqueTiffBlobKeys() []string {
 func (wms *WMS) GetAuthority() *Authority {
 	if wms.Spec.Service.Layer.Authority != nil {
 		return wms.Spec.Service.Layer.Authority
-	} else {
-		for _, childLayer := range *wms.Spec.Service.Layer.Layers {
-			if childLayer.Authority != nil {
-				return childLayer.Authority
-			} else if childLayer.Layers != nil {
-				for _, grandChildLayer := range *childLayer.Layers {
-					if grandChildLayer.Authority != nil {
-						return grandChildLayer.Authority
-					}
+	}
+
+	for _, childLayer := range *wms.Spec.Service.Layer.Layers {
+		if childLayer.Authority != nil {
+			return childLayer.Authority
+		} else if childLayer.Layers != nil {
+			for _, grandChildLayer := range *childLayer.Layers {
+				if grandChildLayer.Authority != nil {
+					return grandChildLayer.Authority
 				}
 			}
 		}
@@ -263,6 +263,6 @@ func (wms *WMS) Options() *Options {
 	return wms.Spec.Options
 }
 
-func (wms *WMS) Id() string {
+func (wms *WMS) ID() string {
 	return Sha1HashOfName(wms)
 }

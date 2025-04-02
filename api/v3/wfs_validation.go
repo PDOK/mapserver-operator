@@ -19,9 +19,9 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
-	} else {
-		return warnings, nil
 	}
+
+	return warnings, nil
 }
 
 func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
@@ -47,9 +47,9 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
-	} else {
-		return warnings, nil
 	}
+
+	return warnings, nil
 }
 
 func validateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {

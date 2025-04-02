@@ -33,9 +33,9 @@ func ephemeralStorage[O pdoknlv3.WMSWFS](obj O, limit bool) *resource.Quantity {
 		if container.Name == "mapserver" {
 			if limit {
 				return container.Resources.Limits.StorageEphemeral()
-			} else {
-				return container.Resources.Requests.StorageEphemeral()
 			}
+
+			return container.Resources.Requests.StorageEphemeral()
 		}
 	}
 
@@ -51,7 +51,6 @@ func EscapeQuotes(s string) string {
 }
 
 func GetPath[O pdoknlv3.WMSWFS](obj O) (path string) {
-	// TODO make this generic for WMS
 	webserviceType := strings.ToLower(string(obj.Type()))
 	datasetOwner := GetLabelValueByKey(obj.GetLabels(), "dataset-owner")
 	dataset := GetLabelValueByKey(obj.GetLabels(), "dataset")

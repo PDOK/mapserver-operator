@@ -26,11 +26,11 @@ package controller
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pdok/mapserver-operator/config/samples"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
@@ -45,6 +45,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/yaml"
 	"slices"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -379,9 +380,9 @@ var _ = Describe("WFS Controller", func() {
 			Expect(ok).To(BeTrue())
 			Expect(ogcLua).To(ContainSubstring("/srv/mapserver/config/scraping-error.xml"))
 
-			scrapingErrorXml, ok := configMap.Data["scraping-error.xml"]
+			scrapingErrorXML, ok := configMap.Data["scraping-error.xml"]
 			Expect(ok).To(BeTrue())
-			Expect(scrapingErrorXml).To(ContainSubstring("It is not possible to use a 'startindex' higher than 50.000"))
+			Expect(scrapingErrorXML).To(ContainSubstring("It is not possible to use a 'startindex' higher than 50.000"))
 		})
 
 		It("Should create correct configMapMapfileGenerator manifest.", func() {
@@ -618,7 +619,12 @@ var _ = Describe("WFS Controller", func() {
 
 			checkLabels(ingressRoute.GetLabels())
 
-			// TODO - check uptime annotations
+			Expect(ingressRoute.Annotations).To(Equal(map[string]string{
+				"uptime.pdok.nl/id":   wfs.ID(),
+				"uptime.pdok.nl/name": "EIGENAAR dataset 1.0.0 INSPIRE WFS",
+				"uptime.pdok.nl/tags": "public-stats,wfs,inspire",
+				"uptime.pdok.nl/url":  "https://service.pdok.nl/eigenaar/dataset/wfs/1.0.0",
+			}))
 
 			Expect(ingressRoute.GetName()).To(Equal(wfs.GetName() + "-mapserver"))
 			Expect(len(ingressRoute.Spec.Routes)).To(Equal(1))
@@ -655,8 +661,12 @@ func reconcileWFS(r *WFSReconciler, wfs *pdoknlv3.WFS, typeNamespacedNameWfs typ
 	Expect(err).NotTo(HaveOccurred())
 }
 
+//go:embed test_manifests/v3_wfs.yaml
+var testManifestWFS []byte
+
 func getUniqueWFSSample(counter int) (*pdoknlv3.WFS, error) {
-	sample, err := samples.V3WFS()
+	sample := &pdoknlv3.WFS{}
+	err := yaml.Unmarshal(testManifestWFS, sample)
 	if err != nil {
 		return nil, err
 	}
@@ -702,7 +712,7 @@ func getHashedConfigMapNameFromClient(ctx context.Context, wfs *pdoknlv3.WFS, vo
 			return volume.ConfigMap.Name, nil
 		}
 	}
-	return "", errors.New(fmt.Sprintf("configmap %s not found", volumeName))
+	return "", fmt.Errorf("configmap %s not found", volumeName)
 }
 
 func getExpectedObjects(ctx context.Context, wfs *pdoknlv3.WFS, includeBlobDownload bool) ([]client.Object, error) {
@@ -763,6 +773,7 @@ func checkLabels(labelSets ...map[string]string) {
 		"service-version":              "1.0.0",
 		"app.kubernetes.io/managed-by": "kustomize",
 		"app.kubernetes.io/name":       "mapserver-operator",
+		"inspire":                      "true",
 	}
 	for _, labelSet := range labelSets {
 		Expect(labelSet).To(Equal(expectedLabels))

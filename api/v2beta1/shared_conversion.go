@@ -15,9 +15,9 @@ func Pointer[T interface{}](val T) *T {
 func PointerVal[T interface{}](val *T, def T) T {
 	if val == nil {
 		return def
-	} else {
-		return *val
 	}
+
+	return *val
 }
 
 func ConverseOptionsV2ToV3(src WMSWFSOptions) *pdoknlv3.Options {

@@ -2,6 +2,7 @@ package v3
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
 	"io"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -31,7 +32,7 @@ type WMSWFS interface {
 	Options() *Options
 	HasPostgisData() bool
 	// Sha1 hash of the objects name
-	Id() string
+	ID() string
 }
 
 type Mapfile struct {
@@ -109,19 +110,19 @@ func GetHost() string {
 }
 
 func GetBaseURLPath[T *WFS | *WMS](o T) string {
-	var serviceUrl string
+	var serviceURL string
 	switch any(o).(type) {
 	case *WFS:
 		if WFS, ok := any(o).(*WFS); ok {
-			serviceUrl = WFS.Spec.Service.URL
+			serviceURL = WFS.Spec.Service.URL
 		}
 	case *WMS:
 		if WMS, ok := any(o).(*WMS); ok {
-			serviceUrl = WMS.Spec.Service.URL
+			serviceURL = WMS.Spec.Service.URL
 		}
 	}
 
-	parsed, _ := url.Parse(serviceUrl)
+	parsed, _ := url.Parse(serviceURL)
 	return strings.TrimPrefix(parsed.Path, "/")
 }
 
@@ -160,7 +161,7 @@ func (d *Data) GetGeometryType() *string {
 
 func Sha1HashOfName[O WMSWFS](obj O) string {
 	s := sha1.New()
-	io.WriteString(s, obj.GetName())
+	_, _ = io.WriteString(s, obj.GetName())
 
-	return string(s.Sum(nil))
+	return hex.EncodeToString(s.Sum(nil))
 }
