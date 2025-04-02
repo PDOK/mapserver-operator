@@ -5,6 +5,7 @@ import (
 	"github.com/cbroglie/mustache"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
+	capabilitiesgenerator "github.com/pdok/ogc-capabilities-generator/pkg/config"
 	"github.com/pdok/ogc-specifications/pkg/wfs200"
 	"github.com/pdok/ogc-specifications/pkg/wsc110"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
@@ -18,22 +19,22 @@ const (
 	metadataMediaType      = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
 )
 
-func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*Config, error) {
+func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
 	featureTypeList, err := getFeatureTypeList(wfs, ownerInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	config := Config{
-		Global: Global{
+	config := capabilitiesgenerator.Config{
+		Global: capabilitiesgenerator.Global{
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
-			OnlineResourceurl: pdoknlv3.GetHost(),
+			Onlineresourceurl: pdoknlv3.GetHost(),
 			Path:              mapperutils.GetPath(wfs),
 			Version:           *mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version"),
 		},
-		Services: Services{
-			WFS200Config: &WFS200Config{
+		Services: capabilitiesgenerator.Services{
+			WFS200Config: &capabilitiesgenerator.WFS200Config{
 				Filename: capabilitiesFilename,
 				Wfs200: wfs200.GetCapabilitiesResponse{
 
