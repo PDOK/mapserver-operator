@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
@@ -449,6 +450,7 @@ func MutateCorsHeadersMiddleware[R Reconciler](r R, obj metav1.Object, middlewar
 	reconcilerClient := GetReconcilerClient(r)
 
 	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
+	labels[AppLabelKey] = MapserverName
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, middleware, labels); err != nil {
 		return err
 	}
@@ -475,7 +477,7 @@ func MutateCorsHeadersMiddleware[R Reconciler](r R, obj metav1.Object, middlewar
 func GetBarePodDisruptionBudget(obj metav1.Object) *v1.PodDisruptionBudget {
 	return &v1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-" + WFSName,
+			Name:      obj.GetName() + "-" + MapserverName,
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -611,6 +613,7 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 	if !changed {
 		return
 	}
+	fmt.Println("Changed", status.OperationResults)
 	if err := r.Status().Update(ctx, obj); err != nil {
 		lgr.Error(err, "unable to update status")
 	}

@@ -42,20 +42,20 @@ func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image, postgisCo
 	return &initContainer, nil
 }
 
-func GetConfig[O pdoknlv3.WMSWFS](obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
-	switch any(obj).(type) {
+func GetConfig[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
+	switch any(webservice).(type) {
 	case *pdoknlv3.WFS:
-		if WFS, ok := any(obj).(*pdoknlv3.WFS); ok {
+		if WFS, ok := any(webservice).(*pdoknlv3.WFS); ok {
 			return createConfigForWFS(WFS, ownerInfo)
 		}
 	case *pdoknlv3.WMS:
-		if _, ok := any(obj).(*pdoknlv3.WMS); ok {
+		if _, ok := any(webservice).(*pdoknlv3.WMS); ok {
 			return "", errors.New("not implemented for WMS")
 		}
 	default:
-		return "", fmt.Errorf("unexpected input, webservice should be of type WFS or WMS, webservice: %v", obj)
+		return "", fmt.Errorf("unexpected input, webservice should be of type WFS or WMS, webservice: %v", webservice)
 	}
-	return "", fmt.Errorf("unexpected input, webservice should be of type WFS or WMS, webservice: %v", obj)
+	return "", fmt.Errorf("unexpected input, webservice should be of type WFS or WMS, webservice: %v", webservice)
 }
 
 func createConfigForWFS(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {

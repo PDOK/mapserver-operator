@@ -41,6 +41,7 @@ import (
 	v2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -149,8 +150,8 @@ var _ = Describe("WFS Controller", func() {
 			err = k8sClient.Get(ctx, typeNamespacedNameWfs, wfs)
 			Expect(err).NotTo(HaveOccurred())
 			// TODO fix
-			//Expect(len(wfs.Status.Conditions)).To(BeEquivalentTo(1))
-			//Expect(wfs.Status.Conditions[0].Status).To(BeEquivalentTo(metav1.ConditionTrue))
+			Expect(len(wfs.Status.Conditions)).To(BeEquivalentTo(1))
+			Expect(wfs.Status.Conditions[0].Status).To(BeEquivalentTo(metav1.ConditionTrue))
 
 			By("Deleting the WFS")
 			Expect(k8sClient.Delete(ctx, wfs)).To(Succeed())
@@ -470,17 +471,13 @@ var _ = Describe("WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			// TODO add tests for specific fields
-			//Expect(middlewareCorsHeaders.Name).Should(Equal("test-atom-6-atom-cors-headers"))
-			//Expect(middlewareCorsHeaders.Namespace).Should(Equal("default"))
-			//Expect(middlewareCorsHeaders.Labels["app"]).Should(Equal("atom-service"))
-			//Expect(middlewareCorsHeaders.Labels["dataset"]).Should(Equal("test-dataset"))
-			//Expect(middlewareCorsHeaders.Labels["dataset-owner"]).Should(Equal("test-datasetowner"))
-			//Expect(middlewareCorsHeaders.Labels["service-type"]).Should(Equal("atom"))
+			Expect(middlewareCorsHeaders.Name).Should(Equal(wfs.GetName() + "-mapserver-headers"))
+			Expect(middlewareCorsHeaders.Namespace).Should(Equal("default"))
+			checkLabels(middlewareCorsHeaders.GetLabels())
 			//Expect(middlewareCorsHeaders.Spec.Headers.FrameDeny).Should(Equal(true))
-			//Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Headers"]).Should(Equal("Content-Type"))
-			//Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Method"]).Should(Equal("GET, HEAD, OPTIONS"))
-			//Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Origin"]).Should(Equal("*"))
+			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Headers"]).Should(Equal("Content-Type"))
+			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Method"]).Should(Equal("GET, HEAD, OPTIONS"))
+			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Origin"]).Should(Equal("*"))
 		})
 
 		It("Should create correct podDisruptionBudget manifest.", func() {
