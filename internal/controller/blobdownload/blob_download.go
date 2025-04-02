@@ -5,6 +5,8 @@ import (
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"regexp"
@@ -31,20 +33,10 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 		Image:           image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		EnvFrom: []corev1.EnvFromSource{
-			{
-				ConfigMapRef: &corev1.ConfigMapEnvSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: blobsConfigName, // Todo add this ConfigMap
-					},
-				},
-			},
-			{
-				SecretRef: &corev1.SecretEnvSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: blobsSecretName, // Todo add this Secret
-					},
-				},
-			},
+			// Todo add this ConfigMap
+			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, blobsConfigName),
+			// Todo add this Secret
+			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, blobsSecretName),
 		},
 		Resources: corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
@@ -71,6 +63,17 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 	}
 	initContainer.Resources.Limits = corev1.ResourceList{
 		corev1.ResourceCPU: resourceCPU,
+	}
+
+	if options := obj.Options(); options != nil {
+		if options.PrefetchData != nil && *options.PrefetchData {
+			mount := corev1.VolumeMount{
+				Name:      mapserver.ConfigMapBlobDownloadVolumeName,
+				MountPath: "/src/scripts",
+				ReadOnly:  true,
+			}
+			initContainer.VolumeMounts = append(initContainer.VolumeMounts, mount)
+		}
 	}
 
 	return &initContainer, nil

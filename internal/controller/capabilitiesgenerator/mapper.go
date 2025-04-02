@@ -4,9 +4,11 @@ import (
 	"encoding/xml"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/ogc-specifications/pkg/wfs200"
 	"github.com/pdok/ogc-specifications/pkg/wsc110"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -14,12 +16,31 @@ const (
 	capabilitiesFilename   = "/var/www/config/capabilities_wfs_200.xml"
 )
 
+func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image string) (*corev1.Container, error) {
+	initContainer := corev1.Container{
+		Name:            "capabilities-generator",
+		Image:           image,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Env: []corev1.EnvVar{
+			{
+				Name:  "SERVICECONFIG",
+				Value: "/input/input.yaml",
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "data", MountPath: "/var/www", ReadOnly: false},
+			{Name: mapserver.ConfigMapCapabilitiesGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+		},
+	}
+	return &initContainer, nil
+}
+
 func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (Config, error) {
 	config := Config{
 		Global: Global{
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
-			OnlineResourceurl: pdoknlv3.GetBaseURL(),
+			OnlineResourceurl: pdoknlv3.GetHost(),
 			Path:              mapperutils.GetPath(wfs),
 			Version:           *mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version"),
 		},
@@ -37,7 +58,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 							Href string
 						}{
 							Type: "simple",
-							Href: pdoknlv3.GetBaseURL(),
+							Href: pdoknlv3.GetHost(),
 						}),
 					},
 					ServiceIdentification: wfs200.ServiceIdentification{

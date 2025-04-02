@@ -1,6 +1,8 @@
 package v3
 
 import (
+	"crypto/sha1"
+	"io"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +19,7 @@ const (
 	ServiceTypeWFS ServiceType = "WFS"
 )
 
+// +kubebuilder:object:generate=false
 type WMSWFS interface {
 	*WFS | *WMS
 	metav1.Object
@@ -26,6 +29,9 @@ type WMSWFS interface {
 	HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec
 	Type() ServiceType
 	Options() *Options
+	HasPostgisData() bool
+	// Sha1 hash of the objects name
+	Id() string
 }
 
 type Mapfile struct {
@@ -150,4 +156,11 @@ func (d *Data) GetGeometryType() *string {
 	default:
 		return nil
 	}
+}
+
+func Sha1HashOfName[O WMSWFS](obj O) string {
+	s := sha1.New()
+	io.WriteString(s, obj.GetName())
+
+	return string(s.Sum(nil))
 }

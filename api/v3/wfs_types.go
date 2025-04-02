@@ -146,3 +146,7 @@ func (wfs *WFS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutos
 func (wfs *WFS) Options() *Options {
 	return wfs.Spec.Options
 }
+
+func (wfs *WFS) Id() string {
+	return Sha1HashOfName(wfs)
+}

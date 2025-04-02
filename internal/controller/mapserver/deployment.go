@@ -5,11 +5,19 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapserver-operator/internal/controller/static_files"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
+)
+
+const (
+	ConfigMapVolumeName                      = "mapserver"
+	ConfigMapMapfileGeneratorVolumeName      = "mapfile-generator-config"
+	ConfigMapCapabilitiesGeneratorVolumeName = "capabilities-generator-config"
+	ConfigMapBlobDownloadVolumeName          = "init-scripts"
 )
 
 func GetBareDeployment(obj metav1.Object, mapserverName string) *appsv1.Deployment {
@@ -56,7 +64,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			},
 		},
 		{
-			Name: "mapserver",
+			Name: ConfigMapVolumeName,
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{
@@ -66,7 +74,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			},
 		},
 		{
-			Name: "mapfile-generator-config",
+			Name: ConfigMapMapfileGeneratorVolumeName,
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.MapfileGenerator},
@@ -74,7 +82,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			},
 		},
 		{
-			Name: "capabilities-generator-config",
+			Name: ConfigMapCapabilitiesGeneratorVolumeName,
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.CapabilitiesGenerator},
@@ -94,6 +102,20 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 				},
 			},
 		})
+	}
+
+	if options := obj.Options(); options != nil {
+		if options.PrefetchData != nil && *options.PrefetchData {
+			volumes = append(volumes, v1.Volume{
+				Name: ConfigMapBlobDownloadVolumeName,
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.BlobDownload},
+						DefaultMode:          smoothoperatorutils.Pointer(int32(0777)),
+					},
+				},
+			})
+		}
 	}
 
 	return volumes
@@ -185,7 +207,7 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		}
 	}
 
-	if objResources.Limits.Cpu() != nil {
+	if objResources.Limits.Cpu() != nil && objResources.Requests.Cpu().Value() > resources.Requests.Cpu().Value() {
 		resources.Limits[v1.ResourceCPU] = *objResources.Limits.Cpu()
 	}
 

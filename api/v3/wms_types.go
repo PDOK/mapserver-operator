@@ -234,6 +234,15 @@ func (wms *WMS) GetAuthority() *Authority {
 	return nil
 }
 
+func (wms *WMS) HasPostgisData() bool {
+	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+		if layer.Data != nil && layer.Data.Postgis != nil {
+			return true
+		}
+	}
+	return false
+}
+
 func (wms *WMS) Mapfile() *Mapfile {
 	return wms.Spec.Service.Mapfile
 }
@@ -252,4 +261,8 @@ func (wms *WMS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutos
 
 func (wms *WMS) Options() *Options {
 	return wms.Spec.Options
+}
+
+func (wms *WMS) Id() string {
+	return Sha1HashOfName(wms)
 }

@@ -50,13 +50,13 @@ func EscapeQuotes(s string) string {
 	return strings.ReplaceAll(s, "\"", "\\\"")
 }
 
-func GetPath(WFS *pdoknlv3.WFS) (path string) {
+func GetPath[O pdoknlv3.WMSWFS](obj O) (path string) {
 	// TODO make this generic for WMS
-	webserviceType := "wfs"
-	datasetOwner := GetLabelValueByKey(WFS.ObjectMeta.Labels, "dataset-owner")
-	dataset := GetLabelValueByKey(WFS.ObjectMeta.Labels, "dataset")
-	theme := GetLabelValueByKey(WFS.ObjectMeta.Labels, "theme")
-	serviceVersion := GetLabelValueByKey(WFS.ObjectMeta.Labels, "service-version")
+	webserviceType := strings.ToLower(string(obj.Type()))
+	datasetOwner := GetLabelValueByKey(obj.GetLabels(), "dataset-owner")
+	dataset := GetLabelValueByKey(obj.GetLabels(), "dataset")
+	theme := GetLabelValueByKey(obj.GetLabels(), "theme")
+	serviceVersion := GetLabelValueByKey(obj.GetLabels(), "service-version")
 
 	path = fmt.Sprintf("/%s/%s", *datasetOwner, *dataset)
 	if theme != nil {
