@@ -131,8 +131,6 @@ func TestGetConfigForWFS(t *testing.T) {
 										MetadataIdentifier: "metameta-meta-meta-meta-metametameta",
 									},
 								},
-								SpatialDatasetIdentifier: "datadata-data-data-data-datadatadata",
-								Language:                 "dut",
 							},
 							DefaultCrs: "EPSG:28992",
 							OtherCrs: []string{
