@@ -8,7 +8,7 @@ import (
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
-func GetInput[W *pdoknlv3.WFS | *pdoknlv3.WMS](webservice W, ownerInfo *smoothoperatorv1.OwnerInfo) (input string, err error) {
+func GetInput[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.OwnerInfo) (input string, err error) {
 	switch any(webservice).(type) {
 	case *pdoknlv3.WFS:
 		if WFS, ok := any(webservice).(*pdoknlv3.WFS); ok {

@@ -8,7 +8,7 @@ import (
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 )
 
-func GetConfig[W *pdoknlv3.WFS | *pdoknlv3.WMS](webservice W, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
+func GetConfig[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
 	switch any(webservice).(type) {
 	case *pdoknlv3.WFS:
 		if WFS, ok := any(webservice).(*pdoknlv3.WFS); ok {
