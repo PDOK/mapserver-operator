@@ -1343,7 +1343,6 @@ spec:
                                 type: string
                             required:
                             - blobKey
-                            - offsite
                             type: object
                         type: object
                       datasetMetadataUrl:

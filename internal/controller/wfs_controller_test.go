@@ -261,8 +261,6 @@ func getReconciler() *WFSReconciler {
 	}
 }
 
-func
-
 func readV3Sample() *pdoknlv3.WFS {
 	yamlFile, err := os.ReadFile("../../config/samples/v3_wfs.yaml")
 	if err != nil {

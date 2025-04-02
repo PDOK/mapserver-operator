@@ -1,14 +1,18 @@
 module github.com/pdok/mapserver-operator
 
-go 1.23.0
+go 1.24
+
+toolchain go1.24.1
 
 godebug default=go1.23
 
 require (
+	github.com/cbroglie/mustache v1.4.0
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
-	github.com/pdok/ogc-specifications v1.0.0-beta2
-	github.com/pdok/smooth-operator v0.0.6
+	github.com/pdok/ogc-capabilities-generator v1.0.0-beta5
+	github.com/pdok/ogc-specifications v1.0.0-beta4
+	github.com/pdok/smooth-operator v0.0.9
 	github.com/traefik/traefik/v3 v3.3.4
 	k8s.io/api v0.32.0
 	k8s.io/apimachinery v0.32.0

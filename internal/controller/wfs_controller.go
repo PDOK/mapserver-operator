@@ -32,7 +32,7 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 
-	//"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -329,19 +329,14 @@ func (r *WFSReconciler) mutateConfigMapCapabilitiesGenerator(WFS *pdoknlv3.WFS, 
 		return err
 	}
 
-	//if len(configMap.Data) == 0 {
-	//	input, err := capabilitiesgenerator.MapWFSToCapabilitiesGeneratorInput(WFS, ownerInfo)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	yamlInput, err := yaml.Marshal(&input)
-	//	if err != nil {
-	//		return fmt.Errorf("failed to marshal the capabilities generator input to yaml: %w", err)
-	//	}
-	//
-	//	configMap.Data = map[string]string{capabilitiesGeneratorInput: string(yamlInput)}
-	//
-	//}
+	if len(configMap.Data) == 0 {
+		input, err := capabilitiesgenerator.GetInput(WFS, ownerInfo)
+		if err != nil {
+			return err
+		}
+		configMap.Data = map[string]string{capabilitiesGeneratorInput: string(input)}
+
+	}
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 
 	if err := smoothoperatorutils.EnsureSetGVK(r.Client, configMap, configMap); err != nil {
