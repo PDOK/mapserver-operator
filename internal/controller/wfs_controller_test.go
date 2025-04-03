@@ -29,6 +29,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"slices"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
@@ -46,7 +48,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
-	"slices"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -475,7 +476,7 @@ var _ = Describe("WFS Controller", func() {
 			Expect(middlewareCorsHeaders.Name).Should(Equal(wfs.GetName() + "-mapserver-headers"))
 			Expect(middlewareCorsHeaders.Namespace).Should(Equal("default"))
 			checkLabels(middlewareCorsHeaders.GetLabels())
-			//Expect(middlewareCorsHeaders.Spec.Headers.FrameDeny).Should(Equal(true))
+			// Expect(middlewareCorsHeaders.Spec.Headers.FrameDeny).Should(Equal(true))
 			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Headers"]).Should(Equal("Content-Type"))
 			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Method"]).Should(Equal("GET, HEAD, OPTIONS"))
 			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Origin"]).Should(Equal("*"))

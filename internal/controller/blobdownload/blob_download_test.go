@@ -1,10 +1,11 @@
 package blobdownload
 
 import (
-	v3 "github.com/pdok/mapserver-operator/api/v3"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"strings"
 	"testing"
+
+	v3 "github.com/pdok/mapserver-operator/api/v3"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 const (

@@ -1,14 +1,16 @@
 package v3
 
 import (
+	//nolint:gosec
 	"crypto/sha1"
 	"encoding/hex"
 	"io"
+	"net/url"
+	"strings"
+
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/url"
-	"strings"
 )
 
 var host string
@@ -160,6 +162,7 @@ func (d *Data) GetGeometryType() *string {
 }
 
 func Sha1HashOfName[O WMSWFS](obj O) string {
+	//nolint:gosec
 	s := sha1.New()
 	_, _ = io.WriteString(s, obj.GetName())
 

@@ -2,6 +2,7 @@ package samples
 
 import (
 	_ "embed"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"sigs.k8s.io/yaml"
 )

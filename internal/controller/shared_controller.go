@@ -3,6 +3,10 @@ package controller
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
+	"time"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
@@ -27,9 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (

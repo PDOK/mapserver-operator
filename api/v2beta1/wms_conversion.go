@@ -25,10 +25,11 @@ SOFTWARE.
 package v2beta1
 
 import (
-	"fmt"
-	sharedModel "github.com/pdok/smooth-operator/model"
+	"errors"
 	"log"
 	"strconv"
+
+	sharedModel "github.com/pdok/smooth-operator/model"
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -256,7 +257,7 @@ func (v2Service WMSService) GetTopLayer() (*WMSLayer, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unable to detect the toplayer of this WMS service")
+	return nil, errors.New("unable to detect the toplayer of this WMS service")
 }
 
 func (v2Service WMSService) GetChildLayers(parent WMSLayer) ([]WMSLayer, error) {
@@ -269,7 +270,7 @@ func (v2Service WMSService) GetChildLayers(parent WMSLayer) ([]WMSLayer, error) 
 	}
 
 	if len(children) == 0 {
-		return children, fmt.Errorf("no child layers found")
+		return children, errors.New("no child layers found")
 	}
 
 	return children, nil

@@ -26,6 +26,7 @@ package v3
 
 import (
 	"encoding/json"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/yaml"
@@ -127,7 +128,7 @@ var _ = Describe("WFS Webhook", func() {
 		})
 
 		It("Should deny update if a label was removed", func() {
-			for label, _ := range obj.Labels {
+			for label := range obj.Labels {
 				delete(obj.Labels, label)
 				break
 			}

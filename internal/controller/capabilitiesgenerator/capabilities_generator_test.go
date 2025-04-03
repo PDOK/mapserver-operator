@@ -5,8 +5,9 @@ import (
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"testing"
+
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 const (

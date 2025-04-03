@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 )
 
 func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image, postgisConfigName, postgisSecretName, srvDir string) (*corev1.Container, error) {

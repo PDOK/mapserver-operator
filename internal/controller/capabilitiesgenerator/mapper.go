@@ -2,6 +2,9 @@ package capabilitiesgenerator
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/cbroglie/mustache"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
@@ -9,8 +12,6 @@ import (
 	"github.com/pdok/ogc-specifications/pkg/wfs200"
 	"github.com/pdok/ogc-specifications/pkg/wsc110"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
-	"strconv"
-	"strings"
 )
 
 const (

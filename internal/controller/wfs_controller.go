@@ -27,6 +27,7 @@ package controller
 import (
 	"context"
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"

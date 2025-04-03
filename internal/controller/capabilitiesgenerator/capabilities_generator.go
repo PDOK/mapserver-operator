@@ -3,6 +3,7 @@ package capabilitiesgenerator
 import (
 	"errors"
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"

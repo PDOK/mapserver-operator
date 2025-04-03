@@ -2,6 +2,7 @@ package v2beta1
 
 import (
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	shared_model "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -47,6 +48,7 @@ func ConvertOptionsV3ToV2(src *pdoknlv3.Options) WMSWFSOptions {
 func ConvertAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscalerSpec {
 	var minReplicas *int32
 	if src.MinReplicas != nil {
+		//nolint:gosec
 		minReplicas = Pointer(int32(*src.MinReplicas))
 	}
 

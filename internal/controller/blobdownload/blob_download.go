@@ -3,14 +3,15 @@ package blobdownload
 import (
 	_ "embed"
 	"fmt"
+	"regexp"
+	"strings"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"regexp"
-	"strings"
 )
 
 const (

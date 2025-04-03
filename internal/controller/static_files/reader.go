@@ -2,7 +2,6 @@ package static_files
 
 import (
 	"embed"
-	"fmt"
 )
 
 //go:embed files
@@ -13,7 +12,7 @@ func GetStaticFiles() map[string][]byte {
 
 	files, _ := embeddedFiles.ReadDir("files")
 	for _, f := range files {
-		content, _ := embeddedFiles.ReadFile(fmt.Sprintf("files/%s", f.Name()))
+		content, _ := embeddedFiles.ReadFile("files/" + f.Name())
 		result[f.Name()] = content
 	}
 

@@ -2,10 +2,11 @@ package mapperutils
 
 import (
 	"fmt"
+	"strings"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"strings"
 )
 
 // Use ephemeral volume when ephemeral storage is greater then 10Gi

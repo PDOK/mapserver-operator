@@ -24,7 +24,7 @@ SOFTWARE.
 
 package controller
 
-//var _ = Describe("WMS Controller", func() {
+// var _ = Describe("WMS Controller", func() {
 //	Context("When reconciling a resource", func() {
 //		const resourceName = "test-resource"
 //

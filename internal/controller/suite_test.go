@@ -28,12 +28,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"golang.org/x/tools/go/packages"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"golang.org/x/tools/go/packages"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

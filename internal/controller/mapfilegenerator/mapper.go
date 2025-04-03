@@ -1,12 +1,13 @@
 package mapfilegenerator
 
 import (
+	"strconv"
+	"strings"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
-	"strconv"
-	"strings"
 )
 
 const (

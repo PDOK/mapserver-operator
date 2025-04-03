@@ -25,8 +25,9 @@ SOFTWARE.
 package v2beta1
 
 import (
-	sharedModel "github.com/pdok/smooth-operator/model"
 	"log"
+
+	sharedModel "github.com/pdok/smooth-operator/model"
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
