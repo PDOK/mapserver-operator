@@ -48,7 +48,7 @@ import (
 const (
 	defaultMultitoolImage             = "docker.io/pdok/docker-multitool:0.9.1"
 	defaultMapfileGeneratorImage      = "docker.io/pdok/mapfile-generator:1.9.3"
-	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/pdok/ogc-capabilities-generator:0.2.7"
+	defaultCapabilitiesGeneratorImage = "docker.io/pdok/ogc-capabilities-generator:1.0.0-beta5"
 )
 
 var (

@@ -109,7 +109,7 @@ func GetHost() string {
 	return host
 }
 
-func GetBaseURLPath[T *WFS | *WMS](o T) string {
+func GetBaseURLPath[T WMSWFS](o T) string {
 	var serviceURL string
 	switch any(o).(type) {
 	case *WFS:

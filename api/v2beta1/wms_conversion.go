@@ -54,15 +54,15 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	if src.Spec.Kubernetes.Autoscaling != nil {
-		dst.Spec.HorizontalPodAutoscalerPatch = ConverseAutoscaling(*src.Spec.Kubernetes.Autoscaling)
+		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
 	}
 
 	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
 	if src.Spec.Kubernetes.Resources != nil {
-		dst.Spec.PodSpecPatch = ConverseResources(*src.Spec.Kubernetes.Resources)
+		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = ConverseOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WMSService{
 		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
@@ -144,7 +144,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
 	if src.Spec.Options != nil {
-		dst.Spec.Options = ConverseOptionsV3ToV2(src.Spec.Options)
+		dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
 	}
 
 	service := WMSService{
@@ -372,7 +372,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 	}
 
 	if v2Layer.Data != nil {
-		layer.Data = Pointer(ConverseV2DataToV3(*v2Layer.Data))
+		layer.Data = Pointer(ConvertV2DataToV3(*v2Layer.Data))
 	} else {
 		childLayersV2, err := v2Service.GetChildLayers(v2Layer)
 		if err != nil {
@@ -463,7 +463,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 		}
 
 		if v3Layer.Data != nil {
-			v2Layer.Data = Pointer(ConverseV3DataToV2(*v3Layer.Data))
+			v2Layer.Data = Pointer(ConvertV3DataToV2(*v3Layer.Data))
 		}
 
 		layers = append(layers, v2Layer)

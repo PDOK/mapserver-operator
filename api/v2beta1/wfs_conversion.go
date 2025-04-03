@@ -49,15 +49,15 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	if src.Spec.Kubernetes.Autoscaling != nil {
-		dst.Spec.HorizontalPodAutoscalerPatch = ConverseAutoscaling(*src.Spec.Kubernetes.Autoscaling)
+		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
 	}
 
 	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
 	if src.Spec.Kubernetes.Resources != nil {
-		dst.Spec.PodSpecPatch = ConverseResources(*src.Spec.Kubernetes.Resources)
+		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = ConverseOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WFSService{
 		Prefix:            "",
@@ -137,7 +137,7 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 		}
 	}
 
-	featureTypeV3.Data = ConverseV2DataToV3(src.Data)
+	featureTypeV3.Data = ConvertV2DataToV3(src.Data)
 
 	return featureTypeV3
 }
@@ -157,7 +157,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
 	if src.Spec.Options != nil {
-		dst.Spec.Options = ConverseOptionsV3ToV2(src.Spec.Options)
+		dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
 	}
 
 	service := WFSService{
@@ -201,7 +201,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 			Keywords:                  featureType.Keywords,
 			DatasetMetadataIdentifier: featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
 			SourceMetadataIdentifier:  "",
-			Data:                      ConverseV3DataToV2(featureType.Data),
+			Data:                      ConvertV3DataToV2(featureType.Data),
 		}
 
 		if src.Spec.Service.Inspire != nil {
