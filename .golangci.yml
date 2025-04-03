@@ -21,7 +21,7 @@ issues:
 
 output:
   formats:
-    - format: colored_line_number
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
