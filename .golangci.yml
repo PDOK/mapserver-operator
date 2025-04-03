@@ -21,10 +21,9 @@ issues:
 
 output:
   formats:
-    text:
-      colors: true
-      print-issued-lines: true
-      print-linter-name: true
+    - format: colored_line_number
+  print-issued-lines: true
+  print-linter-name: true
 
 linters-settings:
   depguard:
