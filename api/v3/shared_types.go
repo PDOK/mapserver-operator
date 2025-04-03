@@ -1,11 +1,41 @@
 package v3
 
 import (
-	corev1 "k8s.io/api/core/v1"
+	//nolint:gosec
+	"crypto/sha1"
+	"encoding/hex"
+	"io"
+	"net/url"
 	"strings"
+
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var baseURL string
+var host string
+
+type ServiceType string
+
+const (
+	ServiceTypeWMS ServiceType = "WMS"
+	ServiceTypeWFS ServiceType = "WFS"
+)
+
+// +kubebuilder:object:generate=false
+type WMSWFS interface {
+	*WFS | *WMS
+	metav1.Object
+
+	Mapfile() *Mapfile
+	PodSpecPatch() *corev1.PodSpec
+	HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec
+	Type() ServiceType
+	Options() *Options
+	HasPostgisData() bool
+	// Sha1 hash of the objects name
+	ID() string
+}
 
 type Mapfile struct {
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
@@ -64,7 +94,7 @@ type Postgis struct {
 type TIF struct {
 	BlobKey                     string  `json:"blobKey"`
 	Resample                    *string `json:"resample,omitempty"`
-	Offsite                     *string `json:"offsite,omitepty"`
+	Offsite                     *string `json:"offsite,omitempty"`
 	GetFeatureInfoIncludesClass *bool   `json:"getFeatureInfoIncludesClass,omitempty"`
 }
 
@@ -73,12 +103,29 @@ type Column struct {
 	Alias *string `json:"alias,omitempty"`
 }
 
-func SetBaseURL(url string) {
-	baseURL = strings.TrimSuffix(url, "/")
+func SetHost(url string) {
+	host = strings.TrimSuffix(url, "/")
 }
 
-func GetBaseURL() string {
-	return baseURL
+func GetHost() string {
+	return host
+}
+
+func GetBaseURLPath[T WMSWFS](o T) string {
+	var serviceURL string
+	switch any(o).(type) {
+	case *WFS:
+		if WFS, ok := any(o).(*WFS); ok {
+			serviceURL = WFS.Spec.Service.URL
+		}
+	case *WMS:
+		if WMS, ok := any(o).(*WMS); ok {
+			serviceURL = WMS.Spec.Service.URL
+		}
+	}
+
+	parsed, _ := url.Parse(serviceURL)
+	return strings.TrimPrefix(parsed.Path, "/")
 }
 
 func (d *Data) GetColumns() *[]Column {
@@ -112,4 +159,12 @@ func (d *Data) GetGeometryType() *string {
 	default:
 		return nil
 	}
+}
+
+func Sha1HashOfName[O WMSWFS](obj O) string {
+	//nolint:gosec
+	s := sha1.New()
+	_, _ = io.WriteString(s, obj.GetName())
+
+	return hex.EncodeToString(s.Sum(nil))
 }

@@ -1,5 +1,6 @@
 package mapfilegenerator
 
+//nolint:tagliatelle
 type Input struct {
 	Title             string   `json:"service_title"`
 	Abstract          string   `json:"service_abstract"`
@@ -20,6 +21,7 @@ type Input struct {
 	Layers            []Layer  `json:"layers"`
 }
 
+//nolint:tagliatelle
 type Layer struct {
 	Name           string   `json:"name"`
 	Title          string   `json:"title"`

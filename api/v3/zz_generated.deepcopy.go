@@ -30,7 +30,7 @@ package v3
 
 import (
 	"github.com/pdok/smooth-operator/model"
-	"k8s.io/api/autoscaling/v2beta1"
+	"k8s.io/api/autoscaling/v2"
 	"k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -676,7 +676,7 @@ func (in *WFSSpec) DeepCopyInto(out *WFSSpec) {
 	}
 	if in.HorizontalPodAutoscalerPatch != nil {
 		in, out := &in.HorizontalPodAutoscalerPatch, &out.HorizontalPodAutoscalerPatch
-		*out = new(v2beta1.HorizontalPodAutoscalerSpec)
+		*out = new(v2.HorizontalPodAutoscalerSpec)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Options != nil {
@@ -843,7 +843,7 @@ func (in *WMSSpec) DeepCopyInto(out *WMSSpec) {
 	}
 	if in.HorizontalPodAutoscalerPatch != nil {
 		in, out := &in.HorizontalPodAutoscalerPatch, &out.HorizontalPodAutoscalerPatch
-		*out = new(v2beta1.HorizontalPodAutoscalerSpec)
+		*out = new(v2.HorizontalPodAutoscalerSpec)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Options != nil {

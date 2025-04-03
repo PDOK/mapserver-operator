@@ -27,6 +27,7 @@ package v3
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -36,7 +37,6 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
 
-// nolint:unused
 // log is for logging in this package.
 var wfslog = logf.Log.WithName("wfs-resource")
 

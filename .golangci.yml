@@ -4,7 +4,7 @@ run:
   timeout: 5m
 
   # Modules download mode (do not modify go.mod)
-  module-download-mode: readonly
+  modules-download-mode: readonly
 
   # Include test files (see below to exclude certain linters)
   tests: true
@@ -20,7 +20,9 @@ issues:
         - funlen
 
 output:
-  formats: colored-line-number
+  formats:
+    - format: colored-line-number
+      path: stdout
   print-issued-lines: true
   print-linter-name: true
 

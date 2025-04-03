@@ -46,8 +46,9 @@ import (
 )
 
 const (
-	defaultMultitoolImage        = "docker.io/pdok/docker-multitool:0.9.1"
-	defaultMapfileGeneratorImage = "docker.io/pdok/mapfile-generator:1.9.3"
+	defaultMultitoolImage             = "docker.io/pdok/docker-multitool:0.9.1"
+	defaultMapfileGeneratorImage      = "docker.io/pdok/mapfile-generator:1.9.3"
+	defaultCapabilitiesGeneratorImage = "docker.io/pdok/ogc-capabilities-generator:1.0.0-beta5"
 )
 
 var (
@@ -73,9 +74,10 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
-	var baseURL string
+	var host string
 	var multitoolImage string
 	var mapfileGeneratorImage string
+	var capabilitiesGeneratorImage string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -93,9 +95,10 @@ func main() {
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
-	flag.StringVar(&baseURL, "baseurl", "", "The base url which is used in the mapserver service.")
+	flag.StringVar(&host, "baseurl", "", "The host which is used in the mapserver service.")
 	flag.StringVar(&multitoolImage, "multitool-image", defaultMultitoolImage, "The image to use in the blob download init-container.")
 	flag.StringVar(&mapfileGeneratorImage, "mapfile-generator-image", defaultMapfileGeneratorImage, "The image to use in the mapfile generator init-container.")
+	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", defaultCapabilitiesGeneratorImage, "The image to use in the capabilities generator init-container.")
 
 	opts := zap.Options{
 		Development: true,
@@ -105,11 +108,11 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	if baseURL == "" {
+	if host == "" {
 		setupLog.Error(errors.New("baseURL is required"), "A value for baseURL must be specified.")
 		os.Exit(1)
 	}
-	pdoknlv3.SetBaseURL(baseURL)
+	pdoknlv3.SetHost(host)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -232,10 +235,11 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.WFSReconciler{
-		Client:                mgr.GetClient(),
-		Scheme:                mgr.GetScheme(),
-		MultitoolImage:        multitoolImage,
-		MapfileGeneratorImage: mapfileGeneratorImage,
+		Client:                     mgr.GetClient(),
+		Scheme:                     mgr.GetScheme(),
+		MultitoolImage:             multitoolImage,
+		MapfileGeneratorImage:      mapfileGeneratorImage,
+		CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WFS")
 		os.Exit(1)
@@ -254,7 +258,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	// nolint:goconst
+
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")

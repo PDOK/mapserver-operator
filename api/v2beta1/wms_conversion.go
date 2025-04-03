@@ -25,10 +25,11 @@ SOFTWARE.
 package v2beta1
 
 import (
-	"fmt"
-	sharedModel "github.com/pdok/smooth-operator/model"
+	"errors"
 	"log"
 	"strconv"
+
+	sharedModel "github.com/pdok/smooth-operator/model"
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -54,18 +55,18 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	if src.Spec.Kubernetes.Autoscaling != nil {
-		dst.Spec.HorizontalPodAutoscalerPatch = ConverseAutoscaling(*src.Spec.Kubernetes.Autoscaling)
+		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
 	}
 
 	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
 	if src.Spec.Kubernetes.Resources != nil {
-		dst.Spec.PodSpecPatch = ConverseResources(*src.Spec.Kubernetes.Resources)
+		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = ConverseOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WMSService{
-		BaseURL:           CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
+		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
@@ -144,7 +145,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
 	if src.Spec.Options != nil {
-		dst.Spec.Options = ConverseOptionsV3ToV2(src.Spec.Options)
+		dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
 	}
 
 	service := WMSService{
@@ -169,7 +170,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 		service.MetadataIdentifier = src.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
 	} else {
 		service.Inspire = false
-		// TODO unable to fill in MetadataIdentifier here untill we know how to handle non inspire services
+		// TODO unable to fill in MetadataIdentifier here until we know how to handle non inspire services
 	}
 
 	uuid, ok := src.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION]
@@ -256,7 +257,7 @@ func (v2Service WMSService) GetTopLayer() (*WMSLayer, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unable to detect the toplayer of this WMS service")
+	return nil, errors.New("unable to detect the toplayer of this WMS service")
 }
 
 func (v2Service WMSService) GetChildLayers(parent WMSLayer) ([]WMSLayer, error) {
@@ -269,7 +270,7 @@ func (v2Service WMSService) GetChildLayers(parent WMSLayer) ([]WMSLayer, error) 
 	}
 
 	if len(children) == 0 {
-		return children, fmt.Errorf("no child layers found")
+		return children, errors.New("no child layers found")
 	}
 
 	return children, nil
@@ -372,7 +373,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 	}
 
 	if v2Layer.Data != nil {
-		layer.Data = Pointer(ConverseV2DataToV3(*v2Layer.Data))
+		layer.Data = Pointer(ConvertV2DataToV3(*v2Layer.Data))
 	} else {
 		childLayersV2, err := v2Service.GetChildLayers(v2Layer)
 		if err != nil {
@@ -463,7 +464,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 		}
 
 		if v3Layer.Data != nil {
-			v2Layer.Data = Pointer(ConverseV3DataToV2(*v3Layer.Data))
+			v2Layer.Data = Pointer(ConvertV3DataToV2(*v3Layer.Data))
 		}
 
 		layers = append(layers, v2Layer)

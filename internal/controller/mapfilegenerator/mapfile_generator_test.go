@@ -1,12 +1,13 @@
 package mapfilegenerator
 
 import (
+	"testing"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	shared_model "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 const (
@@ -89,7 +90,7 @@ func TestGetConfigForWFS(t *testing.T) {
 		WFS       *pdoknlv3.WFS
 		ownerInfo *smoothoperatorv1.OwnerInfo
 	}
-	pdoknlv3.SetBaseURL("http://localhost")
+	pdoknlv3.SetHost("http://localhost")
 	tests := []struct {
 		name       string
 		args       args

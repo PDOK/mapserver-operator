@@ -26,42 +26,53 @@ package controller
 
 import (
 	"context"
+	"fmt"
+
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
+	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 )
 
 const (
-	appLabelKey           = "app"
-	WFSName               = "WFS"
-	downloadScriptName    = "gpkg_download.sh"
-	mapfileGeneratorInput = "input.json"
-	srvDir                = "/srv"
-	inputDir              = "/input"
-	blobsConfigName       = "blobsConfig"
-	blobsSecretName       = "blobsSecret"
-	postgisConfigName     = "postgisConfig"
-	postgisSecretName     = "postgisSecret"
+	downloadScriptName         = "gpkg_download.sh"
+	mapfileGeneratorInput      = "input.json"
+	srvDir                     = "/srv"
+	blobsConfigName            = "blobs-config"
+	blobsSecretName            = "blobs-secret"
+	capabilitiesGeneratorInput = "input.yaml"
+	inputDir                   = "/input"
+	postgisConfigName          = "postgisConfig"
+	postgisSecretName          = "postgisSecret"
+)
+
+var (
+	finalizerName = "wfs-controller" + "." + pdoknlv3.GroupVersion.Group + "/finalizer"
 )
 
 // WFSReconciler reconciles a WFS object
 type WFSReconciler struct {
 	client.Client
-	Scheme                *runtime.Scheme
-	MultitoolImage        string
-	MapfileGeneratorImage string
+	Scheme                     *runtime.Scheme
+	MapserverImage             string
+	MultitoolImage             string
+	MapfileGeneratorImage      string
+	CapabilitiesGeneratorImage string
 }
 
 // +kubebuilder:rbac:groups=pdok.nl,resources=wfs,verbs=get;list;watch;create;update;patch;delete
@@ -83,7 +94,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	lgr := log.FromContext(ctx)
 	lgr.Info("Starting reconcile for WFS resource", "name", req.NamespacedName)
 
-	// Fetch the Atom instance
+	// Fetch the WFS instance
 	wfs := &pdoknlv3.WFS{}
 	if err = r.Client.Get(ctx, req.NamespacedName, wfs); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -110,230 +121,304 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, client.IgnoreNotFound(err)
 	}
 
-	// TODO(user): your logic here
-
-	return ctrl.Result{}, nil
-}
-
-func getBareConfigMapBlobDownload(obj metav1.Object) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getBareDeployment(obj).GetName() + "-init-scripts",
-			Namespace: obj.GetNamespace(),
-		},
-	}
-}
-
-func (r *WFSReconciler) mutateConfigMapBlobDownload(WFS *pdoknlv3.WFS, configMap *corev1.ConfigMap) error {
-	labels := smoothoperatorutils.CloneOrEmptyMap(WFS.GetLabels())
-	labels[appLabelKey] = WFSName
-	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
-		return err
+	lgr.Info("Get object full name")
+	fullName := smoothoperatorutils.GetObjectFullName(r.Client, wfs)
+	lgr.Info("Finalize if necessary")
+	shouldContinue, err := smoothoperatorutils.FinalizeIfNecessary(ctx, r.Client, wfs, finalizerName, func() error {
+		lgr.Info("deleting resources", "name", fullName)
+		return r.deleteAllForWFS(ctx, wfs, ownerInfo)
+	})
+	if !shouldContinue || err != nil {
+		return result, err
 	}
 
-	if len(configMap.Data) == 0 {
-		downloadScript, err := blobdownload.GetScript()
+	lgr.Info("creating resources for wfs", "wfs", wfs)
+	operationResults, err := r.createOrUpdateAllForWFS(ctx, wfs, ownerInfo)
+	if err != nil {
+		lgr.Info("failed creating resources for wfs", "wfs", wfs)
+		LogAndUpdateStatusError(ctx, r, wfs, err)
+		return result, err
+	}
+	lgr.Info("finished creating resources for wfs", "atom", wfs)
+	LogAndUpdateStatusFinished(ctx, r, wfs, operationResults)
+
+	return result, err
+}
+
+func (r *WFSReconciler) createOrUpdateAllForWFS(ctx context.Context, wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (operationResults map[string]controllerutil.OperationResult, err error) {
+	operationResults = make(map[string]controllerutil.OperationResult)
+	c := r.Client
+
+	hashedConfigMapNames := types.HashedConfigMapNames{}
+
+	// region ConfigMap
+	{
+		configMap := GetBareConfigMap(wfs)
+		if err = MutateConfigMap(r, wfs, configMap); err != nil {
+			return operationResults, err
+		}
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, configMap)], err = controllerutil.CreateOrUpdate(ctx, r.Client, configMap, func() error {
+			return MutateConfigMap(r, wfs, configMap)
+		})
 		if err != nil {
-			return err
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, configMap), err)
 		}
-		configMap.Data = map[string]string{downloadScriptName: downloadScript}
-
+		hashedConfigMapNames.ConfigMap = configMap.Name
 	}
-	configMap.Immutable = smoothoperatorutils.Pointer(true)
+	// end region ConfigMap
 
-	if err := smoothoperatorutils.EnsureSetGVK(r.Client, configMap, configMap); err != nil {
-		return err
-	}
-	if err := ctrl.SetControllerReference(WFS, configMap, r.Scheme); err != nil {
-		return err
-	}
-	return smoothoperatorutils.AddHashSuffix(configMap)
-}
-
-func getBareConfigMapMapfileGenerator(obj metav1.Object) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getBareDeployment(obj).GetName() + "-mapfile-generator",
-			Namespace: obj.GetNamespace(),
-		},
-	}
-}
-
-func (r *WFSReconciler) mutateConfigMapMapfileGenerator(WFS *pdoknlv3.WFS, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
-	labels := smoothoperatorutils.CloneOrEmptyMap(WFS.GetLabels())
-	labels[appLabelKey] = WFSName
-	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
-		return err
-	}
-
-	if len(configMap.Data) == 0 {
-		mapfileGeneratorConfig, err := mapfilegenerator.GetConfig(WFS, ownerInfo)
+	// region ConfigMap-MapfileGenerator
+	{
+		configMapMfg := GetBareConfigMapMapfileGenerator(wfs)
+		if err = MutateConfigMapMapfileGenerator(r, wfs, configMapMfg, ownerInfo); err != nil {
+			return operationResults, err
+		}
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, configMapMfg)], err = controllerutil.CreateOrUpdate(ctx, r.Client, configMapMfg, func() error {
+			return MutateConfigMapMapfileGenerator(r, wfs, configMapMfg, ownerInfo)
+		})
 		if err != nil {
-			return err
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, configMapMfg), err)
 		}
-		configMap.Data = map[string]string{mapfileGeneratorInput: mapfileGeneratorConfig}
+		hashedConfigMapNames.MapfileGenerator = configMapMfg.Name
+	}
+	// end region ConfigMap-MapfileGenerator
 
+	// region ConfigMap-CapabilitieGenerator
+	{
+		configMapCg := GetBareConfigMapCapabilitiesGenerator(wfs)
+		if err = MutateConfigMapCapabilitiesGenerator(r, wfs, configMapCg, ownerInfo); err != nil {
+			return operationResults, err
+		}
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, configMapCg)], err = controllerutil.CreateOrUpdate(ctx, r.Client, configMapCg, func() error {
+			return MutateConfigMapCapabilitiesGenerator(r, wfs, configMapCg, ownerInfo)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, configMapCg), err)
+		}
+		hashedConfigMapNames.CapabilitiesGenerator = configMapCg.Name
 	}
-	configMap.Immutable = smoothoperatorutils.Pointer(true)
+	// end region ConfigMap-CapabilitiesGenerator
 
-	if err := smoothoperatorutils.EnsureSetGVK(r.Client, configMap, configMap); err != nil {
-		return err
+	// region ConfigMap-BlobDownload
+	{
+		configMapBd := GetBareConfigMapBlobDownload(wfs)
+		if err = MutateConfigMapBlobDownload(r, wfs, configMapBd); err != nil {
+			return operationResults, err
+		}
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, configMapBd)], err = controllerutil.CreateOrUpdate(ctx, r.Client, configMapBd, func() error {
+			return MutateConfigMapBlobDownload(r, wfs, configMapBd)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, configMapBd), err)
+		}
+		hashedConfigMapNames.BlobDownload = configMapBd.Name
 	}
-	if err := ctrl.SetControllerReference(WFS, configMap, r.Scheme); err != nil {
-		return err
+	// end region ConfigMap-BlobDownload
+
+	// region Deployment
+	{
+		deployment := mapserver.GetBareDeployment(wfs, MapserverName)
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, deployment)], err = controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
+			return r.mutateDeployment(wfs, deployment, hashedConfigMapNames)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, deployment), err)
+		}
 	}
-	return smoothoperatorutils.AddHashSuffix(configMap)
+	// end region Deployment
+
+	// region TraefikMiddleware
+	{
+		middleware := GetBareCorsHeadersMiddleware(wfs)
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, middleware)], err = controllerutil.CreateOrUpdate(ctx, r.Client, middleware, func() error {
+			return MutateCorsHeadersMiddleware(r, wfs, middleware)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, middleware), err)
+		}
+	}
+	// end region TraefikMiddleware
+
+	// region PodDisruptionBudget
+	{
+		podDisruptionBudget := GetBarePodDisruptionBudget(wfs)
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, podDisruptionBudget)], err = controllerutil.CreateOrUpdate(ctx, r.Client, podDisruptionBudget, func() error {
+			return MutatePodDisruptionBudget(r, wfs, podDisruptionBudget)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, podDisruptionBudget), err)
+		}
+	}
+	// end region PodDisruptionBudget
+
+	// region HorizontalAutoScaler
+	{
+		autoscaler := GetBareHorizontalPodAutoScaler(wfs)
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, autoscaler)], err = controllerutil.CreateOrUpdate(ctx, r.Client, autoscaler, func() error {
+			return MutateHorizontalPodAutoscaler(r, wfs, autoscaler)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, autoscaler), err)
+		}
+	}
+	// end region HorizontalAutoScaler
+
+	// region IngressRoute
+	{
+		ingress := GetBareIngressRoute(wfs)
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, ingress)], err = controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
+			return MutateIngressRoute(r, wfs, ingress)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, ingress), err)
+		}
+	}
+	// end region IngressRoute
+
+	// region Service
+	{
+		service := GetBareService(wfs)
+		operationResults[smoothoperatorutils.GetObjectFullName(r.Client, service)], err = controllerutil.CreateOrUpdate(ctx, r.Client, service, func() error {
+			return MutateService(r, wfs, service)
+		})
+		if err != nil {
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(c, service), err)
+		}
+	}
+	// end region Service
+
+	return operationResults, nil
 }
 
-func getBareDeployment(obj metav1.Object) *appsv1.Deployment {
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: obj.GetName() + "-" + WFSName,
-			// name might become too long. not handling here. will just fail on apply.
-			Namespace: obj.GetNamespace(),
-		},
-	}
-}
+func (r *WFSReconciler) deleteAllForWFS(ctx context.Context, wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (err error) {
+	bareObjects := GetSharedBareObjects(wfs)
+	objects := []client.Object{}
 
-func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.Deployment, blobDownloadConfigMapName string, mapfileGeneratorConfigMapName string) error {
-	// Todo Mutate the other deployment parts, these are only the init-containers for blob-download and mapfile-generator
-	podTemplateSpec := corev1.PodTemplateSpec{
-		Spec: corev1.PodSpec{
-			InitContainers: []corev1.Container{
-				{
-					Name:            "blob-download",
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					EnvFrom: []corev1.EnvFromSource{
-						{
-							ConfigMapRef: &corev1.ConfigMapEnvSource{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: blobsConfigName, // Todo add this ConfigMap
-								},
-							},
-							SecretRef: &corev1.SecretEnvSource{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: blobsSecretName, // Todo add this Secret
-								},
-							},
-						},
-					},
-					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU: resource.MustParse("0.15"),
-						},
-					},
-					Command: []string{"/bin/sh", "-c"},
-
-					VolumeMounts: []corev1.VolumeMount{
-						{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
-						{Name: "data", MountPath: "/var/www", ReadOnly: false},
-					},
-				},
-				{
-					Name:            "mapfile-generator",
-					Image:           r.MapfileGeneratorImage,
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Command:         []string{"generate-mapfile"},
-					Args: []string{
-						"--not-include",
-						"wfs",
-						"/input/input.json",
-						"/srv/data/config/mapfile",
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
-						{Name: "mapfile-generator-config", MountPath: inputDir, ReadOnly: true},
-					},
-				},
-			},
-			Volumes: []corev1.Volume{
-				{
-					Name: "mapfile-generator-config",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{Name: mapfileGeneratorConfigMapName},
-						},
-					}},
-			},
-		},
-	}
-
-	if *wfs.Spec.Options.PrefetchData {
-		mount := corev1.VolumeMount{
-			Name:      "init-scripts",
-			MountPath: "/src/scripts",
-			ReadOnly:  true,
+	// Remove ConfigMaps as they have hashed names
+	for _, object := range bareObjects {
+		if _, ok := object.(*corev1.ConfigMap); !ok {
+			objects = append(objects, object)
 		}
-		podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, mount)
-		volume := corev1.Volume{
-			Name: "init-scripts",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{Name: blobDownloadConfigMapName},
-					DefaultMode:          smoothoperatorutils.Pointer(int32(0777)),
-				},
-			},
-		}
-		podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volume)
 	}
 
-	// Additional blob-download configuration
-	args, err := blobdownload.GetArgs(*wfs)
+	// ConfigMap
+	cm := GetBareConfigMap(wfs)
+	err = MutateConfigMap(r, wfs, cm)
 	if err != nil {
 		return err
 	}
-	podTemplateSpec.Spec.InitContainers[0].Args = []string{args}
-	podTemplateSpec.Spec.InitContainers[0].Image = r.MultitoolImage
+	objects = append(objects, cm)
 
-	resourceCPU := resource.MustParse("0.2")
-	if useEphemeralVolume(wfs) {
-		resourceCPU = resource.MustParse("1")
+	// ConfigMap-MapfileGenerator
+	cmMg := GetBareConfigMapMapfileGenerator(wfs)
+	err = MutateConfigMapMapfileGenerator(r, wfs, cmMg, ownerInfo)
+	if err != nil {
+		return err
 	}
-	podTemplateSpec.Spec.InitContainers[0].Resources.Limits = corev1.ResourceList{
-		corev1.ResourceCPU: resourceCPU,
+	objects = append(objects, cmMg)
+
+	// ConfigMap-CapabilitiesGenerator
+	cmCg := GetBareConfigMapCapabilitiesGenerator(wfs)
+	err = MutateConfigMapCapabilitiesGenerator(r, wfs, cmCg, ownerInfo)
+	if err != nil {
+		return err
+	}
+	objects = append(objects, cmCg)
+
+	// ConfigMap-BlobDownload
+	cmBd := GetBareConfigMapBlobDownload(wfs)
+	err = MutateConfigMapBlobDownload(r, wfs, cmBd)
+	if err != nil {
+		return err
+	}
+	objects = append(objects, cmBd)
+
+	return smoothoperatorutils.DeleteObjects(ctx, r.Client, objects)
+}
+
+// TODO Rename configMapnames
+// TODO Make generic for WMS -> move to mapserver package
+func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
+	labels := AddCommonLabels(wfs, smoothoperatorutils.CloneOrEmptyMap(wfs.GetLabels()))
+	if err := smoothoperatorutils.SetImmutableLabels(r.Client, deployment, labels); err != nil {
+		return err
 	}
 
-	// Additional mapfile-generator configuration
-	if wfs.HasPostgisData() {
-		podTemplateSpec.Spec.InitContainers[1].EnvFrom = []corev1.EnvFromSource{
-			{
-				ConfigMapRef: &corev1.ConfigMapEnvSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: postgisConfigName, // Todo add this ConfigMap
+	matchLabels := smoothoperatorutils.CloneOrEmptyMap(labels)
+	deployment.Spec.Selector = &metav1.LabelSelector{
+		MatchLabels: matchLabels,
+	}
+
+	deployment.Spec.RevisionHistoryLimit = smoothoperatorutils.Pointer(int32(1))
+
+	deployment.Spec.Strategy = appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{
+				IntVal: 1,
+			},
+			MaxSurge: &intstr.IntOrString{
+				IntVal: 1,
+			},
+		},
+	}
+
+	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(wfs, r.MultitoolImage, blobsConfigName, blobsSecretName, srvDir)
+	if err != nil {
+		return err
+	}
+	mapfileGeneratorInitContainer, err := mapfilegenerator.GetMapfileGeneratorInitContainer(wfs, r.MapfileGeneratorImage, postgisConfigName, postgisSecretName, srvDir)
+	if err != nil {
+		return err
+	}
+	capabilitiesGeneratorInitContainer, err := capabilitiesgenerator.GetCapabilitiesGeneratorInitContainer(wfs, r.CapabilitiesGeneratorImage)
+	if err != nil {
+		return err
+	}
+
+	deployment.Spec.Template = corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{},
+			Labels:      labels,
+		},
+		Spec: corev1.PodSpec{
+			TerminationGracePeriodSeconds: smoothoperatorutils.Pointer(int64(60)),
+			InitContainers: []corev1.Container{
+				*blobDownloadInitContainer,
+				*mapfileGeneratorInitContainer,
+				*capabilitiesGeneratorInitContainer,
+			},
+			Volumes: mapserver.GetVolumesForDeployment(wfs, configMapNames),
+			Containers: []corev1.Container{
+				{
+					Name:            MapserverName,
+					Image:           r.MapserverImage,
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Ports: []corev1.ContainerPort{
+						{
+							ContainerPort: 80,
+						},
 					},
-				},
-				SecretRef: &corev1.SecretEnvSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: postgisSecretName, // Todo add this Secret
+					Env:          mapserver.GetEnvVarsForDeployment(wfs, blobsSecretName),
+					VolumeMounts: mapserver.GetVolumeMountsForDeployment(wfs, srvDir),
+					Resources:    mapserver.GetResourcesForDeployment(wfs),
+					//LivenessProbe:  &corev1.Probe{}, // TODO
+					//ReadinessProbe: &corev1.Probe{}, // TODO
+					//StartupProbe:   &corev1.Probe{}, // TODO
+					Lifecycle: &corev1.Lifecycle{
+						PreStop: &corev1.LifecycleHandler{
+							Sleep: &corev1.SleepAction{Seconds: 15},
+						},
 					},
 				},
 			},
-		}
+		},
 	}
-
-	deployment.Spec.Template = podTemplateSpec
 
 	if err := smoothoperatorutils.EnsureSetGVK(r.Client, deployment, deployment); err != nil {
 		return err
 	}
 	return ctrl.SetControllerReference(wfs, deployment, r.Scheme)
-
-}
-
-// Use ephemeral volume when ephemeral storage is greater then 10Gi
-func useEphemeralVolume(wfs *pdoknlv3.WFS) bool {
-	threshold := resource.MustParse("10Gi")
-	for _, container := range wfs.Spec.PodSpecPatch.Containers {
-		if container.Name == "mapserver" {
-			if container.Resources.Limits.StorageEphemeral() != nil {
-				if container.Resources.Limits.StorageEphemeral().Value() > threshold.Value() {
-					return true
-				}
-				return false
-			}
-		}
-	}
-	return false
 }
 
 // SetupWithManager sets up the controller with the Manager.

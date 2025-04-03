@@ -1,50 +1,106 @@
 package blobdownload
 
 import (
+	_ "embed"
 	"fmt"
-	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"os"
 	"regexp"
 	"strings"
+
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 const (
-	scriptPath = "./gpkg_download.sh"
 	tifPath    = "/srv/data/tif"
 	imagesPath = "/srv/data/images"
 	fontsPath  = "/srv/data/config/fonts"
 	legendPath = "/var/www/legend"
 )
 
-func GetScript() (config string, err error) {
-	content, err := os.ReadFile(scriptPath)
-	if err != nil {
-		return "", err
-	}
-	return string(content), nil
+//go:embed gpkg_download.sh
+var GpkgDownloadScript string
+
+func GetScript() string {
+	return GpkgDownloadScript
 }
 
-func GetArgs[W pdoknlv3.WFS | pdoknlv3.WMS](webservice W) (args string, err error) {
+func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigName, blobsSecretName, srvDir string) (*corev1.Container, error) {
+	initContainer := corev1.Container{
+		Name:            "blob-download",
+		Image:           image,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		EnvFrom: []corev1.EnvFromSource{
+			// Todo add this ConfigMap
+			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, blobsConfigName),
+			// Todo add this Secret
+			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, blobsSecretName),
+		},
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("0.15"),
+			},
+		},
+		Command: []string{"/bin/sh", "-c"},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
+			{Name: "data", MountPath: "/var/www", ReadOnly: false},
+		},
+	}
+
+	// Additional blob-download configuration
+	args, err := GetArgs(obj)
+	if err != nil {
+		return nil, err
+	}
+	initContainer.Args = []string{args}
+
+	resourceCPU := resource.MustParse("0.2")
+	if use, _ := mapperutils.UseEphemeralVolume(obj); use {
+		resourceCPU = resource.MustParse("1")
+	}
+	initContainer.Resources.Limits = corev1.ResourceList{
+		corev1.ResourceCPU: resourceCPU,
+	}
+
+	if options := obj.Options(); options != nil {
+		if options.PrefetchData != nil && *options.PrefetchData {
+			mount := corev1.VolumeMount{
+				Name:      mapserver.ConfigMapBlobDownloadVolumeName,
+				MountPath: "/src/scripts",
+				ReadOnly:  true,
+			}
+			initContainer.VolumeMounts = append(initContainer.VolumeMounts, mount)
+		}
+	}
+
+	return &initContainer, nil
+}
+
+func GetArgs[W pdoknlv3.WMSWFS](webservice W) (args string, err error) {
 	var sb strings.Builder
 
 	switch any(webservice).(type) {
-	case pdoknlv3.WFS:
-		if WFS, ok := any(webservice).(pdoknlv3.WFS); ok {
+	case *pdoknlv3.WFS:
+		if WFS, ok := any(webservice).(*pdoknlv3.WFS); ok {
 			createConfig(&sb)
 			downloadGeopackage(&sb, *WFS.Spec.Options.PrefetchData)
 			// In case of WFS no downloads are needed for TIFFs, styling assets and legends
 		}
-	case pdoknlv3.WMS:
-		if WMS, ok := any(webservice).(pdoknlv3.WMS); ok {
+	case *pdoknlv3.WMS:
+		if WMS, ok := any(webservice).(*pdoknlv3.WMS); ok {
 			createConfig(&sb)
 			downloadGeopackage(&sb, *WMS.Spec.Options.PrefetchData)
-			if err = downloadTiffs(&sb, &WMS); err != nil {
+			if err = downloadTiffs(&sb, WMS); err != nil {
 				return "", err
 			}
-			if err = downloadStylingAssets(&sb, &WMS); err != nil {
+			if err = downloadStylingAssets(&sb, WMS); err != nil {
 				return "", err
 			}
-			if err = downloadLegends(&sb, &WMS); err != nil {
+			if err = downloadLegends(&sb, WMS); err != nil {
 				return "", err
 			}
 		}
@@ -66,12 +122,12 @@ func downloadGeopackage(sb *strings.Builder, prefetchData bool) {
 	}
 }
 
-func downloadTiffs(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	if !*WMS.Spec.Options.PrefetchData {
+func downloadTiffs(sb *strings.Builder, wms *pdoknlv3.WMS) error {
+	if !*wms.Spec.Options.PrefetchData {
 		return nil
 	}
 
-	for _, blobKey := range WMS.GetUniqueTiffBlobKeys() {
+	for _, blobKey := range wms.GetUniqueTiffBlobKeys() {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {
 			return err
@@ -81,14 +137,15 @@ func downloadTiffs(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
 	return nil
 }
 
-func downloadStylingAssets(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	for _, blobKey := range WMS.Spec.Service.StylingAssets.BlobKeys {
+func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
+	re := regexp.MustCompile(".*\\.(ttf)$")
+	for _, blobKey := range wms.Spec.Service.StylingAssets.BlobKeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {
 			return err
 		}
 		path := imagesPath
-		isTTF, _ := regexp.MatchString(".*\\.(ttf)$", fileName)
+		isTTF := re.MatchString(fileName)
 		if isTTF {
 			path = fontsPath
 		}
@@ -106,8 +163,8 @@ func downloadStylingAssets(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
 	return nil
 }
 
-func downloadLegends(sb *strings.Builder, WMS *pdoknlv3.WMS) error {
-	for _, layer := range WMS.GetAllLayersWithLegend() {
+func downloadLegends(sb *strings.Builder, wms *pdoknlv3.WMS) error {
+	for _, layer := range wms.GetAllLayersWithLegend() {
 		writeLine(sb, "mkdir -p %s/%s;", legendPath, layer.Name)
 		for _, style := range layer.Styles {
 			writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, layer.Name, style.Name)

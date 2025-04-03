@@ -2,9 +2,10 @@ package v2beta1
 
 import (
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -15,12 +16,12 @@ func Pointer[T interface{}](val T) *T {
 func PointerVal[T interface{}](val *T, def T) T {
 	if val == nil {
 		return def
-	} else {
-		return *val
 	}
+
+	return *val
 }
 
-func ConverseOptionsV2ToV3(src WMSWFSOptions) *pdoknlv3.Options {
+func ConvertOptionsV2ToV3(src WMSWFSOptions) *pdoknlv3.Options {
 	return &pdoknlv3.Options{
 		AutomaticCasing:             src.AutomaticCasing,
 		IncludeIngress:              src.IncludeIngress,
@@ -32,7 +33,7 @@ func ConverseOptionsV2ToV3(src WMSWFSOptions) *pdoknlv3.Options {
 	}
 }
 
-func ConverseOptionsV3ToV2(src *pdoknlv3.Options) WMSWFSOptions {
+func ConvertOptionsV3ToV2(src *pdoknlv3.Options) WMSWFSOptions {
 	return WMSWFSOptions{
 		AutomaticCasing:             src.AutomaticCasing,
 		PrefetchData:                src.PrefetchData,
@@ -44,9 +45,10 @@ func ConverseOptionsV3ToV2(src *pdoknlv3.Options) WMSWFSOptions {
 	}
 }
 
-func ConverseAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscalerSpec {
+func ConvertAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscalerSpec {
 	var minReplicas *int32
 	if src.MinReplicas != nil {
+		//nolint:gosec
 		minReplicas = Pointer(int32(*src.MinReplicas))
 	}
 
@@ -60,8 +62,11 @@ func ConverseAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscaler
 		metrics = append(metrics, autoscalingv2.MetricSpec{
 			Type: autoscalingv2.ResourceMetricSourceType,
 			Resource: &autoscalingv2.ResourceMetricSource{
-				Name:                     corev1.ResourceCPU,
-				TargetAverageUtilization: Pointer(int32(*src.AverageCPUUtilization)),
+				Name: corev1.ResourceCPU,
+				Target: autoscalingv2.MetricTarget{
+					Type:               autoscalingv2.UtilizationMetricType,
+					AverageUtilization: Pointer(int32(*src.AverageCPUUtilization)),
+				},
 			},
 		})
 	}
@@ -73,7 +78,7 @@ func ConverseAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscaler
 	}
 }
 
-func ConverseResources(src corev1.ResourceRequirements) *corev1.PodSpec {
+func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 	return &corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
@@ -83,7 +88,7 @@ func ConverseResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 	}
 }
 
-func ConverseColumnAndAliasesV2ToColumnsWithAliasV3(columns []string, aliases map[string]string) []pdoknlv3.Column {
+func ConvertColumnAndAliasesV2ToColumnsWithAliasV3(columns []string, aliases map[string]string) []pdoknlv3.Column {
 	v3Columns := make([]pdoknlv3.Column, 0)
 	for _, column := range columns {
 		col := pdoknlv3.Column{
@@ -101,7 +106,7 @@ func ConverseColumnAndAliasesV2ToColumnsWithAliasV3(columns []string, aliases ma
 	return v3Columns
 }
 
-func ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(columns []pdoknlv3.Column) ([]string, map[string]string) {
+func ConvertColumnsWithAliasV3ToColumnsAndAliasesV2(columns []pdoknlv3.Column) ([]string, map[string]string) {
 	v2Columns := make([]string, 0)
 	v2Aliases := make(map[string]string)
 
@@ -116,7 +121,7 @@ func ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(columns []pdoknlv3.Column) 
 	return v2Columns, v2Aliases
 }
 
-func ConverseV2DataToV3(v2 Data) pdoknlv3.Data {
+func ConvertV2DataToV3(v2 Data) pdoknlv3.Data {
 	v3 := pdoknlv3.Data{}
 
 	if v2.GPKG != nil {
@@ -124,7 +129,7 @@ func ConverseV2DataToV3(v2 Data) pdoknlv3.Data {
 			BlobKey:      v2.GPKG.BlobKey,
 			TableName:    v2.GPKG.Table,
 			GeometryType: v2.GPKG.GeometryType,
-			Columns: ConverseColumnAndAliasesV2ToColumnsWithAliasV3(
+			Columns: ConvertColumnAndAliasesV2ToColumnsWithAliasV3(
 				v2.GPKG.Columns,
 				v2.GPKG.Aliases,
 			),
@@ -135,7 +140,7 @@ func ConverseV2DataToV3(v2 Data) pdoknlv3.Data {
 		v3.Postgis = &pdoknlv3.Postgis{
 			TableName:    v2.Postgis.Table,
 			GeometryType: v2.Postgis.GeometryType,
-			Columns: ConverseColumnAndAliasesV2ToColumnsWithAliasV3(
+			Columns: ConvertColumnAndAliasesV2ToColumnsWithAliasV3(
 				v2.Postgis.Columns,
 				v2.Postgis.Aliases,
 			),
@@ -154,11 +159,11 @@ func ConverseV2DataToV3(v2 Data) pdoknlv3.Data {
 	return v3
 }
 
-func ConverseV3DataToV2(v3 pdoknlv3.Data) Data {
+func ConvertV3DataToV2(v3 pdoknlv3.Data) Data {
 	v2 := Data{}
 
 	if v3.Gpkg != nil {
-		columns, aliases := ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(v3.Gpkg.Columns)
+		columns, aliases := ConvertColumnsWithAliasV3ToColumnsAndAliasesV2(v3.Gpkg.Columns)
 		v2.GPKG = &GPKG{
 			BlobKey:      v3.Gpkg.BlobKey,
 			Table:        v3.Gpkg.TableName,
@@ -169,7 +174,7 @@ func ConverseV3DataToV2(v3 pdoknlv3.Data) Data {
 	}
 
 	if v3.Postgis != nil {
-		columns, aliases := ConverseColumnsWithAliasV3ToColumnsAndAliasesV2(v3.Postgis.Columns)
+		columns, aliases := ConvertColumnsWithAliasV3ToColumnsAndAliasesV2(v3.Postgis.Columns)
 		v2.Postgis = &Postgis{
 			Table:        v3.Postgis.TableName,
 			GeometryType: v3.Postgis.GeometryType,
@@ -215,7 +220,7 @@ func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *core
 
 		if scalingSpec.Metrics != nil {
 			kub.Autoscaling.AverageCPUUtilization = Pointer(
-				int(*scalingSpec.Metrics[0].Resource.TargetAverageUtilization),
+				int(*scalingSpec.Metrics[0].Resource.Target.AverageUtilization),
 			)
 		}
 	}

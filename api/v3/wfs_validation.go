@@ -2,8 +2,9 @@ package v3
 
 import (
 	"fmt"
-	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 	"strings"
+
+	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 )
 
 func (wfs *WFS) ValidateCreate() ([]string, error) {
@@ -19,9 +20,9 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
-	} else {
-		return warnings, nil
 	}
+
+	return warnings, nil
 }
 
 func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
@@ -35,21 +36,21 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 	}
 
 	// Check service.baseURL did not change
-	if wfs.Spec.Service.BaseURL != wfsOld.Spec.Service.BaseURL {
-		reasons = append(reasons, fmt.Sprintf("service.baseURL is immutable"))
+	if wfs.Spec.Service.URL != wfsOld.Spec.Service.URL {
+		reasons = append(reasons, "service.baseURL is immutable")
 	}
 
 	if (wfs.Spec.Service.Inspire == nil && wfsOld.Spec.Service.Inspire != nil) || (wfs.Spec.Service.Inspire != nil && wfsOld.Spec.Service.Inspire == nil) {
-		reasons = append(reasons, fmt.Sprintf("services cannot change from inspire to not inspire or the other way around"))
+		reasons = append(reasons, "services cannot change from inspire to not inspire or the other way around")
 	}
 
 	validateWFS(wfs, &warnings, &reasons)
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
-	} else {
-		return warnings, nil
 	}
+
+	return warnings, nil
 }
 
 func validateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
@@ -59,13 +60,13 @@ func validateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
 
 	service := wfs.Spec.Service
 
-	err := sharedValidation.ValidateBaseURL(service.BaseURL)
+	err := sharedValidation.ValidateBaseURL(service.URL)
 	if err != nil {
 		*reasons = append(*reasons, fmt.Sprintf("%v", err))
 	}
 
 	if service.Mapfile == nil && service.DefaultCrs != "EPSG:28992" && service.Bbox == nil {
-		*reasons = append(*reasons, fmt.Sprintf("service.bbox.defaultCRS is required when service.defaultCRS is not 'EPSG:28992'"))
+		*reasons = append(*reasons, "service.bbox.defaultCRS is required when service.defaultCRS is not 'EPSG:28992'")
 	}
 
 	if service.Mapfile != nil {

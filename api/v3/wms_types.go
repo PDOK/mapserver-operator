@@ -25,13 +25,14 @@ SOFTWARE.
 package v3
 
 import (
-	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
 	"slices"
 	"sort"
+
+	shared_model "github.com/pdok/smooth-operator/model"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -52,7 +53,7 @@ type WMSSpec struct {
 }
 
 type WMSService struct {
-	BaseURL           string         `json:"baseUrl"`
+	URL               string         `json:"url"`
 	Title             string         `json:"title"`
 	Abstract          string         `json:"abstract"`
 	Keywords          []string       `json:"keywords"`
@@ -217,19 +218,52 @@ func (wms *WMS) GetUniqueTiffBlobKeys() []string {
 func (wms *WMS) GetAuthority() *Authority {
 	if wms.Spec.Service.Layer.Authority != nil {
 		return wms.Spec.Service.Layer.Authority
-	} else {
-		for _, childLayer := range *wms.Spec.Service.Layer.Layers {
-			if childLayer.Authority != nil {
-				return childLayer.Authority
-			} else if childLayer.Layers != nil {
-				for _, grandChildLayer := range *childLayer.Layers {
-					if grandChildLayer.Authority != nil {
-						return grandChildLayer.Authority
-					}
+	}
+
+	for _, childLayer := range *wms.Spec.Service.Layer.Layers {
+		if childLayer.Authority != nil {
+			return childLayer.Authority
+		} else if childLayer.Layers != nil {
+			for _, grandChildLayer := range *childLayer.Layers {
+				if grandChildLayer.Authority != nil {
+					return grandChildLayer.Authority
 				}
 			}
 		}
 	}
 
 	return nil
+}
+
+func (wms *WMS) HasPostgisData() bool {
+	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+		if layer.Data != nil && layer.Data.Postgis != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (wms *WMS) Mapfile() *Mapfile {
+	return wms.Spec.Service.Mapfile
+}
+
+func (wms *WMS) Type() ServiceType {
+	return ServiceTypeWMS
+}
+
+func (wms *WMS) PodSpecPatch() *corev1.PodSpec {
+	return wms.Spec.PodSpecPatch
+}
+
+func (wms *WMS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec {
+	return wms.Spec.HorizontalPodAutoscalerPatch
+}
+
+func (wms *WMS) Options() *Options {
+	return wms.Spec.Options
+}
+
+func (wms *WMS) ID() string {
+	return Sha1HashOfName(wms)
 }

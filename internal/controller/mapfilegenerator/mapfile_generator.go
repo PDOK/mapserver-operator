@@ -4,11 +4,46 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
-func GetConfig[W *pdoknlv3.WFS | *pdoknlv3.WMS](webservice W, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
+func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image, postgisConfigName, postgisSecretName, srvDir string) (*corev1.Container, error) {
+	initContainer := corev1.Container{
+		Name:            "mapfile-generator",
+		Image:           image,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Command:         []string{"generate-mapfile"},
+		Args: []string{
+			"--not-include",
+			strings.ToLower(string(obj.Type())),
+			"/input/input.json",
+			"/srv/data/config/mapfile",
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
+			{Name: mapserver.ConfigMapMapfileGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+		},
+	}
+
+	// Additional mapfile-generator configuration
+	if obj.HasPostgisData() {
+		initContainer.EnvFrom = []corev1.EnvFromSource{
+			// Todo add this ConfigMap
+			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, postgisConfigName),
+			// Todo add this Secret
+			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, postgisSecretName),
+		}
+	}
+	return &initContainer, nil
+}
+
+func GetConfig[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
 	switch any(webservice).(type) {
 	case *pdoknlv3.WFS:
 		if WFS, ok := any(webservice).(*pdoknlv3.WFS); ok {

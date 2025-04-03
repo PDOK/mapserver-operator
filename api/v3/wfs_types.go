@@ -26,7 +26,7 @@ package v3
 
 import (
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -79,7 +79,7 @@ type WFSSpec struct {
 
 type WFSService struct {
 	Prefix            string   `json:"prefix"`
-	BaseURL           string   `json:"baseUrl"`
+	URL               string   `json:"url"`
 	Inspire           *Inspire `json:"inspire,omitempty"`
 	Mapfile           *Mapfile `json:"mapfile,omitempty"`
 	OwnerInfoRef      string   `json:"ownerInfoRef"`
@@ -125,4 +125,28 @@ func (wfs *WFS) HasPostgisData() bool {
 		}
 	}
 	return false
+}
+
+func (wfs *WFS) Mapfile() *Mapfile {
+	return wfs.Spec.Service.Mapfile
+}
+
+func (wfs *WFS) Type() ServiceType {
+	return ServiceTypeWFS
+}
+
+func (wfs *WFS) PodSpecPatch() *corev1.PodSpec {
+	return wfs.Spec.PodSpecPatch
+}
+
+func (wfs *WFS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec {
+	return wfs.Spec.HorizontalPodAutoscalerPatch
+}
+
+func (wfs *WFS) Options() *Options {
+	return wfs.Spec.Options
+}
+
+func (wfs *WFS) ID() string {
+	return Sha1HashOfName(wfs)
 }

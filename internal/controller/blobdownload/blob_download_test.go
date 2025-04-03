@@ -1,10 +1,11 @@
 package blobdownload
 
 import (
-	v3 "github.com/pdok/mapserver-operator/api/v3"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"strings"
 	"testing"
+
+	v3 "github.com/pdok/mapserver-operator/api/v3"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 const (
@@ -65,7 +66,7 @@ chown -R 999:999 /var/www/legend
 
 func TestGetArgsForWFS(t *testing.T) {
 	type args struct {
-		WFS v3.WFS
+		WFS *v3.WFS
 	}
 	tests := []struct {
 		name     string
@@ -76,13 +77,13 @@ func TestGetArgsForWFS(t *testing.T) {
 		{
 			name: "GetArgs for WFS with prefetchData",
 			args: args{
-				WFS: v3.WFS{
+				WFS: &v3.WFS{
 					Spec: v3.WFSSpec{
 						Service: v3.WFSService{
 							Title: "wfs-prefetch-service-title",
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(true),
+							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},
 				},
@@ -93,13 +94,13 @@ func TestGetArgsForWFS(t *testing.T) {
 		{
 			name: "GetArgs for WFS without prefetchData",
 			args: args{
-				WFS: v3.WFS{
+				WFS: &v3.WFS{
 					Spec: v3.WFSSpec{
 						Service: v3.WFSService{
 							Title: "wfs-noprefetch-service-title",
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(false),
+							PrefetchData: smoothoperatorutils.Pointer(false),
 						},
 					},
 				},
@@ -145,7 +146,7 @@ func TestGetArgsForWMS(t *testing.T) {
 							Title: "wms-gpkg-service-title",
 							Layer: v3.Layer{
 								Name:  "wms-gpkg-layer-name",
-								Title: stringPtr("wms-gpkg-layer-title"),
+								Title: smoothoperatorutils.Pointer("wms-gpkg-layer-title"),
 								Styles: []v3.Style{
 									{
 										Legend: &v3.Legend{
@@ -156,11 +157,11 @@ func TestGetArgsForWMS(t *testing.T) {
 								Layers: &[]v3.Layer{
 									{
 										Name:  "wms-gpkg-layer-1-name",
-										Title: stringPtr("wms-gpkg-layer-1-title"),
+										Title: smoothoperatorutils.Pointer("wms-gpkg-layer-1-title"),
 										Styles: []v3.Style{
 											{
 												Name:  "wms-gpkg-style-1-name",
-												Title: stringPtr("wms-gpkg-style-1-title"),
+												Title: smoothoperatorutils.Pointer("wms-gpkg-style-1-title"),
 												Legend: &v3.Legend{
 													Width:   50,
 													Height:  50,
@@ -177,11 +178,11 @@ func TestGetArgsForWMS(t *testing.T) {
 									},
 									{
 										Name:  "wms-gpkg-layer-2-name",
-										Title: stringPtr("wms-gpkg-layer-2-title"),
+										Title: smoothoperatorutils.Pointer("wms-gpkg-layer-2-title"),
 										Styles: []v3.Style{
 											{
 												Name:  "wms-gpkg-style-2-name",
-												Title: stringPtr("wms-gpkg-style-2-title"),
+												Title: smoothoperatorutils.Pointer("wms-gpkg-style-2-title"),
 												Legend: &v3.Legend{
 													BlobKey: "resources-bucket/key/gpkg-layer-2-legend.png",
 												},
@@ -205,7 +206,7 @@ func TestGetArgsForWMS(t *testing.T) {
 							},
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(true),
+							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},
 				},
@@ -222,15 +223,15 @@ func TestGetArgsForWMS(t *testing.T) {
 							Title: "wms-tif-service-title",
 							Layer: v3.Layer{
 								Name:  "wms-tif-layer-name",
-								Title: stringPtr("wms-tif-layer-title"),
+								Title: smoothoperatorutils.Pointer("wms-tif-layer-title"),
 								Layers: &[]v3.Layer{
 									{
 										Name:  "wms-tif-layer-1-name",
-										Title: stringPtr("wms-tif-layer-1-title"),
+										Title: smoothoperatorutils.Pointer("wms-tif-layer-1-title"),
 										Styles: []v3.Style{
 											{
 												Name:  "wms-tif-style-1-name",
-												Title: stringPtr("wms-tif-style-1-title"),
+												Title: smoothoperatorutils.Pointer("wms-tif-style-1-title"),
 												Legend: &v3.Legend{
 													BlobKey: "resources-bucket/key/tif-layer-1-legend.png",
 												},
@@ -244,11 +245,11 @@ func TestGetArgsForWMS(t *testing.T) {
 									},
 									{
 										Name:  "wms-tif-layer-2-name",
-										Title: stringPtr("wms-tif-layer-2-title"),
+										Title: smoothoperatorutils.Pointer("wms-tif-layer-2-title"),
 										Styles: []v3.Style{
 											{
 												Name:  "wms-tif-style-2-name",
-												Title: stringPtr("wms-tif-style-2-title"),
+												Title: smoothoperatorutils.Pointer("wms-tif-style-2-title"),
 												Legend: &v3.Legend{
 													BlobKey: "resources-bucket/key/tif-layer-2-legend.png",
 												},
@@ -272,7 +273,7 @@ func TestGetArgsForWMS(t *testing.T) {
 							},
 						},
 						Options: &v3.Options{
-							PrefetchData: smoothoperatorutils.BoolPtr(true),
+							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},
 				},
@@ -283,7 +284,7 @@ func TestGetArgsForWMS(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			args, err := GetArgs(tt.args.WMS)
+			args, err := GetArgs(&tt.args.WMS)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetArgs() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -312,11 +313,7 @@ func TestGetScript(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			script, err := GetScript()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetScript() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			script := GetScript()
 			if !strings.HasPrefix(script, tt.wantHeader) {
 				t.Errorf("The returned script doesn't contain the expected header `%v`, got = %v", tt.wantHeader, script)
 			}
@@ -329,9 +326,4 @@ func TestGetScript(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TODO Move to smoothoperator
-func stringPtr(s string) *string {
-	return &s
 }
