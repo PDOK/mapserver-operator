@@ -3,6 +3,8 @@ package capabilitiesgenerator
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	"github.com/pdok/smooth-operator/model"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"testing"
@@ -116,6 +118,7 @@ func TestGetInputForWFS(t *testing.T) {
 					},
 					Spec: pdoknlv3.WFSSpec{
 						Service: pdoknlv3.WFSService{
+							URL:               "/datasetOwner/dataset/theme/wfs/v1_0",
 							Title:             "some Service title",
 							Abstract:          "some \"Service\" abstract",
 							Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
@@ -200,4 +203,33 @@ func TestGetInputForWFS(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInputForWMS(t *testing.T) {
+	wms := pdoknlv3.WMS{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{},
+		Spec:       pdoknlv3.WMSSpec{},
+		Status:     model.OperatorStatus{},
+	}
+
+	ownerInfo := smoothoperatorv1.OwnerInfo{
+		Spec: smoothoperatorv1.OwnerInfoSpec{
+			NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
+			MetadataUrls: smoothoperatorv1.MetadataUrls{
+				CSW: smoothoperatorv1.MetadataURL{
+					HrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}",
+				},
+			},
+			WFS: smoothoperatorv1.WFS{
+				ServiceProvider: smoothoperatorv1.ServiceProvider{
+					ProviderName: smoothoperatorutils.Pointer("PDOK"),
+				},
+			},
+		},
+	}
+
+	input, err := GetInput(&wms, &ownerInfo)
+	assert.NoError(t, err)
+	println(input)
 }

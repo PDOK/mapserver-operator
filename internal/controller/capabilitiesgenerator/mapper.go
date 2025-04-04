@@ -1,7 +1,9 @@
 package capabilitiesgenerator
 
 import (
+	"encoding/xml"
 	"fmt"
+	"github.com/pdok/ogc-specifications/pkg/wms130"
 	"strconv"
 	"strings"
 
@@ -15,9 +17,10 @@ import (
 )
 
 const (
-	inspireSchemaLocations = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd"
-	capabilitiesFilename   = "/var/www/config/capabilities_wfs_200.xml"
-	metadataMediaType      = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
+	inspireSchemaLocations  = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd"
+	wfsCapabilitiesFilename = "/var/www/config/capabilities_wfs_200.xml"
+	wmsCapabilitiesFilename = "/var/www/config/capabilities_wms_130.xml"
+	metadataMediaType       = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
 )
 
 func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
@@ -31,12 +34,12 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
 			Onlineresourceurl: pdoknlv3.GetHost(),
-			Path:              mapperutils.GetPath(wfs),
+			Path:              "/" + pdoknlv3.GetBaseURLPath(wfs),
 			Version:           *mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version"),
 		},
 		Services: capabilitiesgenerator.Services{
 			WFS200Config: &capabilitiesgenerator.WFS200Config{
-				Filename: capabilitiesFilename,
+				Filename: wfsCapabilitiesFilename,
 				Wfs200: wfs200.GetCapabilitiesResponse{
 
 					ServiceProvider: mapServiceProvider(&ownerInfo.Spec.WFS.ServiceProvider),
@@ -199,4 +202,40 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 	}
 
 	return serviceProvider
+}
+
+func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
+	//featureTypeList, err := getFeatureTypeList(wms, ownerInfo)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	config := capabilitiesgenerator.Config{
+		Global: capabilitiesgenerator.Global{
+			Namespace:         mapperutils.GetNamespaceURI("prefix", ownerInfo),
+			Prefix:            "prefix",
+			Onlineresourceurl: pdoknlv3.GetHost(),
+			Path:              pdoknlv3.GetBaseURLPath(wms),
+			Version:           *mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "service-version"),
+		},
+		Services: capabilitiesgenerator.Services{
+			WMS130Config: &capabilitiesgenerator.WMS130Config{
+				Filename: wmsCapabilitiesFilename,
+				Wms130: wms130.GetCapabilitiesResponse{
+					XMLName:      xml.Name{},
+					Namespaces:   wms130.Namespaces{},
+					WMSService:   wms130.WMSService{},
+					Capabilities: wms130.Capabilities{},
+				},
+			},
+		},
+	}
+
+	if wms.Spec.Service.Inspire != nil {
+		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
+		//metadataURL, _ := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wms.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
+
+	}
+
+	return &config, nil
 }
