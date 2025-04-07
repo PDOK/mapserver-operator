@@ -3,7 +3,6 @@ package capabilitiesgenerator
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
-	"github.com/pdok/smooth-operator/model"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -206,11 +205,60 @@ func TestGetInputForWFS(t *testing.T) {
 }
 
 func TestInputForWMS(t *testing.T) {
+	var maxSize int32 = 123
+
 	wms := pdoknlv3.WMS{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Spec:       pdoknlv3.WMSSpec{},
-		Status:     model.OperatorStatus{},
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{
+				"dataset":         "dataset",
+				"dataset-owner":   "datasetOwner",
+				"theme":           "theme",
+				"service-version": "v1_0",
+			},
+		},
+		Spec: pdoknlv3.WMSSpec{
+			Service: pdoknlv3.WMSService{
+				URL:               "/datasetOwner/dataset/theme/wms/v1_0",
+				Title:             "some Service title",
+				Abstract:          "some \"Service\" abstract",
+				Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
+				AccessConstraints: "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
+				MaxSize:           &maxSize,
+				Inspire: &pdoknlv3.Inspire{
+					ServiceMetadataURL: pdoknlv3.MetadataURL{
+						CSW: &pdoknlv3.Metadata{
+							MetadataIdentifier: "metameta-meta-meta-meta-metametameta",
+						},
+					},
+					Language:                 "dut",
+					SpatialDatasetIdentifier: "datadata-data-data-data-datadatadata",
+				},
+				DataEPSG:      "EPSG:28992",
+				StylingAssets: nil,
+				Mapfile:       nil,
+				Layer: pdoknlv3.Layer{
+					Name:                "",
+					Title:               nil,
+					Abstract:            nil,
+					Keywords:            nil,
+					BoundingBoxes:       nil,
+					Visible:             nil,
+					Authority:           nil,
+					DatasetMetadataURL:  nil,
+					MinScaleDenominator: nil,
+					MaxScaleDenominator: nil,
+					Styles:              nil,
+					LabelNoClip:         false,
+					Data:                nil,
+					Layers:              nil,
+				},
+			},
+		},
+	}
+
+	contactPersonPrimary := smoothoperatorv1.ContactPersonPrimary{
+		ContactPerson:       asPtr("KlantContactCenter PDOK"),
+		ContactOrganization: asPtr("PDOK"),
 	}
 
 	ownerInfo := smoothoperatorv1.OwnerInfo{
@@ -221,9 +269,21 @@ func TestInputForWMS(t *testing.T) {
 					HrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}",
 				},
 			},
-			WFS: smoothoperatorv1.WFS{
-				ServiceProvider: smoothoperatorv1.ServiceProvider{
-					ProviderName: smoothoperatorutils.Pointer("PDOK"),
+			WMS: smoothoperatorv1.WMS{
+				ContactInformation: &smoothoperatorv1.ContactInformation{
+					ContactPersonPrimary: &contactPersonPrimary,
+					ContactPosition:      asPtr("pointOfContact"),
+					ContactAddress: &smoothoperatorv1.ContactAddress{
+						AddressType:     asPtr("Work"),
+						Address:         nil,
+						City:            asPtr("Apeldoorn"),
+						StateOrProvince: nil,
+						PostCode:        nil,
+						Country:         asPtr("The Netherlands"),
+					},
+					ContactVoiceTelephone:        nil,
+					ContactFacsimileTelephone:    nil,
+					ContactElectronicMailAddress: asPtr("BeheerPDOK@kadaster.nl"),
 				},
 			},
 		},
