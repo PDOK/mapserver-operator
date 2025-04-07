@@ -43,6 +43,13 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WMS)
 	log.Printf("ConvertTo: Converting WMS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
+	V3HubFromV2(src, dst)
+
+	return nil
+}
+
+func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
+	dst := target
 
 	dst.ObjectMeta = src.ObjectMeta
 	dst.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION] = src.Spec.Service.MetadataIdentifier
@@ -126,8 +133,6 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Service = service
-
-	return nil
 }
 
 // ConvertFrom converts the Hub version (v3) to this WMS (v2beta1).

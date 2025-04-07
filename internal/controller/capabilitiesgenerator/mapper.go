@@ -209,6 +209,8 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 	if wms.Spec.Service.Fees != nil {
 		feesPtr := mapperutils.EscapeQuotes(*wms.Spec.Service.Fees)
 		fees = &feesPtr
+	} else {
+		fees = asPtr("NONE")
 	}
 
 	config := capabilitiesgenerator.Config{
