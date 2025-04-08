@@ -204,7 +204,8 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 }
 
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
-	canonicalServiceUrl := "https://service.pdok.nl" + "/" + pdoknlv3.GetBaseURLPath(wms)
+	hostBaseUrl := "https://service.pdok.nl"
+	canonicalServiceUrl := hostBaseUrl + "/" + pdoknlv3.GetBaseURLPath(wms)
 
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
 	var fees *string = nil
@@ -213,6 +214,14 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 		fees = &feesPtr
 	} else {
 		fees = asPtr("NONE")
+	}
+
+	maxWidth := 4000
+	maxHeight := 4000
+
+	accessContraints := wms.Spec.Service.AccessConstraints
+	if accessContraints == "" {
+		accessContraints = "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	}
 
 	config := capabilitiesgenerator.Config{
@@ -232,13 +241,13 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Title:              mapperutils.EscapeQuotes(wms.Spec.Service.Title),
 						Abstract:           &abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.Keywords},
-						OnlineResource:     wms130.OnlineResource{Href: &wms.Spec.Service.URL},
+						OnlineResource:     wms130.OnlineResource{Href: &hostBaseUrl},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               fees,
-						AccessConstraints:  &wms.Spec.Service.AccessConstraints,
+						AccessConstraints:  &accessContraints,
 						LayerLimit:         nil,
-						MaxWidth:           nil,
-						MaxHeight:          nil,
+						MaxWidth:           &maxWidth,
+						MaxHeight:          &maxHeight,
 					},
 					Capabilities: wms130.Capabilities{
 						WMSCapabilities: wms130.WMSCapabilities{
@@ -258,7 +267,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 							},
 							Exception:            wms130.ExceptionType{Format: []string{"XML", "BLANK"}},
 							ExtendedCapabilities: nil,
-							Layer:                getLayers(wms),
+							Layer:                getLayers(wms, canonicalServiceUrl),
 						},
 						OptionalConstraints: wms130.OptionalConstraints{},
 					},
@@ -366,7 +375,7 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 	return &result
 }
 
-func getLayers(wms *pdoknlv3.WMS) []wms130.Layer {
+func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 	result := make([]wms130.Layer, 0)
 	referenceLayer := wms.Spec.Service.Layer
 	title := referenceLayer.Title
@@ -496,6 +505,24 @@ func getLayers(wms *pdoknlv3.WMS) []wms130.Layer {
 			Resy: 0,
 		})
 
+	var authorityUrl *wms130.AuthorityURL = nil
+	var identifier *wms130.Identifier = nil
+
+	if referenceLayer.Authority != nil {
+		authorityUrl = &wms130.AuthorityURL{
+			Name: referenceLayer.Authority.Name,
+			OnlineResource: wms130.OnlineResource{
+				Xlink: nil,
+				Type:  nil,
+				Href:  &referenceLayer.Authority.URL,
+			},
+		}
+		identifier = &wms130.Identifier{
+			Authority: referenceLayer.Authority.Name,
+			Value:     referenceLayer.Authority.SpatialDatasetIdentifier,
+		}
+	}
+
 	topLayer := wms130.Layer{
 		Queryable:               asPtr(1),
 		Opaque:                  nil,
@@ -508,15 +535,101 @@ func getLayers(wms *pdoknlv3.WMS) []wms130.Layer {
 		BoundingBox:             allDefaultBoundingBoxes,
 		Dimension:               nil,
 		Attribution:             nil,
-		AuthorityURL:            nil,
-		Identifier:              nil,
+		AuthorityURL:            authorityUrl,
+		Identifier:              identifier,
 		MetadataURL:             nil,
 		DataURL:                 nil,
 		FeatureListURL:          nil,
 		Style:                   nil,
 		MinScaleDenominator:     nil,
 		MaxScaleDenominator:     nil,
-		Layer:                   nil,
+		Layer:                   []*wms130.Layer{},
+	}
+
+	for _, layer := range *referenceLayer.Layers {
+		var minScaleDenom *float64
+		var maxScaleDenom *float64
+		var innerIdentifier *wms130.Identifier
+		metadataUrls := make([]*wms130.MetadataURL, 0)
+
+		if layer.MinScaleDenominator != nil {
+			float, err := strconv.ParseFloat(*layer.MinScaleDenominator, 64)
+			if err == nil {
+				minScaleDenom = &float
+			}
+		}
+
+		if layer.MaxScaleDenominator != nil {
+			float, err := strconv.ParseFloat(*layer.MaxScaleDenominator, 64)
+			if err == nil {
+				maxScaleDenom = &float
+			}
+		}
+
+		if layer.DatasetMetadataURL != nil {
+			metadataUrls = append(metadataUrls, &wms130.MetadataURL{
+				Type:   asPtr("TC211"),
+				Format: asPtr("text/plain"),
+				OnlineResource: wms130.OnlineResource{
+					Xlink: nil,
+					Type:  asPtr("simple"),
+					Href:  asPtr("https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=" + layer.DatasetMetadataURL.CSW.MetadataIdentifier),
+				},
+			})
+		}
+
+		if layer.Authority != nil {
+			innerIdentifier = &wms130.Identifier{
+				Authority: layer.Authority.Name,
+				Value:     layer.Authority.SpatialDatasetIdentifier,
+			}
+		}
+
+		nestedLayer := wms130.Layer{
+			Queryable: asPtr(1),
+			Opaque:    nil,
+			Name:      &layer.Name,
+			Title:     pointerValOrDefault(layer.Title, ""),
+			Abstract:  layer.Abstract,
+			KeywordList: &wms130.Keywords{
+				Keyword: layer.Keywords,
+			},
+			CRS:                     defaultCrs,
+			EXGeographicBoundingBox: &defaultBoundingBox,
+			BoundingBox:             allDefaultBoundingBoxes,
+			Dimension:               nil,
+			Attribution:             nil,
+			AuthorityURL:            authorityUrl,
+			Identifier:              innerIdentifier,
+			MetadataURL:             metadataUrls,
+			DataURL:                 nil,
+			FeatureListURL:          nil,
+			Style:                   []*wms130.Style{},
+			MinScaleDenominator:     minScaleDenom,
+			MaxScaleDenominator:     maxScaleDenom,
+			Layer:                   nil,
+		}
+		for _, style := range layer.Styles {
+			newStyle := wms130.Style{
+				Name:     style.Name,
+				Title:    pointerValOrDefault(style.Title, ""),
+				Abstract: style.Abstract,
+				LegendURL: &wms130.LegendURL{
+					Width:  78,
+					Height: 20,
+					Format: "image/png",
+					OnlineResource: wms130.OnlineResource{
+						Xlink: nil,
+						Type:  asPtr("simple"),
+						Href:  asPtr(canonicalUrl + "/legend/" + layer.Name + "/" + layer.Name + ".png"),
+					},
+				},
+				StyleSheetURL: nil,
+			}
+			nestedLayer.Style = append(nestedLayer.Style, &newStyle)
+		}
+
+		topLayer.Layer = append(topLayer.Layer, &nestedLayer)
 	}
 
 	result = append(result, topLayer)
