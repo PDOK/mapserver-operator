@@ -94,7 +94,7 @@ services:
 	WMSInput = `global:
     prefix: prefix
     namespace: http://prefix.geonovum.nl
-    onlineResourceUrl: ""
+    onlineResourceUrl: http://localhost
     path: /rws/nwbwegen/wms/v1_0
     version: v1_0
     additionalSchemaLocations: http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd
@@ -674,6 +674,7 @@ func TestInputForWMS(t *testing.T) {
 	assert.NoError(t, err)
 	var wms pdoknlv3.WMS
 	v2beta1.V3HubFromV2(&v2wms, &wms)
+	pdoknlv3.SetHost("http://localhost")
 
 	contactPersonPrimary := smoothoperatorv1.ContactPersonPrimary{
 		ContactPerson:       asPtr("KlantContactCenter PDOK"),
