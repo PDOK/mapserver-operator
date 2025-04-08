@@ -204,6 +204,8 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 }
 
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
+	canonicalServiceUrl := "https://service.pdok.nl" + "/" + pdoknlv3.GetBaseURLPath(wms)
+
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
 	var fees *string = nil
 	if wms.Spec.Service.Fees != nil {
@@ -241,13 +243,22 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 					Capabilities: wms130.Capabilities{
 						WMSCapabilities: wms130.WMSCapabilities{
 							Request: wms130.Request{
-								GetCapabilities: wms130.RequestType{},
-								GetMap:          wms130.RequestType{},
-								GetFeatureInfo:  nil,
+								GetCapabilities: wms130.RequestType{
+									Format:  []string{"text/xml"},
+									DCPType: getDcpType(canonicalServiceUrl, false),
+								},
+								GetMap: wms130.RequestType{
+									Format:  []string{"image/png", "image/jpeg", "image/png; mode=8bit", "image/vnd.jpeg-png", "image/vnd.jpeg-png8"},
+									DCPType: getDcpType(canonicalServiceUrl, true),
+								},
+								GetFeatureInfo: &wms130.RequestType{
+									Format:  []string{"application/json", "application/json; subtype=geojson", "application/vnd.ogc.gml", "text/html", "text/plain", "text/xml", "text/xml; subtype=gml/3.1.1"},
+									DCPType: getDcpType(canonicalServiceUrl, true),
+								},
 							},
 							Exception:            wms130.ExceptionType{Format: []string{"XML", "BLANK"}},
 							ExtendedCapabilities: nil,
-							Layer:                nil,
+							Layer:                getLayers(wms),
 						},
 						OptionalConstraints: wms130.OptionalConstraints{},
 					},
@@ -327,6 +338,189 @@ func getContactInformation(ownerInfo *smoothoperatorv1.OwnerInfo) *wms130.Contac
 	result.ContactElectronicMailAddress = providedContactInformation.ContactElectronicMailAddress
 
 	return &result
+}
+
+func getDcpType(url string, fillPost bool) *wms130.DCPType {
+	get := wms130.Method{
+		OnlineResource: wms130.OnlineResource{
+			Xlink: nil,
+			Type:  nil,
+			Href:  asPtr(url),
+		},
+	}
+
+	var post *wms130.Method = nil
+	if fillPost {
+		post = &get
+	}
+
+	result := wms130.DCPType{
+		HTTP: struct {
+			Get  wms130.Method  `xml:"Get" yaml:"get"`
+			Post *wms130.Method `xml:"Post" yaml:"post"`
+		}{
+			Get:  get,
+			Post: post,
+		},
+	}
+	return &result
+}
+
+func getLayers(wms *pdoknlv3.WMS) []wms130.Layer {
+	result := make([]wms130.Layer, 0)
+	referenceLayer := wms.Spec.Service.Layer
+	title := referenceLayer.Title
+	if title != nil {
+		title = asPtr(mapperutils.EscapeQuotes(*referenceLayer.Title))
+	} else {
+		title = asPtr("")
+	}
+
+	defaultCrs := []wms130.CRS{{
+		Namespace: "EPSG",
+		Code:      28992,
+	}, {
+		Namespace: "EPSG",
+		Code:      25831,
+	}, {
+		Namespace: "EPSG",
+		Code:      25832,
+	}, {
+		Namespace: "EPSG",
+		Code:      3034,
+	}, {
+		Namespace: "EPSG",
+		Code:      3035,
+	}, {
+		Namespace: "EPSG",
+		Code:      3857,
+	}, {
+		Namespace: "EPSG",
+		Code:      4258,
+	}, {
+		Namespace: "EPSG",
+		Code:      4326,
+	}, {
+		Namespace: "CRS",
+		Code:      84,
+	}}
+
+	defaultBoundingBox := wms130.EXGeographicBoundingBox{
+		WestBoundLongitude: 2.52713,
+		EastBoundLongitude: 7.37403,
+		SouthBoundLatitude: 50.2129,
+		NorthBoundLatitude: 55.7212,
+	}
+
+	allDefaultBoundingBoxes := make([]*wms130.LayerBoundingBox, 0)
+	allDefaultBoundingBoxes = append(allDefaultBoundingBoxes,
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:28992",
+			Minx: -25000,
+			Miny: 250000,
+			Maxx: 280000,
+			Maxy: 860000,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:25831",
+			Minx: -470271,
+			Miny: 5.56231e+06,
+			Maxx: 795163,
+			Maxy: 6.18197e+06,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:25832",
+			Minx: 62461.6,
+			Miny: 5.56555e+06,
+			Maxx: 397827,
+			Maxy: 6.19042e+06,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:3034",
+			Minx: 2.61336e+06,
+			Miny: 3.509e+06,
+			Maxx: 3.22007e+06,
+			Maxy: 3.84003e+06,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:3035",
+			Minx: 3.01676e+06,
+			Miny: 3.81264e+06,
+			Maxx: 3.64485e+06,
+			Maxy: 4.15586e+06,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:3857",
+			Minx: 281318,
+			Miny: 6.48322e+06,
+			Maxx: 820873,
+			Maxy: 7.50311e+06,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:4258",
+			Minx: 50.2129,
+			Miny: 2.52713,
+			Maxx: 55.7212,
+			Maxy: 7.37403,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "EPSG:4326",
+			Minx: 50.2129,
+			Miny: 2.52713,
+			Maxx: 55.7212,
+			Maxy: 7.37403,
+			Resx: 0,
+			Resy: 0,
+		},
+		&wms130.LayerBoundingBox{
+			CRS:  "CRS:84",
+			Minx: 2.52713,
+			Miny: 50.2129,
+			Maxx: 7.37403,
+			Maxy: 55.7212,
+			Resx: 0,
+			Resy: 0,
+		})
+
+	topLayer := wms130.Layer{
+		Queryable:               asPtr(1),
+		Opaque:                  nil,
+		Name:                    nil,
+		Title:                   *title,
+		Abstract:                asPtr(mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)),
+		KeywordList:             &wms130.Keywords{Keyword: referenceLayer.Keywords},
+		CRS:                     defaultCrs,
+		EXGeographicBoundingBox: &defaultBoundingBox,
+		BoundingBox:             allDefaultBoundingBoxes,
+		Dimension:               nil,
+		Attribution:             nil,
+		AuthorityURL:            nil,
+		Identifier:              nil,
+		MetadataURL:             nil,
+		DataURL:                 nil,
+		FeatureListURL:          nil,
+		Style:                   nil,
+		MinScaleDenominator:     nil,
+		MaxScaleDenominator:     nil,
+		Layer:                   nil,
+	}
+
+	result = append(result, topLayer)
+	return result
 }
 
 func pointerValOrDefault[T any](pointer *T, defaultValue T) T {
