@@ -267,3 +267,7 @@ func (wms *WMS) Options() *Options {
 func (wms *WMS) ID() string {
 	return Sha1HashOfName(wms)
 }
+
+func (wms *WMS) URLPath() string {
+	return wms.Spec.Service.URL
+}

@@ -1,7 +1,6 @@
 package capabilitiesgenerator
 
 import (
-	"errors"
 	"fmt"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -37,8 +36,8 @@ func GetInput[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.Owner
 			return createInputForWFS(WFS, ownerInfo)
 		}
 	case *pdoknlv3.WMS:
-		if _, ok := any(webservice).(*pdoknlv3.WMS); ok {
-			return "", errors.New("not implemented for WMS")
+		if WMS, ok := any(webservice).(*pdoknlv3.WMS); ok {
+			return createInputForWMS(WMS, ownerInfo)
 		}
 	default:
 		return "", fmt.Errorf("unexpected input, webservice should be of type WFS or WMS, webservice: %v", webservice)
@@ -48,6 +47,19 @@ func GetInput[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.Owner
 
 func createInputForWFS(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
 	input, err := MapWFSToCapabilitiesGeneratorInput(wfs, ownerInfo)
+	if err != nil {
+		return "", err
+	}
+	yamlInput, err := yaml.Marshal(input)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal the capabilities generator input to yaml: %w", err)
+	}
+
+	return string(yamlInput), nil
+}
+
+func createInputForWMS(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
+	input, err := MapWMSToCapabilitiesGeneratorInput(wms, ownerInfo)
 	if err != nil {
 		return "", err
 	}
