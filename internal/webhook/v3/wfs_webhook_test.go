@@ -25,34 +25,11 @@ SOFTWARE.
 package v3
 
 import (
-	"encoding/json"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/yaml"
-
-	"os"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	// TODO (user): Add any additional imports if needed
 )
-
-func readSample(v *pdoknlv3.WFS) error {
-	sampleYaml, err := os.ReadFile("../../../config/samples/v3_wfs.yaml")
-	if err != nil {
-		return err
-	}
-	sampleJSON, err := yaml.YAMLToJSONStrict(sampleYaml)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(sampleJSON, v)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 var _ = Describe("WFS Webhook", func() {
 	var (
