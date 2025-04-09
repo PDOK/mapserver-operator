@@ -52,6 +52,10 @@ func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 	dst := target
 
 	dst.ObjectMeta = src.ObjectMeta
+	if dst.Annotations == nil {
+		dst.Annotations = make(map[string]string)
+	}
+
 	dst.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION] = src.Spec.Service.MetadataIdentifier
 
 	// Set LifeCycle if defined
@@ -322,6 +326,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 		BoundingBoxes:       []pdoknlv3.WMSBoundingBox{},
 		MinScaleDenominator: nil,
 		MaxScaleDenominator: nil,
+		Visible:             &v2Layer.Visible,
 	}
 
 	if v2Layer.SourceMetadataIdentifier != nil {
