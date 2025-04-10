@@ -150,3 +150,7 @@ func (wfs *WFS) Options() *Options {
 func (wfs *WFS) ID() string {
 	return Sha1HashOfName(wfs)
 }
+
+func (wfs *WFS) URLPath() string {
+	return wfs.Spec.Service.URL
+}

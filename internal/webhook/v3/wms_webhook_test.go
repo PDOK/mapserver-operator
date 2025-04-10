@@ -27,37 +27,195 @@ package v3
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	// TODO (user): Add any additional imports if needed
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var _ = Describe("WMS Webhook", func() {
 	var (
-		obj    *pdoknlv3.WMS
-		oldObj *pdoknlv3.WMS
+		obj       *pdoknlv3.WMS
+		oldObj    *pdoknlv3.WMS
+		validator WMSCustomValidator
 	)
 
 	BeforeEach(func() {
-		obj = &pdoknlv3.WMS{}
-		oldObj = &pdoknlv3.WMS{}
-		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
+		validator = WMSCustomValidator{}
+		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
+
+		sample := &pdoknlv3.WMS{}
+		err := readSample(sample)
+		Expect(err).To(BeNil(), "Reading and parsing the WMS V3 sample failed")
+
+		obj = sample.DeepCopy()
+		oldObj = sample.DeepCopy()
+
 		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")
-		// TODO (user): Add any setup logic common to all tests
+		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
+
 	})
 
 	AfterEach(func() {
-		// TODO (user): Add any teardown logic common to all tests
+
 	})
 
-	Context("When creating WMS under Conversion Webhook", func() {
-		// TODO (user): Add logic to convert the object to the desired version and verify the conversion
-		// Example:
-		// It("Should convert the object correctly", func() {
-		//     convertedObj := &pdoknlv3.WMS{}
-		//     Expect(obj.ConvertTo(convertedObj)).To(Succeed())
-		//     Expect(convertedObj).ToNot(BeNil())
-		// })
+	Context("When creating or updating WMS under Conversion Webhook", func() {
+		It("Creates the WMS from the sample", func() {
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(BeNil())
+		})
+
+		It("Warns if the name contains WMS", func() {
+			obj.Name += "-wms"
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(BeNil())
+			Expect(len(warnings)).To(BeNumerically(">", 0))
+		})
+
+		It("Should deny creation if the baseUrl is not https", func() {
+			obj.Spec.Service.URL = "http://pdok.nl/wms-test"
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if the baseUrl does not have a path", func() {
+			obj.Spec.Service.URL = "https://pdok.nl/"
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if there are no labels", func() {
+			obj.Labels = map[string]string{}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if layer names are not unique", func() {
+			childLayers := *obj.Spec.Service.Layer.Layers
+			secondLayer := childLayers[0]
+			obj.Spec.Service.Layer.Name = secondLayer.Name
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if defaultCRS is not EPSG:28992 and layer has no boundingbox defined for the corresponding CRS", func() {
+			obj.Spec.Service.DataEPSG = "EPSG:4326"
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if layer is visible and has no value for required field title", func() {
+			obj.Spec.Service.Layer.Title = nil
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if layer is visible and has no value for required field abstract", func() {
+			obj.Spec.Service.Layer.Abstract = nil
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if layer is visible and has no value for required field keywords", func() {
+			obj.Spec.Service.Layer.Keywords = nil
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if there is a visible layer without a style title", func() {
+			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers2 := *nestedLayers1[0].Layers
+			nestedLayers2[0].Styles[0].Title = nil
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if layer has parent layer with same style name as child layer", func() {
+			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers2 := *nestedLayers1[0].Layers
+			nestedLayers1[0].Styles = []pdoknlv3.Style{{Name: nestedLayers2[0].Styles[0].Name}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if datalayer has style without visualization but there is no mapfile set", func() {
+			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers2 := *nestedLayers1[0].Layers
+			nestedLayers2[0].Styles[0].Visualization = nil
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if datalayer has style with visualization but there is also a mapfile set", func() {
+			obj.Spec.Service.Mapfile = &pdoknlv3.Mapfile{ConfigMapKeyRef: corev1.ConfigMapKeySelector{Key: "mapfile.map"}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if grouplayer is not visible", func() {
+			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers1[0].Visible = smoothoperatorutils.Pointer(false)
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if grouplayer has data", func() {
+			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers1[0].Data = &pdoknlv3.Data{}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if grouplayer has style with visualization", func() {
+			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers1[0].Styles = []pdoknlv3.Style{{Visualization: smoothoperatorutils.Pointer("visualization.style")}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if a label changed", func() {
+			for label, val := range obj.Labels {
+				obj.Labels[label] = val + "-newval"
+				break
+			}
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if a label was removed", func() {
+			for label := range obj.Labels {
+				delete(obj.Labels, label)
+				break
+			}
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if a label was added", func() {
+			obj.Labels["new-label"] = "test"
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if an inspire block was added", func() {
+			oldObj.Spec.Service.Inspire = nil
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny update if an inspire block was removed", func() {
+			obj.Spec.Service.Inspire = nil
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should deny creation if there are no visible layers", func() {
+			obj.Spec.Service.Layer.Layers = nil
+			obj.Spec.Service.Layer.Visible = smoothoperatorutils.Pointer(false)
+
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+		})
 	})
 
 })

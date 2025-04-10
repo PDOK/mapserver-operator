@@ -35,6 +35,7 @@ type WMSWFS interface {
 	HasPostgisData() bool
 	// Sha1 hash of the objects name
 	ID() string
+	URLPath() string
 }
 
 type Mapfile struct {
@@ -112,18 +113,7 @@ func GetHost() string {
 }
 
 func GetBaseURLPath[T WMSWFS](o T) string {
-	var serviceURL string
-	switch any(o).(type) {
-	case *WFS:
-		if WFS, ok := any(o).(*WFS); ok {
-			serviceURL = WFS.Spec.Service.URL
-		}
-	case *WMS:
-		if WMS, ok := any(o).(*WMS); ok {
-			serviceURL = WMS.Spec.Service.URL
-		}
-	}
-
+	serviceURL := o.URLPath()
 	parsed, _ := url.Parse(serviceURL)
 	return strings.TrimPrefix(parsed.Path, "/")
 }

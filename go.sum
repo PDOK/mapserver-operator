@@ -142,8 +142,8 @@ github.com/pdok/featureinfo-generator v1.4.0-beta1 h1:ZZO5OtK7yW5ozXFrl1OaxKl0MK
 github.com/pdok/featureinfo-generator v1.4.0-beta1/go.mod h1:02Ryu7ZRkeha8SCfS6VYWCdKYZh0llskrfFgp6xRCjk=
 github.com/pdok/ogc-capabilities-generator v1.0.0-beta5 h1:nwkIbFcUW4FIYnf6fLfzpkaIdolQoEhH7yyS8KXNt/g=
 github.com/pdok/ogc-capabilities-generator v1.0.0-beta5/go.mod h1:qG2auFy7MDL8Zp1eOfdaUJat+jNW5oLGVd+g7Mbth4Q=
-github.com/pdok/ogc-specifications v1.0.0-beta4 h1:/Dgi6ArgR0YPCkErpNyCQTCYMkH/cIfWe+VCoUUZZN0=
-github.com/pdok/ogc-specifications v1.0.0-beta4/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
+github.com/pdok/ogc-specifications v1.0.0-beta5 h1:j7JrXUeW55mVU9ZmJ67r8V6DhbKdgTDiGE1YKFpRWx4=
+github.com/pdok/ogc-specifications v1.0.0-beta5/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
 github.com/pdok/smooth-operator v0.0.9 h1:UaOPc23BaHDWzBatSWnOxEjffV0WMiy1LPUkRdqdIGI=
 github.com/pdok/smooth-operator v0.0.9/go.mod h1:oZWFuIKJGjN/C6ocgMNfMZ7SbLQi+N0qaWj7j95Wdec=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

@@ -12,8 +12,9 @@ require (
 	github.com/onsi/gomega v1.36.2
 	github.com/pdok/featureinfo-generator v1.4.0-beta1
 	github.com/pdok/ogc-capabilities-generator v1.0.0-beta5
-	github.com/pdok/ogc-specifications v1.0.0-beta4
+	github.com/pdok/ogc-specifications v1.0.0-beta5
 	github.com/pdok/smooth-operator v0.0.9
+	github.com/stretchr/testify v1.10.0
 	github.com/traefik/traefik/v3 v3.3.4
 	k8s.io/api v0.32.0
 	k8s.io/apimachinery v0.32.0
@@ -40,6 +41,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/miekg/dns v1.1.62 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/traefik/paerser v0.2.2 // indirect
@@ -81,7 +83,7 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cel-go v0.22.0 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/google/go-cmp v0.7.0
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -134,7 +136,7 @@ require (
 	k8s.io/component-base v0.32.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241212222426-2c72e554b1e7 // indirect
-	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
+	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/kustomize/api v0.19.0 // indirect

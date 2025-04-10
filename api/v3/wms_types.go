@@ -231,6 +231,34 @@ func (layer *Layer) IsGroupLayer(service *WMSService) bool {
 	return layer.GetLayerType(service) == GroupLayer
 }
 
+func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {
+	for _, bbox := range layer.BoundingBoxes {
+		if bbox.CRS == crs {
+			return true
+		}
+	}
+	return false
+}
+
+func (layer *Layer) setInheritedBoundingBoxes() {
+	if layer.Layers == nil || len(*layer.Layers) == 0 {
+		return
+	}
+
+	var updatedLayers []Layer
+	for _, childLayer := range *layer.Layers {
+		// Inherit parent boundingboxes
+		for _, boundingBox := range layer.BoundingBoxes {
+			if !childLayer.hasBoundingBoxForCRS(boundingBox.CRS) {
+				childLayer.BoundingBoxes = append(childLayer.BoundingBoxes, boundingBox)
+			}
+		}
+		childLayer.setInheritedBoundingBoxes()
+		updatedLayers = append(updatedLayers, childLayer)
+	}
+	*layer.Layers = updatedLayers
+}
+
 func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
 	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		if !layer.hasData() || len(layer.Styles) == 0 {
@@ -309,4 +337,8 @@ func (wms *WMS) Options() *Options {
 
 func (wms *WMS) ID() string {
 	return Sha1HashOfName(wms)
+}
+
+func (wms *WMS) URLPath() string {
+	return wms.Spec.Service.URL
 }
