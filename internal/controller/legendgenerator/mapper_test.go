@@ -4,6 +4,8 @@ import (
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 	"testing"
 )
@@ -16,9 +18,21 @@ func TestGenerateConfigmapNoLegendFix(t *testing.T) {
 	var wms pdoknlv3.WMS
 	v2beta1.V3HubFromV2(&v2wms, &wms)
 	configMap := GetLegendGeneratorConfigMap(&wms)
-	_ = configMap
-	a := 0
-	_ = a
+
+	expectedData := make(map[string]string)
+	expectedData["default_mapserver.conf"] = "CONFIG\n  ENV\n    MS_MAP_NO_PATH \"true\"\n  END\nEND\n"
+	expectedData["input"] = "\"wegvakken\" \"wegvakken\"\n\"hectopunten\" \"hectopunten\"\n"
+	expectedData["input2"] = "- layer: wegvakken\n  style: wegvakken\n- layer: hectopunten\n  style: hectopunten\n"
+
+	expected := v1.ConfigMap{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{Name: "rws-nwbwegen-v1-0-legend-generator", Labels: map[string]string{"app": "mapserver", "dataset": "nwbwegen", "dataset-owner": "rws", "inspire": "true", "service-type": "wms", "service-version": "v1_0"}},
+		Immutable:  v2beta1.Pointer(true),
+		Data:       expectedData,
+		BinaryData: nil,
+	}
+
+	assert.Equal(t, expected, *configMap)
 }
 
 func TestGenerateConfigmapWithLegendFix(t *testing.T) {
@@ -29,7 +43,22 @@ func TestGenerateConfigmapWithLegendFix(t *testing.T) {
 	var wms pdoknlv3.WMS
 	v2beta1.V3HubFromV2(&v2wms, &wms)
 	configMap := GetLegendGeneratorConfigMap(&wms)
-	_ = configMap
-	a := 0
-	_ = a
+
+	expectedData := make(map[string]string)
+	expectedData["default_mapserver.conf"] = "CONFIG\n  ENV\n    MS_MAP_NO_PATH \"true\"\n  END\nEND\n"
+	expectedData["input"] = "\"Bebouwing\" \"standaard:bebouwing\"\n\"Bebouwing\" \"kwaliteit:bebouwing\"\n\"Bebouwing\" \"print:bebouwing\"\n\"Bebouwingvlak\" \"standaard\"\n\"Bebouwingvlak\" \"kwaliteit\"\n\"Bebouwingvlak\" \"print\"\n\"Bebouwingvlak\" \"standaard:bebouwing\"\n\"Bebouwingvlak\" \"kwaliteit:bebouwing\"\n\"Bebouwingvlak\" \"print:bebouwing\"\n\"Nummeraanduidingreeks\" \"standaard\"\n\"Nummeraanduidingreeks\" \"kwaliteit\"\n\"Nummeraanduidingreeks\" \"print\"\n\"Nummeraanduidingreeks\" \"standaard:bebouwing\"\n\"Nummeraanduidingreeks\" \"kwaliteit:bebouwing\"\n\"Nummeraanduidingreeks\" \"print:bebouwing\"\n\"OpenbareRuimteNaam\" \"standaard\"\n\"OpenbareRuimteNaam\" \"kwaliteit\"\n\"OpenbareRuimteNaam\" \"print\"\n\"OpenbareRuimteNaam\" \"standaard:openbareruimtenaam\"\n\"OpenbareRuimteNaam\" \"kwaliteit:openbareruimtenaam\"\n\"OpenbareRuimteNaam\" \"print:openbareruimtenaam\"\n\"Perceel\" \"standaard:perceel\"\n\"Perceel\" \"kwaliteit:perceel\"\n\"Perceel\" \"print:perceel\"\n\"Perceelvlak\" \"standaard\"\n\"Perceelvlak\" \"kwaliteit\"\n\"Perceelvlak\" \"print\"\n\"Perceelvlak\" \"standaard:perceel\"\n\"Perceelvlak\" \"kwaliteit:perceel\"\n\"Perceelvlak\" \"print:perceel\"\n\"Label\" \"standaard\"\n\"Label\" \"standaard:perceel\"\n\"Label\" \"kwaliteit\"\n\"Label\" \"kwaliteit:perceel\"\n\"Label\" \"print\"\n\"Label\" \"print:perceel\"\n\"Bijpijling\" \"standaard\"\n\"Bijpijling\" \"kwaliteit\"\n\"Bijpijling\" \"print\"\n\"Bijpijling\" \"standaard:perceel\"\n\"Bijpijling\" \"kwaliteit:perceel\"\n\"Bijpijling\" \"print:perceel\"\n\"KadastraleGrens\" \"standaard\"\n\"KadastraleGrens\" \"kwaliteit\"\n\"KadastraleGrens\" \"print\"\n\"KadastraleGrens\" \"standaard:kadastralegrens\"\n\"KadastraleGrens\" \"kwaliteit:kadastralegrens\"\n\"KadastraleGrens\" \"print:kadastralegrens\"\n"
+	expectedData["input2"] = "- layer: Bebouwing\n  style: standaard:bebouwing\n- layer: Bebouwing\n  style: kwaliteit:bebouwing\n- layer: Bebouwing\n  style: print:bebouwing\n- layer: Bebouwingvlak\n  style: standaard\n- layer: Bebouwingvlak\n  style: kwaliteit\n- layer: Bebouwingvlak\n  style: print\n- layer: Bebouwingvlak\n  style: standaard:bebouwing\n- layer: Bebouwingvlak\n  style: kwaliteit:bebouwing\n- layer: Bebouwingvlak\n  style: print:bebouwing\n- layer: Nummeraanduidingreeks\n  style: standaard\n- layer: Nummeraanduidingreeks\n  style: kwaliteit\n- layer: Nummeraanduidingreeks\n  style: print\n- layer: Nummeraanduidingreeks\n  style: standaard:bebouwing\n- layer: Nummeraanduidingreeks\n  style: kwaliteit:bebouwing\n- layer: Nummeraanduidingreeks\n  style: print:bebouwing\n- layer: OpenbareRuimteNaam\n  style: standaard\n- layer: OpenbareRuimteNaam\n  style: kwaliteit\n- layer: OpenbareRuimteNaam\n  style: print\n- layer: OpenbareRuimteNaam\n  style: standaard:openbareruimtenaam\n- layer: OpenbareRuimteNaam\n  style: kwaliteit:openbareruimtenaam\n- layer: OpenbareRuimteNaam\n  style: print:openbareruimtenaam\n- layer: Perceel\n  style: standaard:perceel\n- layer: Perceel\n  style: kwaliteit:perceel\n- layer: Perceel\n  style: print:perceel\n- layer: Perceelvlak\n  style: standaard\n- layer: Perceelvlak\n  style: kwaliteit\n- layer: Perceelvlak\n  style: print\n- layer: Perceelvlak\n  style: standaard:perceel\n- layer: Perceelvlak\n  style: kwaliteit:perceel\n- layer: Perceelvlak\n  style: print:perceel\n- layer: Label\n  style: standaard\n- layer: Label\n  style: standaard:perceel\n- layer: Label\n  style: kwaliteit\n- layer: Label\n  style: kwaliteit:perceel\n- layer: Label\n  style: print\n- layer: Label\n  style: print:perceel\n- layer: Bijpijling\n  style: standaard\n- layer: Bijpijling\n  style: kwaliteit\n- layer: Bijpijling\n  style: print\n- layer: Bijpijling\n  style: standaard:perceel\n- layer: Bijpijling\n  style: kwaliteit:perceel\n- layer: Bijpijling\n  style: print:perceel\n- layer: KadastraleGrens\n  style: standaard\n- layer: KadastraleGrens\n  style: kwaliteit\n- layer: KadastraleGrens\n  style: print\n- layer: KadastraleGrens\n  style: standaard:kadastralegrens\n- layer: KadastraleGrens\n  style: kwaliteit:kadastralegrens\n- layer: KadastraleGrens\n  style: print:kadastralegrens\n"
+	expectedData["legend-fixer.sh"] = "#!/usr/bin/env bash\nset -eo pipefail\necho \"creating legends for root and group layers by concatenating data layers\"\ninput_filepath=\"/input/input\"\nremove_filepath=\"/input/remove\"\nconfig_filepath=\"/input/ogc-webservice-proxy-config.yaml\"\nlegend_dir=\"/var/www/legend\"\n< \"${input_filepath}\" xargs -n 2 echo | while read -r layer style; do\n  export layer\n  # shellcheck disable=SC2016 # dollar is for yq\n  if ! < \"${config_filepath}\" yq -e 'env(layer) as $layer | .grouplayers | keys | contains([$layer])' &>/dev/null; then\n    continue\n  fi\n  export grouplayer=\"${layer}\"\n  grouplayer_style_filepath=\"${legend_dir}/${grouplayer}/${style}.png\"\n  # shellcheck disable=SC2016 # dollar is for yq\n  datalayers=$(< \"${config_filepath}\" yq 'env(grouplayer) as $foo | .grouplayers[$foo][]')\n  datalayer_style_filepaths=()\n  for datalayer in $datalayers; do\n    datalayer_style_filepath=\"${legend_dir}/${datalayer}/${style}.png\"\n    if [[ -f \"${datalayer_style_filepath}\" ]]; then\n      datalayer_style_filepaths+=(\"${datalayer_style_filepath}\")\n    fi\n  done\n  if [[ -n \"${datalayer_style_filepaths[*]}\" ]]; then\n    echo \"concatenating ${grouplayer_style_filepath}\"\n    gm convert -append \"${datalayer_style_filepaths[@]}\" \"${grouplayer_style_filepath}\"\n  else\n    echo \"no data for ${grouplayer_style_filepath}\"\n  fi\ndone\n< \"${remove_filepath}\" xargs -n 2 echo | while read -r layer style; do\n  remove_legend_file=\"${legend_dir}/${layer}/${style}.png\"\n  echo removing $remove_legend_file\n  rm $remove_legend_file\ndone\necho \"done\""
+	expectedData["ogc-webservice-proxy-config.yaml"] = "grouplayers:\n  Bebouwing:\n  - Bebouwingvlak\n  - Nummeraanduidingreeks\n  Kadastralekaart:\n  - Bebouwingvlak\n  - Nummeraanduidingreeks\n  - OpenbareRuimteNaam\n  - Perceelvlak\n  - Label\n  - Bijpijling\n  - KadastraleGrens\n  Perceel:\n  - Perceelvlak\n  - Label\n  - Bijpijling\n"
+	expectedData["remove"] = "\"OpenbareRuimteNaam\" \"standaard\"\n\"OpenbareRuimteNaam\" \"kwaliteit\"\n\"OpenbareRuimteNaam\" \"print\"\n\"KadastraleGrens\" \"standaard\"\n\"KadastraleGrens\" \"kwaliteit\"\n\"KadastraleGrens\" \"print\"\n"
+
+	expected := v1.ConfigMap{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{Name: "kadaster-kadastralekaart-legend-generator", Labels: map[string]string{"app": "mapserver", "dataset": "kadastralekaart", "dataset-owner": "kadaster", "inspire": "false", "service-type": "wms", "service-version": "v5_0"}},
+		Immutable:  v2beta1.Pointer(true),
+		Data:       expectedData,
+		BinaryData: nil,
+	}
+
+	assert.Equal(t, expected, *configMap)
 }

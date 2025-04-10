@@ -26,6 +26,10 @@ type LegendReference struct {
 	Style string `yaml:"style" json:"style"`
 }
 
+type OgcWebserviceProxyConfig struct {
+	GroupLayers map[string][]string `yaml:"grouplayers" json:"grouplayers"`
+}
+
 func getBareConfigMapLegendGenerator(obj metav1.Object) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -101,14 +105,16 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 		data["legend-fixer.sh"] = string(fileBytes)
 	}
 
+	topLayer := wms.Spec.Service.Layer
+
 	legendReferences := make([]LegendReference, 0)
 	topLevelStyleNames := make(map[string]bool)
 
-	for _, style := range wms.Spec.Service.Layer.Styles {
+	for _, style := range topLayer.Styles {
 		topLevelStyleNames[style.Name] = true
 	}
 
-	if wms.Spec.Service.Layer.Layers != nil {
+	if topLayer.Layers != nil {
 		// These layers are called 'middle layers' in the old operator
 		for _, layer := range *wms.Spec.Service.Layer.Layers {
 			for _, style := range layer.Styles {
@@ -128,4 +134,36 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 	}
 
 	data["remove"] = sb.String()
+
+	groupLayers := make(map[string][]string)
+
+	if topLayer.IsGroupLayer() {
+		layerName := topLayer.Name
+		targetArray := make([]string, 0)
+		getAllNestedNonGroupLayerNames(&topLayer, &targetArray)
+		groupLayers[layerName] = targetArray
+
+		for _, subLayer := range *topLayer.Layers {
+			if subLayer.IsGroupLayer() {
+				layerName = subLayer.Name
+				targetArray = make([]string, 0)
+				getAllNestedNonGroupLayerNames(&subLayer, &targetArray)
+				groupLayers[layerName] = targetArray
+			}
+		}
+	}
+
+	ogcWebServiceProxyConfig := OgcWebserviceProxyConfig{GroupLayers: groupLayers}
+	proxyConfigData, err := yaml.Marshal(ogcWebServiceProxyConfig)
+	data["ogc-webservice-proxy-config.yaml"] = string(proxyConfigData)
+}
+
+func getAllNestedNonGroupLayerNames(layer *pdoknlv3.Layer, target *[]string) {
+	for _, subLayer := range *layer.Layers {
+		if subLayer.IsGroupLayer() {
+			getAllNestedNonGroupLayerNames(&subLayer, target)
+		} else {
+			*target = append(*target, subLayer.Name)
+		}
+	}
 }
