@@ -26,6 +26,11 @@ package controller
 
 import (
 	"context"
+	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,10 +40,15 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
 
+const (
+	featureinfoGeneratorInput = "input.json"
+)
+
 // WMSReconciler reconciles a WMS object
 type WMSReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme                    *runtime.Scheme
+	FeatureinfoGeneratorImage string
 }
 
 // +kubebuilder:rbac:groups=pdok.nl,resources=wms,verbs=get;list;watch;create;update;patch;delete
@@ -59,6 +69,12 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	// TODO(user): your logic here
 
+	// TODO use this featureinfoGeneratorInitContainer in the Reconcile process
+	_, err := featureinfogenerator.GetFeatureinfoGeneratorInitContainer(r.FeatureinfoGeneratorImage, srvDir)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -68,4 +84,37 @@ func (r *WMSReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&pdoknlv3.WMS{}).
 		Named("wms").
 		Complete(r)
+}
+
+func GetBareConfigMapFeatureinfoGenerator(obj metav1.Object) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      obj.GetName() + "-featureinfo-generator",
+			Namespace: obj.GetNamespace(),
+		},
+	}
+}
+
+func MutateConfigMapFeatureinfoGenerator(r WMSReconciler, wms *pdoknlv3.WMS, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
+	labels := AddCommonLabels(wms, smoothoperatorutils.CloneOrEmptyMap(wms.GetLabels()))
+	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
+		return err
+	}
+
+	if len(configMap.Data) == 0 {
+		input, err := featureinfogenerator.GetInput(wms)
+		if err != nil {
+			return err
+		}
+		configMap.Data = map[string]string{featureinfoGeneratorInput: input}
+	}
+	configMap.Immutable = smoothoperatorutils.Pointer(true)
+
+	if err := smoothoperatorutils.EnsureSetGVK(r.Client, configMap, configMap); err != nil {
+		return err
+	}
+	if err := ctrl.SetControllerReference(wms, configMap, r.Scheme); err != nil {
+		return err
+	}
+	return smoothoperatorutils.AddHashSuffix(configMap)
 }

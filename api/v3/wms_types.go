@@ -35,6 +35,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	TopLayer   = "topLayer"
+	DataLayer  = "dataLayer"
+	GroupLayer = "groupLayer"
+)
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -156,14 +162,32 @@ func init() {
 	SchemeBuilder.Register(&WMS{}, &WMSList{})
 }
 
-func (layer *Layer) getAllLayers() (layers []Layer) {
+func (layer *Layer) GetAllLayers() (layers []Layer) {
 	layers = append(layers, *layer)
 	if layer.Layers != nil {
 		for _, childLayer := range *layer.Layers {
-			layers = append(layers, childLayer.getAllLayers()...)
+			layers = append(layers, childLayer.GetAllLayers()...)
 		}
 	}
 	return
+}
+
+func (layer *Layer) GetParent(candidateLayer *Layer) *Layer {
+	if candidateLayer.Layers == nil {
+		return nil
+	}
+
+	for _, childLayer := range *candidateLayer.Layers {
+		if childLayer.Name == layer.Name {
+			return candidateLayer
+		} else {
+			parent := layer.GetParent(&childLayer)
+			if parent != nil {
+				return parent
+			}
+		}
+	}
+	return nil
 }
 
 func (layer *Layer) hasData() bool {
@@ -188,8 +212,27 @@ func (layer *Layer) hasTIFData() bool {
 	return layer.Data.TIF != nil && layer.Data.TIF.BlobKey != ""
 }
 
+func (layer *Layer) GetLayerType(service *WMSService) (layerType string) {
+	switch {
+	case layer.hasData() && layer.Layers == nil:
+		return DataLayer
+	case layer.Name == service.Layer.Name:
+		return TopLayer
+	default:
+		return GroupLayer
+	}
+}
+
+func (layer *Layer) IsDataLayer(service *WMSService) bool {
+	return layer.GetLayerType(service) == DataLayer
+}
+
+func (layer *Layer) IsGroupLayer(service *WMSService) bool {
+	return layer.GetLayerType(service) == GroupLayer
+}
+
 func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
-	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		if !layer.hasData() || len(layer.Styles) == 0 {
 			continue
 		}
@@ -205,7 +248,7 @@ func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
 
 func (wms *WMS) GetUniqueTiffBlobKeys() []string {
 	blobKeys := map[string]bool{}
-	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		if layer.hasTIFData() {
 			blobKeys[layer.Data.TIF.BlobKey] = true
 		}
@@ -236,7 +279,7 @@ func (wms *WMS) GetAuthority() *Authority {
 }
 
 func (wms *WMS) HasPostgisData() bool {
-	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		if layer.Data != nil && layer.Data.Postgis != nil {
 			return true
 		}
