@@ -101,12 +101,31 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 		data["legend-fixer.sh"] = string(fileBytes)
 	}
 
-	//TODO: Identify middle layers
+	legendReferences := make([]LegendReference, 0)
+	topLevelStyleNames := make(map[string]bool)
+
+	for _, style := range wms.Spec.Service.Layer.Styles {
+		topLevelStyleNames[style.Name] = true
+	}
+
 	if wms.Spec.Service.Layer.Layers != nil {
+		// These layers are called 'middle layers' in the old operator
 		for _, layer := range *wms.Spec.Service.Layer.Layers {
-			if layer.Layers != nil && len(*layer.Layers) > 0 {
-				println(layer.Name)
+			for _, style := range layer.Styles {
+				if topLevelStyleNames[style.Name] && style.Legend == nil {
+					legendReferences = append(legendReferences, LegendReference{
+						Layer: layer.Name,
+						Style: style.Name,
+					})
+				}
 			}
 		}
 	}
+
+	sb := strings.Builder{}
+	for _, reference := range legendReferences {
+		sb.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", reference.Layer, reference.Style))
+	}
+
+	data["remove"] = sb.String()
 }
