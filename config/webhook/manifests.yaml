@@ -24,3 +24,23 @@ webhooks:
     resources:
     - wfs
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-pdok-nl-v3-wms
+  failurePolicy: Fail
+  name: vwms-v3.kb.io
+  rules:
+  - apiGroups:
+    - pdok.nl
+    apiVersions:
+    - v3
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - wms
+  sideEffects: None

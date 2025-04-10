@@ -25,14 +25,19 @@ SOFTWARE.
 package v3
 
 import (
-	"maps"
-	"slices"
-	"sort"
-
 	shared_model "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"maps"
+	"slices"
+	"sort"
+)
+
+const (
+	topLayer   = "topLayer"
+	dataLayer  = "dataLayer"
+	groupLayer = "groupLayer"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -186,6 +191,45 @@ func (layer *Layer) hasTIFData() bool {
 		return false
 	}
 	return layer.Data.TIF != nil && layer.Data.TIF.BlobKey != ""
+}
+
+func (layer *Layer) getLayerType(service *WMSService) (layerType string) {
+	switch {
+	case layer.hasData() && layer.Layers == nil:
+		return dataLayer
+	case layer.Name == service.Layer.Name:
+		return topLayer
+	default:
+		return groupLayer
+	}
+}
+
+func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {
+	for _, bbox := range layer.BoundingBoxes {
+		if bbox.CRS == crs {
+			return true
+		}
+	}
+	return false
+}
+
+func (layer *Layer) setInheritedBoundingBoxes() {
+	if layer.Layers == nil || len(*layer.Layers) == 0 {
+		return
+	}
+
+	var updatedLayers []Layer
+	for _, childLayer := range *layer.Layers {
+		// Inherit parent boundingboxes
+		for _, boundingBox := range layer.BoundingBoxes {
+			if !childLayer.hasBoundingBoxForCRS(boundingBox.CRS) {
+				childLayer.BoundingBoxes = append(childLayer.BoundingBoxes, boundingBox)
+			}
+		}
+		childLayer.setInheritedBoundingBoxes()
+		updatedLayers = append(updatedLayers, childLayer)
+	}
+	*layer.Layers = updatedLayers
 }
 
 func (layer *Layer) IsGroupLayer() bool {

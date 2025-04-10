@@ -4,6 +4,149 @@ metadata:
   labels:
     app.kubernetes.io/name: mapserver-operator
     app.kubernetes.io/managed-by: kustomize
-  name: wms-sample
+    dataset: dataset
+    dataset-owner: owner
+    service-type: wfs
+    service-version: 1.0.0
+  name: sample-v3
 spec:
-  # TODO(user): Add fields here
+  lifecycle:
+    ttlInDays: 21
+  podSpecPatch:
+    containers:
+      - name: mapserver
+        resources:
+          limits:
+            memory: 12M
+            ephemeral-storage: 2G
+  horizontalPodAutoscalerPatch:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: wms-sample-v3
+    maxReplicas: 5
+    minReplicas: 2
+    metrics:
+      - type: "Resource"
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 60
+  options:
+    automaticCasing: true
+    prefetchData: false
+    includeIngress: false
+    rewriteGroupToDataLayers: true
+    validateChildStyleNameEqual: true
+  service:
+    url: https://service.pdok.nl/owner/dataset/wms/1.0.0
+    title: "Dataset"
+    abstract: "Dataset abstract ..."
+    keywords:
+      - keyword1
+      - keyword2
+    ownerInfoRef:
+    fees: ""
+    accessConstraints: "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+    maxSize:
+    inspire:
+      serviceMetadataUrl:
+        csw:
+          metadataIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
+      spatialDatasetIdentifier: abcd1234-abcd-1234-abcd-1234abcd1234
+      language: "nl"
+    dataEPSG: EPSG:28992
+    resolution:
+    defResolution:
+    stylingAssets:
+    mapfile:
+    layer:
+      name: top-layer-name
+      title: Top "Layer" Title
+      abstract: Top "Layer" Abstract
+      keywords:
+        - top-layer-keyword-1
+        - top-layer-keyword-2
+      boundingBoxes:
+        - crs: EPSG:28992
+          bbox:
+            minx: "482.06"
+            maxx: "306602.42"
+            miny: "284182.97"
+            maxy: "637049.52"
+      visible: true
+      authority:
+      datasetMetadataUrl:
+      minscaledenominator:
+      maxscaledenominator:
+      style:
+      labelNoClip: false
+      data:
+      layers:
+        - name: group-layer-name
+          title: Group "Layer" Title
+          abstract: Group "Abstract" Abstract
+          keywords:
+            - group-layer-keyword-1
+            - group-layer-keyword-2
+          boundingBoxes:
+          visible: true
+          authority:
+          datasetMetadataUrl:
+          minscaledenominator:
+          maxscaledenominator:
+          styles:
+          labelNoClip: false
+          layers:
+            - name: gpkg-layer-name
+              title: GPKG "Layer" Title
+              abstract: GPKG "Abstract" Abstract
+              keywords:
+                - gpkg-layer-keyword-1
+                - gpkg-layer-keyword-2
+              boundingBoxes:
+              visible: true
+              authority:
+              datasetMetadataUrl:
+              minscaledenominator:
+              maxscaledenominator:
+              styles:
+                - name: gpkg-layer-style-name
+                  title: gpkg-layer-style-title
+                  visualization: gpkg-layer-style.style
+              labelNoClip: false
+              data:
+                gpkg:
+                  blobKey: "geopackages-bucket/key/gpkg-layer-data.gpkg"
+                  tableName: "table-1"
+                  geometryType: "MultiPolygon"
+                  columns:
+                    - name: "column-1"
+                      alias: "alias-column-1"
+                    - name: "column-2"
+                    - name: "column-3"
+                      alias: "alias-column-3"
+            - name: tif-layer-name
+              title: TIF "Layer" Title
+              abstract: TIF "Abstract" Abstract
+              keywords:
+                - tif-layer-keyword-1
+                - tif-layer-keyword-2
+              boundingBoxes:
+              visible: true
+              authority:
+              datasetMetadataUrl:
+              minscaledenominator:
+              maxscaledenominator:
+              styles:
+                - name: tif-layer-style-1-name
+                  title: tif-layer-style-1-title
+                  visualization: tif-layer-style-1.style
+              labelNoClip: false
+              data:
+                tif:
+                  blobKey: "tifs-bucket/key/tif-layer-data.tif"
+                  offsite: "#FF00FF"
+                  resample: "AVERAGE"
+                  getFeatureInfoIncludesClass: true

@@ -38,7 +38,7 @@ import (
 )
 
 // log is for logging in this package.
-var wfslog = logf.Log.WithName("wfs-resource")
+var wfsLog = logf.Log.WithName("wfs-resource")
 
 // SetupWFSWebhookWithManager registers the webhook for WFS in the manager.
 func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
@@ -46,8 +46,6 @@ func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 		WithValidator(&WFSCustomValidator{}).
 		Complete()
 }
-
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
@@ -71,7 +69,7 @@ func (v *WFSCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Obj
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
 	}
-	wfslog.Info("Validation for WFS upon creation", "name", wfs.GetName())
+	wfsLog.Info("Validation for WFS upon creation", "name", wfs.GetName())
 
 	return wfs.ValidateCreate()
 }
@@ -86,7 +84,7 @@ func (v *WFSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj 
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object for the oldObj but got %T", newObj)
 	}
-	wfslog.Info("Validation for WFS upon update", "name", wfs.GetName())
+	wfsLog.Info("Validation for WFS upon update", "name", wfs.GetName())
 
 	return wfs.ValidateUpdate(wfsOld)
 }
@@ -97,7 +95,7 @@ func (v *WFSCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Obj
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
 	}
-	wfslog.Info("Validation for WFS upon deletion", "name", wfs.GetName())
+	wfsLog.Info("Validation for WFS upon deletion", "name", wfs.GetName())
 
 	// TODO(user): fill in your validation logic upon object deletion.
 
