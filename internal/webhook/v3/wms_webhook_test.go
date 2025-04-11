@@ -25,6 +25,7 @@ SOFTWARE.
 package v3
 
 import (
+	"context"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -60,6 +61,8 @@ var _ = Describe("WMS Webhook", func() {
 	})
 
 	Context("When creating or updating WMS under Conversion Webhook", func() {
+		ctx := context.Background()
+
 		It("Creates the WMS from the sample", func() {
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(BeNil())

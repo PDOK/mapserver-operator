@@ -54,9 +54,9 @@ const (
 	mapfileGeneratorInput = "input.json"
 	srvDir                = "/srv"
 	// TODO make dynamic?
-	blobsConfigName = "blobs-9d7fcgcfcc"
+	blobsConfigName = "blobs-config" //"blobs-9d7fcgcfcc"
 	// TODO make dynamic?
-	blobsSecretName            = "blobs-8ch6mbkg8t"
+	blobsSecretName            = "blobs-secret" //"blobs-8ch6mbkg8t"
 	capabilitiesGeneratorInput = "input.yaml"
 	inputDir                   = "/input"
 	postgisConfigName          = "postgisConfig"
