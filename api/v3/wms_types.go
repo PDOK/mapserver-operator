@@ -232,6 +232,10 @@ func (layer *Layer) setInheritedBoundingBoxes() {
 	*layer.Layers = updatedLayers
 }
 
+func (layer *Layer) IsGroupLayer() bool {
+	return layer.Layers != nil && len(*layer.Layers) > 0
+}
+
 func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
 	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
 		if !layer.hasData() || len(layer.Styles) == 0 {
