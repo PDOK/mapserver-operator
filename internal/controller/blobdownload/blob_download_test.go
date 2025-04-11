@@ -205,7 +205,7 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: &v3.Options{
+						Options: v3.Options{
 							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},
@@ -272,7 +272,7 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: &v3.Options{
+						Options: v3.Options{
 							PrefetchData: smoothoperatorutils.Pointer(true),
 						},
 					},

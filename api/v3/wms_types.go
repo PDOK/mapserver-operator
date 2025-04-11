@@ -333,7 +333,7 @@ func (wms *WMS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutos
 }
 
 func (wms *WMS) Options() *Options {
-	return wms.Spec.Options
+	return &wms.Spec.Options
 }
 
 func (wms *WMS) ID() string {
