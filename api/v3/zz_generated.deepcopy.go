@@ -679,11 +679,7 @@ func (in *WFSSpec) DeepCopyInto(out *WFSSpec) {
 		*out = new(v2.HorizontalPodAutoscalerSpec)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Options != nil {
-		in, out := &in.Options, &out.Options
-		*out = new(Options)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Options.DeepCopyInto(&out.Options)
 	in.Service.DeepCopyInto(&out.Service)
 }
 
@@ -846,11 +842,7 @@ func (in *WMSSpec) DeepCopyInto(out *WMSSpec) {
 		*out = new(v2.HorizontalPodAutoscalerSpec)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Options != nil {
-		in, out := &in.Options, &out.Options
-		*out = new(Options)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Options.DeepCopyInto(&out.Options)
 	in.Service.DeepCopyInto(&out.Service)
 }
 

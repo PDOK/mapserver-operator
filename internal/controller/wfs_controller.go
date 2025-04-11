@@ -50,11 +50,13 @@ import (
 )
 
 const (
-	downloadScriptName         = "gpkg_download.sh"
-	mapfileGeneratorInput      = "input.json"
-	srvDir                     = "/srv"
-	blobsConfigName            = "blobs-config"
-	blobsSecretName            = "blobs-secret"
+	downloadScriptName    = "gpkg_download.sh"
+	mapfileGeneratorInput = "input.json"
+	srvDir                = "/srv"
+	// TODO make dynamic?
+	blobsConfigName = "blobs-config" //"blobs-9d7fcgcfcc"
+	// TODO make dynamic?
+	blobsSecretName            = "blobs-secret" //"blobs-8ch6mbkg8t"
 	capabilitiesGeneratorInput = "input.yaml"
 	inputDir                   = "/input"
 	postgisConfigName          = "postgisConfig"
@@ -80,6 +82,13 @@ type WFSReconciler struct {
 // +kubebuilder:rbac:groups=pdok.nl,resources=wfs/finalizers,verbs=update
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo,verbs=get;list;watch
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo/status,verbs=get
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=core,resources=configmaps;services,verbs=watch;create;get;update;list;delete
+// +kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=watch;create;get;update;list;delete
+// +kubebuilder:rbac:groups=traefik.io,resources=ingressroutes;middlewares,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=create;update;delete;list;watch
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets/status,verbs=get;update
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -109,7 +118,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	// Fetch the OwnerInfo instance
 	ownerInfo := &smoothoperatorv1.OwnerInfo{}
 	objectKey := client.ObjectKey{
-		Namespace: wfs.Namespace,
+		Namespace: "default", // wfs.Namespace,
 		Name:      wfs.Spec.Service.OwnerInfoRef,
 	}
 	if err := r.Client.Get(ctx, objectKey, ownerInfo); err != nil {
@@ -407,7 +416,11 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 					//StartupProbe:   &corev1.Probe{}, // TODO
 					Lifecycle: &corev1.Lifecycle{
 						PreStop: &corev1.LifecycleHandler{
-							Sleep: &corev1.SleepAction{Seconds: 15},
+							Exec: &corev1.ExecAction{
+								Command: []string{"sleep", "15"},
+							},
+							// Doesn't work
+							//Sleep: &corev1.SleepAction{Seconds: 15},
 						},
 					},
 				},

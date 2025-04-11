@@ -20,6 +20,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
+	smoothoperator "github.com/pdok/smooth-operator/api/v1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"os"
 	"path/filepath"
 
@@ -46,10 +48,11 @@ import (
 )
 
 const (
-	defaultMultitoolImage             = "docker.io/pdok/docker-multitool:0.9.1"
-	defaultMapfileGeneratorImage      = "docker.io/pdok/mapfile-generator:1.9.3"
-	defaultCapabilitiesGeneratorImage = "docker.io/pdok/ogc-capabilities-generator:1.0.0-beta5"
-	defaultFeatureinfoGeneratorImage  = "docker.io/pdok/featureinfo-generator:v1.4.0-beta1"
+	defaultMapserverImage             = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/mapserver:8.4.0-4"
+	defaultMultitoolImage             = "acrpdokprodman.azurecr.io/pdok/docker-multitool:0.9.4"
+	defaultMapfileGeneratorImage      = "acrpdokprodman.azurecr.io/pdok/mapfile-generator:1.9.5"
+	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/ogc-capabilities-generator:1.0.0-beta5"
+	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:v1.4.0-beta1"
 )
 
 var (
@@ -59,7 +62,8 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
+	utilruntime.Must(traefikiov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(smoothoperator.AddToScheme(scheme))
 	utilruntime.Must(pdoknlv3.AddToScheme(scheme))
 	utilruntime.Must(pdoknlv2beta1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
@@ -76,6 +80,7 @@ func main() {
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
 	var host string
+	var mapserverImage string
 	var multitoolImage string
 	var mapfileGeneratorImage string
 	var capabilitiesGeneratorImage string
@@ -98,6 +103,7 @@ func main() {
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
 	flag.StringVar(&host, "baseurl", "", "The host which is used in the mapserver service.")
+	flag.StringVar(&mapserverImage, "mapserver-image", defaultMapserverImage, "The image to use in the blob download init-container.")
 	flag.StringVar(&multitoolImage, "multitool-image", defaultMultitoolImage, "The image to use in the blob download init-container.")
 	flag.StringVar(&mapfileGeneratorImage, "mapfile-generator-image", defaultMapfileGeneratorImage, "The image to use in the mapfile generator init-container.")
 	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", defaultCapabilitiesGeneratorImage, "The image to use in the capabilities generator init-container.")
@@ -241,6 +247,7 @@ func main() {
 	if err = (&controller.WFSReconciler{
 		Client:                     mgr.GetClient(),
 		Scheme:                     mgr.GetScheme(),
+		MapserverImage:             mapserverImage,
 		MultitoolImage:             multitoolImage,
 		MapfileGeneratorImage:      mapfileGeneratorImage,
 		CapabilitiesGeneratorImage: capabilitiesGeneratorImage,

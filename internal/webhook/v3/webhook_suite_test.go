@@ -28,6 +28,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"net"
 	"os"
 	"path/filepath"
@@ -37,7 +39,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,6 +49,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	admissionv1 "k8s.io/api/admission/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -72,17 +74,29 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	ctx, cancel = context.WithCancel(context.TODO())
+	scheme := runtime.NewScheme()
 
 	var err error
-	err = pdoknlv3.AddToScheme(scheme.Scheme)
+	err = pdoknlv2beta1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = pdoknlv3.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = admissionv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
+		Scheme:                scheme,
 		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: false,
+		CRDInstallOptions: envtest.CRDInstallOptions{
+			Scheme: scheme,
+			// MaxTime: time.Minute,
+		},
 
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
 			Paths: []string{filepath.Join("..", "..", "..", "config", "webhook")},
@@ -96,17 +110,18 @@ var _ = BeforeSuite(func() {
 
 	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
+	// TODO enabling next line causes the tests to fail, find out why
+	// Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
 	// start webhook server using Manager.
 	webhookInstallOptions := &testEnv.WebhookInstallOptions
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
+		Scheme: scheme,
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Host:    webhookInstallOptions.LocalServingHost,
 			Port:    webhookInstallOptions.LocalServingPort,

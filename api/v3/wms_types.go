@@ -54,17 +54,18 @@ type WMSSpec struct {
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
-	Options                      *Options                                   `json:"options"`
+	Options                      Options                                    `json:"options,omitempty"`
 	Service                      WMSService                                 `json:"service"`
 }
 
 type WMSService struct {
-	URL               string         `json:"url"`
-	Title             string         `json:"title"`
-	Abstract          string         `json:"abstract"`
-	Keywords          []string       `json:"keywords"`
-	OwnerInfoRef      string         `json:"ownerInfoRef"`
-	Fees              *string        `json:"fees,omitempty"`
+	URL          string   `json:"url"`
+	Title        string   `json:"title"`
+	Abstract     string   `json:"abstract"`
+	Keywords     []string `json:"keywords"`
+	OwnerInfoRef string   `json:"ownerInfoRef"`
+	Fees         *string  `json:"fees,omitempty"`
+	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	AccessConstraints string         `json:"accessConstraints"`
 	MaxSize           *int32         `json:"maxSize,omitempty"`
 	Inspire           *Inspire       `json:"inspire,omitempty"`
@@ -332,7 +333,7 @@ func (wms *WMS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutos
 }
 
 func (wms *WMS) Options() *Options {
-	return wms.Spec.Options
+	return &wms.Spec.Options
 }
 
 func (wms *WMS) ID() string {

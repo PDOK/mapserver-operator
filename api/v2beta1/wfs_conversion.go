@@ -58,10 +58,11 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WFSService{
-		Prefix:            "",
+		// TODO what is prefix, Geonovum subdomain?
+		Prefix:            "prefix",
 		URL:               CreateBaseURL("https://service.pdok.nl", "wfs", src.Spec.General),
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
@@ -105,7 +106,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 				},
 			},
 			SpatialDatasetIdentifier: src.Spec.Service.FeatureTypes[0].SourceMetadataIdentifier,
-			Language:                 "nl",
+			Language:                 "dut",
 		}
 	}
 
@@ -157,9 +158,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
-	if src.Spec.Options != nil {
-		dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
-	}
+	dst.Spec.Options = ConvertOptionsV3ToV2(&src.Spec.Options)
 
 	service := WFSService{
 		Title:             src.Spec.Service.Title,
