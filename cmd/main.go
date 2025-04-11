@@ -52,6 +52,7 @@ const (
 	defaultMultitoolImage             = "acrpdokprodman.azurecr.io/pdok/docker-multitool:0.9.4"
 	defaultMapfileGeneratorImage      = "acrpdokprodman.azurecr.io/pdok/mapfile-generator:1.9.5"
 	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/ogc-capabilities-generator:1.0.0-beta5"
+	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:v1.4.0-beta1"
 )
 
 var (
