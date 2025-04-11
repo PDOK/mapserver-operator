@@ -631,7 +631,7 @@ func AddCommonLabels[O pdoknlv3.WMSWFS](obj O, labels map[string]string) map[str
 	case *pdoknlv3.WFS:
 		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
 	case *pdoknlv3.WMS:
-		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
+		inspire = any(obj).(*pdoknlv3.WMS).Spec.Service.Inspire != nil
 	}
 
 	labels["inspire"] = strconv.FormatBool(inspire)

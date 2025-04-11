@@ -93,7 +93,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 	var names []string
 	hasVisibleLayer := false
 	wms.Spec.Service.Layer.setInheritedBoundingBoxes()
-	for _, layer := range wms.Spec.Service.Layer.getAllLayers() {
+	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		var layerReasons []string
 		if slices.Contains(names, layer.Name) {
 			*reasons = append(*reasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", layer.Name))
@@ -162,8 +162,8 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 				}
 			}
 		}
-		layerType := layer.getLayerType(&service)
-		if layerType == dataLayer {
+
+		if layer.IsDataLayer() {
 			for _, style := range layer.Styles {
 				if wms.Spec.Service.Mapfile == nil && style.Visualization == nil {
 					layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.visualization must be set on a dataLayer", style.Name))
@@ -173,7 +173,8 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 				}
 			}
 		}
-		if layerType == groupLayer || layerType == topLayer {
+		layerType := layer.GetLayerType(&service)
+		if layerType == GroupLayer || layerType == TopLayer {
 			if !*layer.Visible {
 				layerReasons = append(layerReasons, layerType+" must be visible")
 			}

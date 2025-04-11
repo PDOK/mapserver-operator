@@ -10,6 +10,7 @@ require (
 	github.com/cbroglie/mustache v1.4.0
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
+	github.com/pdok/featureinfo-generator v1.4.0-beta1
 	github.com/pdok/ogc-capabilities-generator v1.0.0-beta5
 	github.com/pdok/ogc-specifications v1.0.0-beta5
 	github.com/pdok/smooth-operator v0.0.10

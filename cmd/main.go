@@ -83,6 +83,7 @@ func main() {
 	var multitoolImage string
 	var mapfileGeneratorImage string
 	var capabilitiesGeneratorImage string
+	var featureinfoGeneratorImage string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -105,6 +106,7 @@ func main() {
 	flag.StringVar(&multitoolImage, "multitool-image", defaultMultitoolImage, "The image to use in the blob download init-container.")
 	flag.StringVar(&mapfileGeneratorImage, "mapfile-generator-image", defaultMapfileGeneratorImage, "The image to use in the mapfile generator init-container.")
 	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", defaultCapabilitiesGeneratorImage, "The image to use in the capabilities generator init-container.")
+	flag.StringVar(&featureinfoGeneratorImage, "featureinfo-generator-image", defaultFeatureinfoGeneratorImage, "The image to use in the featureinfo generator init-container.")
 
 	opts := zap.Options{
 		Development: true,
@@ -234,8 +236,9 @@ func main() {
 	}
 
 	if err = (&controller.WMSReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:                    mgr.GetClient(),
+		Scheme:                    mgr.GetScheme(),
+		FeatureinfoGeneratorImage: featureinfoGeneratorImage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WMS")
 		os.Exit(1)
