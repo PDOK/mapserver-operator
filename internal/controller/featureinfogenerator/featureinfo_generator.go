@@ -14,7 +14,7 @@ const (
 
 func GetFeatureinfoGeneratorInitContainer(image string, srvDir string) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            "mapfile-generator",
+		Name:            "featureinfo-generator",
 		Image:           image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command:         []string{"featureinfo-generator"},
@@ -23,6 +23,7 @@ func GetFeatureinfoGeneratorInitContainer(image string, srvDir string) (*corev1.
 			"/input/input.json",
 			"--dest-folder",
 			htmlTemplatesPath,
+			"--file-name",
 			"feature-info",
 		},
 		VolumeMounts: []corev1.VolumeMount{
