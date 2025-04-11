@@ -18,7 +18,7 @@ func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, 
 	}
 
 	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
-		if !layer.IsDataLayer(&wms.Spec.Service) {
+		if !layer.IsDataLayer() {
 			continue
 		}
 		l := featureinfo.Layer{
@@ -27,7 +27,7 @@ func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, 
 		}
 
 		parentLayer := layer.GetParent(&wms.Spec.Service.Layer)
-		if parentLayer != nil && parentLayer.IsGroupLayer(&wms.Spec.Service) {
+		if parentLayer != nil && parentLayer.IsGroupLayer() {
 			l.GroupName = parentLayer.Name
 		}
 

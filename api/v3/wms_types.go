@@ -214,7 +214,7 @@ func (layer *Layer) hasTIFData() bool {
 
 func (layer *Layer) GetLayerType(service *WMSService) (layerType string) {
 	switch {
-	case layer.hasData() && layer.Layers == nil:
+	case layer.IsDataLayer():
 		return DataLayer
 	case layer.Name == service.Layer.Name:
 		return TopLayer
@@ -223,12 +223,12 @@ func (layer *Layer) GetLayerType(service *WMSService) (layerType string) {
 	}
 }
 
-func (layer *Layer) IsDataLayer(service *WMSService) bool {
-	return layer.GetLayerType(service) == DataLayer
+func (layer *Layer) IsDataLayer() bool {
+	return layer.hasData() && (layer.Layers == nil || len(*layer.Layers) == 0)
 }
 
-func (layer *Layer) IsGroupLayer(service *WMSService) bool {
-	return layer.GetLayerType(service) == GroupLayer
+func (layer *Layer) IsGroupLayer() bool {
+	return layer.Layers != nil && len(*layer.Layers) > 0
 }
 
 func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {
@@ -257,10 +257,6 @@ func (layer *Layer) setInheritedBoundingBoxes() {
 		updatedLayers = append(updatedLayers, childLayer)
 	}
 	*layer.Layers = updatedLayers
-}
-
-func (layer *Layer) IsGroupLayer() bool {
-	return layer.Layers != nil && len(*layer.Layers) > 0
 }
 
 func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {

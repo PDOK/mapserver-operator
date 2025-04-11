@@ -163,7 +163,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 			}
 		}
 
-		if layer.IsDataLayer(&wms.Spec.Service) {
+		if layer.IsDataLayer() {
 			for _, style := range layer.Styles {
 				if wms.Spec.Service.Mapfile == nil && style.Visualization == nil {
 					layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.visualization must be set on a dataLayer", style.Name))
