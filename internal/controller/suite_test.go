@@ -29,15 +29,15 @@ import (
 	"encoding/json"
 	"errors"
 	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
+	smoothoperator1 "github.com/pdok/smooth-operator/api/v1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"golang.org/x/tools/go/packages"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
-
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"golang.org/x/tools/go/packages"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -49,7 +49,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	smoothoperator1 "github.com/pdok/smooth-operator/api/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -102,7 +101,8 @@ var _ = BeforeSuite(func() {
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			Scheme: scheme,
 			Paths: []string{
-				filepath.Join("..", "..", "config", "crd", "bases"),
+				filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wfs.yaml"),
+				filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wms.yaml"),
 				traefikCRDPath,
 				ownerInfoCRDPath,
 			},
@@ -117,8 +117,7 @@ var _ = BeforeSuite(func() {
 
 	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()
-	// TODO enabling next line causes the tests to fail, find out why
-	//Expect(err).NotTo(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
