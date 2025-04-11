@@ -57,14 +57,15 @@ type WFSSpec struct {
 	General    General       `json:"general"`
 	Service    WFSService    `json:"service"`
 	Kubernetes Kubernetes    `json:"kubernetes"`
-	Options    WMSWFSOptions `json:"options"`
+	Options    WMSWFSOptions `json:"options,omitempty"`
 }
 
 // WFSService is the struct with all service specific options
 type WFSService struct {
-	Title              string    `json:"title"`
-	Inspire            bool      `json:"inspire"`
-	Abstract           string    `json:"abstract"`
+	Title    string `json:"title"`
+	Inspire  bool   `json:"inspire"`
+	Abstract string `json:"abstract"`
+	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	AccessConstraints  string    `json:"accessConstraints"`
 	Keywords           []string  `json:"keywords"`
 	MetadataIdentifier string    `json:"metadataIdentifier"`

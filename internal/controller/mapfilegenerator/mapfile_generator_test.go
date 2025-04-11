@@ -1,6 +1,7 @@
 package mapfilegenerator
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -15,7 +16,6 @@ const (
     "service_title": "some Service title",
     "service_abstract": "some \\\"Service\\\" abstract",
     "service_keywords": "service-keyword-1,service-keyword-2,infoFeatureAccessService",
-    "service_accessconstraints": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
     "service_extent": "0.0 2.0 1.0 3.0",
     "service_wfs_maxfeatures": "1000",
     "service_namespace_prefix": "prefix",
@@ -110,7 +110,7 @@ func TestGetConfigForWFS(t *testing.T) {
 						},
 					},
 					Spec: pdoknlv3.WFSSpec{
-						Options: &pdoknlv3.Options{
+						Options: pdoknlv3.Options{
 							AutomaticCasing: true,
 						},
 						Service: pdoknlv3.WFSService{
@@ -226,9 +226,8 @@ func TestGetConfigForWFS(t *testing.T) {
 				t.Errorf("GetConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if gotConfig != tt.wantConfig {
-				t.Errorf("GetConfig() gotConfig = %v, want %v", gotConfig, tt.wantConfig)
-			}
+
+			require.JSONEqf(t, tt.wantConfig, gotConfig, "GetConfig() got %v, want %v", gotConfig, tt.wantConfig)
 		})
 	}
 }

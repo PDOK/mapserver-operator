@@ -114,7 +114,7 @@ func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 				},
 			},
 			SpatialDatasetIdentifier: *src.Spec.Service.Layers[0].SourceMetadataIdentifier,
-			Language:                 "nl",
+			Language:                 "dut",
 		}
 	}
 
