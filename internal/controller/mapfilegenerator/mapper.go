@@ -1,6 +1,7 @@
 package mapfilegenerator
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -84,4 +85,32 @@ func getGeopackagePath(data pdoknlv3.Data) *string {
 	index := strings.LastIndex(data.Gpkg.BlobKey, "/") + 1
 	blobName := data.Gpkg.BlobKey[index:]
 	return smoothoperatorutils.Pointer(geopackagePath + "/" + blobName)
+}
+
+func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
+	service := wms.Spec.Service
+
+	result := WMSInput{
+		BaseServiceInput: BaseServiceInput{
+			Title:           service.Title,
+			Abstract:        service.Abstract,
+			Keywords:        strings.Join(service.Keywords, ","),
+			Extent:          "-25000 250000 280000 860000",
+			NamespacePrefix: "prefix",
+			NamespaceURI:    fmt.Sprintf("https://%s.geonovum.nl", wms.ObjectMeta.Labels["dataset"]),
+			OnlineResource:  service.URL,
+			Path:            "",
+			MetadataId:      "",
+			DatasetOwner:    nil,
+			AuthorityURL:    nil,
+			AutomaticCasing: false,
+			DataEPSG:        service.DataEPSG,
+			EPSGList:        nil,
+		},
+		AccessConstraints: "",
+		Layers:            []WMSLayer{},
+		Templates:         "",
+	}
+
+	return result, nil
 }
