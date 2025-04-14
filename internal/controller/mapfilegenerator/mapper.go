@@ -90,26 +90,45 @@ func getGeopackagePath(data pdoknlv3.Data) *string {
 func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
 	service := wms.Spec.Service
 
+	accessConstraints := service.AccessConstraints
+	if accessConstraints == "" {
+		accessConstraints = "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+	}
+
+	owner := wms.ObjectMeta.Labels["dataset-owner"]
+	datasetName := wms.ObjectMeta.Labels["dataset"]
+	protocol := "http"
+	authority := wms.GetAuthority()
+	authorityUrl := ""
+	if authority != nil {
+		authorityUrl = authority.URL
+	}
+
+	box := service.GetBoundingBox()
+	extent := box.ToExtent()
+
+	epsgs := []string{"EPSG:28992", "EPSG:25831", "EPSG:25832", "EPSG:3034", "EPSG:3035", "EPSG:3857", "EPSG:4258", "EPSG:4326", "CRS:84"}
+
 	result := WMSInput{
 		BaseServiceInput: BaseServiceInput{
 			Title:           service.Title,
 			Abstract:        service.Abstract,
 			Keywords:        strings.Join(service.Keywords, ","),
-			Extent:          "-25000 250000 280000 860000",
-			NamespacePrefix: "prefix",
-			NamespaceURI:    fmt.Sprintf("https://%s.geonovum.nl", wms.ObjectMeta.Labels["dataset"]),
+			Extent:          extent,
+			NamespacePrefix: datasetName,
+			NamespaceURI:    fmt.Sprintf("%s://%s.geonovum.nl", protocol, datasetName),
 			OnlineResource:  pdoknlv3.GetHost(),
 			Path:            mapperutils.GetPath(wms),
 			MetadataId:      "onbekend",
-			DatasetOwner:    smoothoperatorutils.Pointer("onbekend"),
-			AuthorityURL:    smoothoperatorutils.Pointer("onbekend"),
+			DatasetOwner:    &owner,
+			AuthorityURL:    &authorityUrl,
 			AutomaticCasing: wms.Spec.Options.AutomaticCasing,
 			DataEPSG:        service.DataEPSG,
-			EPSGList:        []string{service.DataEPSG},
+			EPSGList:        epsgs,
 		},
-		AccessConstraints: service.AccessConstraints,
+		AccessConstraints: accessConstraints,
 		Layers:            []WMSLayer{},
-		Templates:         "onbekend",
+		Templates:         "/src/data/config/templates",
 	}
 
 	return result, nil

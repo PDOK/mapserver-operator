@@ -25,9 +25,11 @@ SOFTWARE.
 package v3
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"sort"
+	"strings"
 
 	shared_model "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -112,6 +114,29 @@ type WMSBoundingBox struct {
 	BBox shared_model.BBox `json:"bbox"`
 }
 
+func (wmsBoundingBox *WMSBoundingBox) ToExtent() string {
+	bbox := wmsBoundingBox.BBox
+	return strings.Trim(fmt.Sprintf("%s %s %s %s", bbox.MinX, bbox.MinY, bbox.MaxX, bbox.MaxY), " ")
+}
+
+func (wmsBoundingBox *WMSBoundingBox) Combine(other *WMSBoundingBox) {
+	if wmsBoundingBox.CRS != other.CRS {
+		return
+	}
+	if other.BBox.MinX < wmsBoundingBox.BBox.MinX {
+		wmsBoundingBox.BBox.MinX = other.BBox.MinX
+	}
+	if other.BBox.MaxX > wmsBoundingBox.BBox.MaxX {
+		wmsBoundingBox.BBox.MaxX = other.BBox.MaxX
+	}
+	if other.BBox.MinY < wmsBoundingBox.BBox.MinY {
+		wmsBoundingBox.BBox.MinY = other.BBox.MinY
+	}
+	if other.BBox.MaxY > wmsBoundingBox.BBox.MaxY {
+		wmsBoundingBox.BBox.MaxY = other.BBox.MaxY
+	}
+}
+
 type Authority struct {
 	Name                     string `json:"name"`
 	URL                      string `json:"url"`
@@ -161,6 +186,42 @@ type WMSList struct {
 
 func init() {
 	SchemeBuilder.Register(&WMS{}, &WMSList{})
+}
+
+func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
+	var boundingBox *WMSBoundingBox
+
+	allLayers := wmsService.GetAllLayers()
+	for _, layer := range allLayers {
+		if layer.BoundingBoxes != nil && len(layer.BoundingBoxes) > 0 {
+			for _, bbox := range wmsService.Layer.BoundingBoxes {
+				if boundingBox == nil {
+					boundingBox = &bbox
+				} else {
+					boundingBox.Combine(&bbox)
+				}
+			}
+		}
+	}
+
+	if boundingBox != nil {
+		return *boundingBox
+	} else {
+		return WMSBoundingBox{
+			CRS: "EPSG:28992",
+			BBox: shared_model.BBox{
+				MinX: "-25000",
+				MaxX: "250000",
+				MinY: "280000",
+				MaxY: "860000",
+			},
+		}
+	}
+
+}
+
+func (wmsService *WMSService) GetAllLayers() (layers []Layer) {
+	return wmsService.Layer.GetAllLayers()
 }
 
 func (layer *Layer) GetAllLayers() (layers []Layer) {
