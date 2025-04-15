@@ -28,6 +28,7 @@ import (
 	"errors"
 	"log"
 	"strconv"
+	"strings"
 
 	sharedModel "github.com/pdok/smooth-operator/model"
 
@@ -292,12 +293,30 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 
 	var layer pdoknlv3.Layer
 	if topLayer == nil {
+
+		boundingBoxes := make([]pdoknlv3.WMSBoundingBox, 0)
+		if v2Service.Extent != nil {
+
+			bboxStringList := strings.Split(*v2Service.Extent, " ")
+			bbox := pdoknlv3.WMSBoundingBox{
+				CRS: v2Service.DataEPSG,
+				BBox: sharedModel.BBox{
+					MinX: bboxStringList[0],
+					MaxX: bboxStringList[2],
+					MinY: bboxStringList[1],
+					MaxY: bboxStringList[3],
+				},
+			}
+			boundingBoxes = append(boundingBoxes, bbox)
+		}
+
 		layer = pdoknlv3.Layer{
-			Name:     "wms",
-			Title:    &v2Service.Title,
-			Abstract: &v2Service.Abstract,
-			Keywords: v2Service.Keywords,
-			Layers:   &[]pdoknlv3.Layer{},
+			Name:          "wms",
+			Title:         &v2Service.Title,
+			Abstract:      &v2Service.Abstract,
+			Keywords:      v2Service.Keywords,
+			BoundingBoxes: boundingBoxes,
+			Layers:        &[]pdoknlv3.Layer{},
 		}
 
 		var childLayersV3 []pdoknlv3.Layer
