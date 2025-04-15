@@ -72,8 +72,10 @@ func getWFSLayers(featureTypes []pdoknlv3.FeatureType) (layers []WFSLayer) {
 
 func getColumns(data pdoknlv3.Data) []Column {
 	columns := []Column{{Name: "fuuid"}}
-	for _, column := range *data.GetColumns() {
-		columns = append(columns, Column{Name: column.Name, Alias: column.Alias})
+	if data.GetColumns() != nil {
+		for _, column := range *data.GetColumns() {
+			columns = append(columns, Column{Name: column.Name, Alias: column.Alias})
+		}
 	}
 	return columns
 }
@@ -109,6 +111,16 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 
 	epsgs := []string{"EPSG:28992", "EPSG:25831", "EPSG:25832", "EPSG:3034", "EPSG:3035", "EPSG:3857", "EPSG:4258", "EPSG:4326", "CRS:84"}
 
+	maxSize := "4000"
+	if service.MaxSize != nil {
+		maxSize = strconv.Itoa(int(*service.MaxSize))
+	}
+
+	metadataId := ""
+	if service.Inspire != nil {
+		metadataId = service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
+	}
+
 	result := WMSInput{
 		BaseServiceInput: BaseServiceInput{
 			Title:           service.Title,
@@ -119,7 +131,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 			NamespaceURI:    fmt.Sprintf("%s://%s.geonovum.nl", protocol, datasetName),
 			OnlineResource:  pdoknlv3.GetHost(),
 			Path:            mapperutils.GetPath(wms),
-			MetadataId:      wms.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
+			MetadataId:      metadataId,
 			DatasetOwner:    &owner,
 			AuthorityURL:    &authorityUrl,
 			AutomaticCasing: wms.Spec.Options.AutomaticCasing,
@@ -128,7 +140,12 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		},
 		AccessConstraints: accessConstraints,
 		Layers:            []WMSLayer{},
+		GroupLayers:       []GroupLayer{},
+		Symbols:           getSymbols(wms),
+		OutputFormatJpg:   "jpg",
+		OutputFormatPng:   "png",
 		Templates:         "/srv/data/config/templates",
+		MaxSize:           maxSize,
 	}
 
 	allLayers := wms.Spec.Service.GetAllLayers()
@@ -198,5 +215,20 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 		}
 	}
 
+	return result
+}
+
+func getSymbols(wms *pdoknlv3.WMS) []string {
+	result := make([]string, 0)
+	service := wms.Spec.Service
+	if service.StylingAssets != nil {
+		for _, ref := range service.StylingAssets.ConfigMapRefs {
+			for _, key := range ref.Keys {
+				if strings.HasSuffix(key, ".symbol") {
+					result = append(result, "/styling/"+key)
+				}
+			}
+		}
+	}
 	return result
 }
