@@ -133,62 +133,70 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 
 	allLayers := wms.Spec.Service.GetAllLayers()
 	for _, serviceLayer := range allLayers[1:] {
-		layerExtent := extent
-		if len(serviceLayer.BoundingBoxes) > 0 {
-			layerExtent = serviceLayer.BoundingBoxes[0].ToExtent()
-		}
-
-		layer := WMSLayer{
-			BaseLayer: BaseLayer{
-				Name:           serviceLayer.Name,
-				Title:          smoothoperatorutils.PointerVal(serviceLayer.Title, ""),
-				Abstract:       smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
-				Keywords:       strings.Join(serviceLayer.Keywords, ","),
-				Extent:         layerExtent,
-				MetadataId:     serviceLayer.DatasetMetadataURL.CSW.MetadataIdentifier,
-				Columns:        []Column{},
-				GeometryType:   nil,
-				GeopackagePath: nil,
-				TableName:      nil,
-				Postgis:        nil,
-			},
-			GroupName:                   "",
-			Styles:                      []Style{},
-			Offsite:                     "",
-			GetFeatureInfoIncludesClass: false,
-		}
-
-		for _, style := range serviceLayer.Styles {
-			stylePath := "/styling/" + smoothoperatorutils.PointerVal(style.Visualization, "")
-			layer.Styles = append(layer.Styles, Style{
-				Path:  stylePath,
-				Title: smoothoperatorutils.PointerVal(style.Title, ""),
-			})
-		}
-
-		if serviceLayer.Data != nil && serviceLayer.Data.Gpkg != nil {
-			gpkg := serviceLayer.Data.Gpkg
-
-			layer.Columns = append(layer.Columns, Column{
-				Name:  "fuuid",
-				Alias: nil,
-			})
-
-			for _, column := range serviceLayer.Data.Gpkg.Columns {
-				layer.Columns = append(layer.Columns, Column{
-					Name:  column.Name,
-					Alias: column.Alias,
-				})
-			}
-
-			layer.GeometryType = &gpkg.GeometryType
-			splitBlobKey := strings.Split(gpkg.BlobKey, "/")
-			geopackageConstructedPath := "/srv/data/gpkg/" + splitBlobKey[len(splitBlobKey)-1]
-			layer.GeopackagePath = &geopackageConstructedPath
-			layer.TableName = &gpkg.TableName
-		}
-
+		layer := getWMSLayer(serviceLayer, extent, wms)
 		result.Layers = append(result.Layers, layer)
 	}
 	return result, nil
+}
+
+func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {
+	layerExtent := serviceExtent
+	if len(serviceLayer.BoundingBoxes) > 0 {
+		layerExtent = serviceLayer.BoundingBoxes[0].ToExtent()
+	}
+
+	result := WMSLayer{
+		BaseLayer: BaseLayer{
+			Name:           serviceLayer.Name,
+			Title:          smoothoperatorutils.PointerVal(serviceLayer.Title, ""),
+			Abstract:       smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
+			Keywords:       strings.Join(serviceLayer.Keywords, ","),
+			Extent:         layerExtent,
+			MetadataId:     serviceLayer.DatasetMetadataURL.CSW.MetadataIdentifier,
+			Columns:        getColumns(*serviceLayer.Data),
+			GeometryType:   nil,
+			GeopackagePath: nil,
+			TableName:      serviceLayer.Data.GetTableName(),
+			Postgis:        nil,
+		},
+		GroupName:                   "",
+		Styles:                      []Style{},
+		Offsite:                     "",
+		GetFeatureInfoIncludesClass: false,
+	}
+
+	for _, style := range serviceLayer.Styles {
+		stylePath := "/styling/" + smoothoperatorutils.PointerVal(style.Visualization, "")
+		result.Styles = append(result.Styles, Style{
+			Path:  stylePath,
+			Title: smoothoperatorutils.PointerVal(style.Title, ""),
+		})
+	}
+
+	if serviceLayer.Data != nil {
+		if serviceLayer.Data.Gpkg != nil {
+			gpkg := serviceLayer.Data.Gpkg
+
+			result.GeometryType = &gpkg.GeometryType
+			geopackageConstructedPath := ""
+			if smoothoperatorutils.PointerVal(wms.Options().PrefetchData, true) {
+				splitBlobKey := strings.Split(gpkg.BlobKey, "/")
+				geopackageConstructedPath = "/srv/data/gpkg/" + splitBlobKey[len(splitBlobKey)-1]
+			} else {
+				geopackageConstructedPath = "/vsiaz/geopackages/" + gpkg.BlobKey
+			}
+
+			result.GeopackagePath = &geopackageConstructedPath
+		} else if serviceLayer.Data.TIF != nil {
+			tif := serviceLayer.Data.TIF
+			result.GeometryType = smoothoperatorutils.Pointer("Raster")
+			_ = tif
+
+		} else if serviceLayer.Data.Postgis != nil {
+			postgis := serviceLayer.Data.Postgis
+			_ = postgis
+		}
+	}
+
+	return result
 }
