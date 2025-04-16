@@ -111,7 +111,7 @@ func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 		}
 	}
 
-	if src.Spec.Service.Inspire {
+	if src.Spec.Service.Inspire || true {
 		service.Inspire = &pdoknlv3.Inspire{
 			ServiceMetadataURL: pdoknlv3.MetadataURL{
 				CSW: &pdoknlv3.Metadata{

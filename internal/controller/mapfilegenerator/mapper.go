@@ -97,7 +97,13 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		accessConstraints = "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	}
 
-	owner := wms.ObjectMeta.Labels["dataset-owner"]
+	datasetOwner := ""
+	if service.Layer.Authority != nil {
+		datasetOwner = service.Layer.Authority.Name
+	} else {
+		datasetOwner = wms.ObjectMeta.Labels["dataset-owner"]
+	}
+
 	datasetName := wms.ObjectMeta.Labels["dataset"]
 	protocol := "http"
 	authority := wms.GetAuthority()
@@ -121,6 +127,18 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		metadataId = service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
 	}
 
+	var fonts *string
+
+	if service.StylingAssets != nil {
+		writeFonts := mapperutils.AnyMatch(service.StylingAssets.BlobKeys, func(s string) bool {
+			return strings.HasSuffix(s, ".ttf")
+		})
+
+		if writeFonts {
+			fonts = smoothoperatorutils.Pointer("/srv/data/config/fonts")
+		}
+	}
+
 	result := WMSInput{
 		BaseServiceInput: BaseServiceInput{
 			Title:           service.Title,
@@ -132,7 +150,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 			OnlineResource:  pdoknlv3.GetHost(),
 			Path:            mapperutils.GetPath(wms),
 			MetadataId:      metadataId,
-			DatasetOwner:    &owner,
+			DatasetOwner:    &datasetOwner,
 			AuthorityURL:    &authorityUrl,
 			AutomaticCasing: wms.Spec.Options.AutomaticCasing,
 			DataEPSG:        service.DataEPSG,
@@ -142,6 +160,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		Layers:            []WMSLayer{},
 		GroupLayers:       []GroupLayer{},
 		Symbols:           getSymbols(wms),
+		Fonts:             fonts,
 		OutputFormatJpg:   "jpg",
 		OutputFormatPng:   "png",
 		Templates:         "/srv/data/config/templates",

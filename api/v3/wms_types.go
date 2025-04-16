@@ -211,8 +211,8 @@ func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 			CRS: "EPSG:28992",
 			BBox: shared_model.BBox{
 				MinX: "-25000",
-				MaxX: "250000",
-				MinY: "280000",
+				MaxX: "280000",
+				MinY: "250000",
 				MaxY: "860000",
 			},
 		}

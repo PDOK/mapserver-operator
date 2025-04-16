@@ -32,6 +32,7 @@ type WMSInput struct {
 	Layers            []WMSLayer   `json:"layers"`
 	GroupLayers       []GroupLayer `json:"group_layers"`
 	Symbols           []string     `json:"symbols"`
+	Fonts             *string      `json:"fonts"`
 	Templates         string       `json:"templates,omitempty"`
 	OutputFormatJpg   string       `json:"outputformat_jpg"`
 	OutputFormatPng   string       `json:"outputformat_png8"`
