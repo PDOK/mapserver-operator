@@ -249,11 +249,10 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			tif := serviceLayer.Data.TIF
 			result.GeometryType = smoothoperatorutils.Pointer("Raster")
 			result.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
-			_ = tif
-
 		} else if serviceLayer.Data.Postgis != nil {
 			postgis := serviceLayer.Data.Postgis
-			_ = postgis
+			result.Postgis = smoothoperatorutils.Pointer(true)
+			result.GeometryType = &postgis.GeometryType
 		}
 	}
 
