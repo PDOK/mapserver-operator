@@ -216,11 +216,11 @@ services:
                             mediaType: application/vnd.ogc.csw.GetRecordByIdResponse_xml
                         supportedLanguages:
                             defaultLanguage:
-                                language: nl
+                                language: dut
                             supportedLanguage:
-                                - language: nl
+                                - language: dut
                         responseLanguage:
-                            language: nl
+                            language: dut
                     layer:
                         - queryable: 1
                           opaque: null

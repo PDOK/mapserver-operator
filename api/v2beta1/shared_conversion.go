@@ -82,6 +82,7 @@ func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 	return &corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
+				Name:      "mapserver",
 				Resources: src,
 			},
 		},

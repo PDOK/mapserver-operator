@@ -20,6 +20,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
+	smoothoperator "github.com/pdok/smooth-operator/api/v1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"os"
 	"path/filepath"
 
@@ -61,7 +63,8 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
+	utilruntime.Must(traefikiov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(smoothoperator.AddToScheme(scheme))
 	utilruntime.Must(pdoknlv3.AddToScheme(scheme))
 	utilruntime.Must(pdoknlv2beta1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme

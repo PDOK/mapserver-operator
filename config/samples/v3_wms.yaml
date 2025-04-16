@@ -55,7 +55,7 @@ spec:
         csw:
           metadataIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
       spatialDatasetIdentifier: abcd1234-abcd-1234-abcd-1234abcd1234
-      language: "nl"
+      language: "dut"
     dataEPSG: EPSG:28992
     resolution:
     defResolution:

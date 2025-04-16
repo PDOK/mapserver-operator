@@ -1183,6 +1183,7 @@ spec:
                   abstract:
                     type: string
                   accessConstraints:
+                    default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
                     type: string
                   dataEPSG:
                     type: string
@@ -1506,7 +1507,6 @@ spec:
             required:
             - horizontalPodAutoscalerPatch
             - lifecycle
-            - options
             - service
             type: object
           status:

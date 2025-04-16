@@ -45,7 +45,7 @@ spec:
         csw:
           metadataIdentifier: 68a42961-ed55-436b-a412-cc7424fd2a6e
       spatialDatasetIdentifier: ""
-      language: "nl"
+      language: "dut"
     ownerInfoRef: pdok
     title: "Dataset"
     abstract: "Dataset beschrijving ..."

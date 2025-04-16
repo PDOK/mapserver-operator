@@ -66,27 +66,28 @@ func init() {
 
 // WFSSpec vertegenwoordigt de hoofdstruct voor de YAML-configuratie
 type WFSSpec struct {
-	Lifecycle *shared_model.Lifecycle `json:"lifecycle"`
+	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
-	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
-	Options                      *Options                                   `json:"options"`
+	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
+	Options                      Options                                    `json:"options,omitempty"`
 	Service                      WFSService                                 `json:"service"`
 }
 
 type WFSService struct {
-	Prefix            string   `json:"prefix"`
-	URL               string   `json:"url"`
-	Inspire           *Inspire `json:"inspire,omitempty"`
-	Mapfile           *Mapfile `json:"mapfile,omitempty"`
-	OwnerInfoRef      string   `json:"ownerInfoRef"`
-	Title             string   `json:"title"`
-	Abstract          string   `json:"abstract"`
-	Keywords          []string `json:"keywords"`
-	Fees              *string  `json:"fees,omitempty"`
+	Prefix       string   `json:"prefix"`
+	URL          string   `json:"url"`
+	Inspire      *Inspire `json:"inspire,omitempty"`
+	Mapfile      *Mapfile `json:"mapfile,omitempty"`
+	OwnerInfoRef string   `json:"ownerInfoRef"`
+	Title        string   `json:"title"`
+	Abstract     string   `json:"abstract"`
+	Keywords     []string `json:"keywords"`
+	Fees         *string  `json:"fees,omitempty"`
+	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	AccessConstraints string   `json:"accessConstraints"`
 	DefaultCrs        string   `json:"defaultCrs"`
 	OtherCrs          []string `json:"otherCrs,omitempty"`
@@ -144,7 +145,7 @@ func (wfs *WFS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutos
 }
 
 func (wfs *WFS) Options() *Options {
-	return wfs.Spec.Options
+	return &wfs.Spec.Options
 }
 
 func (wfs *WFS) ID() string {

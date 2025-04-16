@@ -74,7 +74,7 @@ func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WMSService{
 		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
@@ -118,7 +118,7 @@ func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 				},
 			},
 			SpatialDatasetIdentifier: *src.Spec.Service.Layers[0].SourceMetadataIdentifier,
-			Language:                 "nl",
+			Language:                 "dut",
 		}
 	}
 
@@ -153,9 +153,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
-	if src.Spec.Options != nil {
-		dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
-	}
+	dst.Spec.Options = ConvertOptionsV3ToV2(&src.Spec.Options)
 
 	service := WMSService{
 		Title:              src.Spec.Service.Title,
