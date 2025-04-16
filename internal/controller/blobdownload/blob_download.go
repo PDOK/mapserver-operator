@@ -138,6 +138,10 @@ func downloadTiffs(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 }
 
 func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
+	if wms.Spec.Service.StylingAssets == nil { // TODO Is StylingAssets required and should this return an error?
+		return nil
+	}
+
 	re := regexp.MustCompile(".*\\.(ttf)$")
 	for _, blobKey := range wms.Spec.Service.StylingAssets.BlobKeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)

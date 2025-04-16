@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	corev1 "k8s.io/api/core/v1"
 )
 
 const (
-	htmlTemplatesPath                       = "/srv/data/config/templates"
-	ConfigMapFeatureinfoGeneratorVolumeName = "featureinfo-generator-config"
+	htmlTemplatesPath = "/srv/data/config/templates"
 )
 
 func GetFeatureinfoGeneratorInitContainer(image string, srvDir string) (*corev1.Container, error) {
@@ -28,7 +28,7 @@ func GetFeatureinfoGeneratorInitContainer(image string, srvDir string) (*corev1.
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
-			{Name: ConfigMapFeatureinfoGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+			{Name: mapserver.ConfigMapFeatureinfoGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 		},
 	}
 

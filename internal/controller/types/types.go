@@ -5,4 +5,7 @@ type HashedConfigMapNames struct {
 	BlobDownload          string
 	MapfileGenerator      string
 	CapabilitiesGenerator string
+	OgcWebserviceProxy    string
+	LegendGenerator       string
+	FeatureInfoGenerator  string
 }
