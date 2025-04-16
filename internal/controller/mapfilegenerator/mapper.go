@@ -76,6 +76,8 @@ func getColumns(data pdoknlv3.Data) []Column {
 		for _, column := range *data.GetColumns() {
 			columns = append(columns, Column{Name: column.Name, Alias: column.Alias})
 		}
+	} else {
+		return nil
 	}
 	return columns
 }
@@ -172,6 +174,20 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		layer := getWMSLayer(serviceLayer, extent, wms)
 		result.Layers = append(result.Layers, layer)
 	}
+
+	for _, serviceLayer := range allLayers {
+		if serviceLayer.IsGroupLayer() && serviceLayer.Visible != nil && *serviceLayer.Visible {
+			groupLayer := GroupLayer{
+				Name:       serviceLayer.Name,
+				Title:      smoothoperatorutils.PointerVal(serviceLayer.Title, ""),
+				Abstract:   smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
+				StyleName:  "",
+				StyleTitle: "",
+			}
+			result.GroupLayers = append(result.GroupLayers, groupLayer)
+		}
+	}
+
 	return result, nil
 }
 
@@ -179,6 +195,12 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	layerExtent := serviceExtent
 	if len(serviceLayer.BoundingBoxes) > 0 {
 		layerExtent = serviceLayer.BoundingBoxes[0].ToExtent()
+	}
+
+	groupName := ""
+	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
+	if parent.IsGroupLayer() {
+		groupName = parent.Name
 	}
 
 	result := WMSLayer{
@@ -195,7 +217,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			TableName:      serviceLayer.Data.GetTableName(),
 			Postgis:        nil,
 		},
-		GroupName:                   "",
+		GroupName:                   groupName,
 		Styles:                      []Style{},
 		Offsite:                     "",
 		GetFeatureInfoIncludesClass: false,
@@ -226,6 +248,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 		} else if serviceLayer.Data.TIF != nil {
 			tif := serviceLayer.Data.TIF
 			result.GeometryType = smoothoperatorutils.Pointer("Raster")
+			result.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
 			_ = tif
 
 		} else if serviceLayer.Data.Postgis != nil {

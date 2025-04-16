@@ -290,7 +290,11 @@ func (layer *Layer) IsDataLayer() bool {
 }
 
 func (layer *Layer) IsGroupLayer() bool {
-	return layer.Layers != nil && len(*layer.Layers) > 0
+	return layer.Layers != nil && len(*layer.Layers) > 0 && layer.Visible != nil && *layer.Visible
+}
+
+func (layer *Layer) IsTopLayer(service *WMSService) bool {
+	return layer.Name == service.Layer.Name
 }
 
 func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {
