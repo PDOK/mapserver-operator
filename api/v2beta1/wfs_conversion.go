@@ -39,26 +39,31 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WFS)
 	log.Printf("ConvertTo: Converting WFS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
+	V3WFSHubFromV2(src, dst)
 
-	dst.ObjectMeta = src.ObjectMeta
+	return nil
+}
+
+func V3WFSHubFromV2(src *WFS, target *pdoknlv3.WFS) {
+	target.ObjectMeta = src.ObjectMeta
 
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
-		dst.Spec.Lifecycle = &sharedModel.Lifecycle{
+		target.Spec.Lifecycle = &sharedModel.Lifecycle{
 			TTLInDays: Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
 		}
 	}
 
 	if src.Spec.Kubernetes.Autoscaling != nil {
-		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
+		target.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
 	}
 
 	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
 	if src.Spec.Kubernetes.Resources != nil {
-		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
+		target.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
+	target.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WFSService{
 		// TODO what is prefix, Geonovum subdomain?
@@ -114,9 +119,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 		service.FeatureTypes = append(service.FeatureTypes, convertV2FeatureTypeToV3(featureType))
 	}
 
-	dst.Spec.Service = service
-
-	return nil
+	target.Spec.Service = service
 }
 
 func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -25,8 +26,6 @@ func main() {
 			checkWms(path)
 		} else if strings.HasSuffix(path, "wfs.yaml") {
 			checkWfs(path)
-		} else if strings.HasSuffix(path, "atom.yaml") {
-			checkAtom(path)
 		}
 		return nil
 	})
@@ -37,9 +36,69 @@ func main() {
 
 func checkWms(path string) {
 	print("Checking ")
+	print(path)
+	print("...")
+	fileString, err := getNormalizedFileString(path)
+	if err != nil {
+		return
+	}
+
+	var v2wms v2beta1.WMS
+	err = yaml.Unmarshal([]byte(fileString), &v2wms)
+	if err != nil {
+		fmt.Printf("Could not unmarshall '%s' to v2wms", path)
+		return
+	}
+	var wms pdoknlv3.WMS
+	v2beta1.V3WMSHubFromV2(&v2wms, &wms)
+	warnings, err := wms.ValidateCreate()
+	if err != nil {
+		println("ERRORS")
+		println("###")
+		println(err.Error())
+		println("###")
+	} else if len(warnings) > 0 {
+		println("WARNINGS")
+	} else {
+		println("OK")
+	}
+
+}
+
+func checkWfs(path string) {
+	print("Checking ")
+	print(path)
+	print("...")
+	fileString, err := getNormalizedFileString(path)
+	if err != nil {
+		return
+	}
+
+	var v2wfs v2beta1.WFS
+	err = yaml.Unmarshal([]byte(fileString), &v2wfs)
+	if err != nil {
+		fmt.Printf("Could not unmarshall '%s' to v2wms", path)
+		return
+	}
+	var wfs pdoknlv3.WFS
+	v2beta1.V3WFSHubFromV2(&v2wfs, &wfs)
+	warnings, err := wfs.ValidateCreate()
+	if err != nil {
+		println("ERRORS")
+		println("###")
+		println(err.Error())
+		println("###")
+	} else if len(warnings) > 0 {
+		println("WARNINGS")
+	} else {
+		println("OK")
+	}
+}
+
+func getNormalizedFileString(path string) (string, error) {
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("Could not read file '%s', exiting", path)
+		return "", errors.New(fmt.Sprintf("Could not read file '%s', exiting", path))
 	}
 	fileString := string(fileBytes)
 	fileString = strings.ReplaceAll(fileString, "${BLOBS_RESOURCES_BUCKET}", "resources")
@@ -64,24 +123,10 @@ func checkWms(path string) {
 	fileString = strings.ReplaceAll(fileString, "${REQUESTS_CPU}", "1001")
 	fileString = strings.ReplaceAll(fileString, "${REQUESTS_MEM}", "100M")
 	fileString = strings.ReplaceAll(fileString, "${REQUESTS_EPHEMERAL_STORAGE}", "101M")
+	fileString = strings.ReplaceAll(fileString, "${LIMITS_MEM}", "103M")
 
-	var v2wms v2beta1.WMS
-	err = yaml.Unmarshal([]byte(fileString), &v2wms)
-	if err != nil {
-		println(err)
-		println(path)
-		os.Exit(1)
+	if strings.Contains(fileString, "${") {
+		return "", errors.New(fmt.Sprintf("File '%s' still has an unreplaced variable", path))
 	}
-	var wms pdoknlv3.WMS
-	v2beta1.V3HubFromV2(&v2wms, &wms)
-}
-
-func checkWfs(path string) {
-	//print("Did not check ")
-	//println(path)
-}
-
-func checkAtom(path string) {
-	//print("Did not check ")
-	//println(path)
+	return fileString, nil
 }
