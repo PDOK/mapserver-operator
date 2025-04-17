@@ -47,8 +47,8 @@ type WFS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   WFSSpec                     `json:"spec,omitempty"`
-	Status shared_model.OperatorStatus `json:"status,omitempty"`
+	Spec   WFSSpec                      `json:"spec"`
+	Status *shared_model.OperatorStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -73,12 +73,12 @@ type WFSSpec struct {
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
-	Options                      Options                                    `json:"options,omitempty"`
+	Options                      Options                                    `json:"options"` // default waardes, mogelijk omitempty
 	Service                      WFSService                                 `json:"service"`
 }
 
 type WFSService struct {
-	Prefix       string   `json:"prefix"`
+	Prefix       string   `json:"prefix"` // XML Namespace prefix, mag niet met een cijfer beginnen
 	URL          string   `json:"url"`
 	Inspire      *Inspire `json:"inspire,omitempty"`
 	Mapfile      *Mapfile `json:"mapfile,omitempty"`
@@ -86,15 +86,15 @@ type WFSService struct {
 	Title        string   `json:"title"`
 	Abstract     string   `json:"abstract"`
 	Keywords     []string `json:"keywords"`
-	Fees         *string  `json:"fees,omitempty"`
+	Fees         *string  `json:"fees,omitempty"` // maybe deprecated, has default value in capabilities-generator
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	AccessConstraints string   `json:"accessConstraints"`
 	DefaultCrs        string   `json:"defaultCrs"`
-	OtherCrs          []string `json:"otherCrs,omitempty"`
-	Bbox              *Bbox    `json:"bbox,omitempty"`
+	OtherCrs          []string `json:"otherCrs,omitempty"` // mag default lijstje zijn
+	Bbox              Bbox     `json:"bbox"`
 	// CountDefault -> wfs_maxfeatures in mapfile
-	CountDefault *string       `json:"countDefault,omitempty"`
-	FeatureTypes []FeatureType `json:"featureTypes"`
+	CountDefault *string       `json:"countDefault,omitempty"` // TODO ook goed zetten in capabilities, mogelijk int maken
+	FeatureTypes []FeatureType `json:"featureTypes"`           // TODO minlength 1
 }
 
 type Bbox struct {
@@ -108,15 +108,15 @@ type FeatureType struct {
 	Title              string       `json:"title"`
 	Abstract           string       `json:"abstract"`
 	Keywords           []string     `json:"keywords"`
-	DatasetMetadataURL MetadataURL  `json:"datasetMetadataUrl"`
-	Bbox               *FeatureBbox `json:"bbox,omitempty"`
+	DatasetMetadataURL *MetadataURL `json:"datasetMetadataUrl,omitempty"`
+	Bbox               FeatureBbox  `json:"bbox"`
 	Data               Data         `json:"data"`
 }
 
 type FeatureBbox struct {
 	//nolint:tagliatelle
-	DefaultCRS shared_model.BBox  `json:"defaultCRS"`
-	WGS84      *shared_model.BBox `json:"wgs84,omitempty"`
+	DefaultCRS shared_model.BBox `json:"defaultCRS"`
+	WGS84      shared_model.BBox `json:"wgs84"`
 }
 
 func (wfs *WFS) HasPostgisData() bool {

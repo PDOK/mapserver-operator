@@ -42,19 +42,21 @@ type Mapfile struct {
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
 }
 
+// TODO moeten allemaal default waardes hebben
+// TODO WMS/WFS splitsen
 type Options struct {
-	IncludeIngress              bool  `json:"includeIngress"`
-	AutomaticCasing             bool  `json:"automaticCasing"`
-	ValidateRequests            *bool `json:"validateRequests,omitempty"`
-	RewriteGroupToDataLayers    *bool `json:"rewriteGroupToDataLayers,omitempty"`
-	DisableWebserviceProxy      *bool `json:"disableWebserviceProxy,omitempty"`
-	PrefetchData                *bool `json:"prefetchData,omitempty"`
-	ValidateChildStyleNameEqual *bool `json:"validateChildStyleNameEqual,omitempty"`
+	IncludeIngress              bool `json:"includeIngress"`              // default true
+	AutomaticCasing             bool `json:"automaticCasing"`             // default true
+	ValidateRequests            bool `json:"validateRequests"`            // default true
+	RewriteGroupToDataLayers    bool `json:"rewriteGroupToDataLayers"`    // default false
+	DisableWebserviceProxy      bool `json:"disableWebserviceProxy"`      // default false
+	PrefetchData                bool `json:"prefetchData"`                // default true
+	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual"` // default true, moeten eigenlijk weg
 }
 
 type Inspire struct {
 	ServiceMetadataURL       MetadataURL `json:"serviceMetadataUrl"`
-	SpatialDatasetIdentifier string      `json:"spatialDatasetIdentifier"`
+	SpatialDatasetIdentifier *string     `json:"spatialDatasetIdentifier,omitempty"` // TODO required for WFS, doesn't exist in WMS, mogelijk uitsplitsen
 	Language                 string      `json:"language"`
 }
 
@@ -72,24 +74,25 @@ type Custom struct {
 	Type string `json:"type"`
 }
 
+// minstens 1 verplicht, mogelijk splitsing wms/wfs
 type Data struct {
 	Gpkg    *Gpkg    `json:"gpkg,omitempty"`
 	Postgis *Postgis `json:"postgis,omitempty"`
-	TIF     *TIF     `json:"tif,omitempty"`
+	TIF     *TIF     `json:"tif,omitempty"` // kan niet voor WFS
 }
 
 type Gpkg struct {
 	BlobKey      string   `json:"blobKey"`
 	TableName    string   `json:"tableName"`
 	GeometryType string   `json:"geometryType"`
-	Columns      []Column `json:"columns"`
+	Columns      []Column `json:"columns"` // minlenght 1
 }
 
 // Postgis - reference to table in a Postgres database
 type Postgis struct {
 	TableName    string   `json:"tableName"`
 	GeometryType string   `json:"geometryType"`
-	Columns      []Column `json:"columns"`
+	Columns      []Column `json:"columns"` // minlenght 1
 }
 
 type TIF struct {
