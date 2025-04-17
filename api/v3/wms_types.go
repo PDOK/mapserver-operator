@@ -25,16 +25,13 @@ SOFTWARE.
 package v3
 
 import (
-	"fmt"
-	"maps"
-	"slices"
-	"sort"
-	"strings"
-
 	shared_model "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"maps"
+	"slices"
+	"sort"
 )
 
 const (
@@ -115,26 +112,14 @@ type WMSBoundingBox struct {
 }
 
 func (wmsBoundingBox *WMSBoundingBox) ToExtent() string {
-	bbox := wmsBoundingBox.BBox
-	return strings.Trim(fmt.Sprintf("%s %s %s %s", bbox.MinX, bbox.MinY, bbox.MaxX, bbox.MaxY), " ")
+	return wmsBoundingBox.BBox.ToExtent()
 }
 
 func (wmsBoundingBox *WMSBoundingBox) Combine(other *WMSBoundingBox) {
 	if wmsBoundingBox.CRS != other.CRS {
 		return
 	}
-	if other.BBox.MinX < wmsBoundingBox.BBox.MinX {
-		wmsBoundingBox.BBox.MinX = other.BBox.MinX
-	}
-	if other.BBox.MaxX > wmsBoundingBox.BBox.MaxX {
-		wmsBoundingBox.BBox.MaxX = other.BBox.MaxX
-	}
-	if other.BBox.MinY < wmsBoundingBox.BBox.MinY {
-		wmsBoundingBox.BBox.MinY = other.BBox.MinY
-	}
-	if other.BBox.MaxY > wmsBoundingBox.BBox.MaxY {
-		wmsBoundingBox.BBox.MaxY = other.BBox.MaxY
-	}
+	wmsBoundingBox.BBox.Combine(other.BBox)
 }
 
 type Authority struct {
