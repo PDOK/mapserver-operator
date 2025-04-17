@@ -3,15 +3,13 @@ package legendgenerator
 import (
 	"fmt"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
+
+	_ "embed"
 	"sigs.k8s.io/yaml"
 	"strings"
 )
 
+// TODO Reuse default_mapserver.conf from static_files?
 const (
 	defaultMapserverConf = `CONFIG
   ENV
@@ -21,6 +19,9 @@ END
 `
 )
 
+//go:embed legend-fixer.sh
+var legendFixerScript string
+
 type LegendReference struct {
 	Layer string `yaml:"layer" json:"layer"`
 	Style string `yaml:"style" json:"style"`
@@ -28,33 +29,6 @@ type LegendReference struct {
 
 type OgcWebserviceProxyConfig struct {
 	GroupLayers map[string][]string `yaml:"grouplayers" json:"grouplayers"`
-}
-
-func getBareConfigMapLegendGenerator(obj metav1.Object) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-legend-generator",
-			Namespace: obj.GetNamespace(),
-		},
-	}
-}
-
-func GetLegendGeneratorConfigMap(wms *pdoknlv3.WMS) *corev1.ConfigMap {
-	result := getBareConfigMapLegendGenerator(wms)
-	labels := controller.AddCommonLabels(wms, smoothoperatorutils.CloneOrEmptyMap(wms.GetLabels()))
-	result.Labels = labels
-
-	result.Immutable = smoothoperatorutils.Pointer(true)
-	result.Data = map[string]string{}
-	result.Data["default_mapserver.conf"] = defaultMapserverConf
-
-	addLayerInput(wms, result.Data)
-
-	if wms.Spec.Options.RewriteGroupToDataLayers != nil && *wms.Spec.Options.RewriteGroupToDataLayers {
-		addLegendFixerConfig(wms, result.Data)
-	}
-
-	return result
 }
 
 func addLayerInput(wms *pdoknlv3.WMS, data map[string]string) {
@@ -100,10 +74,7 @@ func processLayer(layer *pdoknlv3.Layer, legendReferences *[]LegendReference) {
 }
 
 func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
-	fileBytes, err := os.ReadFile("./legend-fixer.sh")
-	if err == nil {
-		data["legend-fixer.sh"] = string(fileBytes)
-	}
+	data["legend-fixer.sh"] = legendFixerScript
 
 	topLayer := wms.Spec.Service.Layer
 
@@ -154,7 +125,7 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 	}
 
 	ogcWebServiceProxyConfig := OgcWebserviceProxyConfig{GroupLayers: groupLayers}
-	proxyConfigData, err := yaml.Marshal(ogcWebServiceProxyConfig)
+	proxyConfigData, _ := yaml.Marshal(ogcWebServiceProxyConfig)
 	data["ogc-webservice-proxy-config.yaml"] = string(proxyConfigData)
 }
 
