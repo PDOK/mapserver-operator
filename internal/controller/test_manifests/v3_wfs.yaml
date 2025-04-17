@@ -63,9 +63,9 @@ spec:
         maxy: "625000"
     countDefault: "12"
     featureTypes:
-      - name: Feature1
-        title: Feature1
-        abstract: "Feature 1 beschrijving..."
+      - name: FeatureType1
+        title: FeatureType1
+        abstract: "FeatureType 1 beschrijving..."
         keywords:
           - keyword1
           - keyword2
@@ -82,6 +82,33 @@ spec:
           gpkg:
             blobKey: eigenaar/dataset/data.gpkg
             tableName: table1
+            geometryType: "MultiPolygon"
+            columns:
+              - name: naam
+              - name: gebiedsnum
+                alias: gebiedsnummer
+              - name: besluitnum
+              - name: besluitdat
+                alias: datum
+      - name: FeatureType2
+        title: FeatureType2
+        abstract: "FeatureType 2 beschrijving..."
+        keywords:
+          - keyword1
+          - keyword2
+        datasetMetadataUrl:
+          csw:
+            metadataIdentifier: 07d73b60-dfd6-4c54-9c82-9fac70c6c48f
+        bbox:
+          defaultCRS: # EXTENT/wfs_extent in mapfile
+            minx: "0"
+            maxx: "280000"
+            miny: "300000"
+            maxy: "625000"
+        data:
+          gpkg:
+            blobKey: eigenaar/dataset/data.gpkg
+            tableName: table2
             geometryType: "MultiPolygon"
             columns:
               - name: naam

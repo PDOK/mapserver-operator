@@ -32,13 +32,15 @@ spec:
           name: cpu
           target:
             type: Utilization
-            averageUtilization: 60
+            averageUtilization: 120
   options:
     automaticCasing: true
     prefetchData: false
     includeIngress: false
     rewriteGroupToDataLayers: true
     validateChildStyleNameEqual: true
+    disableWebserviceProxy: false
+    validateRequests: true
   service:
     url: https://service.pdok.nl/owner/dataset/wms/1.0.0
     title: "Dataset"
@@ -55,7 +57,7 @@ spec:
         csw:
           metadataIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
       spatialDatasetIdentifier: abcd1234-abcd-1234-abcd-1234abcd1234
-      language: "dut"
+      language: "nl"
     dataEPSG: EPSG:28992
     resolution:
     defResolution:
@@ -80,7 +82,16 @@ spec:
       datasetMetadataUrl:
       minscaledenominator:
       maxscaledenominator:
-      style:
+      styles:
+        - title: style-title-1
+          name: style-name-1
+          abstract: Style abstract 1
+          visualization: style-1.style
+          legend:
+            width: 50
+            height: 150
+            format: png
+            blobKey: resources-bucket/key/style-1-legend.png
       labelNoClip: false
       data:
       layers:
@@ -97,6 +108,15 @@ spec:
           minscaledenominator:
           maxscaledenominator:
           styles:
+            - title: style-title-2
+              name: style-name-2
+              abstract: Style abstract 2
+              visualization: style-2.style
+              legend:
+                width: 50
+                height: 150
+                format: png
+                blobKey: resources-bucket/key/style-2-legend.png
           labelNoClip: false
           layers:
             - name: gpkg-layer-name
@@ -114,7 +134,13 @@ spec:
               styles:
                 - name: gpkg-layer-style-name
                   title: gpkg-layer-style-title
+                  abstract: Gpkg layer style abstract
                   visualization: gpkg-layer-style.style
+                  legend:
+                    width: 50
+                    height: 150
+                    format: png
+                    blobKey: resources-bucket/key/gpkg-layer-style-legend.png
               labelNoClip: false
               data:
                 gpkg:
@@ -140,9 +166,15 @@ spec:
               minscaledenominator:
               maxscaledenominator:
               styles:
-                - name: tif-layer-style-1-name
-                  title: tif-layer-style-1-title
-                  visualization: tif-layer-style-1.style
+                - name: tif-layer-style-name
+                  title: tif-layer-style-title
+                  abstract: TIF layer style abstract
+                  visualization: tif-layer-style.style
+                  legend:
+                    width: 50
+                    height: 150
+                    format: png
+                    blobKey: resources-bucket/key/tif-layer-style-legend.png
               labelNoClip: false
               data:
                 tif:

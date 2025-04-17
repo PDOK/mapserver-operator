@@ -158,3 +158,8 @@ func Sha1HashOfName[O WMSWFS](obj O) string {
 
 	return hex.EncodeToString(s.Sum(nil))
 }
+
+func (o *Options) UseWebserviceProxy() bool {
+	// options.DisableWebserviceProxy not set or false
+	return o != nil && (o.DisableWebserviceProxy == nil || !*o.DisableWebserviceProxy)
+}

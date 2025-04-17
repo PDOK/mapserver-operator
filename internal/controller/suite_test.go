@@ -102,7 +102,8 @@ var _ = BeforeSuite(func() {
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			Scheme: scheme,
 			Paths: []string{
-				filepath.Join("..", "..", "config", "crd", "bases"),
+				filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wfs.yaml"),
+				filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wms.yaml"),
 				traefikCRDPath,
 				ownerInfoCRDPath,
 			},
@@ -117,8 +118,7 @@ var _ = BeforeSuite(func() {
 
 	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()
-	// TODO enabling next line causes the tests to fail, find out why
-	//Expect(err).NotTo(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
