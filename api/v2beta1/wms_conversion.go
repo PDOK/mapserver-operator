@@ -26,10 +26,9 @@ package v2beta1
 
 import (
 	"errors"
+	sharedModel "github.com/pdok/smooth-operator/model"
 	"log"
 	"strconv"
-
-	sharedModel "github.com/pdok/smooth-operator/model"
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -300,6 +299,13 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Layers:   &[]pdoknlv3.Layer{},
 		}
 
+		if v2Service.DataEPSG != "EPSG:28992" && v2Service.Extent != nil {
+			layer.BoundingBoxes = append(layer.BoundingBoxes, pdoknlv3.WMSBoundingBox{
+				CRS:  v2Service.DataEPSG,
+				BBox: sharedModel.ExtentToBBox(*v2Service.Extent),
+			})
+		}
+
 		var childLayersV3 []pdoknlv3.Layer
 		for _, childLayer := range v2Service.Layers {
 			childLayersV3 = append(childLayersV3, childLayer.MapToV3(v2Service))
@@ -353,6 +359,10 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 			CRS:  v2Service.DataEPSG,
 			BBox: sharedModel.ExtentToBBox(*v2Service.Extent),
 		})
+	}
+
+	if len(layer.BoundingBoxes) == 0 && v2Service.DataEPSG != "EPSG:28992" {
+		print("Broken!")
 	}
 
 	if v2Layer.MinScale != nil {
