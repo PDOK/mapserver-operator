@@ -361,10 +361,6 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 		})
 	}
 
-	if len(layer.BoundingBoxes) == 0 && v2Service.DataEPSG != "EPSG:28992" {
-		print("Broken!")
-	}
-
 	if v2Layer.MinScale != nil {
 		layer.MinScaleDenominator = Pointer(strconv.FormatFloat(*v2Layer.MinScale, 'f', -1, 64))
 	}
