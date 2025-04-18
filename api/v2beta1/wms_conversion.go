@@ -26,10 +26,9 @@ package v2beta1
 
 import (
 	"errors"
+	sharedModel "github.com/pdok/smooth-operator/model"
 	"log"
 	"strconv"
-
-	sharedModel "github.com/pdok/smooth-operator/model"
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -43,12 +42,12 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WMS)
 	log.Printf("ConvertTo: Converting WMS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
-	V3HubFromV2(src, dst)
+	V3WMSHubFromV2(src, dst)
 
 	return nil
 }
 
-func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
+func V3WMSHubFromV2(src *WMS, target *pdoknlv3.WMS) {
 	dst := target
 
 	dst.ObjectMeta = src.ObjectMeta
@@ -298,6 +297,13 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Abstract: &v2Service.Abstract,
 			Keywords: v2Service.Keywords,
 			Layers:   &[]pdoknlv3.Layer{},
+		}
+
+		if v2Service.DataEPSG != "EPSG:28992" && v2Service.Extent != nil {
+			layer.BoundingBoxes = append(layer.BoundingBoxes, pdoknlv3.WMSBoundingBox{
+				CRS:  v2Service.DataEPSG,
+				BBox: sharedModel.ExtentToBBox(*v2Service.Extent),
+			})
 		}
 
 		var childLayersV3 []pdoknlv3.Layer

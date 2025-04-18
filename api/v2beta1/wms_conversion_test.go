@@ -13,7 +13,7 @@ func TestV2ToV3(t *testing.T) {
 	err := yaml.Unmarshal([]byte(input), &v2wms)
 	assert.NoError(t, err)
 	var target pdoknlv3.WMS
-	V3HubFromV2(&v2wms, &target)
+	V3WMSHubFromV2(&v2wms, &target)
 	assert.Equal(t, "NWB - Wegen WMS", target.Spec.Service.Title)
 	a := 0
 	_ = a

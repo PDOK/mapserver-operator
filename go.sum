@@ -146,6 +146,8 @@ github.com/pdok/ogc-specifications v1.0.0-beta5 h1:j7JrXUeW55mVU9ZmJ67r8V6DhbKdg
 github.com/pdok/ogc-specifications v1.0.0-beta5/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
 github.com/pdok/smooth-operator v0.0.10 h1:dv5ua20wB62fcYiV9UznOMB5GjxpVLWqEzqBDZZO014=
 github.com/pdok/smooth-operator v0.0.10/go.mod h1:oZWFuIKJGjN/C6ocgMNfMZ7SbLQi+N0qaWj7j95Wdec=
+github.com/pdok/smooth-operator v0.0.11-0.20250417141155-2c2a0eb3e412 h1:PycDu6gAE6EZxuSlF0HfcOQbg0OsecI9YwtLmnsWA08=
+github.com/pdok/smooth-operator v0.0.11-0.20250417141155-2c2a0eb3e412/go.mod h1:oZWFuIKJGjN/C6ocgMNfMZ7SbLQi+N0qaWj7j95Wdec=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
