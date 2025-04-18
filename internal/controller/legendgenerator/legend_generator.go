@@ -16,11 +16,18 @@ func GetLegendGeneratorInitContainer(wms *pdoknlv3.WMS, image string, srvDir str
 			"bash",
 			"-c",
 			`set -eu;
+exit_code=0;
 cat /input/input | xargs -n 2 echo | while read layer style; do
 echo Generating legend for layer: $layer, style: $style;
 mkdir -p /var/www/legend/$layer;
 mapserv -nh 'QUERY_STRING=SERVICE=WMS&language=dut&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer='$layer'&format=image/png&STYLE='$style'' > /var/www/legend/$layer/${style}.png;
-done
+magic_bytes=$(head -c 4 /var/www/legend/$layer/${style}.png | tail -c 3);
+if [[ $magic_bytes != 'PNG' ]]; then
+echo [4T2O9] file /var/www/legend/$layer/${style}.png appears to not be a png file;
+exit_code=1;
+fi;
+done;
+exit $exit_code;
 `,
 		},
 		VolumeMounts: []corev1.VolumeMount{

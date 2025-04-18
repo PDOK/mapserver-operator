@@ -29,15 +29,15 @@ import (
 	"encoding/json"
 	"errors"
 	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
+	smoothoperator1 "github.com/pdok/smooth-operator/api/v1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"golang.org/x/tools/go/packages"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
-
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"golang.org/x/tools/go/packages"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -49,7 +49,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	smoothoperator1 "github.com/pdok/smooth-operator/api/v1"
 	// +kubebuilder:scaffold:imports
 )
 
