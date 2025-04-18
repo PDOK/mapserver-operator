@@ -60,7 +60,7 @@ func processLayer(layer *pdoknlv3.Layer, legendReferences *[]LegendReference) {
 	for _, style := range layer.Styles {
 		if style.Legend == nil {
 			*legendReferences = append(*legendReferences, LegendReference{
-				Layer: layer.Name,
+				Layer: *layer.Name,
 				Style: style.Name,
 			})
 		}
@@ -91,7 +91,7 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 			for _, style := range layer.Styles {
 				if topLevelStyleNames[style.Name] && style.Legend == nil {
 					legendReferences = append(legendReferences, LegendReference{
-						Layer: layer.Name,
+						Layer: *layer.Name,
 						Style: style.Name,
 					})
 				}
@@ -108,18 +108,18 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 
 	groupLayers := make(map[string][]string)
 
-	if topLayer.IsGroupLayer() {
+	if topLayer.IsGroupLayer() && topLayer.Name != nil {
 		layerName := topLayer.Name
 		targetArray := make([]string, 0)
 		getAllNestedNonGroupLayerNames(&topLayer, &targetArray)
-		groupLayers[layerName] = targetArray
+		groupLayers[*layerName] = targetArray
 
 		for _, subLayer := range *topLayer.Layers {
 			if subLayer.IsGroupLayer() {
 				layerName = subLayer.Name
 				targetArray = make([]string, 0)
 				getAllNestedNonGroupLayerNames(&subLayer, &targetArray)
-				groupLayers[layerName] = targetArray
+				groupLayers[*layerName] = targetArray
 			}
 		}
 	}
@@ -134,7 +134,7 @@ func getAllNestedNonGroupLayerNames(layer *pdoknlv3.Layer, target *[]string) {
 		if subLayer.IsGroupLayer() {
 			getAllNestedNonGroupLayerNames(&subLayer, target)
 		} else {
-			*target = append(*target, subLayer.Name)
+			*target = append(*target, *subLayer.Name)
 		}
 	}
 }

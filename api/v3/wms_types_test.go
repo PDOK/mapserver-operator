@@ -3,6 +3,7 @@ package v3
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pdok/smooth-operator/model"
+	controller "github.com/pdok/smooth-operator/pkg/util"
 	"reflect"
 	"testing"
 )
@@ -58,19 +59,19 @@ func TestLayer_setInheritedBoundingBoxes(t *testing.T) {
 		{
 			name: "setInheritedBoundingBoxes for layer",
 			layer: Layer{
-				Name:          "toplayer",
+				Name:          controller.Pointer("toplayer"),
 				BoundingBoxes: []WMSBoundingBox{first28992BoundingBox},
 				Layers: &[]Layer{
 					{
-						Name:          "grouplayer-1",
+						Name:          controller.Pointer("grouplayer-1"),
 						BoundingBoxes: []WMSBoundingBox{first4326BoundingBox},
 						Layers: &[]Layer{
 							{
-								Name:          "datalayer-1",
+								Name:          controller.Pointer("datalayer-1"),
 								BoundingBoxes: []WMSBoundingBox{first4258BoundingBox},
 							},
 							{
-								Name:          "datalayer-2",
+								Name:          controller.Pointer("datalayer-2"),
 								BoundingBoxes: []WMSBoundingBox{second28992BoundingBox},
 							},
 						},
@@ -127,9 +128,9 @@ func TestLayer_setInheritedBoundingBoxes(t *testing.T) {
 }
 
 func TestLayer_GetParent(t *testing.T) {
-	childLayer2 := Layer{Name: "childlayer-2"}
-	childLayer1 := Layer{Name: "childlayer-1", Layers: &[]Layer{childLayer2}}
-	topLayer := Layer{Name: "toplayer", Layers: &[]Layer{childLayer1}}
+	childLayer2 := Layer{Name: controller.Pointer("childlayer-2")}
+	childLayer1 := Layer{Name: controller.Pointer("childlayer-1"), Layers: &[]Layer{childLayer2}}
+	topLayer := Layer{Name: controller.Pointer("toplayer"), Layers: &[]Layer{childLayer1}}
 
 	type args struct {
 		candidateLayer *Layer

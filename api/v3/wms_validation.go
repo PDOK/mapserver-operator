@@ -95,10 +95,10 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 	wms.Spec.Service.Layer.setInheritedBoundingBoxes()
 	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		var layerReasons []string
-		if slices.Contains(names, layer.Name) {
-			*reasons = append(*reasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", layer.Name))
+		if slices.Contains(names, *layer.Name) {
+			*reasons = append(*reasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", *layer.Name))
 		}
-		names = append(names, layer.Name)
+		names = append(names, *layer.Name)
 		if service.Mapfile != nil && layer.BoundingBoxes != nil {
 			*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.boundingBoxes is not used when service.mapfile is configured", wms.GroupVersionKind(), wms.GetName()))
 		}
@@ -154,7 +154,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 				}
 			}
 			if !rewriteGroupToDataLayers && validateChildStyleNameEqual {
-				equalStylesNames, ok := equalChildStyleNames[layer.Name]
+				equalStylesNames, ok := equalChildStyleNames[*layer.Name]
 				if ok {
 					for _, styleName := range equalStylesNames {
 						layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.name from parent layer must not be set on a child layer", styleName))
@@ -188,7 +188,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 			}
 		}
 		if len(layerReasons) != 0 {
-			*reasons = append(*reasons, fmt.Sprintf("%s '%s' is invalid: ", layerType, layer.Name)+strings.Join(layerReasons, ", "))
+			*reasons = append(*reasons, fmt.Sprintf("%s '%s' is invalid: ", layerType, *layer.Name)+strings.Join(layerReasons, ", "))
 		}
 	}
 
@@ -212,7 +212,7 @@ func findEqualChildStyleNames(layer *Layer, equalStyleNames *map[string][]string
 			}
 		}
 		if len(equalStyles) > 0 {
-			equalChildStyleNames[childLayer.Name] = equalStyles
+			equalChildStyleNames[*childLayer.Name] = equalStyles
 		}
 		findEqualChildStyleNames(&childLayer, equalStyleNames)
 	}

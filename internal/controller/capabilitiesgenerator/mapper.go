@@ -588,7 +588,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 		nestedLayer := wms130.Layer{
 			Queryable: asPtr(1),
 			Opaque:    nil,
-			Name:      &layer.Name,
+			Name:      layer.Name,
 			Title:     pointerValOrDefault(layer.Title, ""),
 			Abstract:  layer.Abstract,
 			KeywordList: &wms130.Keywords{
@@ -621,7 +621,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 					OnlineResource: wms130.OnlineResource{
 						Xlink: nil,
 						Type:  asPtr("simple"),
-						Href:  asPtr(canonicalUrl + "/legend/" + layer.Name + "/" + layer.Name + ".png"),
+						Href:  asPtr(canonicalUrl + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
 					},
 				},
 				StyleSheetURL: nil,

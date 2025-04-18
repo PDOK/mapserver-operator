@@ -78,13 +78,13 @@ func TestGetInput(t *testing.T) {
 						},
 						Service: pdoknlv3.WMSService{
 							Layer: pdoknlv3.Layer{
-								Name: "top-layer-name",
+								Name: smoothoperatorutils.Pointer("top-layer-name"),
 								Layers: &[]pdoknlv3.Layer{
 									{
-										Name: "group-layer-name",
+										Name: smoothoperatorutils.Pointer("group-layer-name"),
 										Layers: &[]pdoknlv3.Layer{
 											{
-												Name: "gpkg-layer-name",
+												Name: smoothoperatorutils.Pointer("gpkg-layer-name"),
 												Data: &pdoknlv3.Data{
 													Gpkg: &pdoknlv3.Gpkg{
 														Columns: []pdoknlv3.Column{
@@ -95,7 +95,7 @@ func TestGetInput(t *testing.T) {
 												},
 											},
 											{
-												Name: "postgis-layer-name",
+												Name: smoothoperatorutils.Pointer("postgis-layer-name"),
 												Data: &pdoknlv3.Data{
 													Postgis: &pdoknlv3.Postgis{
 														Columns: []pdoknlv3.Column{
@@ -106,7 +106,7 @@ func TestGetInput(t *testing.T) {
 												},
 											},
 											{
-												Name: "tif-layer-name",
+												Name: smoothoperatorutils.Pointer("tif-layer-name"),
 												Data: &pdoknlv3.Data{
 													TIF: &pdoknlv3.TIF{
 														GetFeatureInfoIncludesClass: smoothoperatorutils.Pointer(true),
