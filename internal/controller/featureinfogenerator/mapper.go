@@ -22,13 +22,13 @@ func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, 
 			continue
 		}
 		l := featureinfo.Layer{
-			Name:       layer.Name,
+			Name:       *layer.Name,
 			Properties: getProperties(&layer),
 		}
 
 		parentLayer := layer.GetParent(&wms.Spec.Service.Layer)
 		if parentLayer != nil && parentLayer.IsGroupLayer() {
-			l.GroupName = parentLayer.Name
+			l.GroupName = *parentLayer.Name
 		}
 
 		input.Layers = append(input.Layers, l)

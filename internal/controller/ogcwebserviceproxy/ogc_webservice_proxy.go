@@ -70,11 +70,11 @@ func MapWMSToOgcWebserviceProxyConfig(wms *pdoknlv3.WMS) (config Config, err err
 			var dataLayers []string
 			for _, childLayer := range *layer.Layers {
 				if childLayer.IsDataLayer() {
-					dataLayers = append(dataLayers, childLayer.Name)
+					dataLayers = append(dataLayers, *childLayer.Name)
 				}
 			}
 			if len(dataLayers) > 0 {
-				config.GroupLayers[layer.Name] = dataLayers
+				config.GroupLayers[*layer.Name] = dataLayers
 			}
 		}
 	}

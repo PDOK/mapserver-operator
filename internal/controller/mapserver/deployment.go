@@ -306,7 +306,7 @@ func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
 	firstDataLayerName := ""
 	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		if layer.IsDataLayer() {
-			firstDataLayerName = layer.Name
+			firstDataLayerName = *layer.Name
 			break
 		}
 	}
@@ -337,7 +337,10 @@ func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
 func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
 	var layerNames []string
 	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
-		layerNames = append(layerNames, layer.Name)
+		if layer.Name != nil {
+			layerNames = append(layerNames, *layer.Name)
+		}
+
 	}
 	if len(layerNames) == 0 {
 		return nil, errors.New("cannot get startup probe for WMS, layers could not be found")
