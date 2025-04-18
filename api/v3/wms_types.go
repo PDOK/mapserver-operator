@@ -87,7 +87,7 @@ type ConfigMapRef struct {
 }
 
 type Layer struct {
-	Name                string           `json:"name"`
+	Name                *string          `json:"name"`
 	Title               *string          `json:"title,omitempty"`
 	Abstract            *string          `json:"abstract,omitempty"`
 	Keywords            []string         `json:"keywords"`

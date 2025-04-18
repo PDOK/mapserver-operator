@@ -2,6 +2,7 @@ package ogcwebserviceproxy
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	controller "github.com/pdok/smooth-operator/pkg/util"
 	"testing"
 )
 
@@ -31,30 +32,30 @@ func TestGetConfig(t *testing.T) {
 					Spec: pdoknlv3.WMSSpec{
 						Service: pdoknlv3.WMSService{
 							Layer: pdoknlv3.Layer{
-								Name: "toplayer",
+								Name: controller.Pointer("toplayer"),
 								Layers: &[]pdoknlv3.Layer{
 									{
-										Name: "grouplayer-1",
+										Name: controller.Pointer("grouplayer-1"),
 										Layers: &[]pdoknlv3.Layer{
 											{
-												Name: "datalayer-1",
+												Name: controller.Pointer("datalayer-1"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-1"}},
 											},
 											{
-												Name: "datalayer-2",
+												Name: controller.Pointer("datalayer-2"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-2"}},
 											},
 										},
 									},
 									{
-										Name: "grouplayer-2",
+										Name: controller.Pointer("grouplayer-2"),
 										Layers: &[]pdoknlv3.Layer{
 											{
-												Name: "datalayer-3",
+												Name: controller.Pointer("datalayer-3"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-3"}},
 											},
 											{
-												Name: "datalayer-4",
+												Name: controller.Pointer("datalayer-4"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-4"}},
 											},
 										},
