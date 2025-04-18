@@ -2,7 +2,6 @@ package mapfilegenerator
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -50,8 +49,8 @@ func GetConfig[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.Owne
 			return createConfigForWFS(WFS, ownerInfo)
 		}
 	case *pdoknlv3.WMS:
-		if _, ok := any(webservice).(*pdoknlv3.WMS); ok {
-			return "", errors.New("not implemented for WMS")
+		if WMS, ok := any(webservice).(*pdoknlv3.WMS); ok {
+			return createConfigForWMS(WMS, ownerInfo)
 		}
 	default:
 		return "", fmt.Errorf("unexpected input, webservice should be of type WFS or WMS, webservice: %v", webservice)
@@ -61,6 +60,19 @@ func GetConfig[W pdoknlv3.WMSWFS](webservice W, ownerInfo *smoothoperatorv1.Owne
 
 func createConfigForWFS(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
 	input, err := MapWFSToMapfileGeneratorInput(wfs, ownerInfo)
+	if err != nil {
+		return "", err
+	}
+
+	jsonConfig, err := json.MarshalIndent(input, "", "    ")
+	if err != nil {
+		return "", err
+	}
+	return string(jsonConfig), nil
+}
+
+func createConfigForWMS(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (config string, err error) {
+	input, err := MapWMSToMapfileGeneratorInput(wms, ownerInfo)
 	if err != nil {
 		return "", err
 	}

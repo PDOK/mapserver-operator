@@ -28,9 +28,15 @@ type WFSInput struct {
 //nolint:tagliatelle
 type WMSInput struct {
 	BaseServiceInput
-	AccessConstraints string     `json:"service_accessconstraints"`
-	Layers            []WMSLayer `json:"layers"`
-	Templates         string     `json:"templates,omitempty"`
+	AccessConstraints string       `json:"service_accessconstraints"`
+	Layers            []WMSLayer   `json:"layers"`
+	GroupLayers       []GroupLayer `json:"group_layers"`
+	Symbols           []string     `json:"symbols"`
+	Fonts             *string      `json:"fonts"`
+	Templates         string       `json:"templates,omitempty"`
+	OutputFormatJpg   string       `json:"outputformat_jpg"`
+	OutputFormatPng   string       `json:"outputformat_png8"`
+	MaxSize           string       `json:"maxSize"`
 }
 
 //nolint:tagliatelle
@@ -50,6 +56,14 @@ type BaseLayer struct {
 
 type WFSLayer struct {
 	BaseLayer
+}
+
+type GroupLayer struct {
+	Name       string `json:"name"`
+	Title      string `json:"title"`
+	Abstract   string `json:"abstract"`
+	StyleName  string `json:"styleName"`
+	StyleTitle string `json:"styleTitle"`
 }
 
 type WMSLayer struct {
