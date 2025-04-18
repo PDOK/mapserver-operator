@@ -28,9 +28,9 @@ import (
 	"errors"
 	sharedModel "github.com/pdok/smooth-operator/model"
 	"log"
-	"strconv"
-
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
+	"strconv"
+	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
@@ -299,11 +299,27 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 	// it needs to be created with defaults from the service
 	// and in this case the middleLayers are all layers without a group
 	if topLayer == nil {
+		boundingBoxes := make([]pdoknlv3.WMSBoundingBox, 0)
+		if v2Service.Extent != nil {
+			bboxStringList := strings.Split(*v2Service.Extent, " ")
+			bbox := pdoknlv3.WMSBoundingBox{
+				CRS: v2Service.DataEPSG,
+				BBox: sharedModel.BBox{
+					MinX: bboxStringList[0],
+					MaxX: bboxStringList[2],
+					MinY: bboxStringList[1],
+					MaxY: bboxStringList[3],
+				},
+			}
+			boundingBoxes = append(boundingBoxes, bbox)
+		}
+
 		topLayer = &pdoknlv3.Layer{
-			Title:    &v2Service.Title,
-			Abstract: &v2Service.Abstract,
-			Keywords: v2Service.Keywords,
-			Layers:   &[]pdoknlv3.Layer{},
+			Title:         &v2Service.Title,
+			Abstract:      &v2Service.Abstract,
+			Keywords:      v2Service.Keywords,
+			Layers:        &[]pdoknlv3.Layer{},
+			BoundingBoxes: boundingBoxes,
 		}
 
 		// adding the bottom layers to the middle layers they are grouped by
