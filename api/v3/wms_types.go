@@ -205,6 +205,60 @@ func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 
 }
 
+type AnnotatedLayer struct {
+	// The name of the group that this layer belongs to, nil if it is not a member of a group. Groups can be a member of the toplayer as a group
+	GroupName *string
+	// Only for spec.Service.Layer
+	IsTopLayer bool
+	// Top layer or layer below the toplayer with children itself
+	IsGroupLayer bool
+	// Contains actual data
+	IsDataLayer bool
+	Layer       Layer
+}
+
+func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
+	result := make([]AnnotatedLayer, 0)
+
+	topLayer := wmsService.Layer
+	annotatedTopLayer := AnnotatedLayer{
+		GroupName:    nil,
+		IsTopLayer:   true,
+		IsGroupLayer: topLayer.Name != nil,
+		IsDataLayer:  false,
+		Layer:        topLayer,
+	}
+	result = append(result, annotatedTopLayer)
+
+	for _, topLayerChild := range *topLayer.Layers {
+		groupName := topLayer.Name
+		isGroupLayer := topLayerChild.Layers != nil && len(*topLayerChild.Layers) > 0
+		isDataLayer := !isGroupLayer
+		result = append(result, AnnotatedLayer{
+			GroupName:    groupName,
+			IsTopLayer:   false,
+			IsGroupLayer: isGroupLayer,
+			IsDataLayer:  isDataLayer,
+			Layer:        topLayerChild,
+		})
+
+		if topLayerChild.Layers != nil && len(*topLayerChild.Layers) > 0 {
+			for _, middleLayerChild := range *topLayerChild.Layers {
+				groupName = topLayerChild.Name
+				result = append(result, AnnotatedLayer{
+					GroupName:    groupName,
+					IsTopLayer:   false,
+					IsGroupLayer: false,
+					IsDataLayer:  true,
+					Layer:        middleLayerChild,
+				})
+			}
+		}
+	}
+
+	return result
+}
+
 func (wmsService *WMSService) GetAllLayers() (layers []Layer) {
 	return wmsService.Layer.GetAllLayers()
 }

@@ -172,18 +172,16 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		MaxSize:           maxSize,
 	}
 
-	allLayers := wms.Spec.Service.GetAllLayers()
-	for _, serviceLayer := range allLayers[1:] {
-		layer := getWMSLayer(serviceLayer, extent, wms)
-		result.Layers = append(result.Layers, layer)
-	}
-
-	for _, serviceLayer := range allLayers {
-		if serviceLayer.IsGroupLayer() && serviceLayer.Visible != nil && *serviceLayer.Visible {
+	annotatedLayers := wms.Spec.Service.GetAnnotatedLayers()
+	for _, annotatedLayer := range annotatedLayers {
+		if annotatedLayer.IsDataLayer {
+			layer := getWMSLayer(annotatedLayer.Layer, extent, wms)
+			result.Layers = append(result.Layers, layer)
+		} else if annotatedLayer.IsGroupLayer && (annotatedLayer.Layer.Visible == nil || *annotatedLayer.Layer.Visible) {
 			groupLayer := GroupLayer{
-				Name:       *serviceLayer.Name,
-				Title:      smoothoperatorutils.PointerVal(serviceLayer.Title, ""),
-				Abstract:   smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
+				Name:       *annotatedLayer.Layer.Name,
+				Title:      smoothoperatorutils.PointerVal(annotatedLayer.Layer.Title, ""),
+				Abstract:   smoothoperatorutils.PointerVal(annotatedLayer.Layer.Abstract, ""),
 				StyleName:  "",
 				StyleTitle: "",
 			}
