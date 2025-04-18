@@ -111,16 +111,15 @@ func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 		}
 	}
 
-	if src.Spec.Service.Inspire || true {
-		service.Inspire = &pdoknlv3.Inspire{
-			ServiceMetadataURL: pdoknlv3.MetadataURL{
-				CSW: &pdoknlv3.Metadata{
-					MetadataIdentifier: src.Spec.Service.MetadataIdentifier,
-				},
+	// Also used by non-inspire services
+	service.Inspire = &pdoknlv3.Inspire{
+		ServiceMetadataURL: pdoknlv3.MetadataURL{
+			CSW: &pdoknlv3.Metadata{
+				MetadataIdentifier: src.Spec.Service.MetadataIdentifier,
 			},
-			SpatialDatasetIdentifier: *src.Spec.Service.Layers[0].SourceMetadataIdentifier,
-			Language:                 "dut",
-		}
+		},
+		SpatialDatasetIdentifier: *src.Spec.Service.Layers[0].SourceMetadataIdentifier,
+		Language:                 "dut",
 	}
 
 	if src.Spec.Service.StylingAssets != nil {
