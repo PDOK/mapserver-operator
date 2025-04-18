@@ -26,11 +26,9 @@ package v2beta1
 
 import (
 	"errors"
+	sharedModel "github.com/pdok/smooth-operator/model"
 	"log"
 	"strconv"
-	"strings"
-
-	sharedModel "github.com/pdok/smooth-operator/model"
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 

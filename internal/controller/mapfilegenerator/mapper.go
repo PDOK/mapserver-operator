@@ -181,7 +181,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 	for _, serviceLayer := range allLayers {
 		if serviceLayer.IsGroupLayer() && serviceLayer.Visible != nil && *serviceLayer.Visible {
 			groupLayer := GroupLayer{
-				Name:       serviceLayer.Name,
+				Name:       *serviceLayer.Name,
 				Title:      smoothoperatorutils.PointerVal(serviceLayer.Title, ""),
 				Abstract:   smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
 				StyleName:  "",
@@ -203,21 +203,31 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	groupName := ""
 	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
 	if parent.IsGroupLayer() {
-		groupName = parent.Name
+		groupName = *parent.Name
+	}
+
+	var columns []Column
+	if serviceLayer.Data != nil {
+		columns = getColumns(*serviceLayer.Data)
+	}
+
+	var tableName *string
+	if serviceLayer.Data != nil {
+		tableName = serviceLayer.Data.GetTableName()
 	}
 
 	result := WMSLayer{
 		BaseLayer: BaseLayer{
-			Name:           serviceLayer.Name,
+			Name:           *serviceLayer.Name,
 			Title:          smoothoperatorutils.PointerVal(serviceLayer.Title, ""),
 			Abstract:       smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
 			Keywords:       strings.Join(serviceLayer.Keywords, ","),
 			Extent:         layerExtent,
 			MetadataId:     serviceLayer.DatasetMetadataURL.CSW.MetadataIdentifier,
-			Columns:        getColumns(*serviceLayer.Data),
+			Columns:        columns,
 			GeometryType:   nil,
 			GeopackagePath: nil,
-			TableName:      serviceLayer.Data.GetTableName(),
+			TableName:      tableName,
 			Postgis:        nil,
 		},
 		GroupName:                   groupName,
