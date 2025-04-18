@@ -2,6 +2,7 @@ package mapfilegenerator
 
 import (
 	"fmt"
+	"github.com/pdok/mapserver-operator/api/v2beta1"
 	"strconv"
 	"strings"
 
@@ -127,6 +128,8 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 	metadataId := ""
 	if service.Inspire != nil {
 		metadataId = service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
+	} else {
+		metadataId = wms.ObjectMeta.Annotations[v2beta1.SERVICE_METADATA_IDENTIFIER_ANNOTATION]
 	}
 
 	var fonts *string
