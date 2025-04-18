@@ -306,7 +306,13 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Keywords: v2Service.Keywords,
 			Layers:   &[]pdoknlv3.Layer{},
 		}
-		middleLayers = notGroupedLayers
+
+		// adding the bottom layers to the middle layers they are grouped by
+		for _, layer := range notGroupedLayers {
+			bottomLayers := groupedLayers[*layer.Name]
+			layer.Layers = &bottomLayers
+			middleLayers = append(middleLayers, layer)
+		}
 	}
 
 	// if the topLayer is defined in the v2 layers
