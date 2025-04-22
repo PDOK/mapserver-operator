@@ -200,7 +200,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 
 	groupName := ""
 	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
-	if parent.IsGroupLayer() {
+	if parent.IsGroupLayer() && parent.Name != nil && (parent.Visible != nil && *parent.Visible) {
 		groupName = *parent.Name
 	}
 

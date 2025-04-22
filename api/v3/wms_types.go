@@ -329,7 +329,7 @@ func (layer *Layer) IsDataLayer() bool {
 }
 
 func (layer *Layer) IsGroupLayer() bool {
-	return layer.Layers != nil && len(*layer.Layers) > 0 && layer.Visible != nil && *layer.Visible
+	return layer.Layers != nil && len(*layer.Layers) > 0
 }
 
 func (layer *Layer) IsTopLayer(service *WMSService) bool {
