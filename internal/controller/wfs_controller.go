@@ -50,13 +50,11 @@ import (
 )
 
 const (
-	downloadScriptName    = "gpkg_download.sh"
-	mapfileGeneratorInput = "input.json"
-	srvDir                = "/srv"
-	// TODO make dynamic?
-	blobsConfigName = "blobs-config" //"blobs-9d7fcgcfcc"
-	// TODO make dynamic?
-	blobsSecretName            = "blobs-secret" //"blobs-8ch6mbkg8t"
+	downloadScriptName         = "gpkg_download.sh"
+	mapfileGeneratorInput      = "input.json"
+	srvDir                     = "/srv"
+	blobsConfigPrefix          = "blobs-"
+	blobsSecretPrefix          = "blobs-"
 	capabilitiesGeneratorInput = "input.yaml"
 	inputDir                   = "/input"
 	postgisConfigName          = "postgisConfig"
@@ -372,7 +370,7 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 		},
 	}
 
-	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(wfs, r.MultitoolImage, blobsConfigName, blobsSecretName, srvDir)
+	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(wfs, r.MultitoolImage, blobsConfigPrefix, blobsSecretPrefix, srvDir)
 	if err != nil {
 		return err
 	}
@@ -408,7 +406,7 @@ func (r *WFSReconciler) mutateDeployment(wfs *pdoknlv3.WFS, deployment *appsv1.D
 							ContainerPort: 80,
 						},
 					},
-					Env:          mapserver.GetEnvVarsForDeployment(wfs, blobsSecretName),
+					Env:          mapserver.GetEnvVarsForDeployment(wfs, blobsSecretPrefix),
 					VolumeMounts: mapserver.GetVolumeMountsForDeployment(wfs, srvDir),
 					Resources:    mapserver.GetResourcesForDeployment(wfs),
 					//LivenessProbe:  &corev1.Probe{}, // TODO
