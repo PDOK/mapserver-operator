@@ -43,12 +43,12 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WMS)
 	log.Printf("ConvertTo: Converting WMS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
-	V3HubFromV2(src, dst)
+	V3WMSHubFromV2(src, dst)
 
 	return nil
 }
 
-func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
+func V3WMSHubFromV2(src *WMS, target *pdoknlv3.WMS) {
 	dst := target
 
 	dst.ObjectMeta = src.ObjectMeta
@@ -305,6 +305,13 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Abstract: &v2Service.Abstract,
 			Keywords: v2Service.Keywords,
 			Layers:   &[]pdoknlv3.Layer{},
+		}
+
+		if v2Service.DataEPSG != "EPSG:28992" && v2Service.Extent != nil {
+			topLayer.BoundingBoxes = append(topLayer.BoundingBoxes, pdoknlv3.WMSBoundingBox{
+				CRS:  v2Service.DataEPSG,
+				BBox: sharedModel.ExtentToBBox(*v2Service.Extent),
+			})
 		}
 
 		// adding the bottom layers to the middle layers they are grouped by
