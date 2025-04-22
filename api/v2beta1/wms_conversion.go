@@ -26,9 +26,10 @@ package v2beta1
 
 import (
 	"errors"
-	sharedModel "github.com/pdok/smooth-operator/model"
 	"log"
 	"strconv"
+
+	sharedModel "github.com/pdok/smooth-operator/model"
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -42,12 +43,12 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WMS)
 	log.Printf("ConvertTo: Converting WMS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
-	V3WMSHubFromV2(src, dst)
+	V3HubFromV2(src, dst)
 
 	return nil
 }
 
-func V3WMSHubFromV2(src *WMS, target *pdoknlv3.WMS) {
+func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 	dst := target
 
 	dst.ObjectMeta = src.ObjectMeta
@@ -266,61 +267,73 @@ func (v2Service WMSService) GetTopLayer() (*WMSLayer, error) {
 	return nil, errors.New("unable to detect the toplayer of this WMS service")
 }
 
-func (v2Service WMSService) GetChildLayers(parent WMSLayer) ([]WMSLayer, error) {
-	children := make([]WMSLayer, 0)
-
+// MapLayersToV3
+func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
+	// Creates map of Groups: layers in that group
+	// and a list of all layers without a group
+	groupedLayers := map[string][]pdoknlv3.Layer{}
+	var notGroupedLayers []pdoknlv3.Layer
 	for _, layer := range v2Service.Layers {
-		if layer.Group != nil && *layer.Group == parent.Name {
-			children = append(children, layer)
+		if layer.Group == nil {
+			notGroupedLayers = append(notGroupedLayers, layer.MapToV3(v2Service))
+		} else {
+			groupedLayers[*layer.Group] = append(groupedLayers[*layer.Group], layer.MapToV3(v2Service))
 		}
 	}
 
-	if len(children) == 0 {
-		return children, errors.New("no child layers found")
+	// if a topLayer is defined in the v2 it be the only layer without a group
+	// and there are other layers that have the topLayer as their group
+	// so if there is exactly 1 layer without a group
+	// and the name of that layer exist as a key in the map of Groups: layer in that group
+	// then that layer must be the topLayer
+	var topLayer *pdoknlv3.Layer
+	if len(notGroupedLayers) == 1 {
+		_, ok := groupedLayers[*notGroupedLayers[0].Name]
+		if ok {
+			topLayer = &notGroupedLayers[0]
+		}
 	}
 
-	return children, nil
-}
+	var middleLayers []pdoknlv3.Layer
 
-// MapLayersToV3
-func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
-	topLayer, err := v2Service.GetTopLayer()
-	if err != nil {
-		panic(err)
-	}
-
-	var layer pdoknlv3.Layer
+	// if the topLayer is not defined in the v2 layers
+	// it needs to be created with defaults from the service
+	// and in this case the middleLayers are all layers without a group
 	if topLayer == nil {
-		layer = pdoknlv3.Layer{
-			Name:     "wms",
+		topLayer = &pdoknlv3.Layer{
 			Title:    &v2Service.Title,
 			Abstract: &v2Service.Abstract,
 			Keywords: v2Service.Keywords,
 			Layers:   &[]pdoknlv3.Layer{},
 		}
 
-		if v2Service.DataEPSG != "EPSG:28992" && v2Service.Extent != nil {
-			layer.BoundingBoxes = append(layer.BoundingBoxes, pdoknlv3.WMSBoundingBox{
-				CRS:  v2Service.DataEPSG,
-				BBox: sharedModel.ExtentToBBox(*v2Service.Extent),
-			})
+		// adding the bottom layers to the middle layers they are grouped by
+		for _, layer := range notGroupedLayers {
+			bottomLayers := groupedLayers[*layer.Name]
+			layer.Layers = &bottomLayers
+			middleLayers = append(middleLayers, layer)
 		}
-
-		var childLayersV3 []pdoknlv3.Layer
-		for _, childLayer := range v2Service.Layers {
-			childLayersV3 = append(childLayersV3, childLayer.MapToV3(v2Service))
-		}
-		layer.Layers = &childLayersV3
-	} else {
-		layer = topLayer.MapToV3(v2Service)
 	}
 
-	return layer
+	// if the topLayer is defined in the v2 layers
+	// meaning the topLayer has a name at this point
+	// then the middleLayers are all layers that had the topLayer name as their group
+	// and the bottomLayers are all layers that had a middleLayer as a group
+	if topLayer.Name != nil {
+		for _, layer := range groupedLayers[*topLayer.Name] {
+			bottomLayers := groupedLayers[*layer.Name]
+			layer.Layers = &bottomLayers
+			middleLayers = append(middleLayers, layer)
+		}
+	}
+	topLayer.Layers = &middleLayers
+
+	return *topLayer
 }
 
 func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 	layer := pdoknlv3.Layer{
-		Name:                v2Layer.Name,
+		Name:                &v2Layer.Name,
 		Title:               v2Layer.Title,
 		Abstract:            v2Layer.Abstract,
 		Keywords:            v2Layer.Keywords,
@@ -388,17 +401,6 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 
 	if v2Layer.Data != nil {
 		layer.Data = Pointer(ConvertV2DataToV3(*v2Layer.Data))
-	} else {
-		childLayersV2, err := v2Service.GetChildLayers(v2Layer)
-		if err != nil {
-			panic(err)
-		}
-
-		var childLayersV3 []pdoknlv3.Layer
-		for _, childLayer := range childLayersV2 {
-			childLayersV3 = append(childLayersV3, childLayer.MapToV3(v2Service))
-		}
-		layer.Layers = &childLayersV3
 	}
 
 	return layer
@@ -407,7 +409,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, serviceEPSG string) []WMSLayer {
 	var layers []WMSLayer
 
-	if parent == nil && v3Layer.Name == "wms" {
+	if parent == nil && *v3Layer.Name == "wms" {
 		// Default top layer, do not include in v2 layers
 		if v3Layer.Layers != nil {
 			for _, childLayer := range *v3Layer.Layers {
@@ -416,7 +418,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 		}
 	} else {
 		v2Layer := WMSLayer{
-			Name:        v3Layer.Name,
+			Name:        *v3Layer.Name,
 			Title:       v3Layer.Title,
 			Abstract:    v3Layer.Abstract,
 			Keywords:    v3Layer.Keywords,
@@ -427,7 +429,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 		v2Layer.Visible = PointerVal(v3Layer.Visible, true)
 
 		if parent != nil {
-			v2Layer.Group = &parent.Name
+			v2Layer.Group = parent.Name
 		}
 
 		if v3Layer.DatasetMetadataURL != nil && v3Layer.DatasetMetadataURL.CSW != nil {
