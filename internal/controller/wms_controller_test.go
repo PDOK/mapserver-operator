@@ -167,6 +167,7 @@ var _ = Describe("WMS Controller", func() {
 				return nil
 			}, "10s", "1s").Should(Not(HaveOccurred()))
 		})
+
 		It("Should successfully reconcile after a change in an owned resource", func() {
 			controllerReconciler := getWMSReconciler()
 
@@ -204,6 +205,7 @@ var _ = Describe("WMS Controller", func() {
 					Expect(*deployment.Spec.RevisionHistoryLimit).To(BeEquivalentTo(originalRevisionHistoryLimit))
 			}, "10s", "1s").Should(BeTrue())
 		})
+
 		It("Should create correct deployment manifest.", func() {
 			controllerReconciler := getWMSReconciler()
 			reconcilerImages := getReconcilerImages(controllerReconciler)
@@ -342,7 +344,8 @@ var _ = Describe("WMS Controller", func() {
 			By("Cleanup the specific resource instance WMS")
 			Expect(k8sClient.Delete(ctx, wmsResource)).To(Succeed())
 
-			sampleWms, err := getUniqueWMSSample(9999)
+			sampleWms, err := getUniqueWMSSample(counter)
+			counter++
 			typeNamespacedNameWms.Name = sampleWms.Name
 			Expect(err).NotTo(HaveOccurred())
 			sampleWms.Spec.Options.PrefetchData = smoothoperatorutils.Pointer(false)
@@ -355,6 +358,33 @@ var _ = Describe("WMS Controller", func() {
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 
 			_, err = getHashedConfigMapNameFromClient(ctx, wms, mapserver.ConfigMapBlobDownloadVolumeName)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should not mount a ogc web service proxy configmap if options.DisableWebserviceProxy is true.", func() {
+			wmsResource := &pdoknlv3.WMS{}
+			wmsResource.Namespace = namespace
+			wmsResource.Name = typeNamespacedNameWms.Name
+			err := k8sClient.Get(ctx, typeNamespacedNameWms, wmsResource)
+			Expect(client.IgnoreNotFound(err)).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance WMS")
+			Expect(k8sClient.Delete(ctx, wmsResource)).To(Succeed())
+
+			sampleWms, err := getUniqueWMSSample(counter)
+			counter++
+			typeNamespacedNameWms.Name = sampleWms.Name
+			Expect(err).NotTo(HaveOccurred())
+			sampleWms.Spec.Options.DisableWebserviceProxy = smoothoperatorutils.Pointer(true)
+			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
+			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
+
+			controllerReconciler := getWMSReconciler()
+
+			By("Reconciling the WMS and checking the configMap")
+			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
+
+			_, err = getHashedConfigMapNameFromClient(ctx, wms, mapserver.ConfigMapOgcWebserviceProxyVolumeName)
 			Expect(err).To(HaveOccurred())
 		})
 
