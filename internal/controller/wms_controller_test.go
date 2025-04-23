@@ -38,6 +38,7 @@ import (
 	smoothoperatorsamples "github.com/pdok/smooth-operator/config/samples"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	v2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -261,17 +262,8 @@ var _ = Describe("WMS Controller", func() {
 			/**
 			Init container tests
 			*/
-			getInitContainer := func(name string) (v1.Container, error) {
-				for _, container := range deployment.Spec.Template.Spec.InitContainers {
-					if container.Name == name {
-						return container, nil
-					}
-				}
 
-				return v1.Container{}, fmt.Errorf("init container with name %s not found", name)
-			}
-
-			blobDownloadContainer, err := getInitContainer("blob-download")
+			blobDownloadContainer, err := getInitContainer("blob-download", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(blobDownloadContainer.Image).Should(Equal(reconcilerImages.MultitoolImage))
 			volumeMounts := []v1.VolumeMount{
@@ -288,7 +280,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(blobDownloadContainer.Command).Should(Equal([]string{"/bin/sh", "-c"}))
 			Expect(len(blobDownloadContainer.Args)).Should(BeNumerically(">", 0))
 
-			mapfileGeneratorContainer, err := getInitContainer("mapfile-generator")
+			mapfileGeneratorContainer, err := getInitContainer("mapfile-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mapfileGeneratorContainer.Image).Should(Equal(reconcilerImages.MapfileGeneratorImage))
 			volumeMounts = []v1.VolumeMount{
@@ -299,7 +291,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(mapfileGeneratorContainer.Command).Should(Equal([]string{"generate-mapfile"}))
 			Expect(mapfileGeneratorContainer.Args).Should(Equal([]string{"--not-include", "wms", "/input/input.json", "/srv/data/config/mapfile"}))
 
-			capabilitiesGeneratorContainer, err := getInitContainer("capabilities-generator")
+			capabilitiesGeneratorContainer, err := getInitContainer("capabilities-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capabilitiesGeneratorContainer.Image).Should(Equal(reconcilerImages.CapabilitiesGeneratorImage))
 			volumeMounts = []v1.VolumeMount{
@@ -386,6 +378,40 @@ var _ = Describe("WMS Controller", func() {
 
 			_, err = getHashedConfigMapNameFromClient(ctx, wms, mapserver.ConfigMapOgcWebserviceProxyVolumeName)
 			Expect(err).To(HaveOccurred())
+		})
+
+		It("Should not mount a ogc web service proxy configmap if options.REWRITEGROUPTODATALAYERS is FALSE.", func() {
+			wmsResource := &pdoknlv3.WMS{}
+			wmsResource.Namespace = namespace
+			wmsResource.Name = typeNamespacedNameWms.Name
+			err := k8sClient.Get(ctx, typeNamespacedNameWms, wmsResource)
+			Expect(client.IgnoreNotFound(err)).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance WMS")
+			Expect(k8sClient.Delete(ctx, wmsResource)).To(Succeed())
+
+			sampleWms, err := getUniqueWMSSample(counter)
+			counter++
+			typeNamespacedNameWms.Name = sampleWms.Name
+			Expect(err).NotTo(HaveOccurred())
+			sampleWms.Spec.Options.RewriteGroupToDataLayers = smoothoperatorutils.Pointer(false)
+			//sampleWms.Spec.Options.DisableWebserviceProxy = smoothoperatorutils.Pointer(true)
+
+			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
+			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
+
+			controllerReconciler := getWMSReconciler()
+
+			By("Reconciling the WMS and checking the configMap")
+			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
+			deployment := &appsv1.Deployment{}
+			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
+			Expect(err).NotTo(HaveOccurred())
+			blobDownloadContainer, err := getInitContainer("blob-download", deployment)
+			Expect(blobDownloadContainer.Name).To(BeEquivalentTo("blob-download"))
+			legendFixer, err := getInitContainer("legend-fixer", deployment)
+			Expect(err).To(HaveOccurred())
+			Expect(legendFixer.Name).To(BeEquivalentTo(""))
 		})
 
 		It("Should create correct configMap manifest.", func() {
@@ -844,4 +870,14 @@ func checkWMSLabels(labelSets ...map[string]string) {
 	for _, labelSet := range labelSets {
 		Expect(labelSet).To(Equal(expectedLabels))
 	}
+}
+
+func getInitContainer(name string, deployment *appsv1.Deployment) (v1.Container, error) {
+	for _, container := range deployment.Spec.Template.Spec.InitContainers {
+		if container.Name == name {
+			return container, nil
+		}
+	}
+
+	return v1.Container{}, fmt.Errorf("init container with name %s not found", name)
 }
