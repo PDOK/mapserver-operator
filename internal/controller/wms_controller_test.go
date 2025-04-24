@@ -295,6 +295,8 @@ var _ = Describe("WMS Controller", func() {
 			capabilitiesGeneratorContainer, err := getInitContainer("capabilities-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capabilitiesGeneratorContainer.Image).Should(Equal(reconcilerImages.CapabilitiesGeneratorImage))
+			Expect(capabilitiesGeneratorContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+
 			volumeMounts = []v1.VolumeMount{
 				{Name: "data", MountPath: "/var/www"},
 				{Name: mapserver.ConfigMapCapabilitiesGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
@@ -304,6 +306,53 @@ var _ = Describe("WMS Controller", func() {
 				{Name: "SERVICECONFIG", Value: "/input/input.yaml"},
 			}
 			Expect(capabilitiesGeneratorContainer.Env).Should(Equal(env))
+
+			featureinfoGeneratorContainer, err := getInitContainer("featureinfo-generator", deployment)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(featureinfoGeneratorContainer.Image).Should(Equal(reconcilerImages.FeatureinfoGeneratorImage))
+			Expect(featureinfoGeneratorContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(featureinfoGeneratorContainer.Command).Should(Equal([]string{"featureinfo-generator"}))
+			volumeMounts = []v1.VolumeMount{
+				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
+				{Name: mapserver.ConfigMapFeatureinfoGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+			}
+			Expect(featureinfoGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
+			Expect(len(featureinfoGeneratorContainer.Args)).Should(BeNumerically("==", 6))
+
+			legendGeneratorContainer, err := getInitContainer("legend-generator", deployment)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(legendGeneratorContainer.Image).Should(Equal(reconcilerImages.MapserverImage))
+			Expect(legendGeneratorContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(len(legendGeneratorContainer.Command)).Should(BeNumerically("==", 3))
+			volumeMounts = []v1.VolumeMount{
+				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
+				{Name: "data", MountPath: "/var/www", ReadOnly: false},
+				// TODO: de volgende volAmount is bedoeld voor CR met mapfile. Bouw daarvoor een aparte test voor
+				//{Name: mapserver.ConfigMapVolumeName, MountPath: "/srv/mapserver/config/default_mapserver.conf"},
+				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+			}
+			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
+
+			env = []v1.EnvVar{
+				{Name: "MS_MAPFILE", Value: "service.map", ValueFrom: nil},
+
+				// TODO: de volgende volAmount is bedoeld voor CR met mapfile. Bouw daarvoor een aparte test voor
+				//{Name: "MAPSERVER_CONFIG_FILE", Value: "/srv/mapserver/config/default_mapserver.conf"},
+				//{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/service.map"},
+			}
+			Expect(legendGeneratorContainer.Env).Should(Equal(env))
+
+			legendFixerContainer, err := getInitContainer("legend-fixer", deployment)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(legendFixerContainer.Image).Should(Equal(reconcilerImages.MultitoolImage))
+			Expect(legendFixerContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(len(legendFixerContainer.Command)).Should(BeNumerically("==", 2))
+
+			volumeMounts = []v1.VolumeMount{
+				{Name: "data", MountPath: "/var/www", ReadOnly: false},
+				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+			}
+			Expect(legendFixerContainer.VolumeMounts).Should(Equal(volumeMounts))
 
 			/**
 			Volumes tests
