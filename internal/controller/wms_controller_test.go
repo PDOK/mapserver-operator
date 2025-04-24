@@ -278,7 +278,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(blobDownloadContainer.VolumeMounts).Should(Equal(volumeMounts))
 			Expect(blobDownloadContainer.EnvFrom).Should(Equal(envFrom))
 			Expect(blobDownloadContainer.Command).Should(Equal([]string{"/bin/sh", "-c"}))
-			Expect(len(blobDownloadContainer.Args)).Should(BeNumerically(">", 0))
+			Expect(len(blobDownloadContainer.Args)).Should(BeNumerically("==", 1))
 
 			mapfileGeneratorContainer, err := getInitContainer("mapfile-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
@@ -286,6 +286,7 @@ var _ = Describe("WMS Controller", func() {
 			volumeMounts = []v1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data"},
 				{Name: mapserver.ConfigMapMapfileGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+				{Name: "styling-files", MountPath: "/styling", ReadOnly: true},
 			}
 			Expect(mapfileGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 			Expect(mapfileGeneratorContainer.Command).Should(Equal([]string{"generate-mapfile"}))

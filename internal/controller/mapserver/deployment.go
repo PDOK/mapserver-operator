@@ -117,7 +117,30 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 				},
 			},
 		}
-		volumes = append(volumes, lgVolume, figVolume)
+		stylingFilesVolume := v1.Volume{
+			Name: "styling-files",
+			VolumeSource: v1.VolumeSource{
+				Projected: &v1.ProjectedVolumeSource{
+					Sources: []v1.VolumeProjection{
+						{
+							ConfigMap: &v1.ConfigMapProjection{
+								LocalObjectReference: v1.LocalObjectReference{
+									Name: "gpkg-styling",
+								},
+							},
+						},
+						{
+							ConfigMap: &v1.ConfigMapProjection{
+								LocalObjectReference: v1.LocalObjectReference{
+									Name: "tif-styling",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, lgVolume, figVolume, stylingFilesVolume)
 	}
 
 	if options := obj.Options(); options != nil {
