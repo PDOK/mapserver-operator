@@ -233,31 +233,46 @@ var _ = Describe("WMS Controller", func() {
 			/**
 			Container tests
 			*/
-			container := deployment.Spec.Template.Spec.Containers[0]
-			Expect(container.Name).Should(Equal("mapserver"))
-			Expect(container.Ports[0].ContainerPort).Should(Equal(int32(80)))
-			Expect(container.Image).Should(Equal(reconcilerImages.MapserverImage))
-			Expect(container.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
-			Expect(container.Resources.Limits.Memory().String()).Should(Equal("800M"))
-			Expect(container.Resources.Requests.Cpu().String()).Should(Equal("100m"))
-			Expect(len(container.LivenessProbe.Exec.Command)).Should(Equal(3))
-			Expect(container.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=wms&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
-			Expect(container.LivenessProbe.FailureThreshold).Should(Equal(int32(3)))
-			Expect(container.LivenessProbe.InitialDelaySeconds).Should(Equal(int32(20)))
-			Expect(container.LivenessProbe.PeriodSeconds).Should(Equal(int32(10)))
-			Expect(container.LivenessProbe.TimeoutSeconds).Should(Equal(int32(10)))
-			Expect(len(container.ReadinessProbe.Exec.Command)).Should(Equal(3))
-			Expect(container.ReadinessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=gpkg-layer-name&STYLES=&FORMAT=image/png' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: image/png'"))
-			Expect(container.ReadinessProbe.FailureThreshold).Should(Equal(int32(3)))
-			Expect(container.ReadinessProbe.InitialDelaySeconds).Should(Equal(int32(20)))
-			Expect(container.ReadinessProbe.PeriodSeconds).Should(Equal(int32(10)))
-			Expect(container.ReadinessProbe.TimeoutSeconds).Should(Equal(int32(10)))
-			Expect(len(container.StartupProbe.Exec.Command)).Should(Equal(3))
-			Expect(container.StartupProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=top-layer-name,group-layer-name,gpkg-layer-name,tif-layer-name&STYLES=&FORMAT=image/png' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: image/png'"))
-			Expect(container.StartupProbe.FailureThreshold).Should(Equal(int32(3)))
-			Expect(container.StartupProbe.InitialDelaySeconds).Should(Equal(int32(20)))
-			Expect(container.StartupProbe.PeriodSeconds).Should(Equal(int32(10)))
-			Expect(container.StartupProbe.TimeoutSeconds).Should(Equal(int32(10)))
+
+			containerMapserver := deployment.Spec.Template.Spec.Containers[0]
+			Expect(containerMapserver.Name).Should(Equal("mapserver"))
+			Expect(containerMapserver.Ports[0].ContainerPort).Should(Equal(int32(80)))
+			Expect(containerMapserver.Image).Should(Equal(reconcilerImages.MapserverImage))
+			Expect(containerMapserver.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(containerMapserver.Resources.Limits.Memory().String()).Should(Equal("800M"))
+			Expect(containerMapserver.Resources.Requests.Cpu().String()).Should(Equal("100m"))
+			Expect(len(containerMapserver.LivenessProbe.Exec.Command)).Should(Equal(3))
+			Expect(containerMapserver.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=wms&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
+			Expect(containerMapserver.LivenessProbe.FailureThreshold).Should(Equal(int32(3)))
+			Expect(containerMapserver.LivenessProbe.InitialDelaySeconds).Should(Equal(int32(20)))
+			Expect(containerMapserver.LivenessProbe.PeriodSeconds).Should(Equal(int32(10)))
+			Expect(containerMapserver.LivenessProbe.TimeoutSeconds).Should(Equal(int32(10)))
+			Expect(len(containerMapserver.ReadinessProbe.Exec.Command)).Should(Equal(3))
+			Expect(containerMapserver.ReadinessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=gpkg-layer-name&STYLES=&FORMAT=image/png' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: image/png'"))
+			Expect(containerMapserver.ReadinessProbe.FailureThreshold).Should(Equal(int32(3)))
+			Expect(containerMapserver.ReadinessProbe.InitialDelaySeconds).Should(Equal(int32(20)))
+			Expect(containerMapserver.ReadinessProbe.PeriodSeconds).Should(Equal(int32(10)))
+			Expect(containerMapserver.ReadinessProbe.TimeoutSeconds).Should(Equal(int32(10)))
+			Expect(len(containerMapserver.StartupProbe.Exec.Command)).Should(Equal(3))
+			Expect(containerMapserver.StartupProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=top-layer-name,group-layer-name,gpkg-layer-name,tif-layer-name&STYLES=&FORMAT=image/png' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: image/png'"))
+			Expect(containerMapserver.StartupProbe.FailureThreshold).Should(Equal(int32(3)))
+			Expect(containerMapserver.StartupProbe.InitialDelaySeconds).Should(Equal(int32(20)))
+			Expect(containerMapserver.StartupProbe.PeriodSeconds).Should(Equal(int32(10)))
+			Expect(containerMapserver.StartupProbe.TimeoutSeconds).Should(Equal(int32(10)))
+
+			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[1]
+			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
+			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-v", "-r", "-d=15"}
+			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
+			Expect(containerOgcWebserviceProxy.Image).Should(Equal(reconcilerImages.OgcWebserviceProxyImage))
+			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(containerOgcWebserviceProxy.Ports[0].ContainerPort).Should(Equal(int32(9111)))
+			Expect(containerOgcWebserviceProxy.Resources.Limits.Memory().String()).Should(Equal("200M"))
+			Expect(containerOgcWebserviceProxy.Resources.Requests.Cpu().String()).Should(Equal("50m"))
+			volumeMountsContainerOgcWebserviceProxy := []v1.VolumeMount{
+				{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: true},
+			}
+			Expect(containerOgcWebserviceProxy.VolumeMounts).Should(Equal(volumeMountsContainerOgcWebserviceProxy))
 
 			/**
 			Init container tests
@@ -430,7 +445,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("Should not mount a ogc web service proxy configmap if options.REWRITEGROUPTODATALAYERS is FALSE.", func() {
+		It("Should not mount a legend-fixer initcontainer if options.REWRITEGROUPTODATALAYERS is FALSE.", func() {
 			wmsResource := &pdoknlv3.WMS{}
 			wmsResource.Namespace = namespace
 			wmsResource.Name = typeNamespacedNameWms.Name
@@ -463,6 +478,37 @@ var _ = Describe("WMS Controller", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(legendFixer.Name).To(BeEquivalentTo(""))
 		})
+
+		// TODO:
+
+		//It("Should not mount a legend-fixer initcontainer if options.AUTOMATICCASING is FALSE.", func() {
+		//	wmsResource := &pdoknlv3.WMS{}
+		//	wmsResource.Namespace = namespace
+		//	wmsResource.Name = typeNamespacedNameWms.Name
+		//	err := k8sClient.Get(ctx, typeNamespacedNameWms, wmsResource)
+		//	Expect(client.IgnoreNotFound(err)).NotTo(HaveOccurred())
+		//
+		//	By("Cleanup the specific resource instance WMS")
+		//	Expect(k8sClient.Delete(ctx, wmsResource)).To(Succeed())
+		//
+		//	sampleWms, err := getUniqueWMSSample(counter)
+		//	counter++
+		//	typeNamespacedNameWms.Name = sampleWms.Name
+		//	Expect(err).NotTo(HaveOccurred())
+		//	sampleWms.Spec.Options.AutomaticCasing = false
+		//
+		//	Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
+		//	Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
+		//
+		//	controllerReconciler := getWMSReconciler()
+		//
+		//	By("Reconciling the WMS and checking the configMap")
+		//	reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
+		//	deployment := &appsv1.Deployment{}
+		//	err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
+		//	Expect(err).NotTo(HaveOccurred())
+		//})
+		// TODO:
 
 		It("Should create correct configMap manifest.", func() {
 			controllerReconciler := getWMSReconciler()
