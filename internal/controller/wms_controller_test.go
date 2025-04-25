@@ -479,36 +479,47 @@ var _ = Describe("WMS Controller", func() {
 			Expect(legendFixer.Name).To(BeEquivalentTo(""))
 		})
 
-		// TODO:
+		It("ogcWebserviceProxyCommands will not contain command '-v' if options.VALIDATEREQUESTS is FALSE.", func() {
+			wmsResource := &pdoknlv3.WMS{}
+			wmsResource.Namespace = namespace
+			wmsResource.Name = typeNamespacedNameWms.Name
+			err := k8sClient.Get(ctx, typeNamespacedNameWms, wmsResource)
+			Expect(client.IgnoreNotFound(err)).NotTo(HaveOccurred())
 
-		//It("Should not mount a legend-fixer initcontainer if options.AUTOMATICCASING is FALSE.", func() {
-		//	wmsResource := &pdoknlv3.WMS{}
-		//	wmsResource.Namespace = namespace
-		//	wmsResource.Name = typeNamespacedNameWms.Name
-		//	err := k8sClient.Get(ctx, typeNamespacedNameWms, wmsResource)
-		//	Expect(client.IgnoreNotFound(err)).NotTo(HaveOccurred())
-		//
-		//	By("Cleanup the specific resource instance WMS")
-		//	Expect(k8sClient.Delete(ctx, wmsResource)).To(Succeed())
-		//
-		//	sampleWms, err := getUniqueWMSSample(counter)
-		//	counter++
-		//	typeNamespacedNameWms.Name = sampleWms.Name
-		//	Expect(err).NotTo(HaveOccurred())
-		//	sampleWms.Spec.Options.AutomaticCasing = false
-		//
-		//	Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
-		//	Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
-		//
-		//	controllerReconciler := getWMSReconciler()
-		//
-		//	By("Reconciling the WMS and checking the configMap")
-		//	reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
-		//	deployment := &appsv1.Deployment{}
-		//	err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
-		//	Expect(err).NotTo(HaveOccurred())
-		//})
-		// TODO:
+			By("Cleanup the specific resource instance WMS")
+			Expect(k8sClient.Delete(ctx, wmsResource)).To(Succeed())
+
+			sampleWms, err := getUniqueWMSSample(counter)
+			counter++
+			typeNamespacedNameWms.Name = sampleWms.Name
+			Expect(err).NotTo(HaveOccurred())
+			sampleWms.Spec.Options.ValidateRequests = smoothoperatorutils.Pointer(false)
+
+			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
+			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
+
+			controllerReconciler := getWMSReconciler()
+
+			By("Reconciling the WMS and checking the configMap")
+			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
+			deployment := &appsv1.Deployment{}
+			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
+			Expect(err).NotTo(HaveOccurred())
+
+			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[1]
+			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
+			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-r", "-d=15"}
+			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
+			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(containerOgcWebserviceProxy.Ports[0].ContainerPort).Should(Equal(int32(9111)))
+			Expect(containerOgcWebserviceProxy.Resources.Limits.Memory().String()).Should(Equal("200M"))
+			Expect(containerOgcWebserviceProxy.Resources.Requests.Cpu().String()).Should(Equal("50m"))
+			volumeMountsContainerOgcWebserviceProxy := []v1.VolumeMount{
+				{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: true},
+			}
+			Expect(containerOgcWebserviceProxy.VolumeMounts).Should(Equal(volumeMountsContainerOgcWebserviceProxy))
+
+		})
 
 		It("Should create correct configMap manifest.", func() {
 			controllerReconciler := getWMSReconciler()
