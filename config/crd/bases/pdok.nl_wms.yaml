@@ -1150,8 +1150,6 @@ spec:
                   ttlInDays:
                     format: int32
                     type: integer
-                required:
-                - ttlInDays
                 type: object
               options:
                 properties:

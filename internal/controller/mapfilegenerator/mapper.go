@@ -15,6 +15,17 @@ const (
 	geopackagePath     = "/srv/data/gpkg"
 )
 
+var defaultEpsgList = []string{
+	"EPSG:28992",
+	"EPSG:25831",
+	"EPSG:25832",
+	"EPSG:3034",
+	"EPSG:3035",
+	"EPSG:3857",
+	"EPSG:4258",
+	"EPSG:4326",
+}
+
 func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (WFSInput, error) {
 	input := WFSInput{
 		BaseServiceInput: BaseServiceInput{
@@ -30,7 +41,7 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			AutomaticCasing: wfs.Spec.Options.AutomaticCasing,
 			DataEPSG:        wfs.Spec.Service.DefaultCrs,
 			// TODO Should this be a constant like in v2, or OtherCRS + default
-			EPSGList: wfs.Spec.Service.OtherCrs,
+			EPSGList: defaultEpsgList, // wfs.Spec.Service.OtherCrs,
 		},
 		MaxFeatures: smoothoperatorutils.PointerVal(wfs.Spec.Service.CountDefault, strconv.Itoa(defaultMaxFeatures)),
 		Layers:      getWFSLayers(wfs.Spec.Service.FeatureTypes),

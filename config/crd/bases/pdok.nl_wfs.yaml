@@ -1090,8 +1090,6 @@ spec:
                   ttlInDays:
                     format: int32
                     type: integer
-                required:
-                - ttlInDays
                 type: object
               options:
                 properties:
@@ -1398,6 +1396,8 @@ spec:
                   ownerInfoRef:
                     type: string
                   prefix:
+                    description: Geonovum subdomein
+                    minLength: 1
                     type: string
                   title:
                     type: string

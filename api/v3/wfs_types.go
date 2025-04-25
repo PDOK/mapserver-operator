@@ -78,6 +78,8 @@ type WFSSpec struct {
 }
 
 type WFSService struct {
+	// Geonovum subdomein
+	// +kubebuilder:validation:MinLength:=1
 	Prefix       string   `json:"prefix"`
 	URL          string   `json:"url"`
 	Inspire      *Inspire `json:"inspire,omitempty"`
