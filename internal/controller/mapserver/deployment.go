@@ -22,6 +22,7 @@ const (
 	ConfigMapOgcWebserviceProxyVolumeName    = "ogc-webservice-proxy-config"
 	ConfigMapLegendGeneratorVolumeName       = "legend-generator-config"
 	ConfigMapFeatureinfoGeneratorVolumeName  = "featureinfo-generator-config"
+	ConfigMapStylingFilesVolumeName          = "styling-files"
 	// TODO How should we determine this boundingbox?
 	healthCheckBbox = "190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914"
 )
@@ -118,7 +119,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			},
 		}
 		stylingFilesVolume := v1.Volume{
-			Name: "styling-files",
+			Name: ConfigMapStylingFilesVolumeName,
 			VolumeSource: v1.VolumeSource{
 				Projected: &v1.ProjectedVolumeSource{
 					Sources: []v1.VolumeProjection{
