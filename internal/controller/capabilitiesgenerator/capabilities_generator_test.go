@@ -635,13 +635,13 @@ func TestGetInputForWFS(t *testing.T) {
 				},
 				ownerInfo: &smoothoperatorv1.OwnerInfo{
 					Spec: smoothoperatorv1.OwnerInfoSpec{
-						NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
-						MetadataUrls: smoothoperatorv1.MetadataUrls{
-							CSW: smoothoperatorv1.MetadataURL{
+						NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
+						MetadataUrls: &smoothoperatorv1.MetadataUrls{
+							CSW: &smoothoperatorv1.MetadataURL{
 								HrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}",
 							},
 						},
-						WFS: smoothoperatorv1.WFS{
+						WFS: &smoothoperatorv1.WFS{
 							ServiceProvider: smoothoperatorv1.ServiceProvider{
 								ProviderName: smoothoperatorutils.Pointer("PDOK"),
 							},
@@ -683,14 +683,14 @@ func TestInputForWMS(t *testing.T) {
 
 	ownerInfo := smoothoperatorv1.OwnerInfo{
 		Spec: smoothoperatorv1.OwnerInfoSpec{
-			NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
-			MetadataUrls: smoothoperatorv1.MetadataUrls{
-				CSW: smoothoperatorv1.MetadataURL{
+			NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
+			MetadataUrls: &smoothoperatorv1.MetadataUrls{
+				CSW: &smoothoperatorv1.MetadataURL{
 					HrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}",
 				},
 			},
-			WMS: smoothoperatorv1.WMS{
-				ContactInformation: &smoothoperatorv1.ContactInformation{
+			WMS: &smoothoperatorv1.WMS{
+				ContactInformation: smoothoperatorv1.ContactInformation{
 					ContactPersonPrimary: &contactPersonPrimary,
 					ContactPosition:      asPtr("pointOfContact"),
 					ContactAddress: &smoothoperatorv1.ContactAddress{

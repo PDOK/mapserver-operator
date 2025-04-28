@@ -174,7 +174,7 @@ var _ = Describe("WMS Controller", func() {
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 
 			By("Getting the original Deployment")
-			deployment := getBareDeployment(wms, MapserverName)
+			deployment := getBareDeployment(wms)
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 				return Expect(err).NotTo(HaveOccurred())
@@ -211,7 +211,7 @@ var _ = Describe("WMS Controller", func() {
 			By("Reconciling the WMS and checking the deployment")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 
-			deployment := getBareDeployment(wms, MapserverName)
+			deployment := getBareDeployment(wms)
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 				return Expect(err).NotTo(HaveOccurred())

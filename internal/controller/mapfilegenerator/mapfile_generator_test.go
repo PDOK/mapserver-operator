@@ -25,6 +25,7 @@ const (
     "service_metadata_id": "metameta-meta-meta-meta-metametameta",
     "automatic_casing": true,
     "data_epsg": "EPSG:28992",
+	"service_debug_level": 0,
     "epsg_list": [
         "EPSG:28992",
         "EPSG:25831",
@@ -211,7 +212,7 @@ func TestGetConfigForWFS(t *testing.T) {
 				},
 				ownerInfo: &smoothoperatorv1.OwnerInfo{
 					Spec: smoothoperatorv1.OwnerInfoSpec{
-						NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
+						NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
 					},
 				},
 			},

@@ -177,7 +177,7 @@ var _ = Describe("WFS Controller", func() {
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
 			By("Getting the original Deployment")
-			deployment := getBareDeployment(wfs, MapserverName)
+			deployment := getBareDeployment(wfs)
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 				return Expect(err).NotTo(HaveOccurred())
@@ -215,7 +215,7 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the deployment")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			deployment := getBareDeployment(wfs, MapserverName)
+			deployment := getBareDeployment(wfs)
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 				return Expect(err).NotTo(HaveOccurred())

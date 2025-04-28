@@ -13,7 +13,7 @@ require (
 	github.com/pdok/featureinfo-generator v1.4.0-beta1
 	github.com/pdok/ogc-capabilities-generator v1.0.0-beta6
 	github.com/pdok/ogc-specifications v1.0.0-beta5
-	github.com/pdok/smooth-operator v0.0.14
+	github.com/pdok/smooth-operator v0.0.16
 	github.com/stretchr/testify v1.10.0
 	github.com/traefik/traefik/v3 v3.3.4
 	k8s.io/api v0.32.3
@@ -23,10 +23,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
-replace (
-	github.com/abbot/go-http-auth => github.com/abbot/go-http-auth v0.4.0 // for github.com/traefik/traefik/v3
-	github.com/pdok/smooth-operator => ../smooth-operator
-)
+replace github.com/abbot/go-http-auth => github.com/abbot/go-http-auth v0.4.0 // for github.com/traefik/traefik/v3
 
 require (
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
@@ -35,7 +32,6 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/goccy/go-yaml v1.15.6 // indirect
 	github.com/google/go-github/v28 v28.1.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
@@ -49,7 +45,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
-	github.com/sters/yaml-diff v1.4.1 // indirect
 	github.com/traefik/paerser v0.2.2 // indirect
 	github.com/unrolled/render v1.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
