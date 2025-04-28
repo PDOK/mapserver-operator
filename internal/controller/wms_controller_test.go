@@ -301,7 +301,7 @@ var _ = Describe("WMS Controller", func() {
 			volumeMounts = []v1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data"},
 				{Name: mapserver.ConfigMapMapfileGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
-				{Name: "styling-files", MountPath: "/styling", ReadOnly: true},
+				{Name: mapserver.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true},
 			}
 			Expect(mapfileGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 			Expect(mapfileGeneratorContainer.Command).Should(Equal([]string{"generate-mapfile"}))
@@ -460,7 +460,6 @@ var _ = Describe("WMS Controller", func() {
 			typeNamespacedNameWms.Name = sampleWms.Name
 			Expect(err).NotTo(HaveOccurred())
 			sampleWms.Spec.Options.RewriteGroupToDataLayers = smoothoperatorutils.Pointer(false)
-			//sampleWms.Spec.Options.DisableWebserviceProxy = smoothoperatorutils.Pointer(true)
 
 			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
 			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
