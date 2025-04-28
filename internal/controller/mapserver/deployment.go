@@ -193,7 +193,7 @@ func GetMapfileEnvVar[O pdoknlv3.WMSWFS](obj O) v1.EnvVar {
 
 	return v1.EnvVar{
 		Name:  "MS_MAPFILE",
-		Value: mapFileName,
+		Value: "/srv/data/config/mapfile/" + mapFileName,
 	}
 }
 

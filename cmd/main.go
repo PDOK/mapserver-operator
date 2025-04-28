@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
+	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
 	smoothoperator "github.com/pdok/smooth-operator/api/v1"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"os"
@@ -54,6 +55,7 @@ const (
 	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/ogc-capabilities-generator:1.0.0-beta7"
 	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:v1.4.0-beta1"
 	defaultOgcWebserviceProxyImage    = "acrpdokprodman.azurecr.io/pdok/ogc-webservice-proxy:0.1.8"
+	defaultApacheExporterImage        = "acrpdokprodman.azurecr.io/mirror/docker.io/lusotycoon/apache-exporter:v0.7.0"
 )
 
 var (
@@ -81,7 +83,8 @@ func main() {
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
 	var host string
-	var multitoolImage, mapfileGeneratorImage, mapserverImage, capabilitiesGeneratorImage, featureinfoGeneratorImage, ogcWebserviceProxyImage string
+	var mapserverDebugLevel int
+	var multitoolImage, mapfileGeneratorImage, mapserverImage, capabilitiesGeneratorImage, featureinfoGeneratorImage, ogcWebserviceProxyImage, apacheExporterImage string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -106,6 +109,8 @@ func main() {
 	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", defaultCapabilitiesGeneratorImage, "The image to use in the capabilities generator init-container.")
 	flag.StringVar(&featureinfoGeneratorImage, "featureinfo-generator-image", defaultFeatureinfoGeneratorImage, "The image to use in the featureinfo generator init-container.")
 	flag.StringVar(&ogcWebserviceProxyImage, "ogc-webservice-proxy-image", defaultOgcWebserviceProxyImage, "The image to use in the ogc webservice proxy container.")
+	flag.StringVar(&apacheExporterImage, "apache-exporter-image", defaultApacheExporterImage, "The image to use in the apache-exporter container.")
+	flag.IntVar(&mapserverDebugLevel, "mapserver-debug-level", 0, "Debug level for the mapserver container, between 0 (error only) and 5 (very very verbose).")
 
 	opts := zap.Options{
 		Development: true,
@@ -120,6 +125,7 @@ func main() {
 		os.Exit(1)
 	}
 	pdoknlv3.SetHost(host)
+	mapfilegenerator.SetDebugLevel(mapserverDebugLevel)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -244,6 +250,7 @@ func main() {
 			CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
 			FeatureinfoGeneratorImage:  featureinfoGeneratorImage,
 			OgcWebserviceProxyImage:    ogcWebserviceProxyImage,
+			ApacheExporterImage:        apacheExporterImage,
 		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WMS")
@@ -257,6 +264,7 @@ func main() {
 			MapfileGeneratorImage:      mapfileGeneratorImage,
 			MapserverImage:             mapserverImage,
 			CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
+			ApacheExporterImage:        apacheExporterImage,
 		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WFS")

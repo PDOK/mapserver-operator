@@ -157,3 +157,15 @@ func (wfs *WFS) ID() string {
 func (wfs *WFS) URLPath() string {
 	return wfs.Spec.Service.URL
 }
+
+func (wfs *WFS) GeoPackages() []*Gpkg {
+	gpkgs := make([]*Gpkg, 0)
+
+	for _, ft := range wfs.Spec.Service.FeatureTypes {
+		if ft.Data.Gpkg != nil {
+			gpkgs = append(gpkgs, ft.Data.Gpkg)
+		}
+	}
+
+	return gpkgs
+}

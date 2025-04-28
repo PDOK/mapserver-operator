@@ -16,6 +16,7 @@ type BaseServiceInput struct {
 	AutomaticCasing bool     `json:"automatic_casing"`
 	DataEPSG        string   `json:"data_epsg"`
 	EPSGList        []string `json:"epsg_list"`
+	DebugLevel      int      `json:"service_debug_level"`
 }
 
 //nolint:tagliatelle

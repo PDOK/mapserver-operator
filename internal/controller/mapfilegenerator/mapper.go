@@ -15,6 +15,8 @@ const (
 	geopackagePath     = "/srv/data/gpkg"
 )
 
+var mapserverDebugLevel = 0
+
 var defaultEpsgList = []string{
 	"EPSG:28992",
 	"EPSG:25831",
@@ -26,13 +28,21 @@ var defaultEpsgList = []string{
 	"EPSG:4326",
 }
 
+func SetDebugLevel(level int) {
+	if level < 0 || level > 5 {
+		panic("level must be between 0 and 5")
+	}
+
+	mapserverDebugLevel = level
+}
+
 func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (WFSInput, error) {
 	input := WFSInput{
 		BaseServiceInput: BaseServiceInput{
 			Title:           mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
 			Abstract:        mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
 			Keywords:        strings.Join(wfs.Spec.Service.Keywords, ","),
-			OnlineResource:  pdoknlv3.GetHost(),
+			OnlineResource:  pdoknlv3.GetHost(true),
 			Path:            mapperutils.GetPath(wfs),
 			MetadataId:      wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
 			Extent:          wfs.Spec.Service.Bbox.DefaultCRS.ToExtent(),
@@ -41,7 +51,8 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			AutomaticCasing: wfs.Spec.Options.AutomaticCasing,
 			DataEPSG:        wfs.Spec.Service.DefaultCrs,
 			// TODO Should this be a constant like in v2, or OtherCRS + default
-			EPSGList: defaultEpsgList, // wfs.Spec.Service.OtherCrs,
+			EPSGList:   defaultEpsgList, // wfs.Spec.Service.OtherCrs,
+			DebugLevel: mapserverDebugLevel,
 		},
 		MaxFeatures: smoothoperatorutils.PointerVal(wfs.Spec.Service.CountDefault, strconv.Itoa(defaultMaxFeatures)),
 		Layers:      getWFSLayers(wfs.Spec.Service.FeatureTypes),

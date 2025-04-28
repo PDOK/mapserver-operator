@@ -10,6 +10,7 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"strconv"
 	"strings"
 	"time"
@@ -83,6 +84,7 @@ type Images struct {
 	CapabilitiesGeneratorImage string
 	FeatureinfoGeneratorImage  string
 	OgcWebserviceProxyImage    string
+	ApacheExporterImage        string
 }
 
 func getReconcilerClient[R Reconciler](r R) client.Client {
@@ -118,9 +120,9 @@ func getReconcilerImages[R Reconciler](r R) *Images {
 	return nil
 }
 
-func getSharedBareObjects(obj metav1.Object) []client.Object {
+func getSharedBareObjects[O pdoknlv3.WMSWFS](obj O) []client.Object {
 	return []client.Object{
-		getBareDeployment(obj, MapserverName),
+		getBareDeployment(obj),
 		getBareIngressRoute(obj),
 		getBareHorizontalPodAutoScaler(obj),
 		getBareConfigMapBlobDownload(obj),
@@ -133,10 +135,14 @@ func getSharedBareObjects(obj metav1.Object) []client.Object {
 	}
 }
 
-func getBareDeployment(obj metav1.Object, mapserverName string) *appsv1.Deployment {
+func getSuffixedName[O pdoknlv3.WMSWFS](obj O, suffix string) string {
+	return obj.GetName() + "-" + strings.ToLower(string(obj.Type())) + "-" + suffix
+}
+
+func getBareDeployment[O pdoknlv3.WMSWFS](obj O) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: obj.GetName() + "-" + mapserverName,
+			Name: getSuffixedName(obj, MapserverName),
 			// name might become too long. not handling here. will just fail on apply.
 			Namespace: obj.GetNamespace(),
 		},
@@ -183,6 +189,16 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 	if err != nil {
 		return err
 	}
+
+	annotations := smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations())
+	annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
+
+	annotations["kubectl.kubernetes.io/default-container"] = "mapserver"
+	annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
+	annotations["prometheus.io/scrape"] = "true"
+	annotations["prometheus.io/port"] = "9117"
+	annotations["priority.version-checker.io/mapserver"] = "4"
+	annotations["priority.version-checker.io/ogc-webservice-proxy"] = "4"
 
 	deployment.Spec.Template = corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -276,6 +292,30 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 
 	containers := []corev1.Container{
 		{
+			Name:                     "apache-exporter",
+			Image:                    images.ApacheExporterImage,
+			ImagePullPolicy:          corev1.PullIfNotPresent,
+			TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+			TerminationMessagePath:   "/dev/termination-log",
+			Ports: []corev1.ContainerPort{
+				{
+					ContainerPort: 9117,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+			Args: []string{
+				"-scrape_uri=http://localhost/server-status?auto",
+			},
+			Resources: corev1.ResourceRequirements{
+				Limits: corev1.ResourceList{
+					corev1.ResourceMemory: resource.MustParse("48M"),
+				},
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU: resource.MustParse("0.02"),
+				},
+			},
+		},
+		{
 			Name:            MapserverName,
 			Image:           images.MapserverImage,
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -316,10 +356,10 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 	return containers, nil
 }
 
-func getBareIngressRoute(obj metav1.Object) *traefikiov1alpha1.IngressRoute {
+func getBareIngressRoute[O pdoknlv3.WMSWFS](obj O) *traefikiov1alpha1.IngressRoute {
 	return &traefikiov1alpha1.IngressRoute{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-" + MapserverName,
+			Name:      getSuffixedName(obj, MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -481,26 +521,36 @@ func makeUptimeName[O pdoknlv3.WMSWFS](obj O) (string, error) {
 }
 
 func getMatchRule[O pdoknlv3.WMSWFS](obj O) string {
-	return "Host(`" + pdoknlv3.GetHost() + "`) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
+	host := pdoknlv3.GetHost(false)
+	if strings.Contains(host, "localhost") {
+		return "Host(`localhost`) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
+	} else {
+		return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
+	}
 }
 
 func getLegendMatchRule(wms *pdoknlv3.WMS) string {
-	return "Host(`" + pdoknlv3.GetHost() + "`) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
+	host := pdoknlv3.GetHost(false)
+	if strings.Contains(host, "localhost") {
+		return "Host(`localhost`) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
+	} else {
+		return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
+	}
 }
 
-func getBareConfigMapMapfileGenerator(obj metav1.Object) *corev1.ConfigMap {
+func getBareConfigMapMapfileGenerator[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-mapfile-generator",
+			Name:      getSuffixedName(obj, "mapfile-generator"),
 			Namespace: obj.GetNamespace(),
 		},
 	}
 }
 
-func getBareConfigMapCapabilitiesGenerator(obj metav1.Object) *corev1.ConfigMap {
+func getBareConfigMapCapabilitiesGenerator[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-capabilities-generator",
+			Name:      getSuffixedName(obj, "capabilities-generator"),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -559,10 +609,10 @@ func mutateConfigMapMapfileGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O
 	return smoothoperatorutils.AddHashSuffix(configMap)
 }
 
-func getBareHorizontalPodAutoScaler(obj metav1.Object) *autoscalingv2.HorizontalPodAutoscaler {
+func getBareHorizontalPodAutoScaler[O pdoknlv3.WMSWFS](obj O) *autoscalingv2.HorizontalPodAutoscaler {
 	return &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-" + MapserverName,
+			Name:      getSuffixedName(obj, MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -657,10 +707,10 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 	return ctrl.SetControllerReference(obj, autoscaler, getReconcilerScheme(r))
 }
 
-func getBareConfigMapBlobDownload(obj metav1.Object) *corev1.ConfigMap {
+func getBareConfigMapBlobDownload[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-init-scripts",
+			Name:      getSuffixedName(obj, "init-scripts"),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -689,10 +739,10 @@ func mutateConfigMapBlobDownload[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, co
 	return smoothoperatorutils.AddHashSuffix(configMap)
 }
 
-func getBareService(obj metav1.Object) *corev1.Service {
+func getBareService[O pdoknlv3.WMSWFS](obj O) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-" + MapserverName,
+			Name:      getSuffixedName(obj, MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -748,10 +798,10 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 	return ctrl.SetControllerReference(obj, service, getReconcilerScheme(r))
 }
 
-func getBareCorsHeadersMiddleware(obj metav1.Object) *traefikiov1alpha1.Middleware {
+func getBareCorsHeadersMiddleware[O pdoknlv3.WMSWFS](obj O) *traefikiov1alpha1.Middleware {
 	return &traefikiov1alpha1.Middleware{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: obj.GetName() + "-" + corsHeadersName,
+			Name: getSuffixedName(obj, corsHeadersName),
 			// name might become too long. not handling here. will just fail on apply.
 			Namespace: obj.GetNamespace(),
 			UID:       obj.GetUID(),
@@ -786,10 +836,10 @@ func mutateCorsHeadersMiddleware[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, mi
 	return ctrl.SetControllerReference(obj, middleware, getReconcilerScheme(r))
 }
 
-func getBarePodDisruptionBudget(obj metav1.Object) *v1.PodDisruptionBudget {
+func getBarePodDisruptionBudget[O pdoknlv3.WMSWFS](obj O) *v1.PodDisruptionBudget {
 	return &v1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-" + MapserverName,
+			Name:      getSuffixedName(obj, MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -817,10 +867,10 @@ func mutatePodDisruptionBudget[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, podD
 	return ctrl.SetControllerReference(obj, podDisruptionBudget, getReconcilerScheme(r))
 }
 
-func getBareConfigMap(obj metav1.Object) *corev1.ConfigMap {
+func getBareConfigMap[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-" + MapserverName,
+			Name:      getSuffixedName(obj, MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -1076,16 +1126,16 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 
 	// region Deployment
 	{
-		deployment := getBareDeployment(obj, MapserverName)
+		deployment := getBareDeployment(obj)
 		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, deployment, func() error {
 			return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
 		})
-		//if operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)] == controllerutil.OperationResultUpdated {
-		//	deployment = getBareDeployment(obj, MapserverName)
-		//	smoothoperatork8s.ShowDiff(ctx, reconcilerClient, deployment, func() error {
-		//		return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
-		//	})
-		//}
+		if operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)] == controllerutil.OperationResultUpdated {
+			deployment = getBareDeployment(obj)
+			smoothoperatork8s.ShowDiff(ctx, reconcilerClient, deployment, func() error {
+				return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
+			})
+		}
 		if err != nil {
 			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment), err)
 		}

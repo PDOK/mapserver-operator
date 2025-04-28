@@ -36,6 +36,8 @@ type WMSWFS interface {
 	// Sha1 hash of the objects name
 	ID() string
 	URLPath() string
+
+	GeoPackages() []*Gpkg
 }
 
 type Mapfile struct {
@@ -43,12 +45,24 @@ type Mapfile struct {
 }
 
 type Options struct {
-	IncludeIngress              bool  `json:"includeIngress"`
-	AutomaticCasing             bool  `json:"automaticCasing"`
-	ValidateRequests            *bool `json:"validateRequests,omitempty"`
-	RewriteGroupToDataLayers    *bool `json:"rewriteGroupToDataLayers,omitempty"`
-	DisableWebserviceProxy      *bool `json:"disableWebserviceProxy,omitempty"`
-	PrefetchData                *bool `json:"prefetchData,omitempty"`
+	// +kubebuilder:default:=true
+	IncludeIngress bool `json:"includeIngress"`
+
+	// +kubebuilder:default:=true
+	AutomaticCasing bool `json:"automaticCasing"`
+
+	// +kubebuilder:default:=true
+	ValidateRequests *bool `json:"validateRequests,omitempty"`
+
+	// +kubebuilder:default:=false
+	RewriteGroupToDataLayers *bool `json:"rewriteGroupToDataLayers,omitempty"`
+
+	// +kubebuilder:default:=false
+	DisableWebserviceProxy *bool `json:"disableWebserviceProxy,omitempty"`
+
+	// +kubebuilder:default:=true
+	PrefetchData *bool `json:"prefetchData,omitempty"`
+
 	ValidateChildStyleNameEqual *bool `json:"validateChildStyleNameEqual,omitempty"`
 }
 
@@ -108,8 +122,16 @@ func SetHost(url string) {
 	host = strings.TrimSuffix(url, "/")
 }
 
-func GetHost() string {
-	return host
+func GetHost(includeProtocol bool) string {
+	if includeProtocol {
+		return host
+	} else {
+		if strings.HasPrefix(host, "http") {
+			return strings.Split(host, "://")[1]
+		} else {
+			return host
+		}
+	}
 }
 
 func GetBaseURLPath[T WMSWFS](o T) string {
