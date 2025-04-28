@@ -665,7 +665,7 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 	autoscaler.Spec = autoscalingv2.HorizontalPodAutoscalerSpec{
 		ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
 			Kind: "Deployment",
-			Name: obj.GetName() + "-" + MapserverName,
+			Name: getSuffixedName(obj, MapserverName),
 		},
 		MinReplicas: &minReplicas,
 		MaxReplicas: maxReplicas,

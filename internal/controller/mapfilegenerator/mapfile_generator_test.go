@@ -245,7 +245,7 @@ func TestGetConfigForWFS(t *testing.T) {
 func TestGetConfigForWMSWithNoGroupLayers(t *testing.T) {
 	ownerInfo := &smoothoperatorv1.OwnerInfo{
 		Spec: smoothoperatorv1.OwnerInfoSpec{
-			NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
+			NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
 		},
 	}
 
@@ -270,7 +270,7 @@ func TestGetConfigForWMSWithNoGroupLayers(t *testing.T) {
 func TestGetConfigForWMSWithGroupLayers(t *testing.T) {
 	ownerInfo := &smoothoperatorv1.OwnerInfo{
 		Spec: smoothoperatorv1.OwnerInfoSpec{
-			NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
+			NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
 		},
 	}
 
@@ -295,7 +295,7 @@ func TestGetConfigForWMSWithGroupLayers(t *testing.T) {
 func TestGetConfigForWMSWithGroupLayersAndTopGroupLayer(t *testing.T) {
 	ownerInfo := &smoothoperatorv1.OwnerInfo{
 		Spec: smoothoperatorv1.OwnerInfoSpec{
-			NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
+			NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
 		},
 	}
 
@@ -320,7 +320,7 @@ func TestGetConfigForWMSWithGroupLayersAndTopGroupLayer(t *testing.T) {
 func TestGetConfigForTifWMS(t *testing.T) {
 	ownerInfo := &smoothoperatorv1.OwnerInfo{
 		Spec: smoothoperatorv1.OwnerInfoSpec{
-			NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
+			NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
 		},
 	}
 
@@ -345,7 +345,7 @@ func TestGetConfigForTifWMS(t *testing.T) {
 func TestGetConfigForPostgisWMS(t *testing.T) {
 	ownerInfo := &smoothoperatorv1.OwnerInfo{
 		Spec: smoothoperatorv1.OwnerInfoSpec{
-			NamespaceTemplate: "http://{{prefix}}.geonovum.nl",
+			NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
 		},
 	}
 

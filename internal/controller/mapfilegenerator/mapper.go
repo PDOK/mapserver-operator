@@ -174,7 +174,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 			Extent:          extent,
 			NamespacePrefix: datasetName,
 			NamespaceURI:    fmt.Sprintf("%s://%s.geonovum.nl", protocol, datasetName),
-			OnlineResource:  pdoknlv3.GetHost(),
+			OnlineResource:  pdoknlv3.GetHost(true),
 			Path:            mapperutils.GetPath(wms),
 			MetadataId:      metadataId,
 			DatasetOwner:    &datasetOwner,
@@ -236,6 +236,11 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 		tableName = serviceLayer.Data.GetTableName()
 	}
 
+	metadataId := ""
+	if serviceLayer.DatasetMetadataURL != nil && serviceLayer.DatasetMetadataURL.CSW != nil {
+		metadataId = serviceLayer.DatasetMetadataURL.CSW.MetadataIdentifier
+	}
+
 	result := WMSLayer{
 		BaseLayer: BaseLayer{
 			Name:           *serviceLayer.Name,
@@ -243,7 +248,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			Abstract:       smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
 			Keywords:       strings.Join(serviceLayer.Keywords, ","),
 			Extent:         layerExtent,
-			MetadataId:     serviceLayer.DatasetMetadataURL.CSW.MetadataIdentifier,
+			MetadataId:     metadataId,
 			Columns:        columns,
 			GeometryType:   nil,
 			GeopackagePath: nil,
