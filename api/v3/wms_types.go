@@ -25,14 +25,13 @@ SOFTWARE.
 package v3
 
 import (
-	"maps"
-	"slices"
-	"sort"
-
 	shared_model "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"maps"
+	"slices"
+	"sort"
 )
 
 const (
@@ -112,6 +111,17 @@ type WMSBoundingBox struct {
 	BBox shared_model.BBox `json:"bbox"`
 }
 
+func (wmsBoundingBox *WMSBoundingBox) ToExtent() string {
+	return wmsBoundingBox.BBox.ToExtent()
+}
+
+func (wmsBoundingBox *WMSBoundingBox) Combine(other *WMSBoundingBox) {
+	if wmsBoundingBox.CRS != other.CRS {
+		return
+	}
+	wmsBoundingBox.BBox.Combine(other.BBox)
+}
+
 type Authority struct {
 	Name                     string `json:"name"`
 	URL                      string `json:"url"`
@@ -161,6 +171,96 @@ type WMSList struct {
 
 func init() {
 	SchemeBuilder.Register(&WMS{}, &WMSList{})
+}
+
+func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
+	var boundingBox *WMSBoundingBox
+
+	allLayers := wmsService.GetAllLayers()
+	for _, layer := range allLayers {
+		if layer.BoundingBoxes != nil && len(layer.BoundingBoxes) > 0 {
+			for _, bbox := range wmsService.Layer.BoundingBoxes {
+				if boundingBox == nil {
+					boundingBox = &bbox
+				} else {
+					boundingBox.Combine(&bbox)
+				}
+			}
+		}
+	}
+
+	if boundingBox != nil {
+		return *boundingBox
+	} else {
+		return WMSBoundingBox{
+			CRS: "EPSG:28992",
+			BBox: shared_model.BBox{
+				MinX: "-25000",
+				MaxX: "280000",
+				MinY: "250000",
+				MaxY: "860000",
+			},
+		}
+	}
+
+}
+
+type AnnotatedLayer struct {
+	// The name of the group that this layer belongs to, nil if it is not a member of a group. Groups can be a member of the toplayer as a group
+	GroupName *string
+	// Only for spec.Service.Layer
+	IsTopLayer bool
+	// Top layer or layer below the toplayer with children itself
+	IsGroupLayer bool
+	// Contains actual data
+	IsDataLayer bool
+	Layer       Layer
+}
+
+func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
+	result := make([]AnnotatedLayer, 0)
+
+	topLayer := wmsService.Layer
+	annotatedTopLayer := AnnotatedLayer{
+		GroupName:    nil,
+		IsTopLayer:   true,
+		IsGroupLayer: topLayer.Name != nil,
+		IsDataLayer:  false,
+		Layer:        topLayer,
+	}
+	result = append(result, annotatedTopLayer)
+
+	for _, topLayerChild := range *topLayer.Layers {
+		groupName := topLayer.Name
+		isGroupLayer := topLayerChild.Layers != nil && len(*topLayerChild.Layers) > 0
+		isDataLayer := !isGroupLayer
+		result = append(result, AnnotatedLayer{
+			GroupName:    groupName,
+			IsTopLayer:   false,
+			IsGroupLayer: isGroupLayer,
+			IsDataLayer:  isDataLayer,
+			Layer:        topLayerChild,
+		})
+
+		if topLayerChild.Layers != nil && len(*topLayerChild.Layers) > 0 {
+			for _, middleLayerChild := range *topLayerChild.Layers {
+				groupName = topLayerChild.Name
+				result = append(result, AnnotatedLayer{
+					GroupName:    groupName,
+					IsTopLayer:   false,
+					IsGroupLayer: false,
+					IsDataLayer:  true,
+					Layer:        middleLayerChild,
+				})
+			}
+		}
+	}
+
+	return result
+}
+
+func (wmsService *WMSService) GetAllLayers() (layers []Layer) {
+	return wmsService.Layer.GetAllLayers()
 }
 
 func (layer *Layer) GetAllLayers() (layers []Layer) {
@@ -230,6 +330,10 @@ func (layer *Layer) IsDataLayer() bool {
 
 func (layer *Layer) IsGroupLayer() bool {
 	return layer.Layers != nil && len(*layer.Layers) > 0
+}
+
+func (layer *Layer) IsTopLayer(service *WMSService) bool {
+	return layer.Name == service.Layer.Name
 }
 
 func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {

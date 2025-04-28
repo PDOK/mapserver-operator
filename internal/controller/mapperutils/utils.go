@@ -78,3 +78,12 @@ func GetLabelValueByKey(labels map[string]string, key string) *string {
 	}
 	return nil
 }
+
+func AnyMatch[S ~[]E, E any](slice S, eql func(E) bool) bool {
+	for _, elem := range slice {
+		if eql(elem) {
+			return true
+		}
+	}
+	return false
+}
