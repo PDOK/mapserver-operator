@@ -10,7 +10,7 @@ type BaseServiceInput struct {
 	NamespaceURI    string   `json:"service_namespace_uri"`
 	OnlineResource  string   `json:"service_onlineresource"`
 	Path            string   `json:"service_path"`
-	MetadataId      string   `json:"service_metadata_id"`
+	MetadataID      string   `json:"service_metadata_id"`
 	DatasetOwner    *string  `json:"dataset_owner,omitempty"`
 	AuthorityURL    *string  `json:"authority_url,omitempty"`
 	AutomaticCasing bool     `json:"automatic_casing"`
@@ -47,7 +47,7 @@ type BaseLayer struct {
 	Abstract       string   `json:"abstract"`
 	Keywords       string   `json:"keywords"`
 	Extent         string   `json:"layer_extent"`
-	MetadataId     string   `json:"dataset_metadata_id"`
+	MetadataID     string   `json:"dataset_metadata_id"`
 	Columns        []Column `json:"columns"`
 	GeometryType   *string  `json:"geometry_type,omitempty"`
 	GeopackagePath *string  `json:"gpkg_path,omitempty"`
@@ -67,6 +67,7 @@ type GroupLayer struct {
 	StyleTitle string `json:"styleTitle"`
 }
 
+//nolint:tagliatelle
 type WMSLayer struct {
 	BaseLayer
 	GroupName                   string  `json:"group_name,omitempty"`

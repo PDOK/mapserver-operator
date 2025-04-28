@@ -16,6 +16,7 @@ limitations under the License.
 
 package e2e
 
+//nolint:revive // Complains about the dot imports
 import (
 	"encoding/json"
 	"fmt"

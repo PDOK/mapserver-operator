@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image string) (*corev1.Container, error) {
+func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](_ O, image string) (*corev1.Container, error) {
 	initContainer := corev1.Container{
 		Name:            "capabilities-generator",
 		Image:           image,

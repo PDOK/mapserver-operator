@@ -46,7 +46,7 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			Keywords:        strings.Join(wfs.Spec.Service.Keywords, ","),
 			OnlineResource:  pdoknlv3.GetHost(true),
 			Path:            mapperutils.GetPath(wfs),
-			MetadataId:      wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
+			MetadataID:      wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
 			Extent:          wfs.Spec.Service.Bbox.DefaultCRS.ToExtent(),
 			NamespacePrefix: wfs.Spec.Service.Prefix,
 			NamespaceURI:    mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
@@ -76,7 +76,7 @@ func getWFSLayers(featureTypes []pdoknlv3.FeatureType) (layers []WFSLayer) {
 				Abstract:       mapperutils.EscapeQuotes(featureType.Abstract),
 				Keywords:       strings.Join(featureType.Keywords, ","),
 				Extent:         bbox.DefaultCRS.ToExtent(),
-				MetadataId:     featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
+				MetadataID:     featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
 				Columns:        getColumns(featureType.Data),
 				TableName:      featureType.Data.GetTableName(),
 				GeometryType:   featureType.Data.GetGeometryType(),
@@ -114,7 +114,7 @@ func getGeopackagePath(data pdoknlv3.Data) *string {
 	return smoothoperatorutils.Pointer(geopackagePath + "/" + blobName)
 }
 
-func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
+func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
 	service := wms.Spec.Service
 
 	accessConstraints := service.AccessConstraints
@@ -132,9 +132,9 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 	datasetName := wms.ObjectMeta.Labels["dataset"]
 	protocol := "http"
 	authority := wms.GetAuthority()
-	authorityUrl := ""
+	authorityURL := ""
 	if authority != nil {
-		authorityUrl = authority.URL
+		authorityURL = authority.URL
 	}
 
 	box := service.GetBoundingBox()
@@ -147,11 +147,11 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		maxSize = strconv.Itoa(int(*service.MaxSize))
 	}
 
-	metadataId := ""
+	var metadataID string
 	if service.Inspire != nil {
-		metadataId = service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
+		metadataID = service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
 	} else {
-		metadataId = wms.ObjectMeta.Annotations[v2beta1.SERVICE_METADATA_IDENTIFIER_ANNOTATION]
+		metadataID = wms.ObjectMeta.Annotations[v2beta1.ServiceMetatdataIdentifierAnnotation]
 	}
 
 	var fonts *string
@@ -176,9 +176,9 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 			NamespaceURI:    fmt.Sprintf("%s://%s.geonovum.nl", protocol, datasetName),
 			OnlineResource:  pdoknlv3.GetHost(true),
 			Path:            mapperutils.GetPath(wms),
-			MetadataId:      metadataId,
+			MetadataID:      metadataID,
 			DatasetOwner:    &datasetOwner,
-			AuthorityURL:    &authorityUrl,
+			AuthorityURL:    &authorityURL,
 			AutomaticCasing: wms.Spec.Options.AutomaticCasing,
 			DataEPSG:        service.DataEPSG,
 			EPSGList:        epsgs,
@@ -236,9 +236,9 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 		tableName = serviceLayer.Data.GetTableName()
 	}
 
-	metadataId := ""
+	metadataID := ""
 	if serviceLayer.DatasetMetadataURL != nil && serviceLayer.DatasetMetadataURL.CSW != nil {
-		metadataId = serviceLayer.DatasetMetadataURL.CSW.MetadataIdentifier
+		metadataID = serviceLayer.DatasetMetadataURL.CSW.MetadataIdentifier
 	}
 
 	result := WMSLayer{
@@ -248,7 +248,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			Abstract:       smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
 			Keywords:       strings.Join(serviceLayer.Keywords, ","),
 			Extent:         layerExtent,
-			MetadataId:     metadataId,
+			MetadataID:     metadataID,
 			Columns:        columns,
 			GeometryType:   nil,
 			GeopackagePath: nil,
@@ -270,7 +270,8 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	}
 
 	if serviceLayer.Data != nil {
-		if serviceLayer.Data.Gpkg != nil {
+		switch {
+		case serviceLayer.Data.Gpkg != nil:
 			gpkg := serviceLayer.Data.Gpkg
 
 			result.GeometryType = &gpkg.GeometryType
@@ -283,11 +284,11 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			}
 
 			result.GeopackagePath = &geopackageConstructedPath
-		} else if serviceLayer.Data.TIF != nil {
+		case serviceLayer.Data.TIF != nil:
 			tif := serviceLayer.Data.TIF
 			result.GeometryType = smoothoperatorutils.Pointer("Raster")
 			result.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
-		} else if serviceLayer.Data.Postgis != nil {
+		case serviceLayer.Data.Postgis != nil:
 			postgis := serviceLayer.Data.Postgis
 			result.Postgis = smoothoperatorutils.Pointer(true)
 			result.GeometryType = &postgis.GeometryType

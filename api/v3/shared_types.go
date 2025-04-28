@@ -125,13 +125,11 @@ func SetHost(url string) {
 func GetHost(includeProtocol bool) string {
 	if includeProtocol {
 		return host
-	} else {
-		if strings.HasPrefix(host, "http") {
-			return strings.Split(host, "://")[1]
-		} else {
-			return host
-		}
+	} else if strings.HasPrefix(host, "http") {
+		return strings.Split(host, "://")[1]
 	}
+
+	return host
 }
 
 func GetBaseURLPath[T WMSWFS](o T) string {

@@ -56,6 +56,9 @@ const (
 	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:v1.4.0-beta1"
 	defaultOgcWebserviceProxyImage    = "acrpdokprodman.azurecr.io/pdok/ogc-webservice-proxy:0.1.8"
 	defaultApacheExporterImage        = "acrpdokprodman.azurecr.io/mirror/docker.io/lusotycoon/apache-exporter:v0.7.0"
+
+	EnvFalse = "false"
+	EnvTrue  = "true"
 )
 
 var (
@@ -271,21 +274,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
 		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")
 			os.Exit(1)
 		}
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
 		if err = webhookpdoknlv3.SetupWMSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WMS")
 			os.Exit(1)
 		}
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
 		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")
 			os.Exit(1)

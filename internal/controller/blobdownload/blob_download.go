@@ -158,7 +158,7 @@ func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 		return nil
 	}
 
-	re := regexp.MustCompile(".*\\.(ttf)$")
+	re := regexp.MustCompile(`.*\\.(ttf)$`)
 	for _, blobKey := range wms.Spec.Service.StylingAssets.BlobKeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {

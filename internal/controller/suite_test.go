@@ -24,6 +24,7 @@ SOFTWARE.
 
 package controller
 
+//nolint:revive // Complains about the dot imports
 import (
 	"context"
 	"encoding/json"

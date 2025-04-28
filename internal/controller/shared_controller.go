@@ -180,7 +180,7 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 	if err != nil {
 		return err
 	}
-	for idx, _ := range initContainers {
+	for idx := range initContainers {
 		initContainers[idx].TerminationMessagePolicy = corev1.TerminationMessagePolicy("File")
 		initContainers[idx].TerminationMessagePath = "/dev/termination-log"
 	}
@@ -524,18 +524,18 @@ func getMatchRule[O pdoknlv3.WMSWFS](obj O) string {
 	host := pdoknlv3.GetHost(false)
 	if strings.Contains(host, "localhost") {
 		return "Host(`localhost`) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
-	} else {
-		return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
 	}
+
+	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
 }
 
 func getLegendMatchRule(wms *pdoknlv3.WMS) string {
 	host := pdoknlv3.GetHost(false)
 	if strings.Contains(host, "localhost") {
 		return "Host(`localhost`) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
-	} else {
-		return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
 	}
+
+	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
 }
 
 func getBareConfigMapMapfileGenerator[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
@@ -621,7 +621,7 @@ func getBareHorizontalPodAutoScaler[O pdoknlv3.WMSWFS](obj O) *autoscalingv2.Hor
 func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, autoscaler *autoscalingv2.HorizontalPodAutoscaler) error {
 	autoscalerPatch := obj.HorizontalPodAutoscalerPatch()
 	podSpecPatch := obj.PodSpecPatch()
-	var behaviourStabilizationWindowSeconds int32 = 0
+	var behaviourStabilizationWindowSeconds int32
 	if obj.Type() == pdoknlv3.ServiceTypeWFS {
 		behaviourStabilizationWindowSeconds = 300
 	}
@@ -1130,12 +1130,12 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, deployment, func() error {
 			return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
 		})
-		if operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)] == controllerutil.OperationResultUpdated {
-			deployment = getBareDeployment(obj)
-			smoothoperatork8s.ShowDiff(ctx, reconcilerClient, deployment, func() error {
-				return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
-			})
-		}
+		// if operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)] == controllerutil.OperationResultUpdated {
+		//	 deployment = getBareDeployment(obj)
+		//	 smoothoperatork8s.ShowDiff(ctx, reconcilerClient, deployment, func() error {
+		//	 	return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
+		//	 })
+		// }
 		if err != nil {
 			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment), err)
 		}
