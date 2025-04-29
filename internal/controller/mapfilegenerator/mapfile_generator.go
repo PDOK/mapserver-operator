@@ -31,10 +31,9 @@ func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image, postgisCo
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		stylingFilesVolAm := corev1.VolumeMount{Name: "styling-files", MountPath: "/styling", ReadOnly: true}
+		stylingFilesVolAm := corev1.VolumeMount{Name: mapserver.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true}
 		initContainer.VolumeMounts = append(initContainer.VolumeMounts, stylingFilesVolAm)
 	}
-
 	// Additional mapfile-generator configuration
 	if obj.HasPostgisData() {
 		initContainer.EnvFrom = []corev1.EnvFromSource{
