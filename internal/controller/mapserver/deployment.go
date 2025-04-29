@@ -22,6 +22,7 @@ const (
 	ConfigMapOgcWebserviceProxyVolumeName    = "ogc-webservice-proxy-config"
 	ConfigMapLegendGeneratorVolumeName       = "legend-generator-config"
 	ConfigMapFeatureinfoGeneratorVolumeName  = "featureinfo-generator-config"
+	ConfigMapStylingFilesVolumeName          = "styling-files"
 	// TODO How should we determine this boundingbox?
 	healthCheckBbox = "190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914"
 
@@ -89,7 +90,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	if mapfile := obj.Mapfile(); mapfile != nil {
 		volumes = append(volumes, v1.Volume{
 			Name:         "mapfile",
-			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Name),
+			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Key),
 		})
 	}
 
@@ -102,7 +103,30 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			Name:         ConfigMapFeatureinfoGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.FeatureInfoGenerator),
 		}
-		volumes = append(volumes, lgVolume, figVolume)
+		stylingFilesVolume := v1.Volume{
+			Name: ConfigMapStylingFilesVolumeName,
+			VolumeSource: v1.VolumeSource{
+				Projected: &v1.ProjectedVolumeSource{
+					Sources: []v1.VolumeProjection{
+						{
+							ConfigMap: &v1.ConfigMapProjection{
+								LocalObjectReference: v1.LocalObjectReference{
+									Name: "gpkg-styling",
+								},
+							},
+						},
+						{
+							ConfigMap: &v1.ConfigMapProjection{
+								LocalObjectReference: v1.LocalObjectReference{
+									Name: "tif-styling",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, lgVolume, figVolume, stylingFilesVolume)
 	}
 
 	if options := obj.Options(); options != nil {

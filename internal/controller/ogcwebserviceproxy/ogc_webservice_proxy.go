@@ -16,7 +16,7 @@ func GetOgcWebserviceProxyContainer(wms *pdoknlv3.WMS, image string) (*corev1.Co
 		Ports:           []corev1.ContainerPort{{ContainerPort: 9111}},
 		Command:         getCommand(wms),
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: false},
+			{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: true},
 		},
 		Resources: corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
