@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	"k8s.io/utils/strings/slices"
 	"regexp"
 	"strings"
 
@@ -32,7 +33,10 @@ func GetScript() string {
 func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigName, blobsSecretName, srvDir string) (*corev1.Container, error) {
 	blobkeys := []string{}
 	for _, gpkg := range obj.GeoPackages() {
-		blobkeys = append(blobkeys, gpkg.BlobKey)
+		// Deduplicate blobkeys to prevent double downloads
+		if !slices.Contains(blobkeys, gpkg.BlobKey) {
+			blobkeys = append(blobkeys, gpkg.BlobKey)
+		}
 	}
 
 	initContainer := corev1.Container{
@@ -158,7 +162,7 @@ func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 		return nil
 	}
 
-	re := regexp.MustCompile(`.*\\.(ttf)$`)
+	re := regexp.MustCompile(`.*\.(ttf)$`)
 	for _, blobKey := range wms.Spec.Service.StylingAssets.BlobKeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {

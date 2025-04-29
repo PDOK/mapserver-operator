@@ -1,0 +1,17 @@
+set -e;
+            mkdir -p /srv/data/config/;
+            rclone config create --non-interactive --obscure blobs azureblob endpoint $BLOBS_ENDPOINT account $BLOBS_ACCOUNT key $BLOBS_KEY use_emulator true;
+            bash /srv/scripts/gpkg_download.sh;
+            rclone copyto blobs:/resources-bucket/key/gpkg-symbol.png /srv/data/images/gpkg-symbol.png || exit 1;
+            rclone copyto blobs:/resources-bucket/key/symbol.svg /srv/data/images/symbol.svg || exit 1;
+            rclone copyto blobs:/resources-bucket/key/font-1.ttf /srv/data/images/font-1.ttf || exit 1;
+            rclone copyto blobs:/resources-bucket/key/font-2.ttf /srv/data/images/font-2.ttf || exit 1;
+            echo 'generated fonts.list:';
+            cat /srv/data/config/fonts/fonts.list;
+            mkdir -p /var/www/legend/wms-gpkg-layer-1-name;
+            rclone copyto blobs:/resources-bucket/key/gpkg-layer-1-legend.png  /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png || exit 1;
+            Copied legend gpkg-layer-1-legend.png to /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png;
+            mkdir -p /var/www/legend/wms-gpkg-layer-2-name;
+            rclone copyto blobs:/resources-bucket/key/gpkg-layer-2-legend.png  /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png || exit 1;
+            Copied legend gpkg-layer-2-legend.png to /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png;
+            chown -R 999:999 /var/www/legend

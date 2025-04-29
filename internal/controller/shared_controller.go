@@ -304,7 +304,7 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 				},
 			},
 			Args: []string{
-				"-scrape_uri=http://localhost/server-status?auto",
+				"--scrape_uri=http://localhost/server-status?auto",
 			},
 			Resources: corev1.ResourceRequirements{
 				Limits: corev1.ResourceList{
