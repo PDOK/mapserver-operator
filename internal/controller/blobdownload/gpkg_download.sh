@@ -61,7 +61,7 @@ function download() {
     fi
 
     local gpkg=$1
-    local file={{ gpkg_path }}/$2
+    local file=$GEOPACKAGE_TARGET_PATH/$2
     local url=${BLOBS_ENDPOINT}/${gpkg}
 
     download_gpkg $gpkg $file $url
@@ -112,12 +112,17 @@ function download_all() {
     local start_time=$(date '+%s')
 
     # create target location if not exists
-    mkdir -p {{ gpkg_path }}
-    chown 999:999 {{ gpkg_path }}
+    mkdir -p $GEOPACKAGE_TARGET_PATH
+    chown 999:999 $GEOPACKAGE_TARGET_PATH
 
-{% for blobKey in (service.featureTypes if type == 'wfs' else service.layers if type == 'wms' else []) | json_query('[].data.gpkg.blobKey') | unique %}
-    download {{ blobKey }} {{ blobKey.split('/') | last }};
-{% endfor %}
+    # Download all geopackages from GEOPACKAGE_DOWNLOAD_LIST
+    # Example: GEOPACKAGE_DOWNLOAD_LIST=path/1/file.gpkg;path/3/other_file.gpkg
+    gpkgs=(${GEOPACKAGE_DOWNLOAD_LIST//;/ })
+    for gpkg_path in "${gpkgs[@]}"
+    do
+      filename=$(basename $gpkg_path)
+      download $gpkg_path $filename
+    done
 
     echo msg=\"All GeoPackages downloaded\" total_time_seconds=$(expr $(date '+%s') - $start_time)
 }

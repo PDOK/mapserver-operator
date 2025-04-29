@@ -13,6 +13,7 @@ import (
 	"github.com/pdok/ogc-specifications/pkg/wfs200"
 	"github.com/pdok/ogc-specifications/pkg/wsc110"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 const (
@@ -32,7 +33,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		Global: capabilitiesgenerator.Global{
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
-			Onlineresourceurl: pdoknlv3.GetHost(),
+			Onlineresourceurl: pdoknlv3.GetHost(true),
 			Path:              "/" + pdoknlv3.GetBaseURLPath(wfs),
 			Version:           *mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version"),
 		},
@@ -204,11 +205,11 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 }
 
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
-	hostBaseUrl := "https://service.pdok.nl"
-	canonicalServiceUrl := hostBaseUrl + "/" + pdoknlv3.GetBaseURLPath(wms)
+	hostBaseURL := "https://service.pdok.nl"
+	canonicalServiceURL := hostBaseURL + "/" + pdoknlv3.GetBaseURLPath(wms)
 
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
-	var fees *string = nil
+	var fees *string
 	if wms.Spec.Service.Fees != nil {
 		feesPtr := mapperutils.EscapeQuotes(*wms.Spec.Service.Fees)
 		fees = &feesPtr
@@ -228,7 +229,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 		Global: capabilitiesgenerator.Global{
 			Namespace:         mapperutils.GetNamespaceURI("prefix", ownerInfo),
 			Prefix:            "prefix",
-			Onlineresourceurl: pdoknlv3.GetHost(),
+			Onlineresourceurl: pdoknlv3.GetHost(true),
 			Path:              "/" + pdoknlv3.GetBaseURLPath(wms),
 			Version:           *mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "service-version"),
 		},
@@ -241,7 +242,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Title:              mapperutils.EscapeQuotes(wms.Spec.Service.Title),
 						Abstract:           &abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.Keywords},
-						OnlineResource:     wms130.OnlineResource{Href: &hostBaseUrl},
+						OnlineResource:     wms130.OnlineResource{Href: &hostBaseURL},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               fees,
 						AccessConstraints:  &accessContraints,
@@ -254,20 +255,20 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 							Request: wms130.Request{
 								GetCapabilities: wms130.RequestType{
 									Format:  []string{"text/xml"},
-									DCPType: getDcpType(canonicalServiceUrl, false),
+									DCPType: getDcpType(canonicalServiceURL, false),
 								},
 								GetMap: wms130.RequestType{
 									Format:  []string{"image/png", "image/jpeg", "image/png; mode=8bit", "image/vnd.jpeg-png", "image/vnd.jpeg-png8"},
-									DCPType: getDcpType(canonicalServiceUrl, true),
+									DCPType: getDcpType(canonicalServiceURL, true),
 								},
 								GetFeatureInfo: &wms130.RequestType{
 									Format:  []string{"application/json", "application/json; subtype=geojson", "application/vnd.ogc.gml", "text/html", "text/plain", "text/xml", "text/xml; subtype=gml/3.1.1"},
-									DCPType: getDcpType(canonicalServiceUrl, true),
+									DCPType: getDcpType(canonicalServiceURL, true),
 								},
 							},
 							Exception:            wms130.ExceptionType{Format: []string{"XML", "BLANK"}},
 							ExtendedCapabilities: nil,
-							Layer:                getLayers(wms, canonicalServiceUrl),
+							Layer:                getLayers(wms, canonicalServiceURL),
 						},
 						OptionalConstraints: wms130.OptionalConstraints{},
 					},
@@ -306,11 +307,6 @@ func getContactInformation(ownerInfo *smoothoperatorv1.OwnerInfo) *wms130.Contac
 	}
 
 	providedContactInformation := ownerInfo.Spec.WMS.ContactInformation
-
-	if providedContactInformation == nil {
-		return &result
-	}
-
 	if providedContactInformation.ContactPersonPrimary != nil {
 		contactPerson := ""
 		if providedContactInformation.ContactPersonPrimary.ContactPerson != nil {
@@ -332,12 +328,12 @@ func getContactInformation(ownerInfo *smoothoperatorv1.OwnerInfo) *wms130.Contac
 	if providedContactInformation.ContactAddress != nil {
 		contactAddressInput := providedContactInformation.ContactAddress
 		contactAddress := wms130.ContactAddress{
-			AddressType:     pointerValOrDefault(contactAddressInput.AddressType, ""),
-			Address:         pointerValOrDefault(contactAddressInput.Address, ""),
-			City:            pointerValOrDefault(contactAddressInput.City, ""),
-			StateOrProvince: pointerValOrDefault(contactAddressInput.StateOrProvince, ""),
-			PostalCode:      pointerValOrDefault(contactAddressInput.PostCode, ""),
-			Country:         pointerValOrDefault(contactAddressInput.Country, ""),
+			AddressType:     smoothoperatorutils.PointerVal(contactAddressInput.AddressType, ""),
+			Address:         smoothoperatorutils.PointerVal(contactAddressInput.Address, ""),
+			City:            smoothoperatorutils.PointerVal(contactAddressInput.City, ""),
+			StateOrProvince: smoothoperatorutils.PointerVal(contactAddressInput.StateOrProvince, ""),
+			PostalCode:      smoothoperatorutils.PointerVal(contactAddressInput.PostCode, ""),
+			Country:         smoothoperatorutils.PointerVal(contactAddressInput.Country, ""),
 		}
 		result.ContactAddress = &contactAddress
 	}
@@ -358,7 +354,7 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 		},
 	}
 
-	var post *wms130.Method = nil
+	var post *wms130.Method
 	if fillPost {
 		post = &get
 	}
@@ -375,7 +371,7 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 	return &result
 }
 
-func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
+func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 	result := make([]wms130.Layer, 0)
 	referenceLayer := wms.Spec.Service.Layer
 	title := referenceLayer.Title
@@ -505,11 +501,11 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 			Resy: 0,
 		})
 
-	var authorityUrl *wms130.AuthorityURL = nil
-	var identifier *wms130.Identifier = nil
+	var authorityURL *wms130.AuthorityURL
+	var identifier *wms130.Identifier
 
 	if referenceLayer.Authority != nil {
-		authorityUrl = &wms130.AuthorityURL{
+		authorityURL = &wms130.AuthorityURL{
 			Name: referenceLayer.Authority.Name,
 			OnlineResource: wms130.OnlineResource{
 				Xlink: nil,
@@ -535,7 +531,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 		BoundingBox:             allDefaultBoundingBoxes,
 		Dimension:               nil,
 		Attribution:             nil,
-		AuthorityURL:            authorityUrl,
+		AuthorityURL:            authorityURL,
 		Identifier:              identifier,
 		MetadataURL:             nil,
 		DataURL:                 nil,
@@ -589,7 +585,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 			Queryable: asPtr(1),
 			Opaque:    nil,
 			Name:      layer.Name,
-			Title:     pointerValOrDefault(layer.Title, ""),
+			Title:     smoothoperatorutils.PointerVal(layer.Title, ""),
 			Abstract:  layer.Abstract,
 			KeywordList: &wms130.Keywords{
 				Keyword: layer.Keywords,
@@ -599,7 +595,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 			BoundingBox:             allDefaultBoundingBoxes,
 			Dimension:               nil,
 			Attribution:             nil,
-			AuthorityURL:            authorityUrl,
+			AuthorityURL:            authorityURL,
 			Identifier:              innerIdentifier,
 			MetadataURL:             metadataUrls,
 			DataURL:                 nil,
@@ -612,7 +608,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 		for _, style := range layer.Styles {
 			newStyle := wms130.Style{
 				Name:     style.Name,
-				Title:    pointerValOrDefault(style.Title, ""),
+				Title:    smoothoperatorutils.PointerVal(style.Title, ""),
 				Abstract: style.Abstract,
 				LegendURL: &wms130.LegendURL{
 					Width:  78,
@@ -621,7 +617,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 					OnlineResource: wms130.OnlineResource{
 						Xlink: nil,
 						Type:  asPtr("simple"),
-						Href:  asPtr(canonicalUrl + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
+						Href:  asPtr(canonicalURL + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
 					},
 				},
 				StyleSheetURL: nil,
@@ -634,14 +630,6 @@ func getLayers(wms *pdoknlv3.WMS, canonicalUrl string) []wms130.Layer {
 
 	result = append(result, topLayer)
 	return result
-}
-
-func pointerValOrDefault[T any](pointer *T, defaultValue T) T {
-	if pointer != nil {
-		return *pointer
-	} else {
-		return defaultValue
-	}
 }
 
 func asPtr[T any](value T) *T {

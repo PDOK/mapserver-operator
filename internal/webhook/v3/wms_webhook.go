@@ -63,7 +63,7 @@ type WMSCustomValidator struct {
 var _ webhook.CustomValidator = &WMSCustomValidator{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type WMS.
-func (v *WMSCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *WMSCustomValidator) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	wms, ok := obj.(*pdoknlv3.WMS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WMS object but got %T", obj)
@@ -74,7 +74,7 @@ func (v *WMSCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Obj
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type WMS.
-func (v *WMSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *WMSCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	wms, ok := newObj.(*pdoknlv3.WMS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WMS object for the newObj but got %T", newObj)
@@ -89,7 +89,7 @@ func (v *WMSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj 
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type WMS.
-func (v *WMSCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *WMSCustomValidator) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	wms, ok := obj.(*pdoknlv3.WMS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WMS object but got %T", obj)

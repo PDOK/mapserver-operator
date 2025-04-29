@@ -24,6 +24,7 @@ SOFTWARE.
 
 package v3
 
+//nolint:revive // Complains about the dot imports
 import (
 	"context"
 	"crypto/tls"
@@ -90,8 +91,11 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		Scheme:                scheme,
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "..", "config", "crd", "bases")},
+		Scheme: scheme,
+		CRDDirectoryPaths: []string{
+			filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wfs.yaml"),
+			filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wms.yaml"),
+		},
 		ErrorIfCRDPathMissing: false,
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			Scheme: scheme,
@@ -110,8 +114,7 @@ var _ = BeforeSuite(func() {
 
 	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()
-	// TODO enabling next line causes the tests to fail, find out why
-	// Expect(err).NotTo(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})

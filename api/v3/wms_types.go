@@ -65,15 +65,16 @@ type WMSService struct {
 	OwnerInfoRef string   `json:"ownerInfoRef"`
 	Fees         *string  `json:"fees,omitempty"`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string         `json:"accessConstraints"`
-	MaxSize           *int32         `json:"maxSize,omitempty"`
-	Inspire           *Inspire       `json:"inspire,omitempty"`
-	DataEPSG          string         `json:"dataEPSG"`
-	Resolution        *int32         `json:"resolution,omitempty"`
-	DefResolution     *int32         `json:"defResolution,omitempty"`
-	StylingAssets     *StylingAssets `json:"stylingAssets,omitempty"`
-	Mapfile           *Mapfile       `json:"mapfile,omitempty"`
-	Layer             Layer          `json:"layer"`
+	AccessConstraints string   `json:"accessConstraints"`
+	MaxSize           *int32   `json:"maxSize,omitempty"`
+	Inspire           *Inspire `json:"inspire,omitempty"`
+	//nolint:tagliatelle
+	DataEPSG      string         `json:"dataEPSG"`
+	Resolution    *int32         `json:"resolution,omitempty"`
+	DefResolution *int32         `json:"defResolution,omitempty"`
+	StylingAssets *StylingAssets `json:"stylingAssets,omitempty"`
+	Mapfile       *Mapfile       `json:"mapfile,omitempty"`
+	Layer         Layer          `json:"layer"`
 }
 
 type StylingAssets struct {
@@ -178,7 +179,7 @@ func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 
 	allLayers := wmsService.GetAllLayers()
 	for _, layer := range allLayers {
-		if layer.BoundingBoxes != nil && len(layer.BoundingBoxes) > 0 {
+		if len(layer.BoundingBoxes) > 0 {
 			for _, bbox := range wmsService.Layer.BoundingBoxes {
 				if boundingBox == nil {
 					boundingBox = &bbox
@@ -191,18 +192,17 @@ func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 
 	if boundingBox != nil {
 		return *boundingBox
-	} else {
-		return WMSBoundingBox{
-			CRS: "EPSG:28992",
-			BBox: shared_model.BBox{
-				MinX: "-25000",
-				MaxX: "280000",
-				MinY: "250000",
-				MaxY: "860000",
-			},
-		}
 	}
 
+	return WMSBoundingBox{
+		CRS: "EPSG:28992",
+		BBox: shared_model.BBox{
+			MinX: "-25000",
+			MaxX: "280000",
+			MinY: "250000",
+			MaxY: "860000",
+		},
+	}
 }
 
 type AnnotatedLayer struct {
@@ -281,11 +281,11 @@ func (layer *Layer) GetParent(candidateLayer *Layer) *Layer {
 	for _, childLayer := range *candidateLayer.Layers {
 		if childLayer.Name == layer.Name {
 			return candidateLayer
-		} else {
-			parent := layer.GetParent(&childLayer)
-			if parent != nil {
-				return parent
-			}
+		}
+
+		parent := layer.GetParent(&childLayer)
+		if parent != nil {
+			return parent
 		}
 	}
 	return nil
@@ -446,4 +446,26 @@ func (wms *WMS) ID() string {
 
 func (wms *WMS) URLPath() string {
 	return wms.Spec.Service.URL
+}
+
+func (wms *WMS) GeoPackages() []*Gpkg {
+	gpkgs := make([]*Gpkg, 0)
+
+	if wms.Spec.Service.Layer.Layers != nil {
+		for _, layer := range *wms.Spec.Service.Layer.Layers {
+			if layer.Data != nil {
+				if layer.Data.Gpkg != nil {
+					gpkgs = append(gpkgs, layer.Data.Gpkg)
+				}
+			} else if layer.Layers != nil {
+				for _, childLayer := range *layer.Layers {
+					if childLayer.Data != nil && childLayer.Data.Gpkg != nil {
+						gpkgs = append(gpkgs, childLayer.Data.Gpkg)
+					}
+				}
+			}
+		}
+	}
+
+	return gpkgs
 }

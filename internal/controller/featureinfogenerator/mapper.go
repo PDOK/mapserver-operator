@@ -62,7 +62,7 @@ func getPropertiesForVector(columns []pdoknlv3.Column) (properties []featureinfo
 
 func getPropertiesForRaster(includeClass *bool) (properties []featureinfo.Property) {
 	properties = append(properties, featureinfo.Property{Name: "value_list"})
-	if includeClass != nil && *includeClass == true {
+	if includeClass != nil && *includeClass {
 		properties = append(properties, featureinfo.Property{Name: "class"})
 	}
 	return
