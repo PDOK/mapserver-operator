@@ -234,7 +234,7 @@ var _ = Describe("WMS Controller", func() {
 			/**
 			Container tests
 			*/
-			containerMapserver := deployment.Spec.Template.Spec.Containers[0]
+			containerMapserver := deployment.Spec.Template.Spec.Containers[1]
 			Expect(containerMapserver.Name).Should(Equal("mapserver"))
 			Expect(containerMapserver.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(containerMapserver.Image).Should(Equal(reconcilerImages.MapserverImage))
@@ -260,7 +260,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(containerMapserver.StartupProbe.PeriodSeconds).Should(Equal(int32(10)))
 			Expect(containerMapserver.StartupProbe.TimeoutSeconds).Should(Equal(int32(10)))
 
-			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[1]
+			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[2]
 			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
 			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-v", "-r", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
@@ -286,7 +286,7 @@ var _ = Describe("WMS Controller", func() {
 				{Name: "data", MountPath: "/var/www"},
 				{Name: mapserver.ConfigMapBlobDownloadVolumeName, MountPath: "/srv/scripts", ReadOnly: true},
 			}
-			envFrom := []v1.EnvFromSource{
+			envFrom := []corev1.EnvFromSource{
 				utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, "blobs-testtest"),
 				utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, "blobs-testtest"),
 			}
@@ -347,7 +347,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 
 			env = []corev1.EnvVar{
-				{Name: "MS_MAPFILE", Value: "service.map", ValueFrom: nil},
+				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/service.map", ValueFrom: nil},
 			}
 			Expect(legendGeneratorContainer.Env).Should(Equal(env))
 
@@ -463,7 +463,7 @@ var _ = Describe("WMS Controller", func() {
 			By("Reconciling the WMS and checking the configMap")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 			deployment := &appsv1.Deployment{}
-			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
+			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms).GetName()}, deployment)
 			Expect(err).NotTo(HaveOccurred())
 			blobDownloadContainer, err := getInitContainer("blob-download", deployment)
 			Expect(blobDownloadContainer.Name).To(BeEquivalentTo("blob-download"))
@@ -496,10 +496,10 @@ var _ = Describe("WMS Controller", func() {
 			By("Reconciling the WMS and checking the configMap")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 			deployment := &appsv1.Deployment{}
-			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
+			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms).GetName()}, deployment)
 			Expect(err).NotTo(HaveOccurred())
 
-			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[1]
+			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[2]
 			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
 			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-r", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
@@ -748,7 +748,7 @@ var _ = Describe("WMS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 
 			Expect(autoscaler.GetName()).To(Equal(wms.GetName() + "-wms-mapserver"))
-			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(v2.CrossVersionObjectReference{
+			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(autoscalingv2.CrossVersionObjectReference{
 				Kind: "Deployment",
 				Name: wms.GetName() + "-wms-mapserver",
 			}))
@@ -817,7 +817,7 @@ var _ = Describe("WMS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 
 			Expect(service.GetName()).To(Equal(wms.GetName() + "-wms-mapserver"))
-			Expect(service.Spec.Ports).To(Equal([]v1.ServicePort{
+			Expect(service.Spec.Ports).To(Equal([]corev1.ServicePort{
 				{
 					Name:       "mapserver",
 					Port:       80,
@@ -918,7 +918,7 @@ var _ = Describe("WMS Controller", func() {
 			By("Reconciling the WMS and checking the configMap")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 			deployment := &appsv1.Deployment{}
-			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
+			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms).GetName()}, deployment)
 			Expect(err).NotTo(HaveOccurred())
 
 			volumeMounts := []corev1.VolumeMount{
@@ -932,7 +932,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 
 			env := []corev1.EnvVar{
-				{Name: "MS_MAPFILE", Value: "mapfile.map", ValueFrom: nil},
+				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/mapfile.map", ValueFrom: nil},
 			}
 			Expect(legendGeneratorContainer.Env).Should(Equal(env))
 			envContainer := []corev1.EnvVar{
@@ -948,15 +948,15 @@ var _ = Describe("WMS Controller", func() {
 					ValueFrom: &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: blobsSecretName,
+								Name: "blobs-testtest",
 							},
 							Key: "AZURE_STORAGE_CONNECTION_STRING",
 						},
 					},
 				},
-				{Name: "MS_MAPFILE", Value: "mapfile.map", ValueFrom: nil},
+				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/mapfile.map", ValueFrom: nil},
 			}
-			Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(Equal(envContainer))
+			Expect(deployment.Spec.Template.Spec.Containers[1].Env).Should(Equal(envContainer))
 		})
 	})
 })
