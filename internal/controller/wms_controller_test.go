@@ -39,8 +39,8 @@ import (
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
-	v2 "k8s.io/api/autoscaling/v2"
-	v1 "k8s.io/api/core/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -238,7 +238,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(containerMapserver.Name).Should(Equal("mapserver"))
 			Expect(containerMapserver.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(containerMapserver.Image).Should(Equal(reconcilerImages.MapserverImage))
-			Expect(containerMapserver.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(containerMapserver.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(containerMapserver.Resources.Limits.Memory().String()).Should(Equal("800M"))
 			Expect(containerMapserver.Resources.Requests.Cpu().String()).Should(Equal("100m"))
 			Expect(len(containerMapserver.LivenessProbe.Exec.Command)).Should(Equal(3))
@@ -265,11 +265,11 @@ var _ = Describe("WMS Controller", func() {
 			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-v", "-r", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
 			Expect(containerOgcWebserviceProxy.Image).Should(Equal(reconcilerImages.OgcWebserviceProxyImage))
-			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(containerOgcWebserviceProxy.Ports[0].ContainerPort).Should(Equal(int32(9111)))
 			Expect(containerOgcWebserviceProxy.Resources.Limits.Memory().String()).Should(Equal("200M"))
 			Expect(containerOgcWebserviceProxy.Resources.Requests.Cpu().String()).Should(Equal("50m"))
-			volumeMountsContainerOgcWebserviceProxy := []v1.VolumeMount{
+			volumeMountsContainerOgcWebserviceProxy := []corev1.VolumeMount{
 				{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: true},
 			}
 			Expect(containerOgcWebserviceProxy.VolumeMounts).Should(Equal(volumeMountsContainerOgcWebserviceProxy))
@@ -281,12 +281,12 @@ var _ = Describe("WMS Controller", func() {
 			blobDownloadContainer, err := getInitContainer("blob-download", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(blobDownloadContainer.Image).Should(Equal(reconcilerImages.MultitoolImage))
-			volumeMounts := []v1.VolumeMount{
+			volumeMounts := []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data"},
 				{Name: "data", MountPath: "/var/www"},
 				{Name: mapserver.ConfigMapBlobDownloadVolumeName, MountPath: "/src/scripts", ReadOnly: true},
 			}
-			envFrom := []v1.EnvFromSource{
+			envFrom := []corev1.EnvFromSource{
 				utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, "blobs-config"),
 				utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, "blobs-secret"),
 			}
@@ -298,7 +298,7 @@ var _ = Describe("WMS Controller", func() {
 			mapfileGeneratorContainer, err := getInitContainer("mapfile-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mapfileGeneratorContainer.Image).Should(Equal(reconcilerImages.MapfileGeneratorImage))
-			volumeMounts = []v1.VolumeMount{
+			volumeMounts = []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data"},
 				{Name: mapserver.ConfigMapMapfileGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 				{Name: mapserver.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true},
@@ -310,14 +310,14 @@ var _ = Describe("WMS Controller", func() {
 			capabilitiesGeneratorContainer, err := getInitContainer("capabilities-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capabilitiesGeneratorContainer.Image).Should(Equal(reconcilerImages.CapabilitiesGeneratorImage))
-			Expect(capabilitiesGeneratorContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(capabilitiesGeneratorContainer.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 
-			volumeMounts = []v1.VolumeMount{
+			volumeMounts = []corev1.VolumeMount{
 				{Name: "data", MountPath: "/var/www"},
 				{Name: mapserver.ConfigMapCapabilitiesGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
 			Expect(capabilitiesGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
-			env := []v1.EnvVar{
+			env := []corev1.EnvVar{
 				{Name: "SERVICECONFIG", Value: "/input/input.yaml"},
 			}
 			Expect(capabilitiesGeneratorContainer.Env).Should(Equal(env))
@@ -325,9 +325,9 @@ var _ = Describe("WMS Controller", func() {
 			featureinfoGeneratorContainer, err := getInitContainer("featureinfo-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(featureinfoGeneratorContainer.Image).Should(Equal(reconcilerImages.FeatureinfoGeneratorImage))
-			Expect(featureinfoGeneratorContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(featureinfoGeneratorContainer.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(featureinfoGeneratorContainer.Command).Should(Equal([]string{"featureinfo-generator"}))
-			volumeMounts = []v1.VolumeMount{
+			volumeMounts = []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
 				{Name: mapserver.ConfigMapFeatureinfoGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
@@ -337,33 +337,27 @@ var _ = Describe("WMS Controller", func() {
 			legendGeneratorContainer, err := getInitContainer("legend-generator", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(legendGeneratorContainer.Image).Should(Equal(reconcilerImages.MapserverImage))
-			Expect(legendGeneratorContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(legendGeneratorContainer.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(len(legendGeneratorContainer.Command)).Should(BeNumerically("==", 3))
-			volumeMounts = []v1.VolumeMount{
+			volumeMounts = []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
 				{Name: "data", MountPath: "/var/www", ReadOnly: false},
-				// TODO: de volgende volAmount is bedoeld voor CR met mapfile. Bouw daarvoor een aparte test voor
-				//{Name: mapserver.ConfigMapVolumeName, MountPath: "/srv/mapserver/config/default_mapserver.conf"},
 				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
 			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 
-			env = []v1.EnvVar{
+			env = []corev1.EnvVar{
 				{Name: "MS_MAPFILE", Value: "service.map", ValueFrom: nil},
-
-				// TODO: de volgende volAmount is bedoeld voor CR met mapfile. Bouw daarvoor een aparte test voor
-				//{Name: "MAPSERVER_CONFIG_FILE", Value: "/srv/mapserver/config/default_mapserver.conf"},
-				//{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/service.map"},
 			}
 			Expect(legendGeneratorContainer.Env).Should(Equal(env))
 
 			legendFixerContainer, err := getInitContainer("legend-fixer", deployment)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(legendFixerContainer.Image).Should(Equal(reconcilerImages.MultitoolImage))
-			Expect(legendFixerContainer.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(legendFixerContainer.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(len(legendFixerContainer.Command)).Should(BeNumerically("==", 2))
 
-			volumeMounts = []v1.VolumeMount{
+			volumeMounts = []corev1.VolumeMount{
 				{Name: "data", MountPath: "/var/www", ReadOnly: false},
 				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
@@ -384,7 +378,7 @@ var _ = Describe("WMS Controller", func() {
 				mapserver.ConfigMapFeatureinfoGeneratorVolumeName,
 			}
 			for _, ev := range expectedVolumes {
-				Expect(slices.IndexFunc(deployment.Spec.Template.Spec.Volumes, func(v v1.Volume) bool {
+				Expect(slices.IndexFunc(deployment.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
 					return v.Name == ev
 				})).ShouldNot(BeEquivalentTo(-1))
 			}
@@ -509,11 +503,11 @@ var _ = Describe("WMS Controller", func() {
 			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
 			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-r", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
-			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(containerOgcWebserviceProxy.Ports[0].ContainerPort).Should(Equal(int32(9111)))
 			Expect(containerOgcWebserviceProxy.Resources.Limits.Memory().String()).Should(Equal("200M"))
 			Expect(containerOgcWebserviceProxy.Resources.Requests.Cpu().String()).Should(Equal("50m"))
-			volumeMountsContainerOgcWebserviceProxy := []v1.VolumeMount{
+			volumeMountsContainerOgcWebserviceProxy := []corev1.VolumeMount{
 				{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: true},
 			}
 			Expect(containerOgcWebserviceProxy.VolumeMounts).Should(Equal(volumeMountsContainerOgcWebserviceProxy))
@@ -754,7 +748,7 @@ var _ = Describe("WMS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 
 			Expect(autoscaler.GetName()).To(Equal(wms.GetName() + "-mapserver"))
-			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(v2.CrossVersionObjectReference{
+			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(autoscalingv2.CrossVersionObjectReference{
 				Kind: "Deployment",
 				Name: wms.GetName() + "-mapserver",
 			}))
@@ -769,40 +763,40 @@ var _ = Describe("WMS Controller", func() {
 			Expect(autoscaler.Spec.Behavior).ToNot(BeNil())
 			Expect(autoscaler.Spec.Behavior.ScaleDown).ToNot(BeNil())
 			Expect(autoscaler.Spec.Behavior.ScaleUp).ToNot(BeNil())
-			Expect(autoscaler.Spec.Behavior.ScaleDown).To(Equal(&v2.HPAScalingRules{
+			Expect(autoscaler.Spec.Behavior.ScaleDown).To(Equal(&autoscalingv2.HPAScalingRules{
 				StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(3600)),
-				SelectPolicy:               smoothoperatorutils.Pointer(v2.MaxChangePolicySelect),
-				Policies: []v2.HPAScalingPolicy{
+				SelectPolicy:               smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
+				Policies: []autoscalingv2.HPAScalingPolicy{
 					{
 						PeriodSeconds: int32(600),
 						Value:         int32(1),
-						Type:          v2.PodsScalingPolicy,
+						Type:          autoscalingv2.PodsScalingPolicy,
 					},
 					{
 						PeriodSeconds: int32(600),
 						Value:         int32(10),
-						Type:          v2.PercentScalingPolicy,
+						Type:          autoscalingv2.PercentScalingPolicy,
 					},
 				},
 			}))
-			Expect(autoscaler.Spec.Behavior.ScaleUp).To(Equal(&v2.HPAScalingRules{
+			Expect(autoscaler.Spec.Behavior.ScaleUp).To(Equal(&autoscalingv2.HPAScalingRules{
 				StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(0)),
-				SelectPolicy:               smoothoperatorutils.Pointer(v2.MaxChangePolicySelect),
-				Policies: []v2.HPAScalingPolicy{
+				SelectPolicy:               smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
+				Policies: []autoscalingv2.HPAScalingPolicy{
 					{
 						PeriodSeconds: int32(60),
 						Value:         int32(20),
-						Type:          v2.PodsScalingPolicy,
+						Type:          autoscalingv2.PodsScalingPolicy,
 					},
 				},
 			}))
-			Expect(autoscaler.Spec.Metrics).To(Equal([]v2.MetricSpec{
+			Expect(autoscaler.Spec.Metrics).To(Equal([]autoscalingv2.MetricSpec{
 				{
-					Type: v2.ResourceMetricSourceType,
-					Resource: &v2.ResourceMetricSource{
-						Name: v1.ResourceCPU,
-						Target: v2.MetricTarget{
-							Type:               v2.UtilizationMetricType,
+					Type: autoscalingv2.ResourceMetricSourceType,
+					Resource: &autoscalingv2.ResourceMetricSource{
+						Name: corev1.ResourceCPU,
+						Target: autoscalingv2.MetricTarget{
+							Type:               autoscalingv2.UtilizationMetricType,
 							AverageUtilization: smoothoperatorutils.Pointer(int32(120)),
 						},
 					},
@@ -823,18 +817,18 @@ var _ = Describe("WMS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 
 			Expect(service.GetName()).To(Equal(wms.GetName() + "-mapserver"))
-			Expect(service.Spec.Ports).To(Equal([]v1.ServicePort{
+			Expect(service.Spec.Ports).To(Equal([]corev1.ServicePort{
 				{
 					Name:       "mapserver",
 					Port:       80,
 					TargetPort: intstr.FromInt32(80),
-					Protocol:   v1.ProtocolTCP,
+					Protocol:   corev1.ProtocolTCP,
 				},
 				{
 					Name:       "metric",
 					Port:       9117,
 					TargetPort: intstr.FromInt32(9117),
-					Protocol:   v1.ProtocolTCP,
+					Protocol:   corev1.ProtocolTCP,
 				},
 				{
 					Name:       "ogc-webservice-proxy",
@@ -897,6 +891,72 @@ var _ = Describe("WMS Controller", func() {
 					},
 				}},
 			}))
+		})
+
+		It("Static mapfile options.", func() {
+			wmsResource := &pdoknlv3.WMS{}
+			wmsResource.Namespace = namespace
+			wmsResource.Name = typeNamespacedNameWms.Name
+			err := k8sClient.Get(ctx, typeNamespacedNameWms, wmsResource)
+			Expect(client.IgnoreNotFound(err)).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance WMS")
+			Expect(k8sClient.Delete(ctx, wmsResource)).To(Succeed())
+
+			sampleWms, err := getUniqueWMSSample(counter)
+			counter++
+			sampleWms.Spec.Service.Mapfile = &pdoknlv3.Mapfile{ConfigMapKeyRef: corev1.ConfigMapKeySelector{Key: "mapfile.map"}}
+			typeNamespacedNameWms.Name = sampleWms.Name
+
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
+			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
+
+			controllerReconciler := getWMSReconciler()
+
+			By("Reconciling the WMS and checking the configMap")
+			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
+			deployment := &appsv1.Deployment{}
+			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms, MapserverName).GetName()}, deployment)
+			Expect(err).NotTo(HaveOccurred())
+
+			volumeMounts := []corev1.VolumeMount{
+				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
+				{Name: "data", MountPath: "/var/www", ReadOnly: false},
+				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+				{Name: "mapfile", MountPath: "/srv/data/config/mapfile"},
+			}
+			legendGeneratorContainer, err := getInitContainer("legend-generator", deployment)
+
+			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
+
+			env := []corev1.EnvVar{
+				{Name: "MS_MAPFILE", Value: "mapfile.map", ValueFrom: nil},
+			}
+			Expect(legendGeneratorContainer.Env).Should(Equal(env))
+			envContainer := []corev1.EnvVar{
+				{Name: "SERVICE_TYPE", Value: "WMS", ValueFrom: nil},
+				{
+					Name:      "MAPSERVER_CONFIG_FILE",
+					Value:     "/srv/mapserver/config/default_mapserver.conf",
+					ValueFrom: nil,
+				},
+				{
+					Name:  "AZURE_STORAGE_CONNECTION_STRING",
+					Value: "",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: blobsSecretName,
+							},
+							Key: "AZURE_STORAGE_CONNECTION_STRING",
+						},
+					},
+				},
+				{Name: "MS_MAPFILE", Value: "mapfile.map", ValueFrom: nil},
+			}
+			Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(Equal(envContainer))
 		})
 	})
 })
@@ -978,12 +1038,12 @@ func checkWMSLabels(labelSets ...map[string]string) {
 	}
 }
 
-func getInitContainer(name string, deployment *appsv1.Deployment) (v1.Container, error) {
+func getInitContainer(name string, deployment *appsv1.Deployment) (corev1.Container, error) {
 	for _, container := range deployment.Spec.Template.Spec.InitContainers {
 		if container.Name == name {
 			return container, nil
 		}
 	}
 
-	return v1.Container{}, fmt.Errorf("init container with name %s not found", name)
+	return corev1.Container{}, fmt.Errorf("init container with name %s not found", name)
 }

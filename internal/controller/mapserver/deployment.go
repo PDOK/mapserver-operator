@@ -94,7 +94,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{
-						Name: mapfile.ConfigMapKeyRef.Name,
+						Name: mapfile.ConfigMapKeyRef.Key,
 					},
 				},
 			},
