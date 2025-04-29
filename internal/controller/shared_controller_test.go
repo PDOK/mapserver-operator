@@ -20,11 +20,12 @@ const (
 	testImageName4        = "test.test/image:test4"
 	testImageName5        = "test.test/image:test5"
 	testImageName6        = "test.test/image:test6"
+	testImageName7        = "test.test/image:test7"
 )
 
 func getHashedConfigMapNameFromClient[O pdoknlv3.WMSWFS](ctx context.Context, obj O, volumeName string) (string, error) {
 	deployment := &appsv1.Deployment{}
-	err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(obj, MapserverName).GetName()}, deployment)
+	err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(obj).GetName()}, deployment)
 	if err != nil {
 		return "", err
 	}

@@ -50,6 +50,7 @@ type WFSReconciler struct {
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo/status,verbs=get
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps;services,verbs=watch;create;get;update;list;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=watch;list;get
 // +kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=watch;create;get;update;list;delete
 // +kubebuilder:rbac:groups=traefik.io,resources=ingressroutes;middlewares,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=create;update;delete;list;watch
@@ -84,7 +85,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	// Fetch the OwnerInfo instance
 	ownerInfo := &smoothoperatorv1.OwnerInfo{}
 	objectKey := client.ObjectKey{
-		Namespace: "default", // wfs.Namespace,
+		Namespace: wfs.Namespace,
 		Name:      wfs.Spec.Service.OwnerInfoRef,
 	}
 	if err := r.Client.Get(ctx, objectKey, ownerInfo); err != nil {

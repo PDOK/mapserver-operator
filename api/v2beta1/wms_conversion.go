@@ -26,16 +26,16 @@ package v2beta1
 
 import (
 	"errors"
-	sharedModel "github.com/pdok/smooth-operator/model"
 	"log"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"strconv"
 	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	sharedModel "github.com/pdok/smooth-operator/model"
 )
 
-const SERVICE_METADATA_IDENTIFIER_ANNOTATION = "pdok.nl/wms-service-metadata-uuid"
+const ServiceMetatdataIdentifierAnnotation = "pdok.nl/wms-service-metadata-uuid"
 
 // ConvertTo converts this WMS (v2beta1) to the Hub version (v3).
 func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
@@ -55,7 +55,7 @@ func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
 		dst.Annotations = make(map[string]string)
 	}
 
-	dst.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION] = src.Spec.Service.MetadataIdentifier
+	dst.Annotations[ServiceMetatdataIdentifierAnnotation] = src.Spec.Service.MetadataIdentifier
 
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
@@ -179,7 +179,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 		// TODO unable to fill in MetadataIdentifier here until we know how to handle non inspire services
 	}
 
-	uuid, ok := src.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION]
+	uuid, ok := src.Annotations[ServiceMetatdataIdentifierAnnotation]
 	if service.MetadataIdentifier == "00000000-0000-0000-0000-000000000000" && ok {
 		service.MetadataIdentifier = uuid
 	}

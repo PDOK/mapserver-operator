@@ -24,6 +24,7 @@ SOFTWARE.
 
 package controller
 
+//nolint:revive // Complains about the dot imports
 import (
 	"context"
 	"encoding/json"
@@ -32,6 +33,8 @@ import (
 	smoothoperator1 "github.com/pdok/smooth-operator/api/v1"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"golang.org/x/tools/go/packages"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"os"
@@ -123,6 +126,25 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	// Deploy blob configmap + secret
+	blobConfig := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      blobsConfigPrefix + "testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, blobConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	blobSecret := v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      blobsSecretPrefix + "testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, &blobSecret)
+	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {

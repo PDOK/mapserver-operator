@@ -24,6 +24,8 @@ const (
 	ConfigMapFeatureinfoGeneratorVolumeName  = "featureinfo-generator-config"
 	// TODO How should we determine this boundingbox?
 	healthCheckBbox = "190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914"
+
+	mimeTextXML = "text/xml"
 )
 
 func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNames) []v1.Volume {
@@ -51,6 +53,17 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		}
 	}
 
+	newVolumeSource := func(name string) v1.VolumeSource {
+		return v1.VolumeSource{
+			ConfigMap: &v1.ConfigMapVolumeSource{
+				DefaultMode: smoothoperatorutils.Pointer(int32(0644)),
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: name,
+				},
+			},
+		}
+	}
+
 	volumes := []v1.Volume{
 		baseVolume,
 		{
@@ -60,86 +73,51 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			},
 		},
 		{
-			Name: ConfigMapVolumeName,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: configMapNames.ConfigMap,
-					},
-				},
-			},
+			Name:         ConfigMapVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.ConfigMap),
 		},
 		{
-			Name: ConfigMapMapfileGeneratorVolumeName,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.MapfileGenerator},
-				},
-			},
+			Name:         ConfigMapMapfileGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
 		},
 		{
-			Name: ConfigMapCapabilitiesGeneratorVolumeName,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.CapabilitiesGenerator},
-				},
-			},
+			Name:         ConfigMapCapabilitiesGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
 		},
 	}
 
 	if mapfile := obj.Mapfile(); mapfile != nil {
 		volumes = append(volumes, v1.Volume{
-			Name: "mapfile",
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: mapfile.ConfigMapKeyRef.Name,
-					},
-				},
-			},
+			Name:         "mapfile",
+			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Name),
 		})
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		lgVolume := v1.Volume{
-			Name: ConfigMapLegendGeneratorVolumeName,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.LegendGenerator},
-				},
-			},
+			Name:         ConfigMapLegendGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.LegendGenerator),
 		}
 		figVolume := v1.Volume{
-			Name: ConfigMapFeatureinfoGeneratorVolumeName,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.FeatureInfoGenerator},
-				},
-			},
+			Name:         ConfigMapFeatureinfoGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.FeatureInfoGenerator),
 		}
 		volumes = append(volumes, lgVolume, figVolume)
 	}
 
 	if options := obj.Options(); options != nil {
 		if options.PrefetchData != nil && *options.PrefetchData {
+			vol := newVolumeSource(configMapNames.BlobDownload)
+			vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
 			volumes = append(volumes, v1.Volume{
-				Name: ConfigMapBlobDownloadVolumeName,
-				VolumeSource: v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.BlobDownload},
-						DefaultMode:          smoothoperatorutils.Pointer(int32(0777)),
-					},
-				},
+				Name:         ConfigMapBlobDownloadVolumeName,
+				VolumeSource: vol,
 			})
 		}
 		if obj.Type() == pdoknlv3.ServiceTypeWMS && options.UseWebserviceProxy() {
 			volumes = append(volumes, v1.Volume{
-				Name: ConfigMapOgcWebserviceProxyVolumeName,
-				VolumeSource: v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{Name: configMapNames.OgcWebserviceProxy},
-					},
-				},
+				Name:         ConfigMapOgcWebserviceProxyVolumeName,
+				VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
 			})
 		}
 	}
@@ -159,7 +137,8 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 		},
 	}
 
-	for name := range static_files.GetStaticFiles() {
+	staticFiles, _ := static_files.GetStaticFiles()
+	for _, name := range staticFiles {
 		volumeMounts = append(volumeMounts, v1.VolumeMount{
 			Name:      "mapserver",
 			MountPath: srvDir + "/mapserver/config/" + name,
@@ -186,7 +165,7 @@ func GetMapfileEnvVar[O pdoknlv3.WMSWFS](obj O) v1.EnvVar {
 
 	return v1.EnvVar{
 		Name:  "MS_MAPFILE",
-		Value: mapFileName,
+		Value: "/srv/data/config/mapfile/" + mapFileName,
 	}
 }
 
@@ -289,8 +268,7 @@ func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *v1.Probe, 
 func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *v1.Probe {
 	webserviceType := strings.ToLower(string(obj.Type()))
 	queryString := "SERVICE=" + webserviceType + "&request=GetCapabilities"
-	mimeType := "text/xml"
-	return getProbe(queryString, mimeType)
+	return getProbe(queryString, mimeTextXML)
 }
 
 func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
@@ -298,8 +276,7 @@ func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
 		return nil, errors.New("cannot get readiness probe for WFS, featuretypes could not be found")
 	}
 	queryString := "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + wfs.Spec.Service.FeatureTypes[0].Name + "&STARTINDEX=0&COUNT=1"
-	mimeType := "text/xml"
-	return getProbe(queryString, mimeType), nil
+	return getProbe(queryString, mimeTextXML), nil
 }
 
 func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
@@ -330,8 +307,7 @@ func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
 	}
 
 	queryString := "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + strings.Join(typeNames, ",") + "&STARTINDEX=0&COUNT=1"
-	mimeType := "text/xml"
-	return getProbe(queryString, mimeType), nil
+	return getProbe(queryString, mimeTextXML), nil
 }
 
 func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
@@ -361,6 +337,7 @@ func getProbe(queryString string, mimeType string) *v1.Probe {
 				probeCmd,
 			},
 		}},
+		SuccessThreshold:    1,
 		FailureThreshold:    3,
 		InitialDelaySeconds: 20,
 		PeriodSeconds:       10,

@@ -24,6 +24,7 @@ SOFTWARE.
 
 package controller
 
+//nolint:revive // Complains about the dot imports
 import (
 	"context"
 	_ "embed"
@@ -177,7 +178,7 @@ var _ = Describe("WFS Controller", func() {
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
 			By("Getting the original Deployment")
-			deployment := getBareDeployment(wfs, MapserverName)
+			deployment := getBareDeployment(wfs)
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 				return Expect(err).NotTo(HaveOccurred())
@@ -215,13 +216,13 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the deployment")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			deployment := getBareDeployment(wfs, MapserverName)
+			deployment := getBareDeployment(wfs)
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(deployment.GetName()).Should(Equal(wfs.GetName() + "-mapserver"))
+			Expect(deployment.GetName()).Should(Equal(wfs.GetName() + "-wfs-mapserver"))
 			Expect(deployment.GetNamespace()).Should(Equal(namespace))
 
 			Expect(deployment.Spec.Template.Spec.TerminationGracePeriodSeconds).Should(Equal(smoothoperatorutils.Pointer(int64(60))))
@@ -234,7 +235,7 @@ var _ = Describe("WFS Controller", func() {
 			/**
 			Container tests
 			*/
-			container := deployment.Spec.Template.Spec.Containers[0]
+			container := deployment.Spec.Template.Spec.Containers[1]
 			Expect(container.Name).Should(Equal("mapserver"))
 			Expect(container.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(container.Image).Should(Equal(reconcilerImages.MapserverImage))
@@ -279,11 +280,11 @@ var _ = Describe("WFS Controller", func() {
 			volumeMounts := []v1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data"},
 				{Name: "data", MountPath: "/var/www"},
-				{Name: mapserver.ConfigMapBlobDownloadVolumeName, MountPath: "/src/scripts", ReadOnly: true},
+				{Name: mapserver.ConfigMapBlobDownloadVolumeName, MountPath: "/srv/scripts", ReadOnly: true},
 			}
 			envFrom := []v1.EnvFromSource{
-				utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, "blobs-config"),
-				utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, "blobs-secret"),
+				utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, "blobs-testtest"),
+				utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, "blobs-testtest"),
 			}
 			Expect(blobDownloadContainer.VolumeMounts).Should(Equal(volumeMounts))
 			Expect(blobDownloadContainer.EnvFrom).Should(Equal(envFrom))
@@ -374,7 +375,7 @@ var _ = Describe("WFS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 
 			// Make sure the name is hashed
-			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-mapserver-"))
+			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-wfs-mapserver"))
 			Expect(configMap.GetNamespace()).To(Equal(namespace))
 			Expect(configMap.Immutable).To(Equal(smoothoperatorutils.Pointer(true)))
 
@@ -411,7 +412,7 @@ var _ = Describe("WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-mapfile-generator-"))
+			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-wfs-mapfile-generator-"))
 			Expect(configMap.GetNamespace()).To(Equal(namespace))
 			Expect(configMap.Immutable).To(Equal(smoothoperatorutils.Pointer(true)))
 			checkWFSLabels(configMap.GetLabels())
@@ -436,7 +437,7 @@ var _ = Describe("WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-init-scripts-"))
+			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-wfs-init-scripts-"))
 			Expect(configMap.GetNamespace()).To(Equal(namespace))
 			Expect(configMap.Immutable).To(Equal(smoothoperatorutils.Pointer(true)))
 			checkWFSLabels(configMap.GetLabels())
@@ -461,7 +462,7 @@ var _ = Describe("WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-capabilities-generator-"))
+			Expect(configMap.GetName()).To(HavePrefix(wfs.GetName() + "-wfs-capabilities-generator-"))
 			Expect(configMap.GetNamespace()).To(Equal(namespace))
 			Expect(configMap.Immutable).To(Equal(smoothoperatorutils.Pointer(true)))
 			checkWFSLabels(configMap.GetLabels())
@@ -484,7 +485,7 @@ var _ = Describe("WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(middlewareCorsHeaders.Name).Should(Equal(wfs.GetName() + "-mapserver-headers"))
+			Expect(middlewareCorsHeaders.Name).Should(Equal(wfs.GetName() + "-wfs-mapserver-headers"))
 			Expect(middlewareCorsHeaders.Namespace).Should(Equal("default"))
 			checkWFSLabels(middlewareCorsHeaders.GetLabels())
 			// Expect(middlewareCorsHeaders.Spec.Headers.FrameDeny).Should(Equal(true))
@@ -510,7 +511,7 @@ var _ = Describe("WFS Controller", func() {
 			*/
 			checkWFSLabels(podDisruptionBudget.GetLabels(), podDisruptionBudget.Spec.Selector.MatchLabels)
 
-			Expect(podDisruptionBudget.GetName()).To(Equal(wfs.GetName() + "-mapserver"))
+			Expect(podDisruptionBudget.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
 			Expect(podDisruptionBudget.Spec.MaxUnavailable.IntValue()).Should(Equal(1))
 		})
 
@@ -526,10 +527,10 @@ var _ = Describe("WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(autoscaler.GetName()).To(Equal(wfs.GetName() + "-mapserver"))
+			Expect(autoscaler.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
 			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(v2.CrossVersionObjectReference{
 				Kind: "Deployment",
-				Name: wfs.GetName() + "-mapserver",
+				Name: wfs.GetName() + "-wfs-mapserver",
 			}))
 
 			/**
@@ -595,7 +596,7 @@ var _ = Describe("WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(service.GetName()).To(Equal(wfs.GetName() + "-mapserver"))
+			Expect(service.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
 			Expect(service.Spec.Ports).To(Equal([]v1.ServicePort{
 				{
 					Name:       "mapserver",
@@ -638,17 +639,17 @@ var _ = Describe("WFS Controller", func() {
 				"uptime.pdok.nl/url":  "https://service.pdok.nl/eigenaar/dataset/wfs/1.0.0",
 			}))
 
-			Expect(ingressRoute.GetName()).To(Equal(wfs.GetName() + "-mapserver"))
+			Expect(ingressRoute.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
 			Expect(len(ingressRoute.Spec.Routes)).To(Equal(1))
 			Expect(ingressRoute.Spec.Routes[0]).To(Equal(traefikiov1alpha1.Route{
 				Kind:        "Rule",
 				Match:       "Host(`localhost`) && Path(`/eigenaar/dataset/wfs/1.0.0`)",
-				Middlewares: []traefikiov1alpha1.MiddlewareRef{{Name: wfs.GetName() + "-mapserver-headers", Namespace: "default"}},
+				Middlewares: []traefikiov1alpha1.MiddlewareRef{{Name: wfs.GetName() + "-wfs-mapserver-headers", Namespace: "default"}},
 				Services: []traefikiov1alpha1.Service{{
 					LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
 						Kind: "Service",
 						Port: intstr.FromInt32(80),
-						Name: wfs.GetName() + "-mapserver",
+						Name: wfs.GetName() + "-wfs-mapserver",
 					},
 				}},
 			}))
@@ -711,6 +712,7 @@ func getWFSReconciler() *WFSReconciler {
 			MapfileGeneratorImage:      testImageName2,
 			MapserverImage:             testImageName3,
 			CapabilitiesGeneratorImage: testImageName4,
+			ApacheExporterImage:        testImageName5,
 		},
 	}
 }

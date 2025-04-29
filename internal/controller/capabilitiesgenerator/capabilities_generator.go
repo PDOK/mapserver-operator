@@ -2,15 +2,15 @@ package capabilitiesgenerator
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v3"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
-func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image string) (*corev1.Container, error) {
+func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](_ O, image string) (*corev1.Container, error) {
 	initContainer := corev1.Container{
 		Name:            "capabilities-generator",
 		Image:           image,

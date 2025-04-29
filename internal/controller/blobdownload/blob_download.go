@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	"k8s.io/utils/strings/slices"
 	"regexp"
 	"strings"
 
@@ -30,10 +31,28 @@ func GetScript() string {
 }
 
 func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigName, blobsSecretName, srvDir string) (*corev1.Container, error) {
+	blobkeys := []string{}
+	for _, gpkg := range obj.GeoPackages() {
+		// Deduplicate blobkeys to prevent double downloads
+		if !slices.Contains(blobkeys, gpkg.BlobKey) {
+			blobkeys = append(blobkeys, gpkg.BlobKey)
+		}
+	}
+
 	initContainer := corev1.Container{
 		Name:            "blob-download",
 		Image:           image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
+		Env: []corev1.EnvVar{
+			{
+				Name:  "GEOPACKAGE_TARGET_PATH",
+				Value: "/srv/data/gpkg",
+			},
+			{
+				Name:  "GEOPACKAGE_DOWNLOAD_LIST",
+				Value: strings.Join(blobkeys, ";"),
+			},
+		},
 		EnvFrom: []corev1.EnvFromSource{
 			// Todo add this ConfigMap
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, blobsConfigName),
@@ -71,7 +90,7 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 		if options.PrefetchData != nil && *options.PrefetchData {
 			mount := corev1.VolumeMount{
 				Name:      mapserver.ConfigMapBlobDownloadVolumeName,
-				MountPath: "/src/scripts",
+				MountPath: "/srv/scripts",
 				ReadOnly:  true,
 			}
 			initContainer.VolumeMounts = append(initContainer.VolumeMounts, mount)
@@ -143,7 +162,7 @@ func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 		return nil
 	}
 
-	re := regexp.MustCompile(".*\\.(ttf)$")
+	re := regexp.MustCompile(`.*\.(ttf)$`)
 	for _, blobKey := range wms.Spec.Service.StylingAssets.BlobKeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {

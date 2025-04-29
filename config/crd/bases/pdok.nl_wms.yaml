@@ -1150,24 +1150,28 @@ spec:
                   ttlInDays:
                     format: int32
                     type: integer
-                required:
-                - ttlInDays
                 type: object
               options:
                 properties:
                   automaticCasing:
+                    default: true
                     type: boolean
                   disableWebserviceProxy:
+                    default: false
                     type: boolean
                   includeIngress:
+                    default: true
                     type: boolean
                   prefetchData:
+                    default: true
                     type: boolean
                   rewriteGroupToDataLayers:
+                    default: false
                     type: boolean
                   validateChildStyleNameEqual:
                     type: boolean
                   validateRequests:
+                    default: true
                     type: boolean
                 required:
                 - automaticCasing

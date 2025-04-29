@@ -78,6 +78,8 @@ type WFSSpec struct {
 }
 
 type WFSService struct {
+	// Geonovum subdomein
+	// +kubebuilder:validation:MinLength:=1
 	Prefix       string   `json:"prefix"`
 	URL          string   `json:"url"`
 	Inspire      *Inspire `json:"inspire,omitempty"`
@@ -154,4 +156,16 @@ func (wfs *WFS) ID() string {
 
 func (wfs *WFS) URLPath() string {
 	return wfs.Spec.Service.URL
+}
+
+func (wfs *WFS) GeoPackages() []*Gpkg {
+	gpkgs := make([]*Gpkg, 0)
+
+	for _, ft := range wfs.Spec.Service.FeatureTypes {
+		if ft.Data.Gpkg != nil {
+			gpkgs = append(gpkgs, ft.Data.Gpkg)
+		}
+	}
+
+	return gpkgs
 }
