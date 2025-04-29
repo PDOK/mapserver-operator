@@ -20,6 +20,8 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 	validateWMS(wms, &warnings, &reasons)
 
 	if len(reasons) > 0 {
+		//yaml, _ := yaml2.Marshal(wms)
+		//fmt.Println(yaml)
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
 	}
 
@@ -95,15 +97,28 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 	wms.Spec.Service.Layer.setInheritedBoundingBoxes()
 	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
 		var layerReasons []string
-		if slices.Contains(names, *layer.Name) {
-			*reasons = append(*reasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", *layer.Name))
+
+		layerType := layer.GetLayerType(&service)
+		var layerName string
+		if layer.Name == nil {
+			if layerType != TopLayer {
+				layerReasons = append(layerReasons, "layer.Name is required (except for the toplayer)")
+			}
+			layerName = "unnamed:" + layerType
+		} else {
+			layerName = *layer.Name
 		}
-		names = append(names, *layer.Name)
+
+		if slices.Contains(names, layerName) {
+			layerReasons = append(layerReasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", layer.Name))
+		}
+		names = append(names, layerName)
+
 		if service.Mapfile != nil && layer.BoundingBoxes != nil {
 			*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.boundingBoxes is not used when service.mapfile is configured", wms.GroupVersionKind(), wms.GetName()))
 		}
 		if service.Mapfile == nil && service.DataEPSG != "EPSG:28992" && !layer.hasBoundingBoxForCRS(service.DataEPSG) {
-			*reasons = append(*reasons, "layer.boundingBoxes must contain a boundingBox for CRS '"+service.DataEPSG+"' when service.dataEPSG is not 'EPSG:28992'")
+			layerReasons = append(layerReasons, "layer.boundingBoxes must contain a boundingBox for CRS '"+service.DataEPSG+"' when service.dataEPSG is not 'EPSG:28992'")
 		}
 
 		//nolint:nestif
@@ -155,7 +170,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 				}
 			}
 			if !rewriteGroupToDataLayers && validateChildStyleNameEqual {
-				equalStylesNames, ok := equalChildStyleNames[*layer.Name]
+				equalStylesNames, ok := equalChildStyleNames[layerName]
 				if ok {
 					for _, styleName := range equalStylesNames {
 						layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.name from parent layer must not be set on a child layer", styleName))
@@ -174,7 +189,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 				}
 			}
 		}
-		layerType := layer.GetLayerType(&service)
+
 		if layerType == GroupLayer || layerType == TopLayer {
 			if !*layer.Visible {
 				layerReasons = append(layerReasons, layerType+" must be visible")
@@ -189,7 +204,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 			}
 		}
 		if len(layerReasons) != 0 {
-			*reasons = append(*reasons, fmt.Sprintf("%s '%s' is invalid: ", layerType, *layer.Name)+strings.Join(layerReasons, ", "))
+			*reasons = append(*reasons, fmt.Sprintf("%s '%s' is invalid: ", layerType, layer.Name)+strings.Join(layerReasons, ", "))
 		}
 	}
 
@@ -204,6 +219,12 @@ func findEqualChildStyleNames(layer *Layer, equalStyleNames *map[string][]string
 	}
 	equalChildStyleNames := map[string][]string{}
 	for _, childLayer := range *layer.Layers {
+		if childLayer.Name == nil {
+			// Name check is done elsewhere
+			// To prevent errors here we just continue
+			continue
+		}
+
 		var equalStyles []string
 		for _, style := range layer.Styles {
 			for _, childStyle := range childLayer.Styles {

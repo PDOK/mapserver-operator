@@ -1,9 +1,9 @@
----
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.1
+  creationTimestamp: null
   name: wms.pdok.nl
 spec:
   group: pdok.nl
@@ -179,6 +179,7 @@ spec:
                   abstract:
                     type: string
                   accessConstraints:
+                    default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
                     type: string
                   authority:
                     description: Authority is a struct for the authority fields in
@@ -330,7 +331,6 @@ spec:
                         visible:
                           type: boolean
                       required:
-                      - labelNoClip
                       - name
                       - styles
                       - visible
@@ -1379,8 +1379,401 @@ spec:
                       labelNoClip:
                         type: boolean
                       layers:
-                        description: Nested structs do not work in crd generation
-                        x-kubernetes-preserve-unknown-fields: true
+                        description: '[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]'
+                        items:
+                          properties:
+                            abstract:
+                              type: string
+                            authority:
+                              properties:
+                                name:
+                                  type: string
+                                spatialDatasetIdentifier:
+                                  type: string
+                                url:
+                                  type: string
+                              required:
+                              - name
+                              - spatialDatasetIdentifier
+                              - url
+                              type: object
+                            boundingBoxes:
+                              items:
+                                properties:
+                                  bbox:
+                                    description: BBox defines a bounding box with
+                                      coordinates
+                                    properties:
+                                      maxx:
+                                        description: Rechtsonder X coördinaat
+                                        pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                        type: string
+                                      maxy:
+                                        description: Rechtsonder Y coördinaat
+                                        pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                        type: string
+                                      minx:
+                                        description: Linksboven X coördinaat
+                                        pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                        type: string
+                                      miny:
+                                        description: Linksboven Y coördinaat
+                                        pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                        type: string
+                                    required:
+                                    - maxx
+                                    - maxy
+                                    - minx
+                                    - miny
+                                    type: object
+                                  crs:
+                                    type: string
+                                required:
+                                - bbox
+                                - crs
+                                type: object
+                              type: array
+                            data:
+                              properties:
+                                gpkg:
+                                  properties:
+                                    blobKey:
+                                      type: string
+                                    columns:
+                                      items:
+                                        properties:
+                                          alias:
+                                            type: string
+                                          name:
+                                            type: string
+                                        required:
+                                        - name
+                                        type: object
+                                      type: array
+                                    geometryType:
+                                      type: string
+                                    tableName:
+                                      type: string
+                                  required:
+                                  - blobKey
+                                  - columns
+                                  - geometryType
+                                  - tableName
+                                  type: object
+                                postgis:
+                                  description: Postgis - reference to table in a Postgres
+                                    database
+                                  properties:
+                                    columns:
+                                      items:
+                                        properties:
+                                          alias:
+                                            type: string
+                                          name:
+                                            type: string
+                                        required:
+                                        - name
+                                        type: object
+                                      type: array
+                                    geometryType:
+                                      type: string
+                                    tableName:
+                                      type: string
+                                  required:
+                                  - columns
+                                  - geometryType
+                                  - tableName
+                                  type: object
+                                tif:
+                                  properties:
+                                    blobKey:
+                                      type: string
+                                    getFeatureInfoIncludesClass:
+                                      type: boolean
+                                    offsite:
+                                      type: string
+                                    resample:
+                                      type: string
+                                  required:
+                                  - blobKey
+                                  type: object
+                              type: object
+                            datasetMetadataUrl:
+                              properties:
+                                csw:
+                                  properties:
+                                    metadataIdentifier:
+                                      type: string
+                                  required:
+                                  - metadataIdentifier
+                                  type: object
+                                custom:
+                                  properties:
+                                    href:
+                                      type: string
+                                    type:
+                                      type: string
+                                  required:
+                                  - href
+                                  - type
+                                  type: object
+                              required:
+                              - csw
+                              type: object
+                            keywords:
+                              items:
+                                type: string
+                              type: array
+                            labelNoClip:
+                              type: boolean
+                            layers:
+                              description: '[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]'
+                              items:
+                                properties:
+                                  abstract:
+                                    type: string
+                                  authority:
+                                    properties:
+                                      name:
+                                        type: string
+                                      spatialDatasetIdentifier:
+                                        type: string
+                                      url:
+                                        type: string
+                                    required:
+                                    - name
+                                    - spatialDatasetIdentifier
+                                    - url
+                                    type: object
+                                  boundingBoxes:
+                                    items:
+                                      properties:
+                                        bbox:
+                                          description: BBox defines a bounding box
+                                            with coordinates
+                                          properties:
+                                            maxx:
+                                              description: Rechtsonder X coördinaat
+                                              pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                              type: string
+                                            maxy:
+                                              description: Rechtsonder Y coördinaat
+                                              pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                              type: string
+                                            minx:
+                                              description: Linksboven X coördinaat
+                                              pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                              type: string
+                                            miny:
+                                              description: Linksboven Y coördinaat
+                                              pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                              type: string
+                                          required:
+                                          - maxx
+                                          - maxy
+                                          - minx
+                                          - miny
+                                          type: object
+                                        crs:
+                                          type: string
+                                      required:
+                                      - bbox
+                                      - crs
+                                      type: object
+                                    type: array
+                                  data:
+                                    properties:
+                                      gpkg:
+                                        properties:
+                                          blobKey:
+                                            type: string
+                                          columns:
+                                            items:
+                                              properties:
+                                                alias:
+                                                  type: string
+                                                name:
+                                                  type: string
+                                              required:
+                                              - name
+                                              type: object
+                                            type: array
+                                          geometryType:
+                                            type: string
+                                          tableName:
+                                            type: string
+                                        required:
+                                        - blobKey
+                                        - columns
+                                        - geometryType
+                                        - tableName
+                                        type: object
+                                      postgis:
+                                        description: Postgis - reference to table
+                                          in a Postgres database
+                                        properties:
+                                          columns:
+                                            items:
+                                              properties:
+                                                alias:
+                                                  type: string
+                                                name:
+                                                  type: string
+                                              required:
+                                              - name
+                                              type: object
+                                            type: array
+                                          geometryType:
+                                            type: string
+                                          tableName:
+                                            type: string
+                                        required:
+                                        - columns
+                                        - geometryType
+                                        - tableName
+                                        type: object
+                                      tif:
+                                        properties:
+                                          blobKey:
+                                            type: string
+                                          getFeatureInfoIncludesClass:
+                                            type: boolean
+                                          offsite:
+                                            type: string
+                                          resample:
+                                            type: string
+                                        required:
+                                        - blobKey
+                                        type: object
+                                    type: object
+                                  datasetMetadataUrl:
+                                    properties:
+                                      csw:
+                                        properties:
+                                          metadataIdentifier:
+                                            type: string
+                                        required:
+                                        - metadataIdentifier
+                                        type: object
+                                      custom:
+                                        properties:
+                                          href:
+                                            type: string
+                                          type:
+                                            type: string
+                                        required:
+                                        - href
+                                        - type
+                                        type: object
+                                    required:
+                                    - csw
+                                    type: object
+                                  keywords:
+                                    items:
+                                      type: string
+                                    type: array
+                                  labelNoClip:
+                                    type: boolean
+                                  maxscaledenominator:
+                                    type: string
+                                  minscaledenominator:
+                                    type: string
+                                  name:
+                                    type: string
+                                  styles:
+                                    items:
+                                      properties:
+                                        abstract:
+                                          type: string
+                                        legend:
+                                          properties:
+                                            blobKey:
+                                              type: string
+                                            format:
+                                              type: string
+                                            height:
+                                              format: int32
+                                              type: integer
+                                            width:
+                                              format: int32
+                                              type: integer
+                                          required:
+                                          - blobKey
+                                          - format
+                                          - height
+                                          - width
+                                          type: object
+                                        name:
+                                          type: string
+                                        title:
+                                          type: string
+                                        visualization:
+                                          type: string
+                                      required:
+                                      - name
+                                      type: object
+                                    type: array
+                                  title:
+                                    type: string
+                                  visible:
+                                    default: true
+                                    type: boolean
+                                required:
+                                - boundingBoxes
+                                - keywords
+                                - name
+                                type: object
+                              type: array
+                            maxscaledenominator:
+                              type: string
+                            minscaledenominator:
+                              type: string
+                            name:
+                              type: string
+                            styles:
+                              items:
+                                properties:
+                                  abstract:
+                                    type: string
+                                  legend:
+                                    properties:
+                                      blobKey:
+                                        type: string
+                                      format:
+                                        type: string
+                                      height:
+                                        format: int32
+                                        type: integer
+                                      width:
+                                        format: int32
+                                        type: integer
+                                    required:
+                                    - blobKey
+                                    - format
+                                    - height
+                                    - width
+                                    type: object
+                                  name:
+                                    type: string
+                                  title:
+                                    type: string
+                                  visualization:
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                            title:
+                              type: string
+                            visible:
+                              default: true
+                              type: boolean
+                          required:
+                          - boundingBoxes
+                          - keywords
+                          - name
+                          type: object
+                        type: array
                       maxscaledenominator:
                         type: string
                       minscaledenominator:
@@ -1417,23 +1810,17 @@ spec:
                             visualization:
                               type: string
                           required:
-                          - abstract
-                          - legend
                           - name
-                          - title
-                          - visualization
                           type: object
                         type: array
                       title:
                         type: string
                       visible:
+                        default: true
                         type: boolean
                     required:
                     - boundingBoxes
                     - keywords
-                    - labelNoClip
-                    - name
-                    - styles
                     type: object
                   mapfile:
                     properties:
@@ -1490,10 +1877,10 @@ spec:
                           - name
                           type: object
                         type: array
-                    required:
-                    - blobKeys
-                    - configMapRefs
                     type: object
+                    x-kubernetes-validations:
+                    - message: Either blobKeys or configMapRefs is required
+                      rule: has(self.blobKeys) || has(self.configMapRefs)
                   title:
                     type: string
                   url:
@@ -1509,8 +1896,6 @@ spec:
                 - url
                 type: object
             required:
-            - horizontalPodAutoscalerPatch
-            - lifecycle
             - service
             type: object
           status:
@@ -1589,3 +1974,9 @@ spec:
     storage: true
     subresources:
       status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: null
+  storedVersions: null

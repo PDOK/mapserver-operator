@@ -45,14 +45,14 @@ const (
 
 // WMSSpec defines the desired state of WMS.
 type WMSSpec struct {
-	Lifecycle *shared_model.Lifecycle `json:"lifecycle"`
+	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
 
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
-	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
+	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
 	Options                      Options                                    `json:"options,omitempty"`
 	Service                      WMSService                                 `json:"service"`
 }
@@ -77,9 +77,10 @@ type WMSService struct {
 	Layer         Layer          `json:"layer"`
 }
 
+// +kubebuilder:validation:XValidation:message="Either blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
 type StylingAssets struct {
-	BlobKeys      []string       `json:"blobKeys"`
-	ConfigMapRefs []ConfigMapRef `json:"configMapRefs"`
+	BlobKeys      []string       `json:"blobKeys,omitempty"`
+	ConfigMapRefs []ConfigMapRef `json:"configMapRefs,omitempty"`
 }
 
 type ConfigMapRef struct {
@@ -88,23 +89,26 @@ type ConfigMapRef struct {
 }
 
 type Layer struct {
-	Name                *string          `json:"name"`
-	Title               *string          `json:"title,omitempty"`
-	Abstract            *string          `json:"abstract,omitempty"`
-	Keywords            []string         `json:"keywords"`
-	BoundingBoxes       []WMSBoundingBox `json:"boundingBoxes"`
-	Visible             *bool            `json:"visible,omitempty"`
-	Authority           *Authority       `json:"authority,omitempty"`
-	DatasetMetadataURL  *MetadataURL     `json:"datasetMetadataUrl,omitempty"`
-	MinScaleDenominator *string          `json:"minscaledenominator,omitempty"`
-	MaxScaleDenominator *string          `json:"maxscaledenominator,omitempty"`
-	Styles              []Style          `json:"styles"`
-	LabelNoClip         bool             `json:"labelNoClip"`
-	Data                *Data            `json:"data,omitempty"`
-	// Nested structs do not work in crd generation
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Schemaless
-	Layers *[]Layer `json:"layers,omitempty"`
+	// +kubebuilder:validations:MinLength:=1
+	Name          *string          `json:"name,omitempty"`
+	Title         *string          `json:"title,omitempty"`
+	Abstract      *string          `json:"abstract,omitempty"`
+	Keywords      []string         `json:"keywords"`
+	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes"`
+	// +kubebuilder:default:=true
+	Visible             *bool        `json:"visible,omitempty"`
+	Authority           *Authority   `json:"authority,omitempty"`
+	DatasetMetadataURL  *MetadataURL `json:"datasetMetadataUrl,omitempty"`
+	MinScaleDenominator *string      `json:"minscaledenominator,omitempty"`
+	MaxScaleDenominator *string      `json:"maxscaledenominator,omitempty"`
+	Styles              []Style      `json:"styles,omitempty"`
+	LabelNoClip         bool         `json:"labelNoClip,omitempty"`
+	Data                *Data        `json:"data,omitempty"`
+	Layers              *[]Layer     `json:"layers,omitempty"`
+}
+
+type RandomType struct {
+	FieldA string `json:"fieldA"`
 }
 
 type WMSBoundingBox struct {
@@ -131,10 +135,10 @@ type Authority struct {
 
 type Style struct {
 	Name          string  `json:"name"`
-	Title         *string `json:"title"`
-	Abstract      *string `json:"abstract"`
-	Visualization *string `json:"visualization"`
-	Legend        *Legend `json:"legend"`
+	Title         *string `json:"title,omitempty"`
+	Abstract      *string `json:"abstract,omitempty"`
+	Visualization *string `json:"visualization,omitempty"`
+	Legend        *Legend `json:"legend,omitempty"`
 }
 
 type Legend struct {
