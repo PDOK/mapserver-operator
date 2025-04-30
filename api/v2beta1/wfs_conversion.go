@@ -39,82 +39,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WFS)
 	log.Printf("ConvertTo: Converting WFS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
-
-	dst.ObjectMeta = src.ObjectMeta
-
-	// Set LifeCycle if defined
-	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
-		dst.Spec.Lifecycle = &sharedModel.Lifecycle{
-			TTLInDays: Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
-		}
-	}
-
-	if src.Spec.Kubernetes.Autoscaling != nil {
-		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
-	}
-
-	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
-	if src.Spec.Kubernetes.Resources != nil {
-		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
-	}
-
-	dst.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
-
-	service := pdoknlv3.WFSService{
-		// TODO what is prefix, Geonovum subdomain?
-		Prefix:            "prefix",
-		URL:               CreateBaseURL("https://service.pdok.nl", "wfs", src.Spec.General),
-		OwnerInfoRef:      "pdok",
-		Title:             src.Spec.Service.Title,
-		Abstract:          src.Spec.Service.Abstract,
-		Keywords:          src.Spec.Service.Keywords,
-		Fees:              nil,
-		AccessConstraints: src.Spec.Service.AccessConstraints,
-		DefaultCrs:        src.Spec.Service.DataEPSG,
-		OtherCrs:          []string{},
-		CountDefault:      src.Spec.Service.Maxfeatures,
-		FeatureTypes:      make([]pdoknlv3.FeatureType, 0),
-	}
-
-	if src.Spec.Service.Mapfile != nil {
-		service.Mapfile = &pdoknlv3.Mapfile{
-			ConfigMapKeyRef: src.Spec.Service.Mapfile.ConfigMapKeyRef,
-		}
-	}
-
-	if src.Spec.Service.Extent != nil && *src.Spec.Service.Extent != "" {
-		service.Bbox = &pdoknlv3.Bbox{
-			DefaultCRS: sharedModel.ExtentToBBox(*src.Spec.Service.Extent),
-		}
-	} else {
-		service.Bbox = &pdoknlv3.Bbox{
-			DefaultCRS: sharedModel.BBox{
-				MinX: "-25000",
-				MaxX: "280000",
-				MinY: "250000",
-				MaxY: "860000",
-			},
-		}
-	}
-
-	// TODO - where to place the MetadataIdentifier and FeatureTypes[0].SourceMetadataIdentifier if the service is not inspire?
-	if src.Spec.Service.Inspire {
-		service.Inspire = &pdoknlv3.Inspire{
-			ServiceMetadataURL: pdoknlv3.MetadataURL{
-				CSW: &pdoknlv3.Metadata{
-					MetadataIdentifier: src.Spec.Service.MetadataIdentifier,
-				},
-			},
-			SpatialDatasetIdentifier: src.Spec.Service.FeatureTypes[0].SourceMetadataIdentifier,
-			Language:                 "dut",
-		}
-	}
-
-	for _, featureType := range src.Spec.Service.FeatureTypes {
-		service.FeatureTypes = append(service.FeatureTypes, convertV2FeatureTypeToV3(featureType))
-	}
-
-	dst.Spec.Service = service
+	V3WFSHubFromV2(src, dst)
 
 	return nil
 }
@@ -218,4 +143,82 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.Service = service
 
 	return nil
+}
+
+func V3WFSHubFromV2(src *WFS, target *pdoknlv3.WFS) {
+	target.ObjectMeta = src.ObjectMeta
+
+	// Set LifeCycle if defined
+	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
+		target.Spec.Lifecycle = &sharedModel.Lifecycle{
+			TTLInDays: Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
+		}
+	}
+
+	if src.Spec.Kubernetes.Autoscaling != nil {
+		target.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
+	}
+
+	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
+	if src.Spec.Kubernetes.Resources != nil {
+		target.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
+	}
+
+	target.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
+
+	service := pdoknlv3.WFSService{
+		// TODO what is prefix, Geonovum subdomain?
+		Prefix:            "prefix",
+		URL:               CreateBaseURL("https://service.pdok.nl", "wfs", src.Spec.General),
+		OwnerInfoRef:      "pdok",
+		Title:             src.Spec.Service.Title,
+		Abstract:          src.Spec.Service.Abstract,
+		Keywords:          src.Spec.Service.Keywords,
+		Fees:              nil,
+		AccessConstraints: src.Spec.Service.AccessConstraints,
+		DefaultCrs:        src.Spec.Service.DataEPSG,
+		OtherCrs:          []string{},
+		CountDefault:      src.Spec.Service.Maxfeatures,
+		FeatureTypes:      make([]pdoknlv3.FeatureType, 0),
+	}
+
+	if src.Spec.Service.Mapfile != nil {
+		service.Mapfile = &pdoknlv3.Mapfile{
+			ConfigMapKeyRef: src.Spec.Service.Mapfile.ConfigMapKeyRef,
+		}
+	}
+
+	if src.Spec.Service.Extent != nil && *src.Spec.Service.Extent != "" {
+		service.Bbox = &pdoknlv3.Bbox{
+			DefaultCRS: sharedModel.ExtentToBBox(*src.Spec.Service.Extent),
+		}
+	} else {
+		service.Bbox = &pdoknlv3.Bbox{
+			DefaultCRS: sharedModel.BBox{
+				MinX: "-25000",
+				MaxX: "280000",
+				MinY: "250000",
+				MaxY: "860000",
+			},
+		}
+	}
+
+	// TODO - where to place the MetadataIdentifier and FeatureTypes[0].SourceMetadataIdentifier if the service is not inspire?
+	if src.Spec.Service.Inspire {
+		service.Inspire = &pdoknlv3.Inspire{
+			ServiceMetadataURL: pdoknlv3.MetadataURL{
+				CSW: &pdoknlv3.Metadata{
+					MetadataIdentifier: src.Spec.Service.MetadataIdentifier,
+				},
+			},
+			SpatialDatasetIdentifier: src.Spec.Service.FeatureTypes[0].SourceMetadataIdentifier,
+			Language:                 "dut",
+		}
+	}
+
+	for _, featureType := range src.Spec.Service.FeatureTypes {
+		service.FeatureTypes = append(service.FeatureTypes, convertV2FeatureTypeToV3(featureType))
+	}
+
+	target.Spec.Service = service
 }

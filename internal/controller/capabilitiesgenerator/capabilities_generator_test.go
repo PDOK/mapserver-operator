@@ -675,7 +675,7 @@ func TestInputForWMS(t *testing.T) {
 	err := yaml.Unmarshal([]byte(v2wmsstring), &v2wms)
 	assert.NoError(t, err)
 	var wms pdoknlv3.WMS
-	v2beta1.V3HubFromV2(&v2wms, &wms)
+	v2beta1.V3WMSHubFromV2(&v2wms, &wms)
 	pdoknlv3.SetHost("http://localhost")
 
 	contactPersonPrimary := smoothoperatorv1.ContactPersonPrimary{
