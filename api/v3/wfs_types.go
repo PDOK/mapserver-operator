@@ -66,36 +66,80 @@ func init() {
 
 // WFSSpec vertegenwoordigt de hoofdstruct voor de YAML-configuratie
 type WFSSpec struct {
+	// Optional lifecycle settings
 	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
+
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
 	Options                      Options                                    `json:"options,omitempty"`
-	Service                      WFSService                                 `json:"service"`
+
+	// service configuration
+	// +kubebuilder:validation:Required
+	Service WFSService `json:"service"`
 }
 
 type WFSService struct {
 	// Geonovum subdomein
 	// +kubebuilder:validation:MinLength:=1
-	Prefix       string   `json:"prefix"`
-	URL          string   `json:"url"`
-	Inspire      *Inspire `json:"inspire,omitempty"`
-	Mapfile      *Mapfile `json:"mapfile,omitempty"`
-	OwnerInfoRef string   `json:"ownerInfoRef"`
-	Title        string   `json:"title"`
-	Abstract     string   `json:"abstract"`
-	Keywords     []string `json:"keywords"`
-	Fees         *string  `json:"fees,omitempty"`
+	Prefix string `json:"prefix"`
+
+	// URL of the service
+	// +kubebuilder:validation:Pattern:=`^https?://.*$`
+	URL string `json:"url"`
+
+	// check for Inspire services
+	// +kubebuilder:default="false"
+	Inspire *Inspire `json:"inspire,omitempty"`
+
+	// External Mapfile reference
+	Mapfile *Mapfile `json:"mapfile,omitempty"`
+
+	// Reference to OwnerInfo CR
+	// TODO no webhook yet?
+	// +kubebuilder:validation:MinLength:=1
+	OwnerInfoRef string `json:"ownerInfoRef"`
+
+	// Service title
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+
+	// Service abstract
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+
+	// Keywords for capabilities
+	// +kubebuilder:validation:MinItems:=1
+	Keywords []string `json:"keywords"`
+
+	// Optional Fees
+	Fees *string `json:"fees,omitempty"`
+
+	// AccessConstraints URL
+	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string   `json:"accessConstraints"`
-	DefaultCrs        string   `json:"defaultCrs"`
-	OtherCrs          []string `json:"otherCrs,omitempty"`
-	Bbox              *Bbox    `json:"bbox,omitempty"`
+	AccessConstraints string `json:"accessConstraints"`
+
+	// Default CRS (DataEPSG)
+	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"
+	// +kubebuilder:validation:MinLength:=1
+	DefaultCrs string `json:"defaultCrs"`
+
+	// Other supported CRS
+	OtherCrs []string `json:"otherCrs,omitempty"`
+
+	// Service bounding box
+	Bbox *Bbox `json:"bbox,omitempty"`
+
 	// CountDefault -> wfs_maxfeatures in mapfile
-	CountDefault *string       `json:"countDefault,omitempty"`
+	// +kubebuilder:validation:MinLength:=1
+	CountDefault *string `json:"countDefault,omitempty"`
+
+	// FeatureTypes configurations
+	// +kubebuilder:validation:MinItems:=1
 	FeatureTypes []FeatureType `json:"featureTypes"`
 }
 
@@ -105,14 +149,37 @@ type Bbox struct {
 	DefaultCRS shared_model.BBox `json:"defaultCRS"`
 }
 
+// FeatureType defines a WFS feature
+// +kubebuilder:validation:Required
 type FeatureType struct {
-	Name               string       `json:"name"`
-	Title              string       `json:"title"`
-	Abstract           string       `json:"abstract"`
-	Keywords           []string     `json:"keywords"`
-	DatasetMetadataURL MetadataURL  `json:"datasetMetadataUrl"`
-	Bbox               *FeatureBbox `json:"bbox,omitempty"`
-	Data               Data         `json:"data"`
+	// Name of the feature
+	// +kubebuilder:validation:MinLength:=1
+	Name string `json:"name"`
+
+	// Title of the feature
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+
+	// Abstract of the feature
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+
+	// Keywords of the feature
+	// +kubebuilder:validation:MinItems:=1
+	Keywords []string `json:"keywords"`
+
+	// Metadata URL
+	// +kubebuilder:validation:Type=object
+	DatasetMetadataURL MetadataURL `json:"datasetMetadataUrl"`
+
+	// Optional feature bbox
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Type:=object
+	Bbox *FeatureBbox `json:"bbox,omitempty"`
+
+	// Featuretype data connection
+	// +kubebuilder:validation:Required
+	Data Data `json:"data"`
 }
 
 type FeatureBbox struct {

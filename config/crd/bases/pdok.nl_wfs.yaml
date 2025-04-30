@@ -1086,6 +1086,7 @@ spec:
                 - scaleTargetRef
                 type: object
               lifecycle:
+                description: Optional lifecycle settings
                 properties:
                   ttlInDays:
                     format: int32
@@ -1118,18 +1119,22 @@ spec:
                 - includeIngress
                 type: object
               podSpecPatch:
-                description: Optional strategic merge patch for the pod in the deployment.
-                  E.g. to patch the resources or add extra env vars.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               service:
+                description: service configuration
                 properties:
                   abstract:
+                    description: Service abstract
+                    minLength: 1
                     type: string
                   accessConstraints:
                     default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
+                    description: AccessConstraints URL
+                    pattern: https?://
                     type: string
                   bbox:
+                    description: Service bounding box
                     properties:
                       defaultCRS:
                         description: EXTENT/wfs_extent in mapfile
@@ -1161,15 +1166,24 @@ spec:
                     type: object
                   countDefault:
                     description: CountDefault -> wfs_maxfeatures in mapfile
+                    minLength: 1
                     type: string
                   defaultCrs:
+                    description: Default CRS (DataEPSG)
+                    minLength: 1
+                    pattern: ^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$
                     type: string
                   featureTypes:
+                    description: FeatureTypes configurations
                     items:
+                      description: FeatureType defines a WFS feature
                       properties:
                         abstract:
+                          description: Abstract of the feature
+                          minLength: 1
                           type: string
                         bbox:
+                          description: Optional feature bbox
                           properties:
                             defaultCRS:
                               description: BBox defines a bounding box with coordinates
@@ -1225,6 +1239,7 @@ spec:
                           - defaultCRS
                           type: object
                         data:
+                          description: Featuretype data connection
                           properties:
                             gpkg:
                               properties:
@@ -1290,6 +1305,7 @@ spec:
                               type: object
                           type: object
                         datasetMetadataUrl:
+                          description: Metadata URL
                           properties:
                             csw:
                               properties:
@@ -1312,12 +1328,18 @@ spec:
                           - csw
                           type: object
                         keywords:
+                          description: Keywords of the feature
                           items:
                             type: string
+                          minItems: 1
                           type: array
                         name:
+                          description: Name of the feature
+                          minLength: 1
                           type: string
                         title:
+                          description: Title of the feature
+                          minLength: 1
                           type: string
                       required:
                       - abstract
@@ -1327,10 +1349,14 @@ spec:
                       - name
                       - title
                       type: object
+                    minItems: 1
                     type: array
                   fees:
+                    description: Optional Fees
                     type: string
                   inspire:
+                    default: "false"
+                    description: check for Inspire services
                     properties:
                       language:
                         type: string
@@ -1364,10 +1390,13 @@ spec:
                     - spatialDatasetIdentifier
                     type: object
                   keywords:
+                    description: Keywords for capabilities
                     items:
                       type: string
+                    minItems: 1
                     type: array
                   mapfile:
+                    description: External Mapfile reference
                     properties:
                       configMapKeyRef:
                         description: Selects a key from a ConfigMap.
@@ -1396,18 +1425,25 @@ spec:
                     - configMapKeyRef
                     type: object
                   otherCrs:
+                    description: Other supported CRS
                     items:
                       type: string
                     type: array
                   ownerInfoRef:
+                    description: Reference to OwnerInfo CR
+                    minLength: 1
                     type: string
                   prefix:
                     description: Geonovum subdomein
                     minLength: 1
                     type: string
                   title:
+                    description: Service title
+                    minLength: 1
                     type: string
                   url:
+                    description: URL of the service
+                    pattern: ^https?://.*$
                     type: string
                 required:
                 - abstract
