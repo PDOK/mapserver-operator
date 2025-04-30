@@ -16,17 +16,32 @@ const (
 )
 
 func TestGetVolumeMountsForDeployment(t *testing.T) {
-	var v2wfs v2beta1.WFS
-	err := yaml.Unmarshal([]byte(v2WfsString), &v2wfs)
-	assert.NoError(t, err)
-	var wfs pdoknlv3.WFS
-	v2beta1.V3WFSHubFromV2(&v2wfs, &wfs)
-
+	var wfs = getV3()
 	pdoknlv3.SetHost("https://service.pdok.nl")
-	result := GetVolumeMountsForDeployment(&wfs, "/srv")
+	result := GetVolumeMountsForDeployment(wfs, "/srv")
 
 	var expectedVolumeMounts []v1.VolumeMount
-	err = json.Unmarshal([]byte(expectedVolumeMountsString), &expectedVolumeMounts)
+	err := json.Unmarshal([]byte(expectedVolumeMountsString), &expectedVolumeMounts)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedVolumeMounts, result)
+}
+
+func TestGetEnvVarsForDeployment(t *testing.T) {
+	var wfs = getV3()
+	pdoknlv3.SetHost("https://service.pdok.nl")
+	result := GetEnvVarsForDeployment(wfs, "blobs-secret")
+	a := 0
+	_ = result
+	_ = a
+}
+
+func getV3() *pdoknlv3.WFS {
+	var v2wfs v2beta1.WFS
+	err := yaml.Unmarshal([]byte(v2WfsString), &v2wfs)
+	if err != nil {
+		panic(err)
+	}
+	var wfs pdoknlv3.WFS
+	v2beta1.V3WFSHubFromV2(&v2wfs, &wfs)
+	return &wfs
 }
