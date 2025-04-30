@@ -1719,7 +1719,6 @@ spec:
                                     default: true
                                     type: boolean
                                 required:
-                                - boundingBoxes
                                 - keywords
                                 - name
                                 type: object
@@ -1769,7 +1768,6 @@ spec:
                               default: true
                               type: boolean
                           required:
-                          - boundingBoxes
                           - keywords
                           - name
                           type: object
@@ -1819,7 +1817,6 @@ spec:
                         default: true
                         type: boolean
                     required:
-                    - boundingBoxes
                     - keywords
                     type: object
                   mapfile:

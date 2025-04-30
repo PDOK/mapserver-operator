@@ -94,7 +94,7 @@ type Layer struct {
 	Title         *string          `json:"title,omitempty"`
 	Abstract      *string          `json:"abstract,omitempty"`
 	Keywords      []string         `json:"keywords"`
-	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes"`
+	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes,omitempty"`
 	// +kubebuilder:default:=true
 	Visible             *bool        `json:"visible,omitempty"`
 	Authority           *Authority   `json:"authority,omitempty"`

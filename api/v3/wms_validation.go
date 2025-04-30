@@ -110,7 +110,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 		}
 
 		if slices.Contains(names, layerName) {
-			layerReasons = append(layerReasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", layer.Name))
+			layerReasons = append(layerReasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", layerName))
 		}
 		names = append(names, layerName)
 
@@ -204,7 +204,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 			}
 		}
 		if len(layerReasons) != 0 {
-			*reasons = append(*reasons, fmt.Sprintf("%s '%s' is invalid: ", layerType, layer.Name)+strings.Join(layerReasons, ", "))
+			*reasons = append(*reasons, fmt.Sprintf("%s '%s' is invalid: ", layerType, layerName)+strings.Join(layerReasons, ", "))
 		}
 	}
 

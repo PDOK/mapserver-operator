@@ -197,14 +197,14 @@ func downloadLegends(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 	layers := wms.GetAllLayersWithLegend()
 	if len(layers) > 0 {
 		for _, layer := range layers {
-			writeLine(sb, "mkdir -p %s/%s;", legendPath, layer.Name)
+			writeLine(sb, "mkdir -p %s/%s;", legendPath, *layer.Name)
 			for _, style := range layer.Styles {
-				writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, layer.Name, style.Name)
+				writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, *layer.Name, style.Name)
 				fileName, err := getFilenameFromBlobKey(style.Legend.BlobKey)
 				if err != nil {
 					return err
 				}
-				writeLine(sb, "Copied legend %s to %s/%s/%s.png;", fileName, legendPath, layer.Name, style.Name)
+				writeLine(sb, "Copied legend %s to %s/%s/%s.png;", fileName, legendPath, *layer.Name, style.Name)
 			}
 		}
 		writeLine(sb, "chown -R 999:999 %s", legendPath)

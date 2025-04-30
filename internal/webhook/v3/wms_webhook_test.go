@@ -158,7 +158,7 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should deny creation if grouplayer is not visible", func() {
 			nestedLayers1 := *obj.Spec.Service.Layer.Layers
-			nestedLayers1[0].Visible = false
+			nestedLayers1[0].Visible = smoothoperatorutils.Pointer(false)
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 		})
@@ -215,7 +215,7 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should deny creation if there are no visible layers", func() {
 			obj.Spec.Service.Layer.Layers = nil
-			obj.Spec.Service.Layer.Visible = false
+			obj.Spec.Service.Layer.Visible = smoothoperatorutils.Pointer(false)
 
 			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
 			Expect(err).To(HaveOccurred())
