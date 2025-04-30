@@ -495,7 +495,7 @@ spec:
               description: WMSSpec defines the desired state of WMS.
               properties:
                 horizontalPodAutoscalerPatch:
-                  description: HorizontalPodAutoscalerSpec describes the desired functionality of the HorizontalPodAutoscaler.
+                  description: Optional specification for the HorizontalAutoscaler
                   properties:
                     behavior:
                       description: |-
@@ -1087,12 +1087,14 @@ spec:
                     - scaleTargetRef
                   type: object
                 lifecycle:
+                  description: Optional lifecycle settings
                   properties:
                     ttlInDays:
                       format: int32
                       type: integer
                   type: object
                 options:
+                  description: Optional options for the configuration of the service.
                   properties:
                     automaticCasing:
                       default: true
@@ -1123,20 +1125,28 @@ spec:
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
                 service:
+                  description: Service specification
                   properties:
                     abstract:
+                      description: Abstract (short description) of the service
+                      minLength: 1
                       type: string
                     accessConstraints:
                       default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
+                      description: AccessConstraints (licence) that are applicable to the service
                       type: string
                     dataEPSG:
+                      description: CRS of the data
+                      pattern: (EPSG|CRS):\d+
                       type: string
                     defResolution:
                       format: int32
                       type: integer
                     fees:
+                      minLength: 1
                       type: string
                     inspire:
+                      description: Optional specification Inspire themes and ids
                       properties:
                         language:
                           type: string
@@ -1170,12 +1180,16 @@ spec:
                         - spatialDatasetIdentifier
                       type: object
                     keywords:
+                      description: Keywords of the service
                       items:
                         type: string
+                      minItems: 1
                       type: array
                     layer:
+                      description: Toplayer
                       properties:
                         abstract:
+                          description: Abstract of the layer
                           type: string
                         authority:
                           properties:
@@ -1191,6 +1205,7 @@ spec:
                             - url
                           type: object
                         boundingBoxes:
+                          description: BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
                           items:
                             properties:
                               bbox:
@@ -1226,6 +1241,7 @@ spec:
                             type: object
                           type: array
                         data:
+                          description: Data (gpkg/postgis/tif) used by the layer
                           properties:
                             gpkg:
                               properties:
@@ -1290,6 +1306,7 @@ spec:
                               type: object
                           type: object
                         datasetMetadataUrl:
+                          description: Links to metadata
                           properties:
                             csw:
                               properties:
@@ -1312,6 +1329,7 @@ spec:
                             - csw
                           type: object
                         keywords:
+                          description: Keywords of the layer
                           items:
                             type: string
                           type: array
@@ -1320,8 +1338,10 @@ spec:
                         layers:
                           description: '[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]'
                           items:
+                            description: Toplayer
                             properties:
                               abstract:
+                                description: Abstract of the layer
                                 type: string
                               authority:
                                 properties:
@@ -1337,6 +1357,7 @@ spec:
                                   - url
                                 type: object
                               boundingBoxes:
+                                description: BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
                                 items:
                                   properties:
                                     bbox:
@@ -1372,6 +1393,7 @@ spec:
                                   type: object
                                 type: array
                               data:
+                                description: Data (gpkg/postgis/tif) used by the layer
                                 properties:
                                   gpkg:
                                     properties:
@@ -1436,6 +1458,7 @@ spec:
                                     type: object
                                 type: object
                               datasetMetadataUrl:
+                                description: Links to metadata
                                 properties:
                                   csw:
                                     properties:
@@ -1458,6 +1481,7 @@ spec:
                                   - csw
                                 type: object
                               keywords:
+                                description: Keywords of the layer
                                 items:
                                   type: string
                                 type: array
@@ -1466,8 +1490,10 @@ spec:
                               layers:
                                 description: '[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]'
                                 items:
+                                  description: Toplayer
                                   properties:
                                     abstract:
+                                      description: Abstract of the layer
                                       type: string
                                     authority:
                                       properties:
@@ -1483,6 +1509,7 @@ spec:
                                         - url
                                       type: object
                                     boundingBoxes:
+                                      description: BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
                                       items:
                                         properties:
                                           bbox:
@@ -1518,6 +1545,7 @@ spec:
                                         type: object
                                       type: array
                                     data:
+                                      description: Data (gpkg/postgis/tif) used by the layer
                                       properties:
                                         gpkg:
                                           properties:
@@ -1582,6 +1610,7 @@ spec:
                                           type: object
                                       type: object
                                     datasetMetadataUrl:
+                                      description: Links to metadata
                                       properties:
                                         csw:
                                           properties:
@@ -1604,18 +1633,25 @@ spec:
                                         - csw
                                       type: object
                                     keywords:
+                                      description: Keywords of the layer
                                       items:
                                         type: string
                                       type: array
                                     labelNoClip:
                                       type: boolean
                                     maxscaledenominator:
+                                      description: The maximum scale at which this layer functions
+                                      pattern: ^[1-9][0-9]*(.[0-9]+)$
                                       type: string
                                     minscaledenominator:
+                                      description: The minimum scale at which this layer functions
+                                      pattern: ^[1-9][0-9]*(.[0-9]+)$
                                       type: string
                                     name:
+                                      description: Name of the layer, required for layers on the 2nd or 3rd level
                                       type: string
                                     styles:
+                                      description: List of styles used by the layer
                                       items:
                                         properties:
                                           abstract:
@@ -1649,22 +1685,33 @@ spec:
                                         type: object
                                       type: array
                                     title:
+                                      description: Title of the layer
                                       type: string
                                     visible:
                                       default: true
+                                      description: Whether or not the layer is visible. At least one of the layers must be visible.
                                       type: boolean
                                   required:
                                     - keywords
                                     - name
                                   type: object
+                                  x-kubernetes-validations:
+                                    - message: A layer can only have data or layers, not both.
+                                      rule: empty(self.data) || empty(self.layers)
                                 type: array
                               maxscaledenominator:
+                                description: The maximum scale at which this layer functions
+                                pattern: ^[1-9][0-9]*(.[0-9]+)$
                                 type: string
                               minscaledenominator:
+                                description: The minimum scale at which this layer functions
+                                pattern: ^[1-9][0-9]*(.[0-9]+)$
                                 type: string
                               name:
+                                description: Name of the layer, required for layers on the 2nd or 3rd level
                                 type: string
                               styles:
+                                description: List of styles used by the layer
                                 items:
                                   properties:
                                     abstract:
@@ -1698,22 +1745,33 @@ spec:
                                   type: object
                                 type: array
                               title:
+                                description: Title of the layer
                                 type: string
                               visible:
                                 default: true
+                                description: Whether or not the layer is visible. At least one of the layers must be visible.
                                 type: boolean
                             required:
                               - keywords
                               - name
                             type: object
+                            x-kubernetes-validations:
+                              - message: A layer can only have data or layers, not both.
+                                rule: empty(self.data) || empty(self.layers)
                           type: array
                         maxscaledenominator:
+                          description: The maximum scale at which this layer functions
+                          pattern: ^[1-9][0-9]*(.[0-9]+)$
                           type: string
                         minscaledenominator:
+                          description: The minimum scale at which this layer functions
+                          pattern: ^[1-9][0-9]*(.[0-9]+)$
                           type: string
                         name:
+                          description: Name of the layer, required for layers on the 2nd or 3rd level
                           type: string
                         styles:
+                          description: List of styles used by the layer
                           items:
                             properties:
                               abstract:
@@ -1747,14 +1805,20 @@ spec:
                             type: object
                           type: array
                         title:
+                          description: Title of the layer
                           type: string
                         visible:
                           default: true
+                          description: Whether or not the layer is visible. At least one of the layers must be visible.
                           type: boolean
                       required:
                         - keywords
                       type: object
+                      x-kubernetes-validations:
+                        - message: A layer can only have data or layers, not both.
+                          rule: empty(self.data) || empty(self.layers)
                     mapfile:
+                      description: Custom mapfile
                       properties:
                         configMapKeyRef:
                           description: Selects a key from a ConfigMap.
@@ -1785,11 +1849,14 @@ spec:
                       format: int32
                       type: integer
                     ownerInfoRef:
+                      description: Reference to a CR of Kind OwnerInfo
+                      minLength: 1
                       type: string
                     resolution:
                       format: int32
                       type: integer
                     stylingAssets:
+                      description: Optional. Required files for the styling of the service
                       properties:
                         blobKeys:
                           items:
@@ -1813,8 +1880,12 @@ spec:
                         - message: Either blobKeys or configMapRefs is required
                           rule: has(self.blobKeys) || has(self.configMapRefs)
                     title:
+                      description: Title of the service
+                      minLength: 1
                       type: string
                     url:
+                      description: URL of the service
+                      format: uri
                       type: string
                   required:
                     - abstract
