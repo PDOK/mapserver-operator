@@ -53,7 +53,7 @@ const (
 	defaultMapfileGeneratorImage      = "acrpdokprodman.azurecr.io/pdok/mapfile-generator:1.9.5"
 	defaultMapserverImage             = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/mapserver:8.4.0-4-nl"
 	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/ogc-capabilities-generator:1.0.0-beta7"
-	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:v1.4.0-beta1"
+	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:1.4.0-beta1"
 	defaultOgcWebserviceProxyImage    = "acrpdokprodman.azurecr.io/pdok/ogc-webservice-proxy:0.1.8"
 	defaultApacheExporterImage        = "acrpdokprodman.azurecr.io/mirror/docker.io/lusotycoon/apache-exporter:v0.7.0"
 

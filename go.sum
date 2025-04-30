@@ -149,10 +149,10 @@ github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaR
 github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/pdok/featureinfo-generator v1.4.0-beta1 h1:ZZO5OtK7yW5ozXFrl1OaxKl0MK3XF5YGFh2692JZVN8=
 github.com/pdok/featureinfo-generator v1.4.0-beta1/go.mod h1:02Ryu7ZRkeha8SCfS6VYWCdKYZh0llskrfFgp6xRCjk=
-github.com/pdok/ogc-capabilities-generator v1.0.0-beta6 h1:yn0ZyMruJ2gmdx7E78LEamtmsxMkFPjFcZYk12mNtcE=
-github.com/pdok/ogc-capabilities-generator v1.0.0-beta6/go.mod h1:slk89sAgmWU5NCIKwGyciQWnm0RHmwhJYQ431E2CwSk=
-github.com/pdok/ogc-specifications v1.0.0-beta5 h1:j7JrXUeW55mVU9ZmJ67r8V6DhbKdgTDiGE1YKFpRWx4=
-github.com/pdok/ogc-specifications v1.0.0-beta5/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
+github.com/pdok/ogc-capabilities-generator v1.0.0-beta7 h1:w0dP2RQX0KEEovrq57NCM1w+Hlizg9mQlgdRBEqKX2g=
+github.com/pdok/ogc-capabilities-generator v1.0.0-beta7/go.mod h1:slk89sAgmWU5NCIKwGyciQWnm0RHmwhJYQ431E2CwSk=
+github.com/pdok/ogc-specifications v1.0.0-beta7 h1:AFSO8iCYbD1MrjOS2q+PGp2PmSqAH+O7cuA7JeePCXE=
+github.com/pdok/ogc-specifications v1.0.0-beta7/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
 github.com/pdok/smooth-operator v0.0.16 h1:1vurI2TPDHmTaTu0YeG1B9mIIa5MT6GPWhixiZ/styg=
 github.com/pdok/smooth-operator v0.0.16/go.mod h1:ohDqrUnmS7wK8TrNHJnFS/mDgf26Yhb8mtRBX3ixdr4=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

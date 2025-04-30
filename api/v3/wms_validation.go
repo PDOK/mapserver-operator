@@ -20,8 +20,6 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 	validateWMS(wms, &warnings, &reasons)
 
 	if len(reasons) > 0 {
-		//yaml, _ := yaml2.Marshal(wms)
-		//fmt.Println(yaml)
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
 	}
 
