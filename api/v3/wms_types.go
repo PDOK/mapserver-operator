@@ -137,7 +137,7 @@ type ConfigMapRef struct {
 	Keys []string `json:"keys,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:message="A layer can only have data or layers, not both.", rule="empty(self.data) || empty(self.layers)"
+// +kubebuilder:validation:XValidation:message="A layer can only have data or layers, not both.", rule="has(self.data) || has(self.layers)"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validations:MinLength:=1

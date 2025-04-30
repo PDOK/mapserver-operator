@@ -1695,9 +1695,6 @@ spec:
                                     - keywords
                                     - name
                                   type: object
-                                  x-kubernetes-validations:
-                                    - message: A layer can only have data or layers, not both.
-                                      rule: empty(self.data) || empty(self.layers)
                                 type: array
                               maxscaledenominator:
                                 description: The maximum scale at which this layer functions
@@ -1757,7 +1754,7 @@ spec:
                             type: object
                             x-kubernetes-validations:
                               - message: A layer can only have data or layers, not both.
-                                rule: empty(self.data) || empty(self.layers)
+                                rule: has(self.data) || has(self.layers)
                           type: array
                         maxscaledenominator:
                           description: The maximum scale at which this layer functions
@@ -1816,7 +1813,7 @@ spec:
                       type: object
                       x-kubernetes-validations:
                         - message: A layer can only have data or layers, not both.
-                          rule: empty(self.data) || empty(self.layers)
+                          rule: has(self.data) || has(self.layers)
                     mapfile:
                       description: Custom mapfile
                       properties:

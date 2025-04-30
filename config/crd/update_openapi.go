@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	kyaml "sigs.k8s.io/yaml"
+	"strings"
 )
 
 // Usage: go run ./update_layersv3_openapi.go <crd_dir_path>
@@ -42,6 +43,13 @@ func updateWMSV3Layers(crdDir string) {
 			layerSpecLevel3 := layer.DeepCopy()
 			layerSpecLevel3.Required = append(layerSpecLevel3.Required, "name")
 			delete(layerSpecLevel3.Properties, "layers")
+			xvals := v1.ValidationRules{}
+			for _, xval := range layerSpecLevel3.XValidations {
+				if !strings.Contains(xval.Rule, "self.layers") {
+					xvals = append(xvals, xval)
+				}
+			}
+			layerSpecLevel3.XValidations = xvals
 
 			// Level 2
 			layerSpecLevel2 := layer.DeepCopy()
