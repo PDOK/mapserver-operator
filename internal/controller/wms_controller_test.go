@@ -641,7 +641,7 @@ var _ = Describe("WMS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(configMap.GetName()).To(HavePrefix(wms.GetName() + "-legend-generator-"))
+			Expect(configMap.GetName()).To(HavePrefix(wms.GetName() + "-wms-legend-generator-"))
 			Expect(configMap.GetNamespace()).To(Equal(namespace))
 			Expect(configMap.Immutable).To(Equal(smoothoperatorutils.Pointer(true)))
 			checkWMSLabels(configMap.GetLabels())
@@ -681,7 +681,7 @@ var _ = Describe("WMS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred())
 			}, "10s", "1s").Should(BeTrue())
 
-			Expect(configMap.GetName()).To(HavePrefix(wms.GetName() + "-featureinfo-generator"))
+			Expect(configMap.GetName()).To(HavePrefix(wms.GetName() + "-wms-featureinfo-generator"))
 			Expect(configMap.GetNamespace()).To(Equal(namespace))
 			Expect(configMap.Immutable).To(Equal(smoothoperatorutils.Pointer(true)))
 			checkWMSLabels(configMap.GetLabels())

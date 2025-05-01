@@ -26,6 +26,7 @@ package v2beta1
 
 import (
 	"errors"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"log"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"strconv"
@@ -320,6 +321,7 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Keywords:      v2Service.Keywords,
 			Layers:        &[]pdoknlv3.Layer{},
 			BoundingBoxes: boundingBoxes,
+			Visible:       smoothoperatorutils.Pointer(true),
 		}
 
 		// adding the bottom layers to the middle layers they are grouped by
@@ -424,7 +426,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, serviceEPSG string) []WMSLayer {
 	var layers []WMSLayer
 
-	if parent == nil && *v3Layer.Name == "wms" {
+	if parent == nil && v3Layer.Name == nil {
 		// Default top layer, do not include in v2 layers
 		if v3Layer.Layers != nil {
 			for _, childLayer := range *v3Layer.Layers {
@@ -441,7 +443,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 			Styles:      []Style{},
 		}
 
-		v2Layer.Visible = PointerVal(v3Layer.Visible, true)
+		v2Layer.Visible = *v3Layer.Visible
 
 		if parent != nil {
 			v2Layer.Group = parent.Name

@@ -45,65 +45,148 @@ const (
 
 // WMSSpec defines the desired state of WMS.
 type WMSSpec struct {
-	Lifecycle *shared_model.Lifecycle `json:"lifecycle"`
+	// Optional lifecycle settings
+	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
 
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
-	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
-	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch"`
-	Options                      Options                                    `json:"options,omitempty"`
-	Service                      WMSService                                 `json:"service"`
+	PodSpecPatch *corev1.PodSpec `json:"podSpecPatch,omitempty"`
+
+	// Optional specification for the HorizontalAutoscaler
+	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
+
+	// Optional options for the configuration of the service.
+	Options Options `json:"options,omitempty"`
+
+	// Service specification
+	Service WMSService `json:"service"`
 }
 
 type WMSService struct {
-	URL          string   `json:"url"`
-	Title        string   `json:"title"`
-	Abstract     string   `json:"abstract"`
-	Keywords     []string `json:"keywords"`
-	OwnerInfoRef string   `json:"ownerInfoRef"`
-	Fees         *string  `json:"fees,omitempty"`
+	// URL of the service
+	// +kubebuilder:validation:Format:=uri
+	URL string `json:"url"`
+
+	// Title of the service
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+
+	// Abstract (short description) of the service
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+
+	// Keywords of the service
+	// +kubebuilder:validation:MinItems:=1
+	Keywords []string `json:"keywords"`
+
+	// Reference to a CR of Kind OwnerInfo
+	// +kubebuilder:validation:MinLength:=1
+	OwnerInfoRef string `json:"ownerInfoRef"`
+
+	// TODO ??
+	// +kubebuilder:validation:MinLength:=1
+	Fees *string `json:"fees,omitempty"`
+
+	// AccessConstraints (licence) that are applicable to the service
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string   `json:"accessConstraints"`
-	MaxSize           *int32   `json:"maxSize,omitempty"`
-	Inspire           *Inspire `json:"inspire,omitempty"`
+	AccessConstraints string `json:"accessConstraints"`
+
+	// TODO??
+	MaxSize *int32 `json:"maxSize,omitempty"`
+
+	// Optional specification Inspire themes and ids
+	Inspire *Inspire `json:"inspire,omitempty"`
+
+	// CRS of the data
+	// +kubebuilder:validation:Pattern:=`(EPSG|CRS):\d+`
 	//nolint:tagliatelle
-	DataEPSG      string         `json:"dataEPSG"`
-	Resolution    *int32         `json:"resolution,omitempty"`
-	DefResolution *int32         `json:"defResolution,omitempty"`
+	DataEPSG string `json:"dataEPSG"`
+
+	// TODO ??
+	Resolution *int32 `json:"resolution,omitempty"`
+
+	// TODO ??
+	DefResolution *int32 `json:"defResolution,omitempty"`
+
+	// Optional. Required files for the styling of the service
 	StylingAssets *StylingAssets `json:"stylingAssets,omitempty"`
-	Mapfile       *Mapfile       `json:"mapfile,omitempty"`
-	Layer         Layer          `json:"layer"`
+
+	// Custom mapfile
+	Mapfile *Mapfile `json:"mapfile,omitempty"`
+
+	// Toplayer
+	Layer Layer `json:"layer"`
 }
 
+// +kubebuilder:validation:XValidation:message="Either blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
 type StylingAssets struct {
-	BlobKeys      []string       `json:"blobKeys"`
-	ConfigMapRefs []ConfigMapRef `json:"configMapRefs"`
+	// +kubebuilder:validations:MinItems:=1
+	BlobKeys []string `json:"blobKeys,omitempty"`
+
+	// +kubebuilder:validations:MinItems:=1
+	ConfigMapRefs []ConfigMapRef `json:"configMapRefs,omitempty"`
 }
 
 type ConfigMapRef struct {
-	Name string   `json:"name"`
+	// +kubebuilder:validations:MinLength:=1
+	Name string `json:"name"`
+
+	// +kubebuilder:validations:MinItems:=1
 	Keys []string `json:"keys,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:message="A layer can only have data or layers, not both.", rule="has(self.data) || has(self.layers)"
 type Layer struct {
-	Name                *string          `json:"name"`
-	Title               *string          `json:"title,omitempty"`
-	Abstract            *string          `json:"abstract,omitempty"`
-	Keywords            []string         `json:"keywords"`
-	BoundingBoxes       []WMSBoundingBox `json:"boundingBoxes"`
-	Visible             *bool            `json:"visible,omitempty"`
-	Authority           *Authority       `json:"authority,omitempty"`
-	DatasetMetadataURL  *MetadataURL     `json:"datasetMetadataUrl,omitempty"`
-	MinScaleDenominator *string          `json:"minscaledenominator,omitempty"`
-	MaxScaleDenominator *string          `json:"maxscaledenominator,omitempty"`
-	Styles              []Style          `json:"styles"`
-	LabelNoClip         bool             `json:"labelNoClip"`
-	Data                *Data            `json:"data,omitempty"`
-	// Nested structs do not work in crd generation
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Schemaless
+	// Name of the layer, required for layers on the 2nd or 3rd level
+	// +kubebuilder:validations:MinLength:=1
+	Name *string `json:"name,omitempty"`
+
+	// Title of the layer
+	// +kubebuilder:validations:MinLength:=1
+	Title *string `json:"title,omitempty"`
+
+	// Abstract of the layer
+	// +kubebuilder:validations:MinLength:=1
+	Abstract *string `json:"abstract,omitempty"`
+
+	// Keywords of the layer
+	// +kubebuilder:validations:MinItems:=1
+	Keywords []string `json:"keywords"`
+
+	// BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
+	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes,omitempty"`
+
+	// Whether or not the layer is visible. At least one of the layers must be visible.
+	// +kubebuilder:default:=true
+	Visible *bool `json:"visible,omitempty"`
+
+	// TODO ??
+	Authority *Authority `json:"authority,omitempty"`
+
+	// Links to metadata
+	DatasetMetadataURL *MetadataURL `json:"datasetMetadataUrl,omitempty"`
+
+	// The minimum scale at which this layer functions
+	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)$`
+	MinScaleDenominator *string `json:"minscaledenominator,omitempty"`
+
+	// The maximum scale at which this layer functions
+	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)$`
+	MaxScaleDenominator *string `json:"maxscaledenominator,omitempty"`
+
+	// List of styles used by the layer
+	// +kubebuilder:validations:MinItems:=1
+	Styles []Style `json:"styles,omitempty"`
+
+	// TODO ??
+	LabelNoClip bool `json:"labelNoClip,omitempty"`
+
+	// Data (gpkg/postgis/tif) used by the layer
+	Data *Data `json:"data,omitempty"`
+
+	// Sublayers of the layer
 	Layers *[]Layer `json:"layers,omitempty"`
 }
 
@@ -130,13 +213,22 @@ type Authority struct {
 }
 
 type Style struct {
-	Name          string  `json:"name"`
-	Title         *string `json:"title"`
-	Abstract      *string `json:"abstract"`
-	Visualization *string `json:"visualization"`
-	Legend        *Legend `json:"legend"`
+	// +kubebuilder:validations:MinLength:=1
+	Name string `json:"name"`
+
+	// +kubebuilder:validations:MinLength:=1
+	Title *string `json:"title,omitempty"`
+
+	// +kubebuilder:validations:MinLength:=1
+	Abstract *string `json:"abstract,omitempty"`
+
+	// +kubebuilder:validations:MinLength:=1
+	Visualization *string `json:"visualization,omitempty"`
+
+	Legend *Legend `json:"legend,omitempty"`
 }
 
+// TODO add validations + descriptions
 type Legend struct {
 	Width   int32  `json:"width"`
 	Height  int32  `json:"height"`

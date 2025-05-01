@@ -3,6 +3,7 @@ package ogcwebserviceproxy
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
@@ -74,7 +75,7 @@ func MapWMSToOgcWebserviceProxyConfig(wms *pdoknlv3.WMS) (config Config, err err
 				}
 			}
 			if len(dataLayers) > 0 {
-				config.GroupLayers[*layer.Name] = dataLayers
+				config.GroupLayers[smoothoperatorutils.PointerVal(layer.Name, "")] = dataLayers
 			}
 		}
 	}
