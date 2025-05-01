@@ -68,17 +68,16 @@ func init() {
 type WFSSpec struct {
 	// Optional lifecycle settings
 	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
+
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
-
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
 	Options                      Options                                    `json:"options,omitempty"`
 
 	// service configuration
-	// +kubebuilder:validation:Required
 	Service WFSService `json:"service"`
 }
 
@@ -92,14 +91,12 @@ type WFSService struct {
 	URL string `json:"url"`
 
 	// check for Inspire services
-	// +kubebuilder:default="false"
 	Inspire *Inspire `json:"inspire,omitempty"`
 
 	// External Mapfile reference
 	Mapfile *Mapfile `json:"mapfile,omitempty"`
 
 	// Reference to OwnerInfo CR
-	// TODO no webhook yet?
 	// +kubebuilder:validation:MinLength:=1
 	OwnerInfoRef string `json:"ownerInfoRef"`
 
@@ -150,7 +147,6 @@ type Bbox struct {
 }
 
 // FeatureType defines a WFS feature
-// +kubebuilder:validation:Required
 type FeatureType struct {
 	// Name of the feature
 	// +kubebuilder:validation:MinLength:=1
@@ -177,15 +173,18 @@ type FeatureType struct {
 	// +kubebuilder:validation:Type:=object
 	Bbox *FeatureBbox `json:"bbox,omitempty"`
 
-	// Featuretype data connection
-	// +kubebuilder:validation:Required
+	// FeatureType data connection
 	Data Data `json:"data"`
 }
 
+// FeatureType bounding box, if provided it overrides the default extent
 type FeatureBbox struct {
+	// DefaultCRS defines the feature’s bounding box in the service’s own CRS
 	//nolint:tagliatelle
-	DefaultCRS shared_model.BBox  `json:"defaultCRS"`
-	WGS84      *shared_model.BBox `json:"wgs84,omitempty"`
+	DefaultCRS shared_model.BBox `json:"defaultCRS"`
+
+	// WGS84, if provided, gives the same bounding box reprojected into EPSG:4326.
+	WGS84 *shared_model.BBox `json:"wgs84,omitempty"`
 }
 
 func (wfs *WFS) HasPostgisData() bool {
