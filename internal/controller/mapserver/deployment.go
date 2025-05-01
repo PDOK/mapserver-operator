@@ -217,6 +217,7 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 	}
 }
 
+// Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	minimumEphemeralStorageLimit := resource.MustParse("200M")
 	resources := v1.ResourceRequirements{
@@ -230,8 +231,20 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 	}
 
 	objResources := &v1.ResourceRequirements{}
-	if obj.PodSpecPatch() != nil && obj.PodSpecPatch().Resources != nil {
-		objResources = obj.PodSpecPatch().Resources
+	if obj.PodSpecPatch() != nil {
+		found := false
+		for _, container := range obj.PodSpecPatch().Containers {
+			if container.Name == "mapserver" {
+				objResources = &container.Resources
+				found = true
+				break
+			}
+		}
+
+		if !found && obj.PodSpecPatch().Resources != nil {
+			objResources = obj.PodSpecPatch().Resources
+		}
+
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
@@ -242,14 +255,14 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		resources.Limits[v1.ResourceCPU] = *objResources.Limits.Cpu()
 	}
 
-	if objResources.Requests.Memory() != nil {
+	if objResources.Requests.Memory() != nil && !objResources.Requests.Memory().IsZero() {
 		resources.Requests[v1.ResourceMemory] = *objResources.Requests.Memory()
 	}
 
 	if use, _ := mapperutils.UseEphemeralVolume(obj); !use {
 		value := mapperutils.EphemeralStorageLimit(obj)
 
-		if value.Value() > minimumEphemeralStorageLimit.Value() {
+		if objResources.Limits.StorageEphemeral() != nil && objResources.Limits.StorageEphemeral().Value() > minimumEphemeralStorageLimit.Value() {
 			resources.Limits[v1.ResourceEphemeralStorage] = *value
 		}
 	}
