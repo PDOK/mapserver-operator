@@ -53,7 +53,7 @@ spec:
       - keyword1
       - keyword2
     fees: ""
-    accessConstraints: ""
+    accessConstraints: "https://test.com"
     defaultCrs: "EPSG:28992"
     bbox:
       defaultCRS:
