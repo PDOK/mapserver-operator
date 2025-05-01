@@ -88,9 +88,10 @@ type WFSService struct {
 
 	// URL of the service
 	// +kubebuilder:validation:Pattern:=`^https?://.*$`
+	// +kubebuilder:validation:MinLength:=1
 	URL string `json:"url"`
 
-	// check for Inspire services
+	// Config for Inspire services
 	Inspire *Inspire `json:"inspire,omitempty"`
 
 	// External Mapfile reference
@@ -113,11 +114,13 @@ type WFSService struct {
 	Keywords []string `json:"keywords"`
 
 	// Optional Fees
+	// +kubebuilder:validation:MinLength:=1
 	Fees *string `json:"fees,omitempty"`
 
 	// AccessConstraints URL
 	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+	// +kubebuilder:validation:MinLength:=1
 	AccessConstraints string `json:"accessConstraints"`
 
 	// Default CRS (DataEPSG)
@@ -126,6 +129,7 @@ type WFSService struct {
 	DefaultCrs string `json:"defaultCrs"`
 
 	// Other supported CRS
+	// +kubebuilder:validation:MinItems:=1
 	OtherCrs []string `json:"otherCrs,omitempty"`
 
 	// Service bounding box
@@ -137,12 +141,14 @@ type WFSService struct {
 
 	// FeatureTypes configurations
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:Type=array
 	FeatureTypes []FeatureType `json:"featureTypes"`
 }
 
 type Bbox struct {
 	// EXTENT/wfs_extent in mapfile
 	//nolint:tagliatelle
+	// +kubebuilder:validation:Type=object
 	DefaultCRS shared_model.BBox `json:"defaultCRS"`
 }
 
@@ -174,6 +180,7 @@ type FeatureType struct {
 	Bbox *FeatureBbox `json:"bbox,omitempty"`
 
 	// FeatureType data connection
+	// +kubebuilder:validation:Type=object
 	Data Data `json:"data"`
 }
 
@@ -181,9 +188,11 @@ type FeatureType struct {
 type FeatureBbox struct {
 	// DefaultCRS defines the feature’s bounding box in the service’s own CRS
 	//nolint:tagliatelle
+	// +kubebuilder:validation:Type=object
 	DefaultCRS shared_model.BBox `json:"defaultCRS"`
 
 	// WGS84, if provided, gives the same bounding box reprojected into EPSG:4326.
+	// +kubebuilder:validation:Type=object
 	WGS84 *shared_model.BBox `json:"wgs84,omitempty"`
 }
 

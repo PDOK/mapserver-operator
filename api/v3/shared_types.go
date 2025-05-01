@@ -45,6 +45,7 @@ type WMSWFS interface {
 // Mapfile references a ConfigMap key where an external mapfile is stored.
 // +kubebuilder:validation:Type=object
 type Mapfile struct {
+	// +kubebuilder:validation:Type=object
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
 }
 
@@ -85,12 +86,15 @@ type Options struct {
 // +kubebuilder:validation:Type=object
 type Inspire struct {
 	// ServiceMetadataURL references the CSW or custom metadata record.
+	// +kubebuilder:validation:Type=object
 	ServiceMetadataURL MetadataURL `json:"serviceMetadataUrl"`
 
 	// SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
+	// +kubebuilder:validation:MinLength:=1
 	SpatialDatasetIdentifier string `json:"spatialDatasetIdentifier"`
 
 	// Language of the INSPIRE metadata record
+	// +kubebuilder:validation:MinLength:=1
 	Language string `json:"language"`
 }
 
@@ -110,14 +114,15 @@ type Metadata struct {
 	MetadataIdentifier string `json:"metadataIdentifier"`
 }
 
-// Custom represents a non-CSW metadata link with an href and MIME type.
-// +kubebuilder:validation:Schemaless
-// +kubebuilder:pruning:PreserveUnknownFields
+// Custom represents a non-CSW metadata link with a href and MIME type.
 // +kubebuilder:validation:Type=object
 type Custom struct {
 	// +kubebuilder:validation:Pattern=`^https?://.*$`
 	// +kubebuilder:validation:MinLength=1
 	Href string `json:"href"`
+
+	// MIME type of the custom link
+	// +kubebuilder:validation:MinLength=1
 	Type string `json:"type"`
 }
 
@@ -139,6 +144,7 @@ type Data struct {
 type Gpkg struct {
 	// Blobkey identifies the location/bucket of the .gpkg file
 	// +kubebuilder:validation:Pattern=`\.gpkg$`
+	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 
 	// TableName is the table within the geopackage
@@ -147,6 +153,7 @@ type Gpkg struct {
 
 	// GeometryType of the table, must match an OGC type
 	// +kubebuilder:validation:Pattern:=`^(Multi)?(Point|LineString|Polygon)$`
+	// +kubebuilder:validation:MinLength:=1
 	GeometryType string `json:"geometryType"`
 
 	// Columns to visualize for this table
@@ -163,6 +170,7 @@ type Postgis struct {
 
 	// GeometryType of the table
 	// +kubebuilder:validation:Pattern=`^(Multi)?(Point|LineString|Polygon)$`
+	// +kubebuilder:validation:MinLength:=1
 	GeometryType string `json:"geometryType"`
 
 	// Columns to expose from table
@@ -175,12 +183,15 @@ type Postgis struct {
 type TIF struct {
 	// BlobKey to the TIFF file
 	// +kubebuilder:validation:Pattern=`\.(tif|tiff)$`
+	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 
 	// Resample method
+	// +kubebuilder:validation:MinLength:=1
 	Resample *string `json:"resample,omitempty"`
 
 	// Offsite color for nodata removal
+	// +kubebuilder:validation:MinLength:=1
 	Offsite *string `json:"offsite,omitempty"`
 
 	// Include class names in GetFeatureInfo responses
@@ -195,6 +206,7 @@ type Column struct {
 	Name string `json:"name"`
 
 	// Alias for the column in the service output.
+	// +kubebuilder:validation:MinLength=1
 	Alias *string `json:"alias,omitempty"`
 }
 
