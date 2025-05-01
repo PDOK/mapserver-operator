@@ -90,7 +90,7 @@ type Inspire struct {
 	// SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
 	SpatialDatasetIdentifier string `json:"spatialDatasetIdentifier"`
 
-	// Language of the INSPIRE metadata record (e.g., "nl" or "en").
+	// Language of the INSPIRE metadata record
 	Language string `json:"language"`
 }
 
