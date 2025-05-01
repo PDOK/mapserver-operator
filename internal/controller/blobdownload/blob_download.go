@@ -162,6 +162,7 @@ func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 		return nil
 	}
 
+	generatedFontsList := false
 	re := regexp.MustCompile(`.*\.(ttf)$`)
 	for _, blobKey := range wms.Spec.Service.StylingAssets.BlobKeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)
@@ -180,26 +181,35 @@ func downloadStylingAssets(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 				return err
 			}
 			writeLine(sb, "echo %s %s >> %s/fonts.list;", fileRoot, fileName, fontsPath)
+			generatedFontsList = true
 		}
 	}
-	writeLine(sb, "echo 'generated fonts.list:';")
-	writeLine(sb, "cat %v/fonts.list;", fontsPath)
+
+	if generatedFontsList {
+		writeLine(sb, "echo 'generated fonts.list:';")
+		writeLine(sb, "cat %v/fonts.list;", fontsPath)
+	}
+
 	return nil
 }
 
 func downloadLegends(sb *strings.Builder, wms *pdoknlv3.WMS) error {
-	for _, layer := range wms.GetAllLayersWithLegend() {
-		writeLine(sb, "mkdir -p %s/%s;", legendPath, *layer.Name)
-		for _, style := range layer.Styles {
-			writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, *layer.Name, style.Name)
-			fileName, err := getFilenameFromBlobKey(style.Legend.BlobKey)
-			if err != nil {
-				return err
+	layers := wms.GetAllLayersWithLegend()
+	if len(layers) > 0 {
+		for _, layer := range layers {
+			writeLine(sb, "mkdir -p %s/%s;", legendPath, *layer.Name)
+			for _, style := range layer.Styles {
+				writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, *layer.Name, style.Name)
+				fileName, err := getFilenameFromBlobKey(style.Legend.BlobKey)
+				if err != nil {
+					return err
+				}
+				writeLine(sb, "Copied legend %s to %s/%s/%s.png;", fileName, legendPath, *layer.Name, style.Name)
 			}
-			writeLine(sb, "Copied legend %s to %s/%s/%s.png;", fileName, legendPath, *layer.Name, style.Name)
 		}
+		writeLine(sb, "chown -R 999:999 %s", legendPath)
 	}
-	writeLine(sb, "chown -R 999:999 %s", legendPath)
+
 	return nil
 }
 

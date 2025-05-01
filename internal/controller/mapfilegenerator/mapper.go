@@ -199,7 +199,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 		if annotatedLayer.IsDataLayer {
 			layer := getWMSLayer(annotatedLayer.Layer, extent, wms)
 			result.Layers = append(result.Layers, layer)
-		} else if annotatedLayer.IsGroupLayer && (annotatedLayer.Layer.Visible == nil || *annotatedLayer.Layer.Visible) {
+		} else if annotatedLayer.IsGroupLayer && *annotatedLayer.Layer.Visible {
 			groupLayer := GroupLayer{
 				Name:       *annotatedLayer.Layer.Name,
 				Title:      smoothoperatorutils.PointerVal(annotatedLayer.Layer.Title, ""),
@@ -222,7 +222,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 
 	groupName := ""
 	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
-	if parent.IsGroupLayer() && parent.Name != nil && (parent.Visible != nil && *parent.Visible) {
+	if parent.IsGroupLayer() && parent.Name != nil && *parent.Visible {
 		groupName = *parent.Name
 	}
 

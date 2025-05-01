@@ -241,24 +241,15 @@ services:
                                 - HVD
                                 - Mobiliteit
                           crs:
-                            - namespace: EPSG
-                              code: 28992
-                            - namespace: EPSG
-                              code: 25831
-                            - namespace: EPSG
-                              code: 25832
-                            - namespace: EPSG
-                              code: 3034
-                            - namespace: EPSG
-                              code: 3035
-                            - namespace: EPSG
-                              code: 3857
-                            - namespace: EPSG
-                              code: 4258
-                            - namespace: EPSG
-                              code: 4326
-                            - namespace: CRS
-                              code: 84
+                            - EPSG:28992
+                            - EPSG:25831
+                            - EPSG:25832
+                            - EPSG:3034
+                            - EPSG:3035
+                            - EPSG:3857
+                            - EPSG:4258
+                            - EPSG:4326
+                            - CRS:84
                           exGeographicBoundingBox:
                             westBoundLongitude: 2.52713
                             eastBoundLongitude: 7.37403
@@ -336,24 +327,15 @@ services:
                                     - Verkeer
                                     - Wegvakken
                               crs:
-                                - namespace: EPSG
-                                  code: 28992
-                                - namespace: EPSG
-                                  code: 25831
-                                - namespace: EPSG
-                                  code: 25832
-                                - namespace: EPSG
-                                  code: 3034
-                                - namespace: EPSG
-                                  code: 3035
-                                - namespace: EPSG
-                                  code: 3857
-                                - namespace: EPSG
-                                  code: 4258
-                                - namespace: EPSG
-                                  code: 4326
-                                - namespace: CRS
-                                  code: 84
+                                - EPSG:28992
+                                - EPSG:25831
+                                - EPSG:25832
+                                - EPSG:3034
+                                - EPSG:3035
+                                - EPSG:3857
+                                - EPSG:4258
+                                - EPSG:4326
+                                - CRS:84
                               exGeographicBoundingBox:
                                 westBoundLongitude: 2.52713
                                 eastBoundLongitude: 7.37403
@@ -451,24 +433,15 @@ services:
                                     - Verkeer
                                     - Hectometerpunten
                               crs:
-                                - namespace: EPSG
-                                  code: 28992
-                                - namespace: EPSG
-                                  code: 25831
-                                - namespace: EPSG
-                                  code: 25832
-                                - namespace: EPSG
-                                  code: 3034
-                                - namespace: EPSG
-                                  code: 3035
-                                - namespace: EPSG
-                                  code: 3857
-                                - namespace: EPSG
-                                  code: 4258
-                                - namespace: EPSG
-                                  code: 4326
-                                - namespace: CRS
-                                  code: 84
+                                - EPSG:28992
+                                - EPSG:25831
+                                - EPSG:25832
+                                - EPSG:3034
+                                - EPSG:3035
+                                - EPSG:3857
+                                - EPSG:4258
+                                - EPSG:4326
+                                - CRS:84
                               exGeographicBoundingBox:
                                 westBoundLongitude: 2.52713
                                 eastBoundLongitude: 7.37403

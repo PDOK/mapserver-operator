@@ -54,9 +54,10 @@ type WMSSpec struct {
 
 // WMSService is the struct for all service level fields
 type WMSService struct {
-	Inspire            bool       `json:"inspire"`
-	Title              string     `json:"title"`
-	Abstract           string     `json:"abstract"`
+	Inspire  bool   `json:"inspire"`
+	Title    string `json:"title"`
+	Abstract string `json:"abstract"`
+	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	AccessConstraints  string     `json:"accessConstraints"`
 	Keywords           []string   `json:"keywords"`
 	MetadataIdentifier string     `json:"metadataIdentifier"`
@@ -86,7 +87,7 @@ type WMSLayer struct {
 	Extent                    *string  `json:"extent,omitempty"`
 	MinScale                  *float64 `json:"minScale,omitempty"`
 	MaxScale                  *float64 `json:"maxScale,omitempty"`
-	LabelNoClip               bool     `json:"labelNoClip"`
+	LabelNoClip               bool     `json:"labelNoClip,omitempty"`
 	Data                      *Data    `json:"data,omitempty"`
 }
 

@@ -1076,7 +1076,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 
 		// region ConfigMap-LegendGenerator
 		{
-			configMapLg := getBareConfigMapLegendGenerator(obj)
+			configMapLg := getBareConfigMapLegendGenerator(wms)
 			if err = mutateConfigMapLegendGenerator(wmsReconciler, wms, configMapLg); err != nil {
 				return operationResults, err
 			}
@@ -1092,7 +1092,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 
 		// region ConfigMap-FeatureinfoGenerator
 		{
-			configMapFig := getBareConfigMapFeatureinfoGenerator(obj)
+			configMapFig := getBareConfigMapFeatureinfoGenerator(wms)
 			if err = mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, configMapFig); err != nil {
 				return operationResults, err
 			}
@@ -1109,7 +1109,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 
 		// region ConfigMap-OgcWebserviceProxy
 		{
-			configMapOwp := getBareConfigMapOgcWebserviceProxy(obj)
+			configMapOwp := getBareConfigMapOgcWebserviceProxy(wms)
 			if err = mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, configMapOwp); err != nil {
 				return operationResults, err
 			}
@@ -1253,7 +1253,7 @@ func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r 
 		wmsReconciler := (*WMSReconciler)(r)
 
 		// ConfigMap-LegendGenerator
-		cmLg := getBareConfigMapLegendGenerator(obj)
+		cmLg := getBareConfigMapLegendGenerator(wms)
 		err = mutateConfigMapLegendGenerator(wmsReconciler, wms, cmLg)
 		if err != nil {
 			return err
@@ -1261,7 +1261,7 @@ func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r 
 		objects = append(objects, cmLg)
 
 		// ConfigMap-FeatureInfo
-		cmFi := getBareConfigMapFeatureinfoGenerator(obj)
+		cmFi := getBareConfigMapFeatureinfoGenerator(wms)
 		err = mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, cmFi)
 		if err != nil {
 			return err
@@ -1269,7 +1269,7 @@ func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r 
 		objects = append(objects, cmFi)
 
 		// ConfigMap-OgcWebserviceProxy
-		cmOwp := getBareConfigMapOgcWebserviceProxy(obj)
+		cmOwp := getBareConfigMapOgcWebserviceProxy(wms)
 		err = mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, cmOwp)
 		if err != nil {
 			return err
