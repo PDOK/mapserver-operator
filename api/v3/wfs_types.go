@@ -66,7 +66,9 @@ func init() {
 
 // WFSSpec vertegenwoordigt de hoofdstruct voor de YAML-configuratie
 type WFSSpec struct {
+	// Optional lifecycle settings
 	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
+
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -74,51 +76,124 @@ type WFSSpec struct {
 	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
 	Options                      Options                                    `json:"options,omitempty"`
-	Service                      WFSService                                 `json:"service"`
+
+	// service configuration
+	Service WFSService `json:"service"`
 }
 
 type WFSService struct {
 	// Geonovum subdomein
 	// +kubebuilder:validation:MinLength:=1
-	Prefix       string   `json:"prefix"`
-	URL          string   `json:"url"`
-	Inspire      *Inspire `json:"inspire,omitempty"`
-	Mapfile      *Mapfile `json:"mapfile,omitempty"`
-	OwnerInfoRef string   `json:"ownerInfoRef"`
-	Title        string   `json:"title"`
-	Abstract     string   `json:"abstract"`
-	Keywords     []string `json:"keywords"`
-	Fees         *string  `json:"fees,omitempty"`
+	Prefix string `json:"prefix"`
+
+	// URL of the service
+	// +kubebuilder:validation:Pattern:=`^https?://.*$`
+	// +kubebuilder:validation:MinLength:=1
+	URL string `json:"url"`
+
+	// Config for Inspire services
+	Inspire *Inspire `json:"inspire,omitempty"`
+
+	// External Mapfile reference
+	Mapfile *Mapfile `json:"mapfile,omitempty"`
+
+	// Reference to OwnerInfo CR
+	// +kubebuilder:validation:MinLength:=1
+	OwnerInfoRef string `json:"ownerInfoRef"`
+
+	// Service title
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+
+	// Service abstract
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+
+	// Keywords for capabilities
+	// +kubebuilder:validation:MinItems:=1
+	Keywords []string `json:"keywords"`
+
+	// Optional Fees
+	// +kubebuilder:validation:MinLength:=1
+	Fees *string `json:"fees,omitempty"`
+
+	// AccessConstraints URL
+	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string   `json:"accessConstraints"`
-	DefaultCrs        string   `json:"defaultCrs"`
-	OtherCrs          []string `json:"otherCrs,omitempty"`
-	Bbox              *Bbox    `json:"bbox,omitempty"`
+	// +kubebuilder:validation:MinLength:=1
+	AccessConstraints string `json:"accessConstraints"`
+
+	// Default CRS (DataEPSG)
+	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"
+	// +kubebuilder:validation:MinLength:=1
+	DefaultCrs string `json:"defaultCrs"`
+
+	// Other supported CRS
+	// +kubebuilder:validation:MinItems:=1
+	OtherCrs []string `json:"otherCrs,omitempty"`
+
+	// Service bounding box
+	Bbox *Bbox `json:"bbox,omitempty"`
+
 	// CountDefault -> wfs_maxfeatures in mapfile
-	CountDefault *string       `json:"countDefault,omitempty"`
+	// +kubebuilder:validation:MinLength:=1
+	CountDefault *string `json:"countDefault,omitempty"`
+
+	// FeatureTypes configurations
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:Type=array
 	FeatureTypes []FeatureType `json:"featureTypes"`
 }
 
 type Bbox struct {
 	// EXTENT/wfs_extent in mapfile
 	//nolint:tagliatelle
+	// +kubebuilder:validation:Type=object
 	DefaultCRS shared_model.BBox `json:"defaultCRS"`
 }
 
+// FeatureType defines a WFS feature
 type FeatureType struct {
-	Name               string       `json:"name"`
-	Title              string       `json:"title"`
-	Abstract           string       `json:"abstract"`
-	Keywords           []string     `json:"keywords"`
-	DatasetMetadataURL MetadataURL  `json:"datasetMetadataUrl"`
-	Bbox               *FeatureBbox `json:"bbox,omitempty"`
-	Data               Data         `json:"data"`
+	// Name of the feature
+	// +kubebuilder:validation:MinLength:=1
+	Name string `json:"name"`
+
+	// Title of the feature
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+
+	// Abstract of the feature
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+
+	// Keywords of the feature
+	// +kubebuilder:validation:MinItems:=1
+	Keywords []string `json:"keywords"`
+
+	// Metadata URL
+	// +kubebuilder:validation:Type=object
+	DatasetMetadataURL MetadataURL `json:"datasetMetadataUrl"`
+
+	// Optional feature bbox
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Type:=object
+	Bbox *FeatureBbox `json:"bbox,omitempty"`
+
+	// FeatureType data connection
+	// +kubebuilder:validation:Type=object
+	Data Data `json:"data"`
 }
 
+// FeatureType bounding box, if provided it overrides the default extent
 type FeatureBbox struct {
+	// DefaultCRS defines the feature’s bounding box in the service’s own CRS
 	//nolint:tagliatelle
-	DefaultCRS shared_model.BBox  `json:"defaultCRS"`
-	WGS84      *shared_model.BBox `json:"wgs84,omitempty"`
+	// +kubebuilder:validation:Type=object
+	DefaultCRS shared_model.BBox `json:"defaultCRS"`
+
+	// WGS84, if provided, gives the same bounding box reprojected into EPSG:4326.
+	// +kubebuilder:validation:Type=object
+	WGS84 *shared_model.BBox `json:"wgs84,omitempty"`
 }
 
 func (wfs *WFS) HasPostgisData() bool {

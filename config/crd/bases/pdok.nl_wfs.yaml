@@ -1086,32 +1086,51 @@ spec:
                 - scaleTargetRef
                 type: object
               lifecycle:
+                description: Optional lifecycle settings
                 properties:
                   ttlInDays:
                     format: int32
                     type: integer
                 type: object
               options:
+                description: Options configures optional behaviors of the operator,
+                  like ingress, casing, and data prefetching.
                 properties:
                   automaticCasing:
                     default: true
+                    description: AutomaticCasing enables automatic conversion from
+                      snake_case to camelCase.
                     type: boolean
                   disableWebserviceProxy:
                     default: false
+                    description: DisableWebserviceProxy disables the built-in proxy
+                      for external web services.
                     type: boolean
                   includeIngress:
                     default: true
+                    description: IncludeIngress dictates whether to deploy an Ingress
+                      or ensure none exists.
                     type: boolean
                   prefetchData:
                     default: true
+                    description: |-
+                      Whether to prefetch data from blob storage, and store it on the local filesystem.
+                      If `false`, the data will be served directly out of blob storage
                     type: boolean
                   rewriteGroupToDataLayers:
                     default: false
+                    description: RewriteGroupToDataLayers merges group layers into
+                      individual data layers.
                     type: boolean
                   validateChildStyleNameEqual:
+                    default: false
+                    description: ValidateChildStyleNameEqual ensures child style names
+                      match the parent style.
                     type: boolean
                   validateRequests:
                     default: true
+                    description: ValidateRequests enables request validation against
+                      the service schema.
                     type: boolean
                 required:
                 - automaticCasing
@@ -1123,13 +1142,20 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               service:
+                description: service configuration
                 properties:
                   abstract:
+                    description: Service abstract
+                    minLength: 1
                     type: string
                   accessConstraints:
                     default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
+                    description: AccessConstraints URL
+                    minLength: 1
+                    pattern: https?://
                     type: string
                   bbox:
+                    description: Service bounding box
                     properties:
                       defaultCRS:
                         description: EXTENT/wfs_extent in mapfile
@@ -1161,18 +1187,28 @@ spec:
                     type: object
                   countDefault:
                     description: CountDefault -> wfs_maxfeatures in mapfile
+                    minLength: 1
                     type: string
                   defaultCrs:
+                    description: Default CRS (DataEPSG)
+                    minLength: 1
+                    pattern: ^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$
                     type: string
                   featureTypes:
+                    description: FeatureTypes configurations
                     items:
+                      description: FeatureType defines a WFS feature
                       properties:
                         abstract:
+                          description: Abstract of the feature
+                          minLength: 1
                           type: string
                         bbox:
+                          description: Optional feature bbox
                           properties:
                             defaultCRS:
-                              description: BBox defines a bounding box with coordinates
+                              description: DefaultCRS defines the feature’s bounding
+                                box in the service’s own CRS
                               properties:
                                 maxx:
                                   description: Rechtsonder X coördinaat
@@ -1197,7 +1233,8 @@ spec:
                               - miny
                               type: object
                             wgs84:
-                              description: BBox defines a bounding box with coordinates
+                              description: WGS84, if provided, gives the same bounding
+                                box reprojected into EPSG:4326.
                               properties:
                                 maxx:
                                   description: Rechtsonder X coördinaat
@@ -1225,25 +1262,47 @@ spec:
                           - defaultCRS
                           type: object
                         data:
+                          description: FeatureType data connection
                           properties:
                             gpkg:
+                              description: Gpkg configures a GeoPackage file source
                               properties:
                                 blobKey:
+                                  description: Blobkey identifies the location/bucket
+                                    of the .gpkg file
+                                  minLength: 1
+                                  pattern: \.gpkg$
                                   type: string
                                 columns:
+                                  description: Columns to visualize for this table
                                   items:
+                                    description: Column maps a source column name
+                                      to an optional alias for output.
                                     properties:
                                       alias:
+                                        description: Alias for the column in the service
+                                          output.
+                                        minLength: 1
                                         type: string
                                       name:
+                                        description: Name of the column in the data
+                                          source.
+                                        minLength: 1
                                         type: string
                                     required:
                                     - name
                                     type: object
+                                  minItems: 1
                                   type: array
                                 geometryType:
+                                  description: GeometryType of the table, must match
+                                    an OGC type
+                                  minLength: 1
+                                  pattern: ^(Multi)?(Point|LineString|Polygon)$
                                   type: string
                                 tableName:
+                                  description: TableName is the table within the geopackage
+                                  minLength: 1
                                   type: string
                               required:
                               - blobKey
@@ -1252,23 +1311,37 @@ spec:
                               - tableName
                               type: object
                             postgis:
-                              description: Postgis - reference to table in a Postgres
-                                database
+                              description: Postgis configures a Postgis table source
                               properties:
                                 columns:
+                                  description: Columns to expose from table
                                   items:
+                                    description: Column maps a source column name
+                                      to an optional alias for output.
                                     properties:
                                       alias:
+                                        description: Alias for the column in the service
+                                          output.
+                                        minLength: 1
                                         type: string
                                       name:
+                                        description: Name of the column in the data
+                                          source.
+                                        minLength: 1
                                         type: string
                                     required:
                                     - name
                                     type: object
+                                  minItems: 1
                                   type: array
                                 geometryType:
+                                  description: GeometryType of the table
+                                  minLength: 1
+                                  pattern: ^(Multi)?(Point|LineString|Polygon)$
                                   type: string
                                 tableName:
+                                  description: TableName in postGIS
+                                  minLength: 1
                                   type: string
                               required:
                               - columns
@@ -1276,33 +1349,59 @@ spec:
                               - tableName
                               type: object
                             tif:
+                              description: TIF configures a GeoTIF raster source
                               properties:
                                 blobKey:
+                                  description: BlobKey to the TIFF file
+                                  minLength: 1
+                                  pattern: \.(tif|tiff)$
                                   type: string
                                 getFeatureInfoIncludesClass:
+                                  description: Include class names in GetFeatureInfo
+                                    responses
                                   type: boolean
                                 offsite:
+                                  description: Offsite color for nodata removal
+                                  minLength: 1
                                   type: string
                                 resample:
+                                  description: Resample method
+                                  minLength: 1
                                   type: string
                               required:
                               - blobKey
                               type: object
                           type: object
+                          x-kubernetes-validations:
+                          - message: Atleast one of the datasource should be provided
+                              (postgis, gpkg, tif)
+                            rule: has(self.gpkg) || has(self.tif) || has(self.postgis)
                         datasetMetadataUrl:
+                          description: Metadata URL
                           properties:
                             csw:
+                              description: CSW describes a metadata record via a metadataIdentifier
+                                (UUID).
                               properties:
                                 metadataIdentifier:
+                                  description: MetadataIdentifier is the record's
+                                    UUID
+                                  format: uuid
+                                  minLength: 1
                                   type: string
                               required:
                               - metadataIdentifier
                               type: object
                             custom:
+                              description: Custom allows arbitrary href
                               properties:
                                 href:
+                                  minLength: 1
+                                  pattern: ^https?://.*$
                                   type: string
                                 type:
+                                  description: MIME type of the custom link
+                                  minLength: 1
                                   type: string
                               required:
                               - href
@@ -1312,12 +1411,18 @@ spec:
                           - csw
                           type: object
                         keywords:
+                          description: Keywords of the feature
                           items:
                             type: string
+                          minItems: 1
                           type: array
                         name:
+                          description: Name of the feature
+                          minLength: 1
                           type: string
                         title:
+                          description: Title of the feature
+                          minLength: 1
                           type: string
                       required:
                       - abstract
@@ -1327,27 +1432,45 @@ spec:
                       - name
                       - title
                       type: object
+                    minItems: 1
                     type: array
                   fees:
+                    description: Optional Fees
+                    minLength: 1
                     type: string
                   inspire:
+                    description: Config for Inspire services
                     properties:
                       language:
+                        description: Language of the INSPIRE metadata record
+                        minLength: 1
                         type: string
                       serviceMetadataUrl:
+                        description: ServiceMetadataURL references the CSW or custom
+                          metadata record.
                         properties:
                           csw:
+                            description: CSW describes a metadata record via a metadataIdentifier
+                              (UUID).
                             properties:
                               metadataIdentifier:
+                                description: MetadataIdentifier is the record's UUID
+                                format: uuid
+                                minLength: 1
                                 type: string
                             required:
                             - metadataIdentifier
                             type: object
                           custom:
+                            description: Custom allows arbitrary href
                             properties:
                               href:
+                                minLength: 1
+                                pattern: ^https?://.*$
                                 type: string
                               type:
+                                description: MIME type of the custom link
+                                minLength: 1
                                 type: string
                             required:
                             - href
@@ -1357,6 +1480,9 @@ spec:
                         - csw
                         type: object
                       spatialDatasetIdentifier:
+                        description: SpatialDatasetIdentifier is the ID uniquely identifying
+                          the dataset.
+                        minLength: 1
                         type: string
                     required:
                     - language
@@ -1364,10 +1490,13 @@ spec:
                     - spatialDatasetIdentifier
                     type: object
                   keywords:
+                    description: Keywords for capabilities
                     items:
                       type: string
+                    minItems: 1
                     type: array
                   mapfile:
+                    description: External Mapfile reference
                     properties:
                       configMapKeyRef:
                         description: Selects a key from a ConfigMap.
@@ -1396,18 +1525,27 @@ spec:
                     - configMapKeyRef
                     type: object
                   otherCrs:
+                    description: Other supported CRS
                     items:
                       type: string
+                    minItems: 1
                     type: array
                   ownerInfoRef:
+                    description: Reference to OwnerInfo CR
+                    minLength: 1
                     type: string
                   prefix:
                     description: Geonovum subdomein
                     minLength: 1
                     type: string
                   title:
+                    description: Service title
+                    minLength: 1
                     type: string
                   url:
+                    description: URL of the service
+                    minLength: 1
+                    pattern: ^https?://.*$
                     type: string
                 required:
                 - abstract
