@@ -119,8 +119,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 			layerReasons = append(layerReasons, "layer.boundingBoxes must contain a boundingBox for CRS '"+service.DataEPSG+"' when service.dataEPSG is not 'EPSG:28992'")
 		}
 
-		//nolint:nestif
-		if !*layer.Visible {
+		if layer.Visible != nil && !*layer.Visible {
 			if layer.Title != nil {
 				*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.title is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
 			}
@@ -189,7 +188,7 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 		}
 
 		if layerType == GroupLayer || layerType == TopLayer {
-			if !*layer.Visible {
+			if layer.Visible != nil && !*layer.Visible {
 				layerReasons = append(layerReasons, layerType+" must be visible")
 			}
 			if layer.Data != nil {
