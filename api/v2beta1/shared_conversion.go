@@ -79,11 +79,20 @@ func ConvertAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscalerS
 }
 
 func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
+	targetResources := src
+
+	if src.Requests != nil {
+		targetResources.Requests[corev1.ResourceEphemeralStorage] = src.Requests["ephemeralStorage"]
+	}
+	if src.Limits != nil {
+		targetResources.Limits[corev1.ResourceEphemeralStorage] = src.Limits["ephemeralStorage"]
+	}
+
 	return &corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
 				Name:      "mapserver",
-				Resources: src,
+				Resources: targetResources,
 			},
 		},
 	}
