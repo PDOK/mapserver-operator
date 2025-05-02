@@ -54,7 +54,7 @@ func addLayerInput(wms *pdoknlv3.WMS, data map[string]string) {
 }
 
 func processLayer(layer *pdoknlv3.Layer, legendReferences *[]LegendReference) {
-	if layer.Visible == nil || !*layer.Visible {
+	if !*layer.Visible {
 		return
 	}
 	for _, style := range layer.Styles {

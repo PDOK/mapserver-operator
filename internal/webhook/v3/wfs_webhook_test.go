@@ -24,6 +24,7 @@ SOFTWARE.
 
 package v3
 
+//nolint:revive // Complains about the dot imports
 import (
 	"context"
 	. "github.com/onsi/ginkgo/v2"
@@ -67,7 +68,7 @@ var _ = Describe("WFS Webhook", func() {
 		})
 
 		It("Warns if the name contains WFS", func() {
-			obj.Name = obj.Name + "-wfs"
+			obj.Name += "-wfs"
 			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(BeNil())
 			Expect(len(warnings)).To(BeNumerically(">", 0))

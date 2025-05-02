@@ -3,6 +3,9 @@ FROM docker.io/golang:1.24 AS builder
 ARG TARGETOS
 ARG TARGETARCH
 
+#COPY --from=repos ./smooth-operator /smooth-operator
+#COPY --from=repos ./ogc-specifications /ogc-specifications
+
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod

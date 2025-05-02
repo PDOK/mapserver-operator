@@ -26,17 +26,17 @@ package v2beta1
 
 import (
 	"errors"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"log"
-	"strconv"
-
-	sharedModel "github.com/pdok/smooth-operator/model"
-
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
+	"strconv"
+	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	sharedModel "github.com/pdok/smooth-operator/model"
 )
 
-const SERVICE_METADATA_IDENTIFIER_ANNOTATION = "pdok.nl/wms-service-metadata-uuid"
+const ServiceMetatdataIdentifierAnnotation = "pdok.nl/wms-service-metadata-uuid"
 
 // ConvertTo converts this WMS (v2beta1) to the Hub version (v3).
 func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
@@ -56,7 +56,7 @@ func V3WMSHubFromV2(src *WMS, target *pdoknlv3.WMS) {
 		dst.Annotations = make(map[string]string)
 	}
 
-	dst.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION] = src.Spec.Service.MetadataIdentifier
+	dst.Annotations[ServiceMetatdataIdentifierAnnotation] = src.Spec.Service.MetadataIdentifier
 
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
@@ -180,7 +180,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 		// TODO unable to fill in MetadataIdentifier here until we know how to handle non inspire services
 	}
 
-	uuid, ok := src.Annotations[SERVICE_METADATA_IDENTIFIER_ANNOTATION]
+	uuid, ok := src.Annotations[ServiceMetatdataIdentifierAnnotation]
 	if service.MetadataIdentifier == "00000000-0000-0000-0000-000000000000" && ok {
 		service.MetadataIdentifier = uuid
 	}
@@ -300,11 +300,28 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 	// it needs to be created with defaults from the service
 	// and in this case the middleLayers are all layers without a group
 	if topLayer == nil {
+		boundingBoxes := make([]pdoknlv3.WMSBoundingBox, 0)
+		if v2Service.Extent != nil {
+			bboxStringList := strings.Split(*v2Service.Extent, " ")
+			bbox := pdoknlv3.WMSBoundingBox{
+				CRS: v2Service.DataEPSG,
+				BBox: sharedModel.BBox{
+					MinX: bboxStringList[0],
+					MaxX: bboxStringList[2],
+					MinY: bboxStringList[1],
+					MaxY: bboxStringList[3],
+				},
+			}
+			boundingBoxes = append(boundingBoxes, bbox)
+		}
+
 		topLayer = &pdoknlv3.Layer{
-			Title:    &v2Service.Title,
-			Abstract: &v2Service.Abstract,
-			Keywords: v2Service.Keywords,
-			Layers:   &[]pdoknlv3.Layer{},
+			Title:         &v2Service.Title,
+			Abstract:      &v2Service.Abstract,
+			Keywords:      v2Service.Keywords,
+			Layers:        &[]pdoknlv3.Layer{},
+			BoundingBoxes: boundingBoxes,
+			Visible:       smoothoperatorutils.Pointer(true),
 		}
 
 		if v2Service.DataEPSG != "EPSG:28992" && v2Service.Extent != nil {
@@ -416,7 +433,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, serviceEPSG string) []WMSLayer {
 	var layers []WMSLayer
 
-	if parent == nil && *v3Layer.Name == "wms" {
+	if parent == nil && v3Layer.Name == nil {
 		// Default top layer, do not include in v2 layers
 		if v3Layer.Layers != nil {
 			for _, childLayer := range *v3Layer.Layers {
@@ -433,7 +450,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 			Styles:      []Style{},
 		}
 
-		v2Layer.Visible = PointerVal(v3Layer.Visible, true)
+		v2Layer.Visible = *v3Layer.Visible
 
 		if parent != nil {
 			v2Layer.Group = parent.Name

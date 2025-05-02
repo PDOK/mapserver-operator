@@ -3,6 +3,7 @@ package featureinfogenerator
 import (
 	featureinfo "github.com/pdok/featureinfo-generator/pkg/types"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 const (
@@ -28,7 +29,7 @@ func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, 
 
 		parentLayer := layer.GetParent(&wms.Spec.Service.Layer)
 		if parentLayer != nil && parentLayer.IsGroupLayer() {
-			l.GroupName = *parentLayer.Name
+			l.GroupName = smoothoperatorutils.PointerVal(parentLayer.Name, "")
 		}
 
 		input.Layers = append(input.Layers, l)
@@ -62,7 +63,7 @@ func getPropertiesForVector(columns []pdoknlv3.Column) (properties []featureinfo
 
 func getPropertiesForRaster(includeClass *bool) (properties []featureinfo.Property) {
 	properties = append(properties, featureinfo.Property{Name: "value_list"})
-	if includeClass != nil && *includeClass == true {
+	if includeClass != nil && *includeClass {
 		properties = append(properties, featureinfo.Property{Name: "class"})
 	}
 	return

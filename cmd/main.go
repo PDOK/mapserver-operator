@@ -20,10 +20,15 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
-	smoothoperator "github.com/pdok/smooth-operator/api/v1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"os"
 	"path/filepath"
+
+	"github.com/go-logr/zapr"
+	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
+	smoothoperator "github.com/pdok/smooth-operator/api/v1"
+	"github.com/pdok/smooth-operator/pkg/integrations/logging"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -35,7 +40,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -51,9 +55,13 @@ const (
 	defaultMultitoolImage             = "acrpdokprodman.azurecr.io/pdok/docker-multitool:0.9.4"
 	defaultMapfileGeneratorImage      = "acrpdokprodman.azurecr.io/pdok/mapfile-generator:1.9.5"
 	defaultMapserverImage             = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/mapserver:8.4.0-4-nl"
-	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/ogc-capabilities-generator:1.0.0-beta5"
-	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:v1.4.0-beta1"
+	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/ogc-capabilities-generator:1.0.0-beta7"
+	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:1.4.0-beta1"
 	defaultOgcWebserviceProxyImage    = "acrpdokprodman.azurecr.io/pdok/ogc-webservice-proxy:0.1.8"
+	defaultApacheExporterImage        = "acrpdokprodman.azurecr.io/mirror/docker.io/lusotycoon/apache-exporter:v0.7.0"
+
+	EnvFalse = "false"
+	EnvTrue  = "true"
 )
 
 var (
@@ -81,7 +89,10 @@ func main() {
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
 	var host string
-	var multitoolImage, mapfileGeneratorImage, mapserverImage, capabilitiesGeneratorImage, featureinfoGeneratorImage, ogcWebserviceProxyImage string
+	var mapserverDebugLevel int
+	var multitoolImage, mapfileGeneratorImage, mapserverImage, capabilitiesGeneratorImage, featureinfoGeneratorImage, ogcWebserviceProxyImage, apacheExporterImage string
+	var slackWebhookURL string
+	var logLevel int
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -106,20 +117,25 @@ func main() {
 	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", defaultCapabilitiesGeneratorImage, "The image to use in the capabilities generator init-container.")
 	flag.StringVar(&featureinfoGeneratorImage, "featureinfo-generator-image", defaultFeatureinfoGeneratorImage, "The image to use in the featureinfo generator init-container.")
 	flag.StringVar(&ogcWebserviceProxyImage, "ogc-webservice-proxy-image", defaultOgcWebserviceProxyImage, "The image to use in the ogc webservice proxy container.")
+	flag.StringVar(&apacheExporterImage, "apache-exporter-image", defaultApacheExporterImage, "The image to use in the apache-exporter container.")
+	flag.IntVar(&mapserverDebugLevel, "mapserver-debug-level", 0, "Debug level for the mapserver container, between 0 (error only) and 5 (very very verbose).")
+	flag.StringVar(&slackWebhookURL, "slack-webhook-url", "", "The webhook url for sending slack messages. Disabled if left empty")
+	flag.IntVar(&logLevel, "log-level", 0, "The zapcore loglevel. 0 = info, 1 = warn, 2 = error")
 
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	//nolint:gosec
+	levelEnabler := zapcore.Level(logLevel)
+	zapLogger, _ := logging.SetupLogger("atom-operator", slackWebhookURL, levelEnabler)
+
+	ctrl.SetLogger(zapr.NewLogger(zapLogger))
 
 	if host == "" {
 		setupLog.Error(errors.New("baseURL is required"), "A value for baseURL must be specified.")
 		os.Exit(1)
 	}
 	pdoknlv3.SetHost(host)
+	mapfilegenerator.SetDebugLevel(mapserverDebugLevel)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -244,6 +260,7 @@ func main() {
 			CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
 			FeatureinfoGeneratorImage:  featureinfoGeneratorImage,
 			OgcWebserviceProxyImage:    ogcWebserviceProxyImage,
+			ApacheExporterImage:        apacheExporterImage,
 		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WMS")
@@ -257,27 +274,28 @@ func main() {
 			MapfileGeneratorImage:      mapfileGeneratorImage,
 			MapserverImage:             mapserverImage,
 			CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
+			ApacheExporterImage:        apacheExporterImage,
 		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WFS")
 		os.Exit(1)
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
 		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")
 			os.Exit(1)
 		}
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
 		if err = webhookpdoknlv3.SetupWMSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WMS")
 			os.Exit(1)
 		}
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
 		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")
 			os.Exit(1)

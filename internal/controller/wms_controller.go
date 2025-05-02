@@ -61,7 +61,12 @@ type WMSReconciler struct {
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo/status,verbs=
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps;services,verbs=watch;create;get;update;list;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=watch;list;get
 // +kubebuilder:rbac:groups=traefik.io,resources=ingressroutes;middlewares,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=watch;create;get;update;list;delete
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=create;update;delete;list;watch
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets/status,verbs=get;update
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -127,10 +132,10 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	return result, err
 }
 
-func getBareConfigMapLegendGenerator(obj metav1.Object) *corev1.ConfigMap {
+func getBareConfigMapLegendGenerator(obj *pdoknlv3.WMS) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-legend-generator",
+			Name:      getSuffixedName(obj, "legend-generator"),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -157,10 +162,10 @@ func mutateConfigMapLegendGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, configM
 
 }
 
-func getBareConfigMapFeatureinfoGenerator(obj metav1.Object) *corev1.ConfigMap {
+func getBareConfigMapFeatureinfoGenerator(obj *pdoknlv3.WMS) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-featureinfo-generator",
+			Name:      getSuffixedName(obj, "featureinfo-generator"),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -190,10 +195,10 @@ func mutateConfigMapFeatureinfoGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, co
 	return smoothoperatorutils.AddHashSuffix(configMap)
 }
 
-func getBareConfigMapOgcWebserviceProxy(obj metav1.Object) *corev1.ConfigMap {
+func getBareConfigMapOgcWebserviceProxy(obj *pdoknlv3.WMS) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName() + "-ogc-webservice-proxy",
+			Name:      getSuffixedName(obj, "ogc-webservice-proxy"),
 			Namespace: obj.GetNamespace(),
 		},
 	}

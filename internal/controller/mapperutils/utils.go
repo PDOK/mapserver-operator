@@ -44,7 +44,7 @@ func ephemeralStorage[O pdoknlv3.WMSWFS](obj O, limit bool) *resource.Quantity {
 }
 
 func GetNamespaceURI(prefix string, ownerInfo *smoothoperatorv1.OwnerInfo) string {
-	return strings.ReplaceAll(ownerInfo.Spec.NamespaceTemplate, "{{prefix}}", prefix)
+	return strings.ReplaceAll(*ownerInfo.Spec.NamespaceTemplate, "{{prefix}}", prefix)
 }
 
 func EscapeQuotes(s string) string {
@@ -77,4 +77,13 @@ func GetLabelValueByKey(labels map[string]string, key string) *string {
 		}
 	}
 	return nil
+}
+
+func AnyMatch[S ~[]E, E any](slice S, eql func(E) bool) bool {
+	for _, elem := range slice {
+		if eql(elem) {
+			return true
+		}
+	}
+	return false
 }

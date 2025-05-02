@@ -38,13 +38,13 @@ spec:
     prefetchData: false
     includeIngress: false
   service:
-    prefix: ""
+    prefix: "test"
     url: https://service.pdok.nl/eigenaar/dataset/wfs/1.0.0
     inspire:
       serviceMetadataUrl:
         csw:
           metadataIdentifier: 68a42961-ed55-436b-a412-cc7424fd2a6e
-      spatialDatasetIdentifier: ""
+      spatialDatasetIdentifier: "002993"
       language: "dut"
     ownerInfoRef: pdok
     title: "Dataset"
@@ -52,8 +52,7 @@ spec:
     keywords:
       - keyword1
       - keyword2
-    fees: ""
-    accessConstraints: ""
+    accessConstraints: "https://test.com"
     defaultCrs: "EPSG:28992"
     bbox:
       defaultCRS:
