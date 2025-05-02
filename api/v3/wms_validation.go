@@ -36,10 +36,7 @@ func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
 		reasons = append(reasons, fmt.Sprintf("%v", err))
 	}
 
-	// Check service.baseURL did not change
-	if wms.Spec.Service.URL != wmsOld.Spec.Service.URL {
-		reasons = append(reasons, "service.baseURL is immutable")
-	}
+	sharedValidation.CheckBaseUrlImmutability(wmsOld, wms, &reasons)
 
 	if (wms.Spec.Service.Inspire == nil && wmsOld.Spec.Service.Inspire != nil) || (wms.Spec.Service.Inspire != nil && wmsOld.Spec.Service.Inspire == nil) {
 		reasons = append(reasons, "services cannot change from inspire to not inspire or the other way around")

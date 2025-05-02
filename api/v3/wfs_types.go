@@ -244,3 +244,7 @@ func (wfs *WFS) GeoPackages() []*Gpkg {
 
 	return gpkgs
 }
+
+func (wfs *WFS) GetBaseUrl() string {
+	return wfs.Spec.Service.URL
+}
