@@ -561,3 +561,7 @@ func (wms *WMS) GeoPackages() []*Gpkg {
 
 	return gpkgs
 }
+
+func (wms *WMS) GetBaseUrl() string {
+	return wms.Spec.Service.URL
+}
