@@ -117,6 +117,6 @@ func getV3() *pdoknlv3.WFS {
 		panic(err)
 	}
 	var wfs pdoknlv3.WFS
-	v2beta1.V3WFSHubFromV2(&v2wfs, &wfs)
+	v2wfs.ToV3(&wfs)
 	return &wfs
 }
