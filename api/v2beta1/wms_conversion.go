@@ -43,12 +43,12 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WMS)
 	log.Printf("ConvertTo: Converting WMS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
-	V3HubFromV2(src, dst)
+	src.ToV3(dst)
 
 	return nil
 }
 
-func V3HubFromV2(src *WMS, target *pdoknlv3.WMS) {
+func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	dst := target
 
 	dst.ObjectMeta = src.ObjectMeta
@@ -319,7 +319,7 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Title:         &v2Service.Title,
 			Abstract:      &v2Service.Abstract,
 			Keywords:      v2Service.Keywords,
-			Layers:        &[]pdoknlv3.Layer{},
+			Layers:        []pdoknlv3.Layer{},
 			BoundingBoxes: boundingBoxes,
 			Visible:       smoothoperatorutils.Pointer(true),
 		}
@@ -327,7 +327,7 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 		// adding the bottom layers to the middle layers they are grouped by
 		for _, layer := range notGroupedLayers {
 			bottomLayers := groupedLayers[*layer.Name]
-			layer.Layers = &bottomLayers
+			layer.Layers = bottomLayers
 			middleLayers = append(middleLayers, layer)
 		}
 	}
@@ -339,11 +339,11 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 	if topLayer.Name != nil {
 		for _, layer := range groupedLayers[*topLayer.Name] {
 			bottomLayers := groupedLayers[*layer.Name]
-			layer.Layers = &bottomLayers
+			layer.Layers = bottomLayers
 			middleLayers = append(middleLayers, layer)
 		}
 	}
-	topLayer.Layers = &middleLayers
+	topLayer.Layers = middleLayers
 
 	return *topLayer
 }
@@ -356,7 +356,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 		Keywords:            v2Layer.Keywords,
 		LabelNoClip:         v2Layer.LabelNoClip,
 		Styles:              []pdoknlv3.Style{},
-		Layers:              &[]pdoknlv3.Layer{},
+		Layers:              []pdoknlv3.Layer{},
 		BoundingBoxes:       []pdoknlv3.WMSBoundingBox{},
 		MinScaleDenominator: nil,
 		MaxScaleDenominator: nil,
@@ -429,7 +429,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 	if parent == nil && v3Layer.Name == nil {
 		// Default top layer, do not include in v2 layers
 		if v3Layer.Layers != nil {
-			for _, childLayer := range *v3Layer.Layers {
+			for _, childLayer := range v3Layer.Layers {
 				layers = append(layers, mapV3LayerToV2Layers(childLayer, nil, serviceEPSG)...)
 			}
 		}
@@ -503,7 +503,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 		layers = append(layers, v2Layer)
 
 		if v3Layer.Layers != nil {
-			for _, childLayer := range *v3Layer.Layers {
+			for _, childLayer := range v3Layer.Layers {
 				layers = append(layers, mapV3LayerToV2Layers(childLayer, &v3Layer, serviceEPSG)...)
 			}
 		}

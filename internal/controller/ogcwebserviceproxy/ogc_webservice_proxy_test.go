@@ -33,10 +33,10 @@ func TestGetConfig(t *testing.T) {
 						Service: pdoknlv3.WMSService{
 							Layer: pdoknlv3.Layer{
 								Name: controller.Pointer("toplayer"),
-								Layers: &[]pdoknlv3.Layer{
+								Layers: []pdoknlv3.Layer{
 									{
 										Name: controller.Pointer("grouplayer-1"),
-										Layers: &[]pdoknlv3.Layer{
+										Layers: []pdoknlv3.Layer{
 											{
 												Name: controller.Pointer("datalayer-1"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-1"}},
@@ -49,7 +49,7 @@ func TestGetConfig(t *testing.T) {
 									},
 									{
 										Name: controller.Pointer("grouplayer-2"),
-										Layers: &[]pdoknlv3.Layer{
+										Layers: []pdoknlv3.Layer{
 											{
 												Name: controller.Pointer("datalayer-3"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-3"}},

@@ -325,13 +325,9 @@ func (in *Layer) DeepCopyInto(out *Layer) {
 	}
 	if in.Layers != nil {
 		in, out := &in.Layers, &out.Layers
-		*out = new([]Layer)
-		if **in != nil {
-			in, out := *in, *out
-			*out = make([]Layer, len(*in))
-			for i := range *in {
-				(*in)[i].DeepCopyInto(&(*out)[i])
-			}
+		*out = make([]Layer, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 }

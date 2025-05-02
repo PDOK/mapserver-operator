@@ -52,7 +52,6 @@ spec:
     keywords:
       - keyword1
       - keyword2
-    accessConstraints: "https://test.com"
     defaultCrs: "EPSG:28992"
     bbox:
       defaultCRS:

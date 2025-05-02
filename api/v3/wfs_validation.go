@@ -16,7 +16,7 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 		reasons = append(reasons, fmt.Sprintf("%v", err))
 	}
 
-	validateWFS(wfs, &warnings, &reasons)
+	ValidateWFS(wfs, &warnings, &reasons)
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
@@ -41,7 +41,7 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 		reasons = append(reasons, "services cannot change from inspire to not inspire or the other way around")
 	}
 
-	validateWFS(wfs, &warnings, &reasons)
+	ValidateWFS(wfs, &warnings, &reasons)
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
@@ -50,7 +50,7 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 	return warnings, nil
 }
 
-func validateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
+func ValidateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
 	if strings.Contains(wfs.GetName(), "wfs") {
 		*warnings = append(*warnings, sharedValidation.FormatValidationWarning("name should not contain wfs", wfs.GroupVersionKind(), wfs.GetName()))
 	}

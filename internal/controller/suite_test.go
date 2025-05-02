@@ -31,6 +31,7 @@ import (
 	"errors"
 	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
 	smoothoperator1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"golang.org/x/tools/go/packages"
 	v1 "k8s.io/api/core/v1"
@@ -144,6 +145,12 @@ var _ = BeforeSuite(func() {
 		},
 	}
 	err = k8sClient.Create(ctx, &blobSecret)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Load CRD schemas
+	err = smoothoperatorvalidation.LoadSchemasForCRD(cfg, "default", "wfs.pdok.nl")
+	Expect(err).NotTo(HaveOccurred())
+	err = smoothoperatorvalidation.LoadSchemasForCRD(cfg, "default", "wms.pdok.nl")
 	Expect(err).NotTo(HaveOccurred())
 })
 

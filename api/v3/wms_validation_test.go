@@ -25,14 +25,14 @@ func Test_getEqualChildStyleNames(t *testing.T) {
 						{Name: "stylename-1"},
 						{Name: "stylename-2"},
 					},
-					Layers: &[]Layer{
+					Layers: []Layer{
 						{
 							Name: controller.Pointer("childlayer-1"),
 							Styles: []Style{
 								{Name: "stylename-2"},
 								{Name: "stylename-3"},
 							},
-							Layers: &[]Layer{
+							Layers: []Layer{
 								{
 									Name: controller.Pointer("childlayer-2"),
 									Styles: []Style{
@@ -60,14 +60,14 @@ func Test_getEqualChildStyleNames(t *testing.T) {
 						{Name: "stylename-1"},
 						{Name: "stylename-2"},
 					},
-					Layers: &[]Layer{
+					Layers: []Layer{
 						{
 							Name: controller.Pointer("childlayer-1"),
 							Styles: []Style{
 								{Name: "stylename-3"},
 								{Name: "stylename-4"},
 							},
-							Layers: &[]Layer{
+							Layers: []Layer{
 								{
 									Name: controller.Pointer("childlayer-2"),
 									Styles: []Style{

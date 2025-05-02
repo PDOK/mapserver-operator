@@ -40,6 +40,10 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 	log.Printf("ConvertTo: Converting WFS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
 
+	return src.ToV3(dst)
+}
+
+func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 	dst.ObjectMeta = src.ObjectMeta
 
 	// Set LifeCycle if defined

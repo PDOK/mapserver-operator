@@ -154,7 +154,7 @@ func TestGetArgsForWMS(t *testing.T) {
 										},
 									},
 								},
-								Layers: &[]v3.Layer{
+								Layers: []v3.Layer{
 									{
 										Name:  smoothoperatorutils.Pointer("wms-gpkg-layer-1-name"),
 										Title: smoothoperatorutils.Pointer("wms-gpkg-layer-1-title"),
@@ -224,7 +224,7 @@ func TestGetArgsForWMS(t *testing.T) {
 							Layer: v3.Layer{
 								Name:  smoothoperatorutils.Pointer("wms-tif-layer-name"),
 								Title: smoothoperatorutils.Pointer("wms-tif-layer-title"),
-								Layers: &[]v3.Layer{
+								Layers: []v3.Layer{
 									{
 										Name:  smoothoperatorutils.Pointer("wms-tif-layer-1-name"),
 										Title: smoothoperatorutils.Pointer("wms-tif-layer-1-title"),
