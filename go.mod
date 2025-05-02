@@ -13,7 +13,7 @@ require (
 	github.com/pdok/featureinfo-generator v1.4.0-beta1
 	github.com/pdok/ogc-capabilities-generator v1.0.0-beta7
 	github.com/pdok/ogc-specifications v1.0.0-beta7
-	github.com/pdok/smooth-operator v0.0.16
+	github.com/pdok/smooth-operator v0.0.18
 	github.com/stretchr/testify v1.10.0
 	github.com/traefik/traefik/v3 v3.3.4
 	k8s.io/api v0.32.3
@@ -74,7 +74,7 @@ require (
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-logr/zapr v1.3.0 // indirect
+	github.com/go-logr/zapr v1.3.0
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
@@ -114,7 +114,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20241215155358-4a5509556b9e // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
