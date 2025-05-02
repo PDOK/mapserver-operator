@@ -542,7 +542,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 		Layer:                   []*wms130.Layer{},
 	}
 
-	for _, layer := range *referenceLayer.Layers {
+	for _, layer := range referenceLayer.Layers {
 		var minScaleDenom *float64
 		var maxScaleDenom *float64
 		var innerIdentifier *wms130.Identifier

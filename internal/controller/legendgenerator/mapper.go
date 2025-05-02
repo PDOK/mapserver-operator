@@ -35,7 +35,7 @@ func addLayerInput(wms *pdoknlv3.WMS, data map[string]string) {
 	legendReferences := make([]LegendReference, 0)
 
 	if wms.Spec.Service.Layer.Layers != nil {
-		for _, layer := range *wms.Spec.Service.Layer.Layers {
+		for _, layer := range wms.Spec.Service.Layer.Layers {
 			processLayer(&layer, &legendReferences)
 		}
 	}
@@ -67,7 +67,7 @@ func processLayer(layer *pdoknlv3.Layer, legendReferences *[]LegendReference) {
 	}
 
 	if layer.Layers != nil {
-		for _, innerLayer := range *layer.Layers {
+		for _, innerLayer := range layer.Layers {
 			processLayer(&innerLayer, legendReferences)
 		}
 	}
@@ -87,7 +87,7 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 
 	if topLayer.Layers != nil {
 		// These layers are called 'middle layers' in the old operator
-		for _, layer := range *wms.Spec.Service.Layer.Layers {
+		for _, layer := range wms.Spec.Service.Layer.Layers {
 			for _, style := range layer.Styles {
 				if topLevelStyleNames[style.Name] && style.Legend == nil {
 					legendReferences = append(legendReferences, LegendReference{
@@ -114,7 +114,7 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 		getAllNestedNonGroupLayerNames(&topLayer, &targetArray)
 		groupLayers[*layerName] = targetArray
 
-		for _, subLayer := range *topLayer.Layers {
+		for _, subLayer := range topLayer.Layers {
 			if subLayer.IsGroupLayer() {
 				layerName = subLayer.Name
 				targetArray = make([]string, 0)
@@ -130,7 +130,7 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 }
 
 func getAllNestedNonGroupLayerNames(layer *pdoknlv3.Layer, target *[]string) {
-	for _, subLayer := range *layer.Layers {
+	for _, subLayer := range layer.Layers {
 		if subLayer.IsGroupLayer() {
 			getAllNestedNonGroupLayerNames(&subLayer, target)
 		} else {

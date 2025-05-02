@@ -1150,7 +1150,6 @@ spec:
                     type: string
                   accessConstraints:
                     default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
-                    description: AccessConstraints URL
                     minLength: 1
                     pattern: https?://
                     type: string

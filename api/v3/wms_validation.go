@@ -17,7 +17,7 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 		reasons = append(reasons, fmt.Sprintf("%v", err))
 	}
 
-	validateWMS(wms, &warnings, &reasons)
+	ValidateWMS(wms, &warnings, &reasons)
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
@@ -36,16 +36,13 @@ func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
 		reasons = append(reasons, fmt.Sprintf("%v", err))
 	}
 
-	// Check service.baseURL did not change
-	if wms.Spec.Service.URL != wmsOld.Spec.Service.URL {
-		reasons = append(reasons, "service.baseURL is immutable")
-	}
+	sharedValidation.CheckBaseUrlImmutability(wmsOld, wms, &reasons)
 
 	if (wms.Spec.Service.Inspire == nil && wmsOld.Spec.Service.Inspire != nil) || (wms.Spec.Service.Inspire != nil && wmsOld.Spec.Service.Inspire == nil) {
 		reasons = append(reasons, "services cannot change from inspire to not inspire or the other way around")
 	}
 
-	validateWMS(wms, &warnings, &reasons)
+	ValidateWMS(wms, &warnings, &reasons)
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
@@ -54,7 +51,7 @@ func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
 	return warnings, nil
 }
 
-func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
+func ValidateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 	if strings.Contains(wms.GetName(), "wms") {
 		*warnings = append(*warnings, sharedValidation.FormatValidationWarning("name should not contain wms", wms.GroupVersionKind(), wms.GetName()))
 	}
@@ -212,11 +209,11 @@ func validateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 }
 
 func findEqualChildStyleNames(layer *Layer, equalStyleNames *map[string][]string) {
-	if layer.Layers == nil || len(*layer.Layers) == 0 {
+	if len(layer.Layers) == 0 {
 		return
 	}
 	equalChildStyleNames := map[string][]string{}
-	for _, childLayer := range *layer.Layers {
+	for _, childLayer := range layer.Layers {
 		if childLayer.Name == nil {
 			// Name check is done elsewhere
 			// To prevent errors here we just continue

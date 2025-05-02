@@ -16,7 +16,7 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 		reasons = append(reasons, fmt.Sprintf("%v", err))
 	}
 
-	validateWFS(wfs, &warnings, &reasons)
+	ValidateWFS(wfs, &warnings, &reasons)
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
@@ -35,16 +35,13 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 		reasons = append(reasons, fmt.Sprintf("%v", err))
 	}
 
-	// Check service.baseURL did not change
-	if wfs.Spec.Service.URL != wfsOld.Spec.Service.URL {
-		reasons = append(reasons, "service.baseURL is immutable")
-	}
+	sharedValidation.CheckBaseUrlImmutability(wfsOld, wfs, &reasons)
 
 	if (wfs.Spec.Service.Inspire == nil && wfsOld.Spec.Service.Inspire != nil) || (wfs.Spec.Service.Inspire != nil && wfsOld.Spec.Service.Inspire == nil) {
 		reasons = append(reasons, "services cannot change from inspire to not inspire or the other way around")
 	}
 
-	validateWFS(wfs, &warnings, &reasons)
+	ValidateWFS(wfs, &warnings, &reasons)
 
 	if len(reasons) > 0 {
 		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
@@ -53,7 +50,7 @@ func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 	return warnings, nil
 }
 
-func validateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
+func ValidateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
 	if strings.Contains(wfs.GetName(), "wfs") {
 		*warnings = append(*warnings, sharedValidation.FormatValidationWarning("name should not contain wfs", wfs.GroupVersionKind(), wfs.GetName()))
 	}

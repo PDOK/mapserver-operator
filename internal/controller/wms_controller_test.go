@@ -38,6 +38,7 @@ import (
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorsamples "github.com/pdok/smooth-operator/config/samples"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -984,7 +985,11 @@ var testManifestWMS []byte
 
 func getUniqueWMSSample(counter int) (*pdoknlv3.WMS, error) {
 	sample := &pdoknlv3.WMS{}
-	err := yaml.Unmarshal(testManifestWMS, sample)
+	defaulted, err := smoothoperatorvalidation.ApplySchemaDefaultsStr(string(testManifestWMS))
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal([]byte(defaulted), sample)
 	if err != nil {
 		return nil, err
 	}

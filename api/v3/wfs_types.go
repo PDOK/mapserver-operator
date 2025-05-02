@@ -120,6 +120,7 @@ type WFSService struct {
 	// AccessConstraints URL
 	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+
 	// +kubebuilder:validation:MinLength:=1
 	AccessConstraints string `json:"accessConstraints"`
 
@@ -243,4 +244,8 @@ func (wfs *WFS) GeoPackages() []*Gpkg {
 	}
 
 	return gpkgs
+}
+
+func (wfs *WFS) GetBaseUrl() string {
+	return wfs.Spec.Service.URL
 }
