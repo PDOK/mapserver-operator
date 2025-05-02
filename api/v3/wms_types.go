@@ -90,8 +90,9 @@ type WMSService struct {
 	Fees *string `json:"fees,omitempty"`
 
 	// AccessConstraints (licence) that are applicable to the service
+	// +kubebuilder:validation:Pattern:=`https?://.*`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string `json:"accessConstraints"`
+	AccessConstraints string `json:"accessConstraints,omitempty"`
 
 	// TODO??
 	MaxSize *int32 `json:"maxSize,omitempty"`
@@ -137,7 +138,7 @@ type ConfigMapRef struct {
 	Keys []string `json:"keys,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:message="A layer can only have data or layers, not both.", rule="has(self.data) || has(self.layers)"
+// +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validations:MinLength:=1
@@ -187,7 +188,7 @@ type Layer struct {
 	Data *Data `json:"data,omitempty"`
 
 	// Sublayers of the layer
-	Layers *[]Layer `json:"layers,omitempty"`
+	Layers []Layer `json:"layers,omitempty"`
 }
 
 type WMSBoundingBox struct {
@@ -322,9 +323,9 @@ func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 	}
 	result = append(result, annotatedTopLayer)
 
-	for _, topLayerChild := range *topLayer.Layers {
+	for _, topLayerChild := range topLayer.Layers {
 		groupName := topLayer.Name
-		isGroupLayer := topLayerChild.Layers != nil && len(*topLayerChild.Layers) > 0
+		isGroupLayer := topLayerChild.Layers != nil && len(topLayerChild.Layers) > 0
 		isDataLayer := !isGroupLayer
 		result = append(result, AnnotatedLayer{
 			GroupName:    groupName,
@@ -334,8 +335,8 @@ func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 			Layer:        topLayerChild,
 		})
 
-		if topLayerChild.Layers != nil && len(*topLayerChild.Layers) > 0 {
-			for _, middleLayerChild := range *topLayerChild.Layers {
+		if len(topLayerChild.Layers) > 0 {
+			for _, middleLayerChild := range topLayerChild.Layers {
 				groupName = topLayerChild.Name
 				result = append(result, AnnotatedLayer{
 					GroupName:    groupName,
@@ -357,10 +358,8 @@ func (wmsService *WMSService) GetAllLayers() (layers []Layer) {
 
 func (layer *Layer) GetAllLayers() (layers []Layer) {
 	layers = append(layers, *layer)
-	if layer.Layers != nil {
-		for _, childLayer := range *layer.Layers {
-			layers = append(layers, childLayer.GetAllLayers()...)
-		}
+	for _, childLayer := range layer.Layers {
+		layers = append(layers, childLayer.GetAllLayers()...)
 	}
 	return
 }
@@ -370,7 +369,7 @@ func (layer *Layer) GetParent(candidateLayer *Layer) *Layer {
 		return nil
 	}
 
-	for _, childLayer := range *candidateLayer.Layers {
+	for _, childLayer := range candidateLayer.Layers {
 		if childLayer.Name == layer.Name {
 			return candidateLayer
 		}
@@ -417,11 +416,11 @@ func (layer *Layer) GetLayerType(service *WMSService) (layerType string) {
 }
 
 func (layer *Layer) IsDataLayer() bool {
-	return layer.hasData() && (layer.Layers == nil || len(*layer.Layers) == 0)
+	return layer.hasData() && len(layer.Layers) == 0
 }
 
 func (layer *Layer) IsGroupLayer() bool {
-	return layer.Layers != nil && len(*layer.Layers) > 0
+	return len(layer.Layers) > 0
 }
 
 func (layer *Layer) IsTopLayer(service *WMSService) bool {
@@ -438,12 +437,12 @@ func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {
 }
 
 func (layer *Layer) setInheritedBoundingBoxes() {
-	if layer.Layers == nil || len(*layer.Layers) == 0 {
+	if len(layer.Layers) == 0 {
 		return
 	}
 
 	var updatedLayers []Layer
-	for _, childLayer := range *layer.Layers {
+	for _, childLayer := range layer.Layers {
 		// Inherit parent boundingboxes
 		for _, boundingBox := range layer.BoundingBoxes {
 			if !childLayer.hasBoundingBoxForCRS(boundingBox.CRS) {
@@ -453,7 +452,7 @@ func (layer *Layer) setInheritedBoundingBoxes() {
 		childLayer.setInheritedBoundingBoxes()
 		updatedLayers = append(updatedLayers, childLayer)
 	}
-	*layer.Layers = updatedLayers
+	layer.Layers = updatedLayers
 }
 
 func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
@@ -488,11 +487,11 @@ func (wms *WMS) GetAuthority() *Authority {
 		return wms.Spec.Service.Layer.Authority
 	}
 
-	for _, childLayer := range *wms.Spec.Service.Layer.Layers {
+	for _, childLayer := range wms.Spec.Service.Layer.Layers {
 		if childLayer.Authority != nil {
 			return childLayer.Authority
 		} else if childLayer.Layers != nil {
-			for _, grandChildLayer := range *childLayer.Layers {
+			for _, grandChildLayer := range childLayer.Layers {
 				if grandChildLayer.Authority != nil {
 					return grandChildLayer.Authority
 				}
@@ -544,13 +543,13 @@ func (wms *WMS) GeoPackages() []*Gpkg {
 	gpkgs := make([]*Gpkg, 0)
 
 	if wms.Spec.Service.Layer.Layers != nil {
-		for _, layer := range *wms.Spec.Service.Layer.Layers {
+		for _, layer := range wms.Spec.Service.Layer.Layers {
 			if layer.Data != nil {
 				if layer.Data.Gpkg != nil {
 					gpkgs = append(gpkgs, layer.Data.Gpkg)
 				}
 			} else if layer.Layers != nil {
-				for _, childLayer := range *layer.Layers {
+				for _, childLayer := range layer.Layers {
 					if childLayer.Data != nil && childLayer.Data.Gpkg != nil {
 						gpkgs = append(gpkgs, childLayer.Data.Gpkg)
 					}

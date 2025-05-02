@@ -90,6 +90,7 @@ type WFSService struct {
 	Keywords     []string `json:"keywords"`
 	Fees         *string  `json:"fees,omitempty"`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+	// +kubebuilder:validation:Pattern:=`https?://.*`
 	AccessConstraints string   `json:"accessConstraints"`
 	DefaultCrs        string   `json:"defaultCrs"`
 	OtherCrs          []string `json:"otherCrs,omitempty"`

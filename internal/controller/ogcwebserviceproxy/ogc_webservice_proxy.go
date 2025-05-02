@@ -69,7 +69,7 @@ func MapWMSToOgcWebserviceProxyConfig(wms *pdoknlv3.WMS) (config Config, err err
 		// TODO Should there be a distinction between grouplayers and the toplayer?
 		if layer.IsGroupLayer() {
 			var dataLayers []string
-			for _, childLayer := range *layer.Layers {
+			for _, childLayer := range layer.Layers {
 				if childLayer.IsDataLayer() {
 					dataLayers = append(dataLayers, *childLayer.Name)
 				}

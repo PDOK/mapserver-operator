@@ -95,7 +95,7 @@ var _ = Describe("WMS Webhook", func() {
 		})
 
 		It("Should deny creation if layer names are not unique", func() {
-			childLayers := *obj.Spec.Service.Layer.Layers
+			childLayers := obj.Spec.Service.Layer.Layers
 			secondLayer := childLayers[0]
 			obj.Spec.Service.Layer.Name = secondLayer.Name
 			_, err := validator.ValidateCreate(ctx, obj)
@@ -127,24 +127,24 @@ var _ = Describe("WMS Webhook", func() {
 		})
 
 		It("Should deny creation if there is a visible layer without a style title", func() {
-			nestedLayers1 := *obj.Spec.Service.Layer.Layers
-			nestedLayers2 := *nestedLayers1[0].Layers
+			nestedLayers1 := obj.Spec.Service.Layer.Layers
+			nestedLayers2 := nestedLayers1[0].Layers
 			nestedLayers2[0].Styles[0].Title = nil
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Should deny creation if layer has parent layer with same style name as child layer", func() {
-			nestedLayers1 := *obj.Spec.Service.Layer.Layers
-			nestedLayers2 := *nestedLayers1[0].Layers
+			nestedLayers1 := obj.Spec.Service.Layer.Layers
+			nestedLayers2 := nestedLayers1[0].Layers
 			nestedLayers1[0].Styles = []pdoknlv3.Style{{Name: nestedLayers2[0].Styles[0].Name}}
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Should deny creation if datalayer has style without visualization but there is no mapfile set", func() {
-			nestedLayers1 := *obj.Spec.Service.Layer.Layers
-			nestedLayers2 := *nestedLayers1[0].Layers
+			nestedLayers1 := obj.Spec.Service.Layer.Layers
+			nestedLayers2 := nestedLayers1[0].Layers
 			nestedLayers2[0].Styles[0].Visualization = nil
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
@@ -157,21 +157,21 @@ var _ = Describe("WMS Webhook", func() {
 		})
 
 		It("Should deny creation if grouplayer is not visible", func() {
-			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers1 := obj.Spec.Service.Layer.Layers
 			nestedLayers1[0].Visible = smoothoperatorutils.Pointer(false)
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Should deny creation if grouplayer has data", func() {
-			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers1 := obj.Spec.Service.Layer.Layers
 			nestedLayers1[0].Data = &pdoknlv3.Data{}
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Should deny creation if grouplayer has style with visualization", func() {
-			nestedLayers1 := *obj.Spec.Service.Layer.Layers
+			nestedLayers1 := obj.Spec.Service.Layer.Layers
 			nestedLayers1[0].Styles = []pdoknlv3.Style{{Visualization: smoothoperatorutils.Pointer("visualization.style")}}
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())

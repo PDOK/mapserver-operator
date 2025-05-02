@@ -1128,6 +1128,7 @@ spec:
                     type: string
                   accessConstraints:
                     default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
+                    pattern: https?://.*
                     type: string
                   bbox:
                     properties:

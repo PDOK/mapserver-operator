@@ -79,10 +79,10 @@ func TestGetInput(t *testing.T) {
 						Service: pdoknlv3.WMSService{
 							Layer: pdoknlv3.Layer{
 								Name: smoothoperatorutils.Pointer("top-layer-name"),
-								Layers: &[]pdoknlv3.Layer{
+								Layers: []pdoknlv3.Layer{
 									{
 										Name: smoothoperatorutils.Pointer("group-layer-name"),
-										Layers: &[]pdoknlv3.Layer{
+										Layers: []pdoknlv3.Layer{
 											{
 												Name: smoothoperatorutils.Pointer("gpkg-layer-name"),
 												Data: &pdoknlv3.Data{

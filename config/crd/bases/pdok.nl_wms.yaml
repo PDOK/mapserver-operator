@@ -1134,6 +1134,7 @@ spec:
                     accessConstraints:
                       default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
                       description: AccessConstraints (licence) that are applicable to the service
+                      pattern: https?://.*
                       type: string
                     dataEPSG:
                       description: CRS of the data
@@ -1753,8 +1754,8 @@ spec:
                               - name
                             type: object
                             x-kubernetes-validations:
-                              - message: A layer can only have data or layers, not both.
-                                rule: has(self.data) || has(self.layers)
+                              - message: A layer should have sublayers or data, not both
+                                rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                           type: array
                         maxscaledenominator:
                           description: The maximum scale at which this layer functions
@@ -1812,8 +1813,8 @@ spec:
                         - keywords
                       type: object
                       x-kubernetes-validations:
-                        - message: A layer can only have data or layers, not both.
-                          rule: has(self.data) || has(self.layers)
+                        - message: A layer should have sublayers or data, not both
+                          rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                     mapfile:
                       description: Custom mapfile
                       properties:
@@ -1886,7 +1887,6 @@ spec:
                       type: string
                   required:
                     - abstract
-                    - accessConstraints
                     - dataEPSG
                     - keywords
                     - layer

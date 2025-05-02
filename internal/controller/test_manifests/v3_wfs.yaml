@@ -53,7 +53,6 @@ spec:
       - keyword1
       - keyword2
     fees: ""
-    accessConstraints: ""
     defaultCrs: "EPSG:28992"
     bbox:
       defaultCRS:
