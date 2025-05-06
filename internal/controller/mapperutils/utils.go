@@ -33,10 +33,13 @@ func ephemeralStorage[O pdoknlv3.WMSWFS](obj O, limit bool) *resource.Quantity {
 	for _, container := range obj.PodSpecPatch().Containers {
 		if container.Name == "mapserver" {
 			if limit {
-				return container.Resources.Limits.StorageEphemeral()
+				limitVal := container.Resources.Limits.StorageEphemeral()
+				if !limitVal.IsZero() {
+					return limitVal
+				}
+			} else if !container.Resources.Requests.StorageEphemeral().IsZero() {
+				return container.Resources.Requests.StorageEphemeral()
 			}
-
-			return container.Resources.Requests.StorageEphemeral()
 		}
 	}
 
