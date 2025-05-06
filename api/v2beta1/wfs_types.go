@@ -66,7 +66,7 @@ type WFSService struct {
 	Inspire  bool   `json:"inspire"`
 	Abstract string `json:"abstract"`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints  string    `json:"accessConstraints"`
+	AccessConstraints  *string   `json:"accessConstraints,omitempty"`
 	Keywords           []string  `json:"keywords"`
 	MetadataIdentifier string    `json:"metadataIdentifier"`
 	Authority          Authority `json:"authority"`

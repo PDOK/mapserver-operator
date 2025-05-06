@@ -26,7 +26,6 @@ package v3
 
 import (
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
@@ -55,7 +54,7 @@ type WMSSpec struct {
 	PodSpecPatch *corev1.PodSpec `json:"podSpecPatch,omitempty"`
 
 	// Optional specification for the HorizontalAutoscaler
-	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
+	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
 
 	// Optional options for the configuration of the service.
 	Options Options `json:"options,omitempty"`
@@ -92,7 +91,7 @@ type WMSService struct {
 	// AccessConstraints (licence) that are applicable to the service
 	// +kubebuilder:validation:Pattern:=`https?://.*`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string `json:"accessConstraints,omitempty"`
+	AccessConstraints *string `json:"accessConstraints,omitempty"`
 
 	// TODO??
 	MaxSize *int32 `json:"maxSize,omitempty"`
@@ -139,6 +138,7 @@ type ConfigMapRef struct {
 }
 
 // +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
+// +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validations:MinLength:=1
@@ -152,9 +152,9 @@ type Layer struct {
 	// +kubebuilder:validations:MinLength:=1
 	Abstract *string `json:"abstract,omitempty"`
 
-	// Keywords of the layer
+	// Keywords of the layer, required if the layer is visible
 	// +kubebuilder:validations:MinItems:=1
-	Keywords []string `json:"keywords"`
+	Keywords []string `json:"keywords,omitempty"`
 
 	// BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
 	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes,omitempty"`
@@ -170,11 +170,11 @@ type Layer struct {
 	DatasetMetadataURL *MetadataURL `json:"datasetMetadataUrl,omitempty"`
 
 	// The minimum scale at which this layer functions
-	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)$`
+	// +kubebuilder:validation:Pattern:=`^[0-9]+(.[0-9]+)?$`
 	MinScaleDenominator *string `json:"minscaledenominator,omitempty"`
 
 	// The maximum scale at which this layer functions
-	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)$`
+	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)?$`
 	MaxScaleDenominator *string `json:"maxscaledenominator,omitempty"`
 
 	// List of styles used by the layer
@@ -523,7 +523,7 @@ func (wms *WMS) PodSpecPatch() *corev1.PodSpec {
 	return wms.Spec.PodSpecPatch
 }
 
-func (wms *WMS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec {
+func (wms *WMS) HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch {
 	return wms.Spec.HorizontalPodAutoscalerPatch
 }
 
