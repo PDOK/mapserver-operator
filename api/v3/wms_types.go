@@ -313,39 +313,38 @@ type AnnotatedLayer struct {
 func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 	result := make([]AnnotatedLayer, 0)
 
-	topLayer := wmsService.Layer
-	annotatedTopLayer := AnnotatedLayer{
-		GroupName:    nil,
-		IsTopLayer:   true,
-		IsGroupLayer: topLayer.Name != nil,
-		IsDataLayer:  false,
-		Layer:        topLayer,
+	firstLayer := AnnotatedLayer{}
+	if wmsService.Layer.Name != nil && len(*wmsService.Layer.Name) > 0 {
+		firstLayer = AnnotatedLayer{
+			GroupName:    nil,
+			IsTopLayer:   wmsService.Layer.IsTopLayer(),
+			IsGroupLayer: wmsService.Layer.IsGroupLayer(),
+			IsDataLayer:  wmsService.Layer.IsDataLayer(),
+			Layer:        wmsService.Layer,
+		}
+		result = append(result, firstLayer)
 	}
-	result = append(result, annotatedTopLayer)
 
-	for _, topLayerChild := range topLayer.Layers {
-		groupName := topLayer.Name
-		isGroupLayer := topLayerChild.Layers != nil && len(topLayerChild.Layers) > 0
+	for _, subLayer := range wmsService.Layer.Layers {
+		groupName := wmsService.Layer.Name
+		isGroupLayer := subLayer.IsGroupLayer()
 		isDataLayer := !isGroupLayer
 		result = append(result, AnnotatedLayer{
 			GroupName:    groupName,
 			IsTopLayer:   false,
 			IsGroupLayer: isGroupLayer,
 			IsDataLayer:  isDataLayer,
-			Layer:        topLayerChild,
+			Layer:        subLayer,
 		})
 
-		if len(topLayerChild.Layers) > 0 {
-			for _, middleLayerChild := range topLayerChild.Layers {
-				groupName = topLayerChild.Name
-				result = append(result, AnnotatedLayer{
-					GroupName:    groupName,
-					IsTopLayer:   false,
-					IsGroupLayer: false,
-					IsDataLayer:  true,
-					Layer:        middleLayerChild,
-				})
-			}
+		for _, subSubLayer := range subLayer.Layers {
+			result = append(result, AnnotatedLayer{
+				GroupName:    subLayer.Name,
+				IsTopLayer:   false,
+				IsGroupLayer: false,
+				IsDataLayer:  true,
+				Layer:        subSubLayer,
+			})
 		}
 	}
 
@@ -423,8 +422,22 @@ func (layer *Layer) IsGroupLayer() bool {
 	return len(layer.Layers) > 0
 }
 
-func (layer *Layer) IsTopLayer(service *WMSService) bool {
-	return layer.Name == service.Layer.Name
+// IsTopLayer - a layer is a toplayer if and only if it has sublayers that are group layers.
+// In other words the layer is level 1 in a 3 level hierarchy.
+func (layer *Layer) IsTopLayer() bool {
+	if layer.IsGroupLayer() {
+		for _, childLayer := range layer.Layers {
+			if childLayer.IsGroupLayer() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (layer *Layer) IsVisible() bool {
+	return layer.Visible == nil || *layer.Visible
 }
 
 func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {

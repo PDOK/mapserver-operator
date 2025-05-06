@@ -456,7 +456,7 @@ spec:
               horizontalPodAutoscalerPatch:
                 description: |-
                   HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
-                  To that v3 CRD end up with an empty scaleTargetRef when marshalling. This can be removed when we're done with converting CRDs.
+                  This way we don't have to specify the scaleTargetRef field in the CRD.
                 properties:
                   behavior:
                     description: |-
