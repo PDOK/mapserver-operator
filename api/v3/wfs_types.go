@@ -26,7 +26,6 @@ package v3
 
 import (
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -73,9 +72,9 @@ type WFSSpec struct {
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
-	PodSpecPatch                 *corev1.PodSpec                            `json:"podSpecPatch,omitempty"`
-	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
-	Options                      Options                                    `json:"options,omitempty"`
+	PodSpecPatch                 *corev1.PodSpec               `json:"podSpecPatch,omitempty"`
+	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
+	Options                      Options                       `json:"options,omitempty"`
 
 	// service configuration
 	Service WFSService `json:"service"`
@@ -120,9 +119,8 @@ type WFSService struct {
 	// AccessConstraints URL
 	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-
 	// +kubebuilder:validation:MinLength:=1
-	AccessConstraints string `json:"accessConstraints"`
+	AccessConstraints *string `json:"accessConstraints,omitempty"`
 
 	// Default CRS (DataEPSG)
 	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"
@@ -218,7 +216,7 @@ func (wfs *WFS) PodSpecPatch() *corev1.PodSpec {
 	return wfs.Spec.PodSpecPatch
 }
 
-func (wfs *WFS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec {
+func (wfs *WFS) HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch {
 	return wfs.Spec.HorizontalPodAutoscalerPatch
 }
 

@@ -360,7 +360,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 		BoundingBoxes:       []pdoknlv3.WMSBoundingBox{},
 		MinScaleDenominator: nil,
 		MaxScaleDenominator: nil,
-		Visible:             &v2Layer.Visible,
+		Visible:             v2Layer.Visible,
 	}
 
 	if v2Layer.SourceMetadataIdentifier != nil {
@@ -443,7 +443,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 			Styles:      []Style{},
 		}
 
-		v2Layer.Visible = *v3Layer.Visible
+		v2Layer.Visible = v3Layer.Visible
 
 		if parent != nil {
 			v2Layer.Group = parent.Name

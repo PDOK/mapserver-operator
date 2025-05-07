@@ -558,7 +558,7 @@ func TestGetInputForWFS(t *testing.T) {
 							Title:             "some Service title",
 							Abstract:          "some \"Service\" abstract",
 							Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
-							AccessConstraints: "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
+							AccessConstraints: smoothoperatorutils.Pointer("http://creativecommons.org/publicdomain/zero/1.0/deed.nl"),
 							Inspire: &pdoknlv3.Inspire{
 								ServiceMetadataURL: pdoknlv3.MetadataURL{
 									CSW: &pdoknlv3.Metadata{

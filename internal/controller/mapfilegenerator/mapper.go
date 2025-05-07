@@ -118,8 +118,8 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 	service := wms.Spec.Service
 
 	accessConstraints := service.AccessConstraints
-	if accessConstraints == "" {
-		accessConstraints = "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+	if accessConstraints == nil || *accessConstraints == "" {
+		accessConstraints = smoothoperatorutils.Pointer("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
 	}
 
 	datasetOwner := ""
@@ -183,7 +183,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 			DataEPSG:        service.DataEPSG,
 			EPSGList:        epsgs,
 		},
-		AccessConstraints: accessConstraints,
+		AccessConstraints: *accessConstraints,
 		Layers:            []WMSLayer{},
 		GroupLayers:       []GroupLayer{},
 		Symbols:           getSymbols(wms),
@@ -199,7 +199,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 		if annotatedLayer.IsDataLayer {
 			layer := getWMSLayer(annotatedLayer.Layer, extent, wms)
 			result.Layers = append(result.Layers, layer)
-		} else if annotatedLayer.IsGroupLayer && *annotatedLayer.Layer.Visible {
+		} else if annotatedLayer.IsGroupLayer && !annotatedLayer.IsTopLayer {
 			groupLayer := GroupLayer{
 				Name:       *annotatedLayer.Layer.Name,
 				Title:      smoothoperatorutils.PointerVal(annotatedLayer.Layer.Title, ""),
@@ -222,7 +222,8 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 
 	groupName := ""
 	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
-	if parent.IsGroupLayer() && parent.Name != nil && *parent.Visible {
+	// If the layer falls directly under the toplayer, the groupname is omitted
+	if !parent.IsTopLayer() && parent.IsGroupLayer() && parent.Name != nil && parent.IsVisible() {
 		groupName = *parent.Name
 	}
 

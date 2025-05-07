@@ -26,7 +26,6 @@ package v3
 
 import (
 	shared_model "github.com/pdok/smooth-operator/model"
-	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
@@ -55,7 +54,7 @@ type WMSSpec struct {
 	PodSpecPatch *corev1.PodSpec `json:"podSpecPatch,omitempty"`
 
 	// Optional specification for the HorizontalAutoscaler
-	HorizontalPodAutoscalerPatch *autoscalingv2.HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerPatch,omitempty"`
+	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
 
 	// Optional options for the configuration of the service.
 	Options Options `json:"options,omitempty"`
@@ -92,7 +91,7 @@ type WMSService struct {
 	// AccessConstraints (licence) that are applicable to the service
 	// +kubebuilder:validation:Pattern:=`https?://.*`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string `json:"accessConstraints,omitempty"`
+	AccessConstraints *string `json:"accessConstraints,omitempty"`
 
 	// TODO??
 	MaxSize *int32 `json:"maxSize,omitempty"`
@@ -139,6 +138,7 @@ type ConfigMapRef struct {
 }
 
 // +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
+// +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validations:MinLength:=1
@@ -152,9 +152,9 @@ type Layer struct {
 	// +kubebuilder:validations:MinLength:=1
 	Abstract *string `json:"abstract,omitempty"`
 
-	// Keywords of the layer
+	// Keywords of the layer, required if the layer is visible
 	// +kubebuilder:validations:MinItems:=1
-	Keywords []string `json:"keywords"`
+	Keywords []string `json:"keywords,omitempty"`
 
 	// BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
 	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes,omitempty"`
@@ -170,11 +170,11 @@ type Layer struct {
 	DatasetMetadataURL *MetadataURL `json:"datasetMetadataUrl,omitempty"`
 
 	// The minimum scale at which this layer functions
-	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)$`
+	// +kubebuilder:validation:Pattern:=`^[0-9]+(.[0-9]+)?$`
 	MinScaleDenominator *string `json:"minscaledenominator,omitempty"`
 
 	// The maximum scale at which this layer functions
-	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)$`
+	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)?$`
 	MaxScaleDenominator *string `json:"maxscaledenominator,omitempty"`
 
 	// List of styles used by the layer
@@ -313,39 +313,38 @@ type AnnotatedLayer struct {
 func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 	result := make([]AnnotatedLayer, 0)
 
-	topLayer := wmsService.Layer
-	annotatedTopLayer := AnnotatedLayer{
-		GroupName:    nil,
-		IsTopLayer:   true,
-		IsGroupLayer: topLayer.Name != nil,
-		IsDataLayer:  false,
-		Layer:        topLayer,
+	firstLayer := AnnotatedLayer{}
+	if wmsService.Layer.Name != nil && len(*wmsService.Layer.Name) > 0 {
+		firstLayer = AnnotatedLayer{
+			GroupName:    nil,
+			IsTopLayer:   wmsService.Layer.IsTopLayer(),
+			IsGroupLayer: wmsService.Layer.IsGroupLayer(),
+			IsDataLayer:  wmsService.Layer.IsDataLayer(),
+			Layer:        wmsService.Layer,
+		}
+		result = append(result, firstLayer)
 	}
-	result = append(result, annotatedTopLayer)
 
-	for _, topLayerChild := range topLayer.Layers {
-		groupName := topLayer.Name
-		isGroupLayer := topLayerChild.Layers != nil && len(topLayerChild.Layers) > 0
+	for _, subLayer := range wmsService.Layer.Layers {
+		groupName := wmsService.Layer.Name
+		isGroupLayer := subLayer.IsGroupLayer()
 		isDataLayer := !isGroupLayer
 		result = append(result, AnnotatedLayer{
 			GroupName:    groupName,
 			IsTopLayer:   false,
 			IsGroupLayer: isGroupLayer,
 			IsDataLayer:  isDataLayer,
-			Layer:        topLayerChild,
+			Layer:        subLayer,
 		})
 
-		if len(topLayerChild.Layers) > 0 {
-			for _, middleLayerChild := range topLayerChild.Layers {
-				groupName = topLayerChild.Name
-				result = append(result, AnnotatedLayer{
-					GroupName:    groupName,
-					IsTopLayer:   false,
-					IsGroupLayer: false,
-					IsDataLayer:  true,
-					Layer:        middleLayerChild,
-				})
-			}
+		for _, subSubLayer := range subLayer.Layers {
+			result = append(result, AnnotatedLayer{
+				GroupName:    subLayer.Name,
+				IsTopLayer:   false,
+				IsGroupLayer: false,
+				IsDataLayer:  true,
+				Layer:        subSubLayer,
+			})
 		}
 	}
 
@@ -423,8 +422,22 @@ func (layer *Layer) IsGroupLayer() bool {
 	return len(layer.Layers) > 0
 }
 
-func (layer *Layer) IsTopLayer(service *WMSService) bool {
-	return layer.Name == service.Layer.Name
+// IsTopLayer - a layer is a toplayer if and only if it has sublayers that are group layers.
+// In other words the layer is level 1 in a 3 level hierarchy.
+func (layer *Layer) IsTopLayer() bool {
+	if layer.IsGroupLayer() {
+		for _, childLayer := range layer.Layers {
+			if childLayer.IsGroupLayer() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (layer *Layer) IsVisible() bool {
+	return layer.Visible == nil || *layer.Visible
 }
 
 func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {
@@ -523,7 +536,7 @@ func (wms *WMS) PodSpecPatch() *corev1.PodSpec {
 	return wms.Spec.PodSpecPatch
 }
 
-func (wms *WMS) HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec {
+func (wms *WMS) HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch {
 	return wms.Spec.HorizontalPodAutoscalerPatch
 }
 

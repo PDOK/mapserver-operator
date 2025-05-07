@@ -58,7 +58,7 @@ type WMSService struct {
 	Title    string `json:"title"`
 	Abstract string `json:"abstract"`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints  string     `json:"accessConstraints"`
+	AccessConstraints  *string    `json:"accessConstraints,omitempty"` // Pointer for CRD conversion as defaulting is not applied there
 	Keywords           []string   `json:"keywords"`
 	MetadataIdentifier string     `json:"metadataIdentifier"`
 	Authority          Authority  `json:"authority"`
@@ -77,7 +77,7 @@ type WMSService struct {
 type WMSLayer struct {
 	Name                      string   `json:"name"`
 	Group                     *string  `json:"group,omitempty"`
-	Visible                   bool     `json:"visible"`
+	Visible                   *bool    `json:"visible,omitempty"`
 	Title                     *string  `json:"title,omitempty"`
 	Abstract                  *string  `json:"abstract,omitempty"`
 	Keywords                  []string `json:"keywords,omitempty"`

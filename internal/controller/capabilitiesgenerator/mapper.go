@@ -46,7 +46,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 					ServiceIdentification: wfs200.ServiceIdentification{
 						Title:             mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
 						Abstract:          mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
-						AccessConstraints: wfs.Spec.Service.AccessConstraints,
+						AccessConstraints: *wfs.Spec.Service.AccessConstraints,
 						Keywords: &wsc110.Keywords{
 							Keyword: wfs.Spec.Service.Keywords,
 						},
@@ -221,8 +221,8 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 	maxHeight := 4000
 
 	accessContraints := wms.Spec.Service.AccessConstraints
-	if accessContraints == "" {
-		accessContraints = "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+	if accessContraints == nil || *accessContraints == "" {
+		accessContraints = smoothoperatorutils.Pointer("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
 	}
 
 	config := capabilitiesgenerator.Config{
@@ -245,7 +245,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						OnlineResource:     wms130.OnlineResource{Href: &hostBaseURL},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               fees,
-						AccessConstraints:  &accessContraints,
+						AccessConstraints:  accessContraints,
 						LayerLimit:         nil,
 						MaxWidth:           &maxWidth,
 						MaxHeight:          &maxHeight,

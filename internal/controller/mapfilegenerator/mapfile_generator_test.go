@@ -130,7 +130,7 @@ func TestGetConfigForWFS(t *testing.T) {
 							Title:             "some Service title",
 							Abstract:          "some \"Service\" abstract",
 							Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
-							AccessConstraints: "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
+							AccessConstraints: smoothoperatorutils.Pointer("http://creativecommons.org/publicdomain/zero/1.0/deed.nl"),
 							Bbox: &pdoknlv3.Bbox{
 								DefaultCRS: shared_model.BBox{
 									MinX: "0.0",
@@ -317,6 +317,7 @@ func TestGetConfigForWMSWithGroupLayersAndTopGroupLayer(t *testing.T) {
 	inputStruct, err := MapWMSToMapfileGeneratorInput(&wms, ownerInfo)
 	assert.NoError(t, err)
 	expected := WMSInput{}
+	assert.NoError(t, err)
 	err = json.Unmarshal([]byte(WMSGroupAndToplayerConfig), &expected)
 	assert.NoError(t, err)
 

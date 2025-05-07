@@ -45,7 +45,7 @@ func ConvertOptionsV3ToV2(src *pdoknlv3.Options) WMSWFSOptions {
 	}
 }
 
-func ConvertAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscalerSpec {
+func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch {
 	var minReplicas *int32
 	if src.MinReplicas != nil {
 		//nolint:gosec
@@ -71,7 +71,7 @@ func ConvertAutoscaling(src Autoscaling) *autoscalingv2.HorizontalPodAutoscalerS
 		})
 	}
 
-	return &autoscalingv2.HorizontalPodAutoscalerSpec{
+	return &pdoknlv3.HorizontalPodAutoscalerPatch{
 		MinReplicas: minReplicas,
 		MaxReplicas: maxReplicas,
 		Metrics:     metrics,
@@ -205,7 +205,7 @@ func ConvertV3DataToV2(v3 pdoknlv3.Data) Data {
 	return v2
 }
 
-func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *corev1.PodSpec, scalingSpec *autoscalingv2.HorizontalPodAutoscalerSpec) Kubernetes {
+func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *corev1.PodSpec, scalingSpec *pdoknlv3.HorizontalPodAutoscalerPatch) Kubernetes {
 	kub := Kubernetes{}
 
 	if lifecycle != nil && lifecycle.TTLInDays != nil {

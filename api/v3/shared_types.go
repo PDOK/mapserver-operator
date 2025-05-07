@@ -22,6 +22,15 @@ const (
 	ServiceTypeWFS ServiceType = "WFS"
 )
 
+// HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
+// This way we don't have to specify the scaleTargetRef field in the CRD.
+type HorizontalPodAutoscalerPatch struct {
+	MinReplicas *int32                                         `json:"minReplicas,omitempty"`
+	MaxReplicas int32                                          `json:"maxReplicas"`
+	Metrics     []autoscalingv2.MetricSpec                     `json:"metrics,omitempty"`
+	Behavior    *autoscalingv2.HorizontalPodAutoscalerBehavior `json:"behavior,omitempty"`
+}
+
 // WMSWFS is the common interface used for both WMS and WFS resources.
 // +kubebuilder:object:generate=false
 type WMSWFS interface {
@@ -30,7 +39,7 @@ type WMSWFS interface {
 
 	Mapfile() *Mapfile
 	PodSpecPatch() *corev1.PodSpec
-	HorizontalPodAutoscalerPatch() *autoscalingv2.HorizontalPodAutoscalerSpec
+	HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch
 	Type() ServiceType
 	Options() *Options
 	HasPostgisData() bool
@@ -182,7 +191,7 @@ type Postgis struct {
 // +kubebuilder:validation:Type=object
 type TIF struct {
 	// BlobKey to the TIFF file
-	// +kubebuilder:validation:Pattern=`\.(tif|tiff)$`
+	// +kubebuilder:validation:Pattern=`\.(tif?f|vrt)$`
 	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 
