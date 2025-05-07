@@ -83,9 +83,11 @@ func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 
 	if src.Requests != nil {
 		targetResources.Requests[corev1.ResourceEphemeralStorage] = src.Requests["ephemeralStorage"]
+		delete(targetResources.Requests, "ephemeralStorage")
 	}
 	if src.Limits != nil {
 		targetResources.Limits[corev1.ResourceEphemeralStorage] = src.Limits["ephemeralStorage"]
+		delete(targetResources.Limits, "ephemeralStorage")
 	}
 
 	return &corev1.PodSpec{
