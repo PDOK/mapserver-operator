@@ -56,8 +56,6 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 		dst.Annotations = make(map[string]string)
 	}
 
-	dst.Annotations[ServiceMetatdataIdentifierAnnotation] = src.Spec.Service.MetadataIdentifier
-
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
 		dst.Spec.Lifecycle = &sharedModel.Lifecycle{
@@ -120,6 +118,9 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 			SpatialDatasetIdentifier: *src.Spec.Service.Layers[0].SourceMetadataIdentifier,
 			Language:                 "dut",
 		}
+	} else {
+		// Annotation to be able to convert back to v2
+		dst.Annotations[ServiceMetatdataIdentifierAnnotation] = src.Spec.Service.MetadataIdentifier
 	}
 
 	if src.Spec.Service.StylingAssets != nil {
