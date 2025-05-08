@@ -58,37 +58,38 @@ type Mapfile struct {
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
 }
 
+// TODO GedefaultOptions
 // Options configures optional behaviors of the operator, like ingress, casing, and data prefetching.
 // +kubebuilder:validation:Type=object
 type Options struct {
 	// IncludeIngress dictates whether to deploy an Ingress or ensure none exists.
 	// +kubebuilder:default:=true
-	IncludeIngress bool `json:"includeIngress"`
+	IncludeIngress bool `json:"includeIngress,omitempty"`
 
 	// AutomaticCasing enables automatic conversion from snake_case to camelCase.
 	// +kubebuilder:default:=true
-	AutomaticCasing bool `json:"automaticCasing"`
+	AutomaticCasing bool `json:"automaticCasing,omitempty"`
 
 	// ValidateRequests enables request validation against the service schema.
 	// +kubebuilder:default:=true
-	ValidateRequests *bool `json:"validateRequests,omitempty"`
+	ValidateRequests bool `json:"validateRequests,omitempty"`
 
 	// RewriteGroupToDataLayers merges group layers into individual data layers.
 	// +kubebuilder:default:=false
-	RewriteGroupToDataLayers *bool `json:"rewriteGroupToDataLayers,omitempty"`
+	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers,omitempty"`
 
 	// DisableWebserviceProxy disables the built-in proxy for external web services.
 	// +kubebuilder:default:=false
-	DisableWebserviceProxy *bool `json:"disableWebserviceProxy,omitempty"`
+	DisableWebserviceProxy bool `json:"disableWebserviceProxy,omitempty"`
 
 	// Whether to prefetch data from blob storage, and store it on the local filesystem.
 	// If `false`, the data will be served directly out of blob storage
 	// +kubebuilder:default:=true
-	PrefetchData *bool `json:"prefetchData,omitempty"`
+	PrefetchData bool `json:"prefetchData,omitempty"`
 
 	// ValidateChildStyleNameEqual ensures child style names match the parent style.
 	// +kubebuilder:default=false
-	ValidateChildStyleNameEqual *bool `json:"validateChildStyleNameEqual,omitempty"`
+	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual,omitempty"`
 }
 
 // Inspire holds INSPIRE-specific metadata for the service.
@@ -107,8 +108,9 @@ type Inspire struct {
 	Language string `json:"language"`
 }
 
+// TODO one of the two, not both
 type MetadataURL struct {
-	// CSW describes a metadata record via a metadataIdentifier (UUID).
+	// CSW describes a metadata record via a metadataIdentifier (UUID) as defined in the OwnerInfo.
 	CSW *Metadata `json:"csw"`
 
 	// Custom allows arbitrary href
@@ -195,16 +197,19 @@ type TIF struct {
 	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 
-	// Resample method
+	// TODO pattern: "(NEAREST|AVERAGE|BILINEAR)"
+	// "This option can be used to control the resampling kernel used sampling raster images, optional"
 	// +kubebuilder:validation:MinLength:=1
 	Resample *string `json:"resample,omitempty"`
 
-	// Offsite color for nodata removal
+	// TODO pattern: '(#[0-9A-F]{2}[0-9A-F]{2}[0-9A-F]{2}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})'
+	// "Sets the color index to treat as transparent for raster layers, optional"
 	// +kubebuilder:validation:MinLength:=1
 	Offsite *string `json:"offsite,omitempty"`
 
-	// Include class names in GetFeatureInfo responses
-	GetFeatureInfoIncludesClass *bool `json:"getFeatureInfoIncludesClass,omitempty"`
+	// TODO default false
+	// "When a band represents nominal or ordinal data the class name (from styling) can be included in the getFeatureInfo"
+	GetFeatureInfoIncludesClass bool `json:"getFeatureInfoIncludesClass,omitempty"`
 }
 
 // Column maps a source column name to an optional alias for output.

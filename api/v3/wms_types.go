@@ -84,17 +84,10 @@ type WMSService struct {
 	// +kubebuilder:validation:MinLength:=1
 	OwnerInfoRef string `json:"ownerInfoRef"`
 
-	// TODO ??
-	// +kubebuilder:validation:MinLength:=1
-	Fees *string `json:"fees,omitempty"`
-
 	// AccessConstraints (licence) that are applicable to the service
 	// +kubebuilder:validation:Pattern:=`https?://.*`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints *string `json:"accessConstraints,omitempty"`
-
-	// TODO??
-	MaxSize *int32 `json:"maxSize,omitempty"`
+	AccessConstraints string `json:"accessConstraints,omitempty"`
 
 	// Optional specification Inspire themes and ids
 	Inspire *Inspire `json:"inspire,omitempty"`
@@ -104,10 +97,13 @@ type WMSService struct {
 	//nolint:tagliatelle
 	DataEPSG string `json:"dataEPSG"`
 
-	// TODO ??
+	// Mapfile setting: Sets the maximum size (in pixels) for both dimensions of the image from a getMap request.
+	MaxSize *int32 `json:"maxSize,omitempty"`
+
+	// Mapfile setting: Sets the RESOLUTION field in the mapfile, not used when service.mapfile is configured
 	Resolution *int32 `json:"resolution,omitempty"`
 
-	// TODO ??
+	// Mapfile setting: Sets the DEFRESOLUTION field in the mapfile, not used when service.mapfile is configured
 	DefResolution *int32 `json:"defResolution,omitempty"`
 
 	// Optional. Required files for the styling of the service
@@ -139,6 +135,7 @@ type ConfigMapRef struct {
 
 // +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
 // +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
+// TODO copy above for title, abstract, authority, datasetmetadaturl,
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validations:MinLength:=1
@@ -157,11 +154,12 @@ type Layer struct {
 	Keywords []string `json:"keywords,omitempty"`
 
 	// BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
+	// +kubebuilder:validations:MinItems:=1
 	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes,omitempty"`
 
 	// Whether or not the layer is visible. At least one of the layers must be visible.
 	// +kubebuilder:default:=true
-	Visible *bool `json:"visible,omitempty"`
+	Visible bool `json:"visible,omitempty"`
 
 	// TODO ??
 	Authority *Authority `json:"authority,omitempty"`
@@ -181,13 +179,14 @@ type Layer struct {
 	// +kubebuilder:validations:MinItems:=1
 	Styles []Style `json:"styles,omitempty"`
 
-	// TODO ??
+	// Mapfile setting, sets "LABEL_NO_CLIP=ON"
 	LabelNoClip bool `json:"labelNoClip,omitempty"`
 
 	// Data (gpkg/postgis/tif) used by the layer
 	Data *Data `json:"data,omitempty"`
 
 	// Sublayers of the layer
+	// +kubebuilder:validations:MinItems:=1
 	Layers []Layer `json:"layers,omitempty"`
 }
 
@@ -229,7 +228,7 @@ type Style struct {
 	Legend *Legend `json:"legend,omitempty"`
 }
 
-// TODO add validations + descriptions
+// TODO add validations + descriptions, omitempty, defaults, behalve blobkey
 type Legend struct {
 	Width   int32  `json:"width"`
 	Height  int32  `json:"height"`
