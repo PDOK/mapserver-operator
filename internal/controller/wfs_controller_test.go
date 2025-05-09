@@ -84,7 +84,7 @@ var _ = Describe("WFS Controller", func() {
 			counter++
 
 			// Set most used options
-			sampleWfs.Options().PrefetchData = smoothoperatorutils.Pointer(true)
+			sampleWfs.Spec.Options.PrefetchData = true
 
 			By("creating the custom resource for the Kind WFS")
 			err = k8sClient.Get(ctx, typeNamespacedNameWfs, wfs)
@@ -348,7 +348,7 @@ var _ = Describe("WFS Controller", func() {
 			sampleWfs, err := getUniqueWFSSample(9999)
 			typeNamespacedNameWfs.Name = sampleWfs.Name
 			Expect(err).NotTo(HaveOccurred())
-			sampleWfs.Spec.Options.PrefetchData = smoothoperatorutils.Pointer(false)
+			sampleWfs.Spec.Options.PrefetchData = false
 			Expect(k8sClient.Create(ctx, sampleWfs.DeepCopy())).To(Succeed())
 			Expect(k8sClient.Get(ctx, typeNamespacedNameWfs, wfs)).To(Succeed())
 

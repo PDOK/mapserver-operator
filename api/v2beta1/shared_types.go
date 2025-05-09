@@ -90,11 +90,15 @@ type Lifecycle struct {
 
 // WMSWFSOptions is the struct with options available in the operator
 type WMSWFSOptions struct {
-	IncludeIngress              bool  `json:"includeIngress"`
-	AutomaticCasing             bool  `json:"automaticCasing"`
-	ValidateRequests            *bool `json:"validateRequests,omitempty"`
-	RewriteGroupToDataLayers    *bool `json:"rewriteGroupToDataLayers,omitempty"`
-	DisableWebserviceProxy      *bool `json:"disableWebserviceProxy,omitempty"`
+	// +kubebuilder:default:=true
+	IncludeIngress bool `json:"includeIngress"`
+	// +kubebuilder:default:=true
+	AutomaticCasing bool `json:"automaticCasing"`
+	// +kubebuilder:default:=true
+	ValidateRequests         *bool `json:"validateRequests,omitempty"`
+	RewriteGroupToDataLayers *bool `json:"rewriteGroupToDataLayers,omitempty"`
+	DisableWebserviceProxy   *bool `json:"disableWebserviceProxy,omitempty"`
+	// +kubebuilder:default:=true
 	PrefetchData                *bool `json:"prefetchData,omitempty"`
 	ValidateChildStyleNameEqual *bool `json:"validateChildStyleNameEqual,omitempty"`
 }
