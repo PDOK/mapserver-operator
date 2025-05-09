@@ -209,21 +209,9 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 	canonicalServiceURL := hostBaseURL + "/" + pdoknlv3.GetBaseURLPath(wms)
 
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
-	var fees *string
-	if wms.Spec.Service.Fees != nil {
-		feesPtr := mapperutils.EscapeQuotes(*wms.Spec.Service.Fees)
-		fees = &feesPtr
-	} else {
-		fees = asPtr("NONE")
-	}
 
 	maxWidth := 4000
 	maxHeight := 4000
-
-	accessContraints := wms.Spec.Service.AccessConstraints
-	if accessContraints == nil || *accessContraints == "" {
-		accessContraints = smoothoperatorutils.Pointer("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
-	}
 
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
@@ -244,8 +232,8 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.Keywords},
 						OnlineResource:     wms130.OnlineResource{Href: &hostBaseURL},
 						ContactInformation: getContactInformation(ownerInfo),
-						Fees:               fees,
-						AccessConstraints:  accessContraints,
+						Fees:               asPtr("NONE"),
+						AccessConstraints:  &wms.Spec.Service.AccessConstraints,
 						LayerLimit:         nil,
 						MaxWidth:           &maxWidth,
 						MaxHeight:          &maxHeight,

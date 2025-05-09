@@ -82,9 +82,6 @@ var _ = Describe("WMS Controller", func() {
 			typeNamespacedNameWms = getUniqueWmsTypeNamespacedName(counter)
 			counter++
 
-			// Set most used options
-			sampleWms.Options().PrefetchData = smoothoperatorutils.Pointer(true)
-
 			By("creating the custom resource for the Kind WMS")
 			err = k8sClient.Get(ctx, typeNamespacedNameWms, wms)
 			if err != nil && k8serrors.IsNotFound(err) {
@@ -263,7 +260,7 @@ var _ = Describe("WMS Controller", func() {
 
 			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[2]
 			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
-			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-v", "-r", "-d=15"}
+			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-v", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
 			Expect(containerOgcWebserviceProxy.Image).Should(Equal(reconcilerImages.OgcWebserviceProxyImage))
 			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
@@ -352,18 +349,6 @@ var _ = Describe("WMS Controller", func() {
 			}
 			Expect(legendGeneratorContainer.Env).Should(Equal(env))
 
-			legendFixerContainer, err := getInitContainer("legend-fixer", deployment)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(legendFixerContainer.Image).Should(Equal(reconcilerImages.MultitoolImage))
-			Expect(legendFixerContainer.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
-			Expect(len(legendFixerContainer.Command)).Should(BeNumerically("==", 2))
-
-			volumeMounts = []corev1.VolumeMount{
-				{Name: "data", MountPath: "/var/www", ReadOnly: false},
-				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
-			}
-			Expect(legendFixerContainer.VolumeMounts).Should(Equal(volumeMounts))
-
 			/**
 			Volumes tests
 			*/
@@ -400,7 +385,8 @@ var _ = Describe("WMS Controller", func() {
 			counter++
 			typeNamespacedNameWms.Name = sampleWms.Name
 			Expect(err).NotTo(HaveOccurred())
-			sampleWms.Spec.Options.PrefetchData = smoothoperatorutils.Pointer(false)
+			sampleWms.Spec.Options.PrefetchData = false
+
 			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
 			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
 
@@ -427,7 +413,7 @@ var _ = Describe("WMS Controller", func() {
 			counter++
 			typeNamespacedNameWms.Name = sampleWms.Name
 			Expect(err).NotTo(HaveOccurred())
-			sampleWms.Spec.Options.DisableWebserviceProxy = smoothoperatorutils.Pointer(true)
+			sampleWms.Spec.Options.DisableWebserviceProxy = true
 			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
 			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
 
@@ -440,7 +426,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("Should not mount a legend-fixer initcontainer if options.REWRITEGROUPTODATALAYERS is FALSE.", func() {
+		It("Should mount a legend-fixer initcontainer if options.REWRITEGROUPTODATALAYERS is TRUE.", func() {
 			wmsResource := &pdoknlv3.WMS{}
 			wmsResource.Namespace = namespace
 			wmsResource.Name = typeNamespacedNameWms.Name
@@ -454,7 +440,7 @@ var _ = Describe("WMS Controller", func() {
 			counter++
 			typeNamespacedNameWms.Name = sampleWms.Name
 			Expect(err).NotTo(HaveOccurred())
-			sampleWms.Spec.Options.RewriteGroupToDataLayers = smoothoperatorutils.Pointer(false)
+			sampleWms.Spec.Options.RewriteGroupToDataLayers = true
 
 			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
 			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
@@ -466,11 +452,45 @@ var _ = Describe("WMS Controller", func() {
 			deployment := &appsv1.Deployment{}
 			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms).GetName()}, deployment)
 			Expect(err).NotTo(HaveOccurred())
-			blobDownloadContainer, err := getInitContainer("blob-download", deployment)
+			blobDownloadContainer, _ := getInitContainer("blob-download", deployment)
 			Expect(blobDownloadContainer.Name).To(BeEquivalentTo("blob-download"))
-			legendFixer, err := getInitContainer("legend-fixer", deployment)
-			Expect(err).To(HaveOccurred())
-			Expect(legendFixer.Name).To(BeEquivalentTo(""))
+			legendFixerContainer, err := getInitContainer("legend-fixer", deployment)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(legendFixerContainer.Image).Should(Equal(controllerReconciler.Images.MultitoolImage))
+			Expect(legendFixerContainer.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
+			Expect(len(legendFixerContainer.Command)).Should(BeNumerically("==", 2))
+
+			volumeMounts := []corev1.VolumeMount{
+				{Name: "data", MountPath: "/var/www", ReadOnly: false},
+				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+			}
+			Expect(legendFixerContainer.VolumeMounts).Should(Equal(volumeMounts))
+
+			configMap := getBareConfigMapLegendGenerator(wms)
+			configMapName, err := getHashedConfigMapNameFromClient(ctx, wms, mapserver.ConfigMapLegendGeneratorVolumeName)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(func() bool {
+				err = k8sClient.Get(ctx, client.ObjectKey{Namespace: wms.GetNamespace(), Name: configMapName}, configMap)
+				return Expect(err).NotTo(HaveOccurred())
+			}, "10s", "1s").Should(BeTrue())
+
+			Expect(configMap.GetName()).To(HavePrefix(wms.GetName() + "-wms-legend-generator-"))
+			Expect(configMap.GetNamespace()).To(Equal(namespace))
+			Expect(configMap.Immutable).To(Equal(smoothoperatorutils.Pointer(true)))
+			checkWMSLabels(configMap.GetLabels())
+
+			data, ok := configMap.Data["legend-fixer.sh"]
+			Expect(ok).To(BeTrue())
+			Expect(len(data)).To(BeNumerically(">", 0))
+
+			_, ok = configMap.Data["remove"]
+			Expect(ok).To(BeTrue())
+
+			data, ok = configMap.Data["ogc-webservice-proxy-config.yaml"]
+			Expect(ok).To(BeTrue())
+			Expect(len(data)).To(BeNumerically(">", 0))
+
+			// actual configMap content is tested in legendgenerator/legend_generator_test.go
 		})
 
 		It("ogcWebserviceProxyCommands will not contain command '-v' if options.VALIDATEREQUESTS is FALSE.", func() {
@@ -487,7 +507,7 @@ var _ = Describe("WMS Controller", func() {
 			counter++
 			typeNamespacedNameWms.Name = sampleWms.Name
 			Expect(err).NotTo(HaveOccurred())
-			sampleWms.Spec.Options.ValidateRequests = smoothoperatorutils.Pointer(false)
+			sampleWms.Spec.Options.ValidateRequests = false
 
 			Expect(k8sClient.Create(ctx, sampleWms.DeepCopy())).To(Succeed())
 			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
@@ -502,7 +522,7 @@ var _ = Describe("WMS Controller", func() {
 
 			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[2]
 			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
-			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-r", "-d=15"}
+			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
 			Expect(containerOgcWebserviceProxy.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(containerOgcWebserviceProxy.Ports[0].ContainerPort).Should(Equal(int32(9111)))
@@ -653,19 +673,6 @@ var _ = Describe("WMS Controller", func() {
 
 			_, ok = configMap.Data["input"]
 			Expect(ok).To(BeTrue())
-
-			data, ok = configMap.Data["legend-fixer.sh"]
-			Expect(ok).To(BeTrue())
-			Expect(len(data)).To(BeNumerically(">", 0))
-
-			_, ok = configMap.Data["remove"]
-			Expect(ok).To(BeTrue())
-
-			data, ok = configMap.Data["ogc-webservice-proxy-config.yaml"]
-			Expect(ok).To(BeTrue())
-			Expect(len(data)).To(BeNumerically(">", 0))
-
-			// actual configMap content is tested in legendgenerator/legend_generator_test.go
 		})
 
 		It("Should create correct configMapFeatureinfoGenerator manifest.", func() {
@@ -928,7 +935,7 @@ var _ = Describe("WMS Controller", func() {
 				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 				{Name: "mapfile", MountPath: "/srv/data/config/mapfile"},
 			}
-			legendGeneratorContainer, err := getInitContainer("legend-generator", deployment)
+			legendGeneratorContainer, _ := getInitContainer("legend-generator", deployment)
 
 			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 

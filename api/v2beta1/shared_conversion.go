@@ -5,43 +5,34 @@ import (
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	shared_model "github.com/pdok/smooth-operator/model"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func Pointer[T interface{}](val T) *T {
-	return &val
-}
+func ConvertOptionsV2ToV3(src WMSWFSOptions) pdoknlv3.Options {
+	defaults := pdoknlv3.GetDefaultOptions()
 
-func PointerVal[T interface{}](val *T, def T) T {
-	if val == nil {
-		return def
-	}
-
-	return *val
-}
-
-func ConvertOptionsV2ToV3(src WMSWFSOptions) *pdoknlv3.Options {
-	return &pdoknlv3.Options{
+	return pdoknlv3.Options{
 		AutomaticCasing:             src.AutomaticCasing,
 		IncludeIngress:              src.IncludeIngress,
-		PrefetchData:                src.PrefetchData,
-		ValidateRequests:            src.ValidateRequests,
-		RewriteGroupToDataLayers:    src.RewriteGroupToDataLayers,
-		DisableWebserviceProxy:      src.DisableWebserviceProxy,
-		ValidateChildStyleNameEqual: src.ValidateChildStyleNameEqual,
+		PrefetchData:                smoothoperatorutils.PointerVal(src.PrefetchData, defaults.PrefetchData),
+		ValidateRequests:            smoothoperatorutils.PointerVal(src.ValidateRequests, defaults.ValidateRequests),
+		RewriteGroupToDataLayers:    smoothoperatorutils.PointerVal(src.RewriteGroupToDataLayers, defaults.RewriteGroupToDataLayers),
+		DisableWebserviceProxy:      smoothoperatorutils.PointerVal(src.DisableWebserviceProxy, defaults.DisableWebserviceProxy),
+		ValidateChildStyleNameEqual: smoothoperatorutils.PointerVal(src.ValidateChildStyleNameEqual, defaults.ValidateChildStyleNameEqual),
 	}
 }
 
-func ConvertOptionsV3ToV2(src *pdoknlv3.Options) WMSWFSOptions {
+func ConvertOptionsV3ToV2(src pdoknlv3.Options) WMSWFSOptions {
 	return WMSWFSOptions{
 		AutomaticCasing:             src.AutomaticCasing,
-		PrefetchData:                src.PrefetchData,
 		IncludeIngress:              src.IncludeIngress,
-		ValidateRequests:            src.ValidateRequests,
-		RewriteGroupToDataLayers:    src.RewriteGroupToDataLayers,
-		DisableWebserviceProxy:      src.DisableWebserviceProxy,
-		ValidateChildStyleNameEqual: src.ValidateChildStyleNameEqual,
+		PrefetchData:                &src.PrefetchData,
+		ValidateRequests:            &src.ValidateRequests,
+		RewriteGroupToDataLayers:    &src.RewriteGroupToDataLayers,
+		DisableWebserviceProxy:      &src.DisableWebserviceProxy,
+		ValidateChildStyleNameEqual: &src.ValidateChildStyleNameEqual,
 	}
 }
 
@@ -49,7 +40,7 @@ func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch 
 	var minReplicas *int32
 	if src.MinReplicas != nil {
 		//nolint:gosec
-		minReplicas = Pointer(int32(*src.MinReplicas))
+		minReplicas = smoothoperatorutils.Pointer(int32(*src.MinReplicas))
 	}
 
 	var maxReplicas int32
@@ -65,7 +56,7 @@ func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch 
 				Name: corev1.ResourceCPU,
 				Target: autoscalingv2.MetricTarget{
 					Type:               autoscalingv2.UtilizationMetricType,
-					AverageUtilization: Pointer(int32(*src.AverageCPUUtilization)),
+					AverageUtilization: smoothoperatorutils.Pointer(int32(*src.AverageCPUUtilization)),
 				},
 			},
 		})
@@ -164,7 +155,7 @@ func ConvertV2DataToV3(v2 Data) pdoknlv3.Data {
 			BlobKey:                     v2.Tif.BlobKey,
 			Resample:                    v2.Tif.Resample,
 			Offsite:                     v2.Tif.Offsite,
-			GetFeatureInfoIncludesClass: v2.Tif.GetFeatureInfoIncludesClass,
+			GetFeatureInfoIncludesClass: smoothoperatorutils.PointerVal(v2.Tif.GetFeatureInfoIncludesClass, false),
 		}
 	}
 
@@ -200,7 +191,7 @@ func ConvertV3DataToV2(v3 pdoknlv3.Data) Data {
 			BlobKey:                     v3.TIF.BlobKey,
 			Offsite:                     v3.TIF.Offsite,
 			Resample:                    v3.TIF.Resample,
-			GetFeatureInfoIncludesClass: v3.TIF.GetFeatureInfoIncludesClass,
+			GetFeatureInfoIncludesClass: &v3.TIF.GetFeatureInfoIncludesClass,
 		}
 	}
 
@@ -212,7 +203,7 @@ func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *core
 
 	if lifecycle != nil && lifecycle.TTLInDays != nil {
 		kub.Lifecycle = &Lifecycle{
-			TTLInDays: Pointer(int(*lifecycle.TTLInDays)),
+			TTLInDays: smoothoperatorutils.Pointer(int(*lifecycle.TTLInDays)),
 		}
 	}
 
@@ -223,15 +214,15 @@ func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *core
 
 	if scalingSpec != nil {
 		kub.Autoscaling = &Autoscaling{
-			MaxReplicas: Pointer(int(scalingSpec.MaxReplicas)),
+			MaxReplicas: smoothoperatorutils.Pointer(int(scalingSpec.MaxReplicas)),
 		}
 
 		if scalingSpec.MinReplicas != nil {
-			kub.Autoscaling.MinReplicas = Pointer(int(*scalingSpec.MinReplicas))
+			kub.Autoscaling.MinReplicas = smoothoperatorutils.Pointer(int(*scalingSpec.MinReplicas))
 		}
 
 		if scalingSpec.Metrics != nil {
-			kub.Autoscaling.AverageCPUUtilization = Pointer(
+			kub.Autoscaling.AverageCPUUtilization = smoothoperatorutils.Pointer(
 				int(*scalingSpec.Metrics[0].Resource.Target.AverageUtilization),
 			)
 		}

@@ -156,18 +156,22 @@ spec:
                   the operator
                 properties:
                   automaticCasing:
+                    default: true
                     type: boolean
                   disableWebserviceProxy:
                     type: boolean
                   includeIngress:
+                    default: true
                     type: boolean
                   prefetchData:
+                    default: true
                     type: boolean
                   rewriteGroupToDataLayers:
                     type: boolean
                   validateChildStyleNameEqual:
                     type: boolean
                   validateRequests:
+                    default: true
                     type: boolean
                 required:
                 - automaticCasing
@@ -1093,7 +1097,12 @@ spec:
                     type: boolean
                 required:
                 - automaticCasing
+                - disableWebserviceProxy
                 - includeIngress
+                - prefetchData
+                - rewriteGroupToDataLayers
+                - validateChildStyleNameEqual
+                - validateRequests
                 type: object
               podSpecPatch:
                 description: Optional strategic merge patch for the pod in the deployment.
@@ -1316,16 +1325,23 @@ spec:
                                   pattern: \.(tif?f|vrt)$
                                   type: string
                                 getFeatureInfoIncludesClass:
-                                  description: Include class names in GetFeatureInfo
-                                    responses
+                                  default: false
+                                  description: '"When a band represents nominal or
+                                    ordinal data the class name (from styling) can
+                                    be included in the getFeatureInfo"'
                                   type: boolean
                                 offsite:
-                                  description: Offsite color for nodata removal
+                                  description: Sets the color index to treat as transparent
+                                    for raster layers, optional, hex or rgb
                                   minLength: 1
+                                  pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
                                   type: string
                                 resample:
-                                  description: Resample method
+                                  description: This option can be used to control
+                                    the resampling kernel used sampling raster images,
+                                    optional
                                   minLength: 1
+                                  pattern: (NEAREST|AVERAGE|BILINEAR)
                                   type: string
                               required:
                               - blobKey
@@ -1340,7 +1356,7 @@ spec:
                           properties:
                             csw:
                               description: CSW describes a metadata record via a metadataIdentifier
-                                (UUID).
+                                (UUID) as defined in the OwnerInfo.
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's
@@ -1369,6 +1385,10 @@ spec:
                           required:
                           - csw
                           type: object
+                          x-kubernetes-validations:
+                          - message: metadataUrl should have csw or custom, not both
+                            rule: (has(self.csw) || has(self.custom)) && !(has(self.csw)
+                              && has(self.custom))
                         keywords:
                           description: Keywords of the feature
                           items:
@@ -1410,7 +1430,7 @@ spec:
                         properties:
                           csw:
                             description: CSW describes a metadata record via a metadataIdentifier
-                              (UUID).
+                              (UUID) as defined in the OwnerInfo.
                             properties:
                               metadataIdentifier:
                                 description: MetadataIdentifier is the record's UUID
@@ -1438,6 +1458,10 @@ spec:
                         required:
                         - csw
                         type: object
+                        x-kubernetes-validations:
+                        - message: metadataUrl should have csw or custom, not both
+                          rule: (has(self.csw) || has(self.custom)) && !(has(self.csw)
+                            && has(self.custom))
                       spatialDatasetIdentifier:
                         description: SpatialDatasetIdentifier is the ID uniquely identifying
                           the dataset.
@@ -1517,6 +1541,7 @@ spec:
                 - url
                 type: object
             required:
+            - options
             - service
             type: object
           status:

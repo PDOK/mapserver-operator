@@ -109,7 +109,7 @@ func TestGetInput(t *testing.T) {
 												Name: smoothoperatorutils.Pointer("tif-layer-name"),
 												Data: &pdoknlv3.Data{
 													TIF: &pdoknlv3.TIF{
-														GetFeatureInfoIncludesClass: smoothoperatorutils.Pointer(true),
+														GetFeatureInfoIncludesClass: true,
 													},
 												},
 											},

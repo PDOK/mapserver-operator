@@ -129,21 +129,19 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		volumes = append(volumes, lgVolume, figVolume, stylingFilesVolume)
 	}
 
-	if options := obj.Options(); options != nil {
-		if options.PrefetchData != nil && *options.PrefetchData {
-			vol := newVolumeSource(configMapNames.BlobDownload)
-			vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
-			volumes = append(volumes, v1.Volume{
-				Name:         ConfigMapBlobDownloadVolumeName,
-				VolumeSource: vol,
-			})
-		}
-		if obj.Type() == pdoknlv3.ServiceTypeWMS && options.UseWebserviceProxy() {
-			volumes = append(volumes, v1.Volume{
-				Name:         ConfigMapOgcWebserviceProxyVolumeName,
-				VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
-			})
-		}
+	if obj.Options().PrefetchData {
+		vol := newVolumeSource(configMapNames.BlobDownload)
+		vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
+		volumes = append(volumes, v1.Volume{
+			Name:         ConfigMapBlobDownloadVolumeName,
+			VolumeSource: vol,
+		})
+	}
+	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
+		volumes = append(volumes, v1.Volume{
+			Name:         ConfigMapOgcWebserviceProxyVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
+		})
 	}
 
 	return volumes

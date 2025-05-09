@@ -149,18 +149,22 @@ spec:
                   description: WMSWFSOptions is the struct with options available in the operator
                   properties:
                     automaticCasing:
+                      default: true
                       type: boolean
                     disableWebserviceProxy:
                       type: boolean
                     includeIngress:
+                      default: true
                       type: boolean
                     prefetchData:
+                      default: true
                       type: boolean
                     rewriteGroupToDataLayers:
                       type: boolean
                     validateChildStyleNameEqual:
                       type: boolean
                     validateRequests:
+                      default: true
                       type: boolean
                   required:
                     - automaticCasing
@@ -1087,7 +1091,12 @@ spec:
                       type: boolean
                   required:
                     - automaticCasing
+                    - disableWebserviceProxy
                     - includeIngress
+                    - prefetchData
+                    - rewriteGroupToDataLayers
+                    - validateChildStyleNameEqual
+                    - validateRequests
                   type: object
                 podSpecPatch:
                   description: Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
@@ -1110,11 +1119,9 @@ spec:
                       pattern: (EPSG|CRS):\d+
                       type: string
                     defResolution:
+                      description: 'Mapfile setting: Sets the DEFRESOLUTION field in the mapfile, not used when service.mapfile is configured'
                       format: int32
                       type: integer
-                    fees:
-                      minLength: 1
-                      type: string
                     inspire:
                       description: Optional specification Inspire themes and ids
                       properties:
@@ -1126,7 +1133,7 @@ spec:
                           description: ServiceMetadataURL references the CSW or custom metadata record.
                           properties:
                             csw:
-                              description: CSW describes a metadata record via a metadataIdentifier (UUID).
+                              description: CSW describes a metadata record via a metadataIdentifier (UUID) as defined in the OwnerInfo.
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
@@ -1154,6 +1161,9 @@ spec:
                           required:
                             - csw
                           type: object
+                          x-kubernetes-validations:
+                            - message: metadataUrl should have csw or custom, not both
+                              rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                         spatialDatasetIdentifier:
                           description: SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
                           minLength: 1
@@ -1312,15 +1322,18 @@ spec:
                                   pattern: \.(tif?f|vrt)$
                                   type: string
                                 getFeatureInfoIncludesClass:
-                                  description: Include class names in GetFeatureInfo responses
+                                  default: false
+                                  description: '"When a band represents nominal or ordinal data the class name (from styling) can be included in the getFeatureInfo"'
                                   type: boolean
                                 offsite:
-                                  description: Offsite color for nodata removal
+                                  description: Sets the color index to treat as transparent for raster layers, optional, hex or rgb
                                   minLength: 1
+                                  pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
                                   type: string
                                 resample:
-                                  description: Resample method
+                                  description: This option can be used to control the resampling kernel used sampling raster images, optional
                                   minLength: 1
+                                  pattern: (NEAREST|AVERAGE|BILINEAR)
                                   type: string
                               required:
                                 - blobKey
@@ -1333,7 +1346,7 @@ spec:
                           description: Links to metadata
                           properties:
                             csw:
-                              description: CSW describes a metadata record via a metadataIdentifier (UUID).
+                              description: CSW describes a metadata record via a metadataIdentifier (UUID) as defined in the OwnerInfo.
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
@@ -1361,12 +1374,16 @@ spec:
                           required:
                             - csw
                           type: object
+                          x-kubernetes-validations:
+                            - message: metadataUrl should have csw or custom, not both
+                              rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                         keywords:
                           description: Keywords of the layer, required if the layer is visible
                           items:
                             type: string
                           type: array
                         labelNoClip:
+                          description: Mapfile setting, sets "LABEL_NO_CLIP=ON"
                           type: boolean
                         layers:
                           description: '[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]'
@@ -1513,15 +1530,18 @@ spec:
                                         pattern: \.(tif?f|vrt)$
                                         type: string
                                       getFeatureInfoIncludesClass:
-                                        description: Include class names in GetFeatureInfo responses
+                                        default: false
+                                        description: '"When a band represents nominal or ordinal data the class name (from styling) can be included in the getFeatureInfo"'
                                         type: boolean
                                       offsite:
-                                        description: Offsite color for nodata removal
+                                        description: Sets the color index to treat as transparent for raster layers, optional, hex or rgb
                                         minLength: 1
+                                        pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
                                         type: string
                                       resample:
-                                        description: Resample method
+                                        description: This option can be used to control the resampling kernel used sampling raster images, optional
                                         minLength: 1
+                                        pattern: (NEAREST|AVERAGE|BILINEAR)
                                         type: string
                                     required:
                                       - blobKey
@@ -1534,7 +1554,7 @@ spec:
                                 description: Links to metadata
                                 properties:
                                   csw:
-                                    description: CSW describes a metadata record via a metadataIdentifier (UUID).
+                                    description: CSW describes a metadata record via a metadataIdentifier (UUID) as defined in the OwnerInfo.
                                     properties:
                                       metadataIdentifier:
                                         description: MetadataIdentifier is the record's UUID
@@ -1562,12 +1582,16 @@ spec:
                                 required:
                                   - csw
                                 type: object
+                                x-kubernetes-validations:
+                                  - message: metadataUrl should have csw or custom, not both
+                                    rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                               keywords:
                                 description: Keywords of the layer, required if the layer is visible
                                 items:
                                   type: string
                                 type: array
                               labelNoClip:
+                                description: Mapfile setting, sets "LABEL_NO_CLIP=ON"
                                 type: boolean
                               layers:
                                 description: '[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]'
@@ -1714,15 +1738,18 @@ spec:
                                               pattern: \.(tif?f|vrt)$
                                               type: string
                                             getFeatureInfoIncludesClass:
-                                              description: Include class names in GetFeatureInfo responses
+                                              default: false
+                                              description: '"When a band represents nominal or ordinal data the class name (from styling) can be included in the getFeatureInfo"'
                                               type: boolean
                                             offsite:
-                                              description: Offsite color for nodata removal
+                                              description: Sets the color index to treat as transparent for raster layers, optional, hex or rgb
                                               minLength: 1
+                                              pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
                                               type: string
                                             resample:
-                                              description: Resample method
+                                              description: This option can be used to control the resampling kernel used sampling raster images, optional
                                               minLength: 1
+                                              pattern: (NEAREST|AVERAGE|BILINEAR)
                                               type: string
                                           required:
                                             - blobKey
@@ -1735,7 +1762,7 @@ spec:
                                       description: Links to metadata
                                       properties:
                                         csw:
-                                          description: CSW describes a metadata record via a metadataIdentifier (UUID).
+                                          description: CSW describes a metadata record via a metadataIdentifier (UUID) as defined in the OwnerInfo.
                                           properties:
                                             metadataIdentifier:
                                               description: MetadataIdentifier is the record's UUID
@@ -1763,12 +1790,16 @@ spec:
                                       required:
                                         - csw
                                       type: object
+                                      x-kubernetes-validations:
+                                        - message: metadataUrl should have csw or custom, not both
+                                          rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                                     keywords:
                                       description: Keywords of the layer, required if the layer is visible
                                       items:
                                         type: string
                                       type: array
                                     labelNoClip:
+                                      description: Mapfile setting, sets "LABEL_NO_CLIP=ON"
                                       type: boolean
                                     maxscaledenominator:
                                       description: The maximum scale at which this layer functions
@@ -1790,20 +1821,23 @@ spec:
                                           legend:
                                             properties:
                                               blobKey:
+                                                description: Location of the legend on the blobstore
+                                                minLength: 1
                                                 type: string
                                               format:
+                                                default: image/png
+                                                description: Format of the legend, defaults to image/png
                                                 type: string
                                               height:
+                                                description: The height of the legend in px, defaults to 20
                                                 format: int32
                                                 type: integer
                                               width:
+                                                description: The width of the legend in px, defaults to 78
                                                 format: int32
                                                 type: integer
                                             required:
                                               - blobKey
-                                              - format
-                                              - height
-                                              - width
                                             type: object
                                           name:
                                             type: string
@@ -1828,6 +1862,14 @@ spec:
                                   x-kubernetes-validations:
                                     - message: A layer should have keywords when visible
                                       rule: '!self.visible || has(self.keywords)'
+                                    - message: A layer should have a title when visible
+                                      rule: '!self.visible || has(self.title)'
+                                    - message: A layer should have an abstract when visible
+                                      rule: '!self.visible || has(self.abstract)'
+                                    - message: A layer should have an authority when visible
+                                      rule: '!self.visible || has(self.authority)'
+                                    - message: A layer should have a datasetMetadataUrl when visible
+                                      rule: '!self.visible || has(self.datasetMetadataUrl)'
                                 type: array
                               maxscaledenominator:
                                 description: The maximum scale at which this layer functions
@@ -1849,20 +1891,23 @@ spec:
                                     legend:
                                       properties:
                                         blobKey:
+                                          description: Location of the legend on the blobstore
+                                          minLength: 1
                                           type: string
                                         format:
+                                          default: image/png
+                                          description: Format of the legend, defaults to image/png
                                           type: string
                                         height:
+                                          description: The height of the legend in px, defaults to 20
                                           format: int32
                                           type: integer
                                         width:
+                                          description: The width of the legend in px, defaults to 78
                                           format: int32
                                           type: integer
                                       required:
                                         - blobKey
-                                        - format
-                                        - height
-                                        - width
                                       type: object
                                     name:
                                       type: string
@@ -1889,6 +1934,14 @@ spec:
                                 rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                               - message: A layer should have keywords when visible
                                 rule: '!self.visible || has(self.keywords)'
+                              - message: A layer should have a title when visible
+                                rule: '!self.visible || has(self.title)'
+                              - message: A layer should have an abstract when visible
+                                rule: '!self.visible || has(self.abstract)'
+                              - message: A layer should have an authority when visible
+                                rule: '!self.visible || has(self.authority)'
+                              - message: A layer should have a datasetMetadataUrl when visible
+                                rule: '!self.visible || has(self.datasetMetadataUrl)'
                           type: array
                         maxscaledenominator:
                           description: The maximum scale at which this layer functions
@@ -1910,20 +1963,23 @@ spec:
                               legend:
                                 properties:
                                   blobKey:
+                                    description: Location of the legend on the blobstore
+                                    minLength: 1
                                     type: string
                                   format:
+                                    default: image/png
+                                    description: Format of the legend, defaults to image/png
                                     type: string
                                   height:
+                                    description: The height of the legend in px, defaults to 20
                                     format: int32
                                     type: integer
                                   width:
+                                    description: The width of the legend in px, defaults to 78
                                     format: int32
                                     type: integer
                                 required:
                                   - blobKey
-                                  - format
-                                  - height
-                                  - width
                                 type: object
                               name:
                                 type: string
@@ -1948,6 +2004,14 @@ spec:
                           rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                         - message: A layer should have keywords when visible
                           rule: '!self.visible || has(self.keywords)'
+                        - message: A layer should have a title when visible
+                          rule: '!self.visible || has(self.title)'
+                        - message: A layer should have an abstract when visible
+                          rule: '!self.visible || has(self.abstract)'
+                        - message: A layer should have an authority when visible
+                          rule: '!self.visible || has(self.authority)'
+                        - message: A layer should have a datasetMetadataUrl when visible
+                          rule: '!self.visible || has(self.datasetMetadataUrl)'
                     mapfile:
                       description: Custom mapfile
                       properties:
@@ -1977,6 +2041,7 @@ spec:
                         - configMapKeyRef
                       type: object
                     maxSize:
+                      description: 'Mapfile setting: Sets the maximum size (in pixels) for both dimensions of the image from a getMap request.'
                       format: int32
                       type: integer
                     ownerInfoRef:
@@ -1984,6 +2049,7 @@ spec:
                       minLength: 1
                       type: string
                     resolution:
+                      description: 'Mapfile setting: Sets the RESOLUTION field in the mapfile, not used when service.mapfile is configured'
                       format: int32
                       type: integer
                     stylingAssets:
@@ -2028,6 +2094,7 @@ spec:
                     - url
                   type: object
               required:
+                - options
                 - service
               type: object
             status:

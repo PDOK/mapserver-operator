@@ -25,6 +25,7 @@ SOFTWARE.
 package v2beta1
 
 import (
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"log"
 
 	sharedModel "github.com/pdok/smooth-operator/model"
@@ -49,7 +50,7 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
 		dst.Spec.Lifecycle = &sharedModel.Lifecycle{
-			TTLInDays: Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
+			TTLInDays: smoothoperatorutils.Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
 		}
 	}
 
@@ -62,7 +63,7 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WFSService{
 		// TODO what is prefix, Geonovum subdomain?
@@ -162,7 +163,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
-	dst.Spec.Options = ConvertOptionsV3ToV2(&src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
 
 	service := WFSService{
 		Title:             src.Spec.Service.Title,
@@ -178,9 +179,9 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	if src.Spec.Service.Bbox != nil {
-		service.Extent = Pointer(src.Spec.Service.Bbox.DefaultCRS.ToExtent())
+		service.Extent = smoothoperatorutils.Pointer(src.Spec.Service.Bbox.DefaultCRS.ToExtent())
 	} else {
-		service.Extent = Pointer("-25000 250000 280000 860000")
+		service.Extent = smoothoperatorutils.Pointer("-25000 250000 280000 860000")
 	}
 
 	if src.Spec.Service.Mapfile != nil {
@@ -213,7 +214,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 		}
 
 		if featureType.Bbox != nil {
-			featureTypeV2.Extent = Pointer(featureType.Bbox.DefaultCRS.ToExtent())
+			featureTypeV2.Extent = smoothoperatorutils.Pointer(featureType.Bbox.DefaultCRS.ToExtent())
 		}
 
 		service.FeatureTypes = append(service.FeatureTypes, featureTypeV2)

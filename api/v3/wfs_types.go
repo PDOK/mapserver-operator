@@ -74,7 +74,8 @@ type WFSSpec struct {
 	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
 	PodSpecPatch                 *corev1.PodSpec               `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
-	Options                      Options                       `json:"options,omitempty"`
+	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
+	Options Options `json:"options"`
 
 	// service configuration
 	Service WFSService `json:"service"`
@@ -220,8 +221,8 @@ func (wfs *WFS) HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch {
 	return wfs.Spec.HorizontalPodAutoscalerPatch
 }
 
-func (wfs *WFS) Options() *Options {
-	return &wfs.Spec.Options
+func (wfs *WFS) Options() Options {
+	return wfs.Spec.Options
 }
 
 func (wfs *WFS) ID() string {

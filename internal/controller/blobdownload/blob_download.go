@@ -3,7 +3,6 @@ package blobdownload
 import (
 	_ "embed"
 	"fmt"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"k8s.io/utils/strings/slices"
 	"regexp"
 	"strings"
@@ -86,15 +85,13 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 		corev1.ResourceCPU: resourceCPU,
 	}
 
-	if options := obj.Options(); options != nil {
-		if options.PrefetchData != nil && *options.PrefetchData {
-			mount := corev1.VolumeMount{
-				Name:      mapserver.ConfigMapBlobDownloadVolumeName,
-				MountPath: "/srv/scripts",
-				ReadOnly:  true,
-			}
-			initContainer.VolumeMounts = append(initContainer.VolumeMounts, mount)
+	if obj.Options().PrefetchData {
+		mount := corev1.VolumeMount{
+			Name:      mapserver.ConfigMapBlobDownloadVolumeName,
+			MountPath: "/srv/scripts",
+			ReadOnly:  true,
 		}
+		initContainer.VolumeMounts = append(initContainer.VolumeMounts, mount)
 	}
 
 	return &initContainer, nil
@@ -107,13 +104,13 @@ func GetArgs[W pdoknlv3.WMSWFS](webservice W) (args string, err error) {
 	case *pdoknlv3.WFS:
 		if WFS, ok := any(webservice).(*pdoknlv3.WFS); ok {
 			createConfig(&sb)
-			downloadGeopackage(&sb, smoothoperatorutils.PointerVal(WFS.Spec.Options.PrefetchData, false))
+			downloadGeopackage(&sb, WFS.Spec.Options.PrefetchData)
 			// In case of WFS no downloads are needed for TIFFs, styling assets and legends
 		}
 	case *pdoknlv3.WMS:
 		if WMS, ok := any(webservice).(*pdoknlv3.WMS); ok {
 			createConfig(&sb)
-			downloadGeopackage(&sb, smoothoperatorutils.PointerVal(WMS.Spec.Options.PrefetchData, false))
+			downloadGeopackage(&sb, WMS.Spec.Options.PrefetchData)
 			if err = downloadTiffs(&sb, WMS); err != nil {
 				return "", err
 			}
@@ -143,7 +140,7 @@ func downloadGeopackage(sb *strings.Builder, prefetchData bool) {
 }
 
 func downloadTiffs(sb *strings.Builder, wms *pdoknlv3.WMS) error {
-	if !*wms.Spec.Options.PrefetchData {
+	if !wms.Spec.Options.PrefetchData {
 		return nil
 	}
 

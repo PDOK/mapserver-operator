@@ -70,7 +70,7 @@ func GetConfigMapData(wms *pdoknlv3.WMS) map[string]string {
 	}
 
 	addLayerInput(wms, data)
-	if wms.Spec.Options.RewriteGroupToDataLayers != nil && *wms.Spec.Options.RewriteGroupToDataLayers {
+	if wms.Spec.Options.RewriteGroupToDataLayers {
 		addLegendFixerConfig(wms, data)
 	}
 	return data

@@ -10,6 +10,8 @@ metadata:
     service-version: 1.0.0
   name: sample-v3
 spec:
+  options:
+    automaticCasing: true
   lifecycle:
     ttlInDays: 21
   podSpecPatch:
@@ -33,14 +35,6 @@ spec:
           target:
             type: Utilization
             averageUtilization: 120
-  options:
-    automaticCasing: true
-    prefetchData: false
-    includeIngress: false
-    rewriteGroupToDataLayers: true
-    validateChildStyleNameEqual: true
-    disableWebserviceProxy: false
-    validateRequests: true
   service:
     url: https://service.pdok.nl/owner/dataset/wms/1.0.0
     title: "Dataset"
@@ -79,7 +73,12 @@ spec:
             maxy: "637049.52"
       visible: true
       authority:
+        name: "test"
+        url: "https://test.com"
+        spatialDatasetIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
       datasetMetadataUrl:
+        csw:
+          metadataIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
       minscaledenominator:
       maxscaledenominator:
       styles:
@@ -104,7 +103,12 @@ spec:
           boundingBoxes:
           visible: true
           authority:
+            name: "test"
+            url: "https://test.com"
+            spatialDatasetIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
           datasetMetadataUrl:
+            csw:
+              metadataIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
           minscaledenominator:
           maxscaledenominator:
           styles:
@@ -128,7 +132,12 @@ spec:
               boundingBoxes:
               visible: true
               authority:
+                name: "test"
+                url: "https://test.com"
+                spatialDatasetIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
               datasetMetadataUrl:
+                csw:
+                  metadataIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
               minscaledenominator:
               maxscaledenominator:
               styles:
@@ -162,7 +171,12 @@ spec:
               boundingBoxes:
               visible: true
               authority:
+                name: "test"
+                url: "https://test.com"
+                spatialDatasetIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
               datasetMetadataUrl:
+                csw:
+                  metadataIdentifier: 1234abcd-1234-abcd-1234-abcd1234abcd
               minscaledenominator:
               maxscaledenominator:
               styles:

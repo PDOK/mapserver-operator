@@ -59,7 +59,7 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
 		dst.Spec.Lifecycle = &sharedModel.Lifecycle{
-			TTLInDays: Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
+			TTLInDays: smoothoperatorutils.Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
 		}
 	}
 
@@ -72,7 +72,7 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = *ConvertOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WMSService{
 		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
@@ -80,8 +80,7 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
-		Fees:              nil,
-		AccessConstraints: src.Spec.Service.AccessConstraints,
+		AccessConstraints: smoothoperatorutils.PointerVal(src.Spec.Service.AccessConstraints, "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"),
 		MaxSize:           nil,
 		Resolution:        nil,
 		DefResolution:     nil,
@@ -91,15 +90,15 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	}
 
 	if src.Spec.Service.Maxsize != nil {
-		service.MaxSize = Pointer(int32(*src.Spec.Service.Maxsize))
+		service.MaxSize = smoothoperatorutils.Pointer(int32(*src.Spec.Service.Maxsize))
 	}
 
 	if src.Spec.Service.Resolution != nil {
-		service.Resolution = Pointer(int32(*src.Spec.Service.Resolution))
+		service.Resolution = smoothoperatorutils.Pointer(int32(*src.Spec.Service.Resolution))
 	}
 
 	if src.Spec.Service.DefResolution != nil {
-		service.DefResolution = Pointer(int32(*src.Spec.Service.DefResolution))
+		service.DefResolution = smoothoperatorutils.Pointer(int32(*src.Spec.Service.DefResolution))
 	}
 
 	if src.Spec.Service.Mapfile != nil {
@@ -154,13 +153,13 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
-	dst.Spec.Options = ConvertOptionsV3ToV2(&src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
 
 	service := WMSService{
 		Title:              src.Spec.Service.Title,
 		Abstract:           src.Spec.Service.Abstract,
 		Keywords:           src.Spec.Service.Keywords,
-		AccessConstraints:  src.Spec.Service.AccessConstraints,
+		AccessConstraints:  &src.Spec.Service.AccessConstraints,
 		Extent:             nil,
 		DataEPSG:           src.Spec.Service.DataEPSG,
 		Layers:             []WMSLayer{},
@@ -187,11 +186,11 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	if src.Spec.Service.DefResolution != nil {
-		service.DefResolution = Pointer(int(*src.Spec.Service.DefResolution))
+		service.DefResolution = smoothoperatorutils.Pointer(int(*src.Spec.Service.DefResolution))
 	}
 
 	if src.Spec.Service.Resolution != nil {
-		service.Resolution = Pointer(int(*src.Spec.Service.Resolution))
+		service.Resolution = smoothoperatorutils.Pointer(int(*src.Spec.Service.Resolution))
 	}
 
 	if src.Spec.Service.StylingAssets != nil {
@@ -216,7 +215,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	if src.Spec.Service.MaxSize != nil {
-		service.Maxsize = Pointer(float64(*src.Spec.Service.MaxSize))
+		service.Maxsize = smoothoperatorutils.Pointer(float64(*src.Spec.Service.MaxSize))
 	}
 
 	service.Layers = mapV3LayerToV2Layers(src.Spec.Service.Layer, nil, src.Spec.Service.DataEPSG)
@@ -227,9 +226,9 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 			if service.Extent == nil {
 				service.Extent = l.Extent
 			} else {
-				bbox := Pointer(sharedModel.ExtentToBBox(*service.Extent)).DeepCopy()
+				bbox := smoothoperatorutils.Pointer(sharedModel.ExtentToBBox(*service.Extent)).DeepCopy()
 				bbox.Combine(sharedModel.ExtentToBBox(*l.Extent))
-				service.Extent = Pointer(bbox.ToExtent())
+				service.Extent = smoothoperatorutils.Pointer(bbox.ToExtent())
 			}
 		}
 	}
@@ -322,7 +321,7 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Keywords:      v2Service.Keywords,
 			Layers:        []pdoknlv3.Layer{},
 			BoundingBoxes: boundingBoxes,
-			Visible:       smoothoperatorutils.Pointer(true),
+			Visible:       true,
 		}
 
 		// adding the bottom layers to the middle layers they are grouped by
@@ -361,7 +360,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 		BoundingBoxes:       []pdoknlv3.WMSBoundingBox{},
 		MinScaleDenominator: nil,
 		MaxScaleDenominator: nil,
-		Visible:             v2Layer.Visible,
+		Visible:             smoothoperatorutils.PointerVal(v2Layer.Visible, true),
 	}
 
 	if v2Layer.SourceMetadataIdentifier != nil {
@@ -393,11 +392,11 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 	}
 
 	if v2Layer.MinScale != nil {
-		layer.MinScaleDenominator = Pointer(strconv.FormatFloat(*v2Layer.MinScale, 'f', -1, 64))
+		layer.MinScaleDenominator = smoothoperatorutils.Pointer(strconv.FormatFloat(*v2Layer.MinScale, 'f', -1, 64))
 	}
 
 	if v2Layer.MaxScale != nil {
-		layer.MaxScaleDenominator = Pointer(strconv.FormatFloat(*v2Layer.MaxScale, 'f', -1, 64))
+		layer.MaxScaleDenominator = smoothoperatorutils.Pointer(strconv.FormatFloat(*v2Layer.MaxScale, 'f', -1, 64))
 	}
 
 	for _, style := range v2Layer.Styles {
@@ -418,7 +417,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 	}
 
 	if v2Layer.Data != nil {
-		layer.Data = Pointer(ConvertV2DataToV3(*v2Layer.Data))
+		layer.Data = smoothoperatorutils.Pointer(ConvertV2DataToV3(*v2Layer.Data))
 	}
 
 	return layer
@@ -444,7 +443,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 			Styles:      []Style{},
 		}
 
-		v2Layer.Visible = v3Layer.Visible
+		v2Layer.Visible = &v3Layer.Visible
 
 		if parent != nil {
 			v2Layer.Group = parent.Name
@@ -460,7 +459,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 
 		for _, bb := range v3Layer.BoundingBoxes {
 			if bb.CRS == serviceEPSG {
-				v2Layer.Extent = Pointer(bb.BBox.ToExtent())
+				v2Layer.Extent = smoothoperatorutils.Pointer(bb.BBox.ToExtent())
 			}
 		}
 
@@ -498,7 +497,7 @@ func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, servic
 		}
 
 		if v3Layer.Data != nil {
-			v2Layer.Data = Pointer(ConvertV3DataToV2(*v3Layer.Data))
+			v2Layer.Data = smoothoperatorutils.Pointer(ConvertV3DataToV2(*v3Layer.Data))
 		}
 
 		layers = append(layers, v2Layer)
