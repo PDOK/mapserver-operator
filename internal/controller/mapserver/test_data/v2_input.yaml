@@ -21,9 +21,9 @@ spec:
       querystring: SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities
     resources:
       limits:
-        ephemeralStorage: 1505Mi
+        ephemeralStorage: 505Mi
       requests:
-        ephemeralStorage: 1505Mi
+        ephemeralStorage: 255Mi
   service:
     title: NWB - Wegen WFS
     abstract:
