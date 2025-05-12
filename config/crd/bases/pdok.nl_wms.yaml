@@ -1857,19 +1857,20 @@ spec:
                                       description: Whether or not the layer is visible. At least one of the layers must be visible.
                                       type: boolean
                                   required:
+                                    - visible
                                     - name
                                   type: object
                                   x-kubernetes-validations:
                                     - message: A layer should have keywords when visible
-                                      rule: '!self.visible || has(self.keywords)'
+                                      rule: self.visible == false || has(self.keywords)
                                     - message: A layer should have a title when visible
                                       rule: '!self.visible || has(self.title)'
                                     - message: A layer should have an abstract when visible
                                       rule: '!self.visible || has(self.abstract)'
-                                    - message: A layer should have an authority when visible
-                                      rule: '!self.visible || has(self.authority)'
-                                    - message: A layer should have a datasetMetadataUrl when visible
-                                      rule: '!self.visible || has(self.datasetMetadataUrl)'
+                                    - message: A layer should have an authority when visible and has a name
+                                      rule: '!(self.visible && has(self.name)) || has(self.authority)'
+                                    - message: A layer should have a datasetMetadataUrl when visible and has a name
+                                      rule: '!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)'
                                 type: array
                               maxscaledenominator:
                                 description: The maximum scale at which this layer functions
@@ -1927,21 +1928,22 @@ spec:
                                 description: Whether or not the layer is visible. At least one of the layers must be visible.
                                 type: boolean
                             required:
+                              - visible
                               - name
                             type: object
                             x-kubernetes-validations:
                               - message: A layer should have sublayers or data, not both
                                 rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                               - message: A layer should have keywords when visible
-                                rule: '!self.visible || has(self.keywords)'
+                                rule: self.visible == false || has(self.keywords)
                               - message: A layer should have a title when visible
                                 rule: '!self.visible || has(self.title)'
                               - message: A layer should have an abstract when visible
                                 rule: '!self.visible || has(self.abstract)'
-                              - message: A layer should have an authority when visible
-                                rule: '!self.visible || has(self.authority)'
-                              - message: A layer should have a datasetMetadataUrl when visible
-                                rule: '!self.visible || has(self.datasetMetadataUrl)'
+                              - message: A layer should have an authority when visible and has a name
+                                rule: '!(self.visible && has(self.name)) || has(self.authority)'
+                              - message: A layer should have a datasetMetadataUrl when visible and has a name
+                                rule: '!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)'
                           type: array
                         maxscaledenominator:
                           description: The maximum scale at which this layer functions
@@ -1998,20 +2000,22 @@ spec:
                           default: true
                           description: Whether or not the layer is visible. At least one of the layers must be visible.
                           type: boolean
+                      required:
+                        - visible
                       type: object
                       x-kubernetes-validations:
                         - message: A layer should have sublayers or data, not both
                           rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                         - message: A layer should have keywords when visible
-                          rule: '!self.visible || has(self.keywords)'
+                          rule: self.visible == false || has(self.keywords)
                         - message: A layer should have a title when visible
                           rule: '!self.visible || has(self.title)'
                         - message: A layer should have an abstract when visible
                           rule: '!self.visible || has(self.abstract)'
-                        - message: A layer should have an authority when visible
-                          rule: '!self.visible || has(self.authority)'
-                        - message: A layer should have a datasetMetadataUrl when visible
-                          rule: '!self.visible || has(self.datasetMetadataUrl)'
+                        - message: A layer should have an authority when visible and has a name
+                          rule: '!(self.visible && has(self.name)) || has(self.authority)'
+                        - message: A layer should have a datasetMetadataUrl when visible and has a name
+                          rule: '!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)'
                     mapfile:
                       description: Custom mapfile
                       properties:

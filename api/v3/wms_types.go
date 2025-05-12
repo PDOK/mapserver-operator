@@ -138,8 +138,8 @@ type ConfigMapRef struct {
 // +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 // +kubebuilder:validation:XValidation:message="A layer should have a title when visible", rule="!self.visible || has(self.title)"
 // +kubebuilder:validation:XValidation:message="A layer should have an abstract when visible", rule="!self.visible || has(self.abstract)"
-// +kubebuilder:validation:XValidation:message="A layer should have an authority when visible", rule="!self.visible || has(self.authority)"
-// +kubebuilder:validation:XValidation:message="A layer should have a datasetMetadataUrl when visible", rule="!self.visible || has(self.datasetMetadataUrl)"
+// +kubebuilder:validation:XValidation:message="A layer should have an authority when visible and has a name", rule="!(self.visible && has(self.name)) || has(self.authority)"
+// +kubebuilder:validation:XValidation:message="A layer should have a datasetMetadataUrl when visible and has a name", rule="!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validations:MinLength:=1
@@ -163,7 +163,7 @@ type Layer struct {
 
 	// Whether or not the layer is visible. At least one of the layers must be visible.
 	// +kubebuilder:default:=true
-	Visible bool `json:"visible,omitempty"`
+	Visible bool `json:"visible"`
 
 	// TODO ??
 	Authority *Authority `json:"authority,omitempty"`
