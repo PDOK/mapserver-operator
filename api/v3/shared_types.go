@@ -41,7 +41,7 @@ type WMSWFS interface {
 	PodSpecPatch() *corev1.PodSpec
 	HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch
 	Type() ServiceType
-	Options() *Options
+	Options() Options
 	HasPostgisData() bool
 	// Sha1 hash of the objects name
 	ID() string
@@ -71,24 +71,36 @@ type Options struct {
 
 	// ValidateRequests enables request validation against the service schema.
 	// +kubebuilder:default:=true
-	ValidateRequests *bool `json:"validateRequests,omitempty"`
+	ValidateRequests bool `json:"validateRequests"`
 
 	// RewriteGroupToDataLayers merges group layers into individual data layers.
 	// +kubebuilder:default:=false
-	RewriteGroupToDataLayers *bool `json:"rewriteGroupToDataLayers,omitempty"`
+	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers"`
 
 	// DisableWebserviceProxy disables the built-in proxy for external web services.
 	// +kubebuilder:default:=false
-	DisableWebserviceProxy *bool `json:"disableWebserviceProxy,omitempty"`
+	DisableWebserviceProxy bool `json:"disableWebserviceProxy"`
 
 	// Whether to prefetch data from blob storage, and store it on the local filesystem.
 	// If `false`, the data will be served directly out of blob storage
 	// +kubebuilder:default:=true
-	PrefetchData *bool `json:"prefetchData,omitempty"`
+	PrefetchData bool `json:"prefetchData"`
 
 	// ValidateChildStyleNameEqual ensures child style names match the parent style.
 	// +kubebuilder:default=false
-	ValidateChildStyleNameEqual *bool `json:"validateChildStyleNameEqual,omitempty"`
+	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual"`
+}
+
+func GetDefaultOptions() *Options {
+	return &Options{
+		IncludeIngress:              true,
+		AutomaticCasing:             true,
+		ValidateRequests:            true,
+		RewriteGroupToDataLayers:    false,
+		DisableWebserviceProxy:      false,
+		PrefetchData:                true,
+		ValidateChildStyleNameEqual: false,
+	}
 }
 
 // Inspire holds INSPIRE-specific metadata for the service.
@@ -107,8 +119,9 @@ type Inspire struct {
 	Language string `json:"language"`
 }
 
+// +kubebuilder:validation:XValidation:rule="(has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))", message="metadataUrl should have csw or custom, not both"
 type MetadataURL struct {
-	// CSW describes a metadata record via a metadataIdentifier (UUID).
+	// CSW describes a metadata record via a metadataIdentifier (UUID) as defined in the OwnerInfo.
 	CSW *Metadata `json:"csw"`
 
 	// Custom allows arbitrary href
@@ -195,16 +208,19 @@ type TIF struct {
 	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 
-	// Resample method
+	// This option can be used to control the resampling kernel used sampling raster images, optional
 	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:Pattern=`(NEAREST|AVERAGE|BILINEAR)`
 	Resample *string `json:"resample,omitempty"`
 
-	// Offsite color for nodata removal
+	// Sets the color index to treat as transparent for raster layers, optional, hex or rgb
 	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:Pattern=`(#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})`
 	Offsite *string `json:"offsite,omitempty"`
 
-	// Include class names in GetFeatureInfo responses
-	GetFeatureInfoIncludesClass *bool `json:"getFeatureInfoIncludesClass,omitempty"`
+	// "When a band represents nominal or ordinal data the class name (from styling) can be included in the getFeatureInfo"
+	// +kubebuilder:default:=false
+	GetFeatureInfoIncludesClass bool `json:"getFeatureInfoIncludesClass,omitempty"`
 }
 
 // Column maps a source column name to an optional alias for output.
@@ -280,7 +296,7 @@ func Sha1HashOfName[O WMSWFS](obj O) string {
 	return hex.EncodeToString(s.Sum(nil))
 }
 
-func (o *Options) UseWebserviceProxy() bool {
+func (o Options) UseWebserviceProxy() bool {
 	// options.DisableWebserviceProxy not set or false
-	return o != nil && (o.DisableWebserviceProxy == nil || !*o.DisableWebserviceProxy)
+	return !o.DisableWebserviceProxy
 }

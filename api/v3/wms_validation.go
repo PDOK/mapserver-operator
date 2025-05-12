@@ -72,15 +72,8 @@ func ValidateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 		}
 	}
 
-	var rewriteGroupToDataLayers = false
-	if wms.Spec.Options.RewriteGroupToDataLayers != nil {
-		rewriteGroupToDataLayers = *wms.Spec.Options.RewriteGroupToDataLayers
-	}
-
-	var validateChildStyleNameEqual = true
-	if wms.Spec.Options.ValidateChildStyleNameEqual != nil {
-		validateChildStyleNameEqual = *wms.Spec.Options.ValidateChildStyleNameEqual
-	}
+	var rewriteGroupToDataLayers = wms.Spec.Options.RewriteGroupToDataLayers
+	var validateChildStyleNameEqual = wms.Spec.Options.ValidateChildStyleNameEqual
 
 	equalChildStyleNames := map[string][]string{}
 	if rewriteGroupToDataLayers && validateChildStyleNameEqual {
@@ -117,7 +110,7 @@ func ValidateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 		}
 
 		//nolint:nestif
-		if !*layer.Visible {
+		if !layer.Visible {
 			if layer.Title != nil {
 				*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.title is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
 			}
@@ -143,7 +136,7 @@ func ValidateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 			}
 		}
 
-		if layer.Visible != nil && *layer.Visible {
+		if layer.Visible {
 			var fields []string
 			hasVisibleLayer = true
 
@@ -186,7 +179,7 @@ func ValidateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 		}
 
 		if layerType == GroupLayer || layerType == TopLayer {
-			if !*layer.Visible {
+			if !layer.Visible {
 				layerReasons = append(layerReasons, layerType+" must be visible")
 			}
 			if layer.Data != nil {

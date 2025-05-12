@@ -44,7 +44,7 @@ func getProperties(layer *pdoknlv3.Layer) (properties []featureinfo.Property) {
 	case layer.Data.Postgis != nil:
 		properties = getPropertiesForVector(layer.Data.Postgis.Columns)
 	case layer.Data.TIF != nil:
-		properties = getPropertiesForRaster(layer.Data.TIF.GetFeatureInfoIncludesClass)
+		properties = getPropertiesForRaster(&layer.Data.TIF.GetFeatureInfoIncludesClass)
 	}
 	return
 }

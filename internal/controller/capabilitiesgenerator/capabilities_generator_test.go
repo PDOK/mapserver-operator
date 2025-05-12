@@ -652,8 +652,8 @@ func TestInputForWMS(t *testing.T) {
 	pdoknlv3.SetHost("http://localhost")
 
 	contactPersonPrimary := smoothoperatorv1.ContactPersonPrimary{
-		ContactPerson:       asPtr("KlantContactCenter PDOK"),
-		ContactOrganization: asPtr("PDOK"),
+		ContactPerson:       smoothoperatorutils.Pointer("KlantContactCenter PDOK"),
+		ContactOrganization: smoothoperatorutils.Pointer("PDOK"),
 	}
 
 	ownerInfo := smoothoperatorv1.OwnerInfo{
@@ -667,18 +667,18 @@ func TestInputForWMS(t *testing.T) {
 			WMS: &smoothoperatorv1.WMS{
 				ContactInformation: smoothoperatorv1.ContactInformation{
 					ContactPersonPrimary: &contactPersonPrimary,
-					ContactPosition:      asPtr("pointOfContact"),
+					ContactPosition:      smoothoperatorutils.Pointer("pointOfContact"),
 					ContactAddress: &smoothoperatorv1.ContactAddress{
-						AddressType:     asPtr("Work"),
+						AddressType:     smoothoperatorutils.Pointer("Work"),
 						Address:         nil,
-						City:            asPtr("Apeldoorn"),
+						City:            smoothoperatorutils.Pointer("Apeldoorn"),
 						StateOrProvince: nil,
 						PostCode:        nil,
-						Country:         asPtr("The Netherlands"),
+						Country:         smoothoperatorutils.Pointer("The Netherlands"),
 					},
 					ContactVoiceTelephone:        nil,
 					ContactFacsimileTelephone:    nil,
-					ContactElectronicMailAddress: asPtr("BeheerPDOK@kadaster.nl"),
+					ContactElectronicMailAddress: smoothoperatorutils.Pointer("BeheerPDOK@kadaster.nl"),
 				},
 			},
 		},

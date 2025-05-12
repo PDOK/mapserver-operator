@@ -117,11 +117,6 @@ func getGeopackagePath(data pdoknlv3.Data) *string {
 func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
 	service := wms.Spec.Service
 
-	accessConstraints := service.AccessConstraints
-	if accessConstraints == nil || *accessConstraints == "" {
-		accessConstraints = smoothoperatorutils.Pointer("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
-	}
-
 	datasetOwner := ""
 	if service.Layer.Authority != nil {
 		datasetOwner = service.Layer.Authority.Name
@@ -183,7 +178,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 			DataEPSG:        service.DataEPSG,
 			EPSGList:        epsgs,
 		},
-		AccessConstraints: *accessConstraints,
+		AccessConstraints: service.AccessConstraints,
 		Layers:            []WMSLayer{},
 		GroupLayers:       []GroupLayer{},
 		Symbols:           getSymbols(wms),
@@ -223,7 +218,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	groupName := ""
 	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
 	// If the layer falls directly under the toplayer, the groupname is omitted
-	if !parent.IsTopLayer() && parent.IsGroupLayer() && parent.Name != nil && parent.IsVisible() {
+	if !parent.IsTopLayer() && parent.IsGroupLayer() && parent.Name != nil && parent.Visible {
 		groupName = *parent.Name
 	}
 
@@ -277,7 +272,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 
 			result.GeometryType = &gpkg.GeometryType
 			geopackageConstructedPath := ""
-			if smoothoperatorutils.PointerVal(wms.Options().PrefetchData, true) {
+			if wms.Options().PrefetchData {
 				splitBlobKey := strings.Split(gpkg.BlobKey, "/")
 				geopackageConstructedPath = "/srv/data/gpkg/" + splitBlobKey[len(splitBlobKey)-1]
 			} else {

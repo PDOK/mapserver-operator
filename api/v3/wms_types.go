@@ -57,7 +57,8 @@ type WMSSpec struct {
 	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
 
 	// Optional options for the configuration of the service.
-	Options Options `json:"options,omitempty"`
+	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
+	Options Options `json:"options"`
 
 	// Service specification
 	Service WMSService `json:"service"`
@@ -84,17 +85,10 @@ type WMSService struct {
 	// +kubebuilder:validation:MinLength:=1
 	OwnerInfoRef string `json:"ownerInfoRef"`
 
-	// TODO ??
-	// +kubebuilder:validation:MinLength:=1
-	Fees *string `json:"fees,omitempty"`
-
 	// AccessConstraints (licence) that are applicable to the service
 	// +kubebuilder:validation:Pattern:=`https?://.*`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints *string `json:"accessConstraints,omitempty"`
-
-	// TODO??
-	MaxSize *int32 `json:"maxSize,omitempty"`
+	AccessConstraints string `json:"accessConstraints,omitempty"`
 
 	// Optional specification Inspire themes and ids
 	Inspire *Inspire `json:"inspire,omitempty"`
@@ -104,10 +98,13 @@ type WMSService struct {
 	//nolint:tagliatelle
 	DataEPSG string `json:"dataEPSG"`
 
-	// TODO ??
+	// Mapfile setting: Sets the maximum size (in pixels) for both dimensions of the image from a getMap request.
+	MaxSize *int32 `json:"maxSize,omitempty"`
+
+	// Mapfile setting: Sets the RESOLUTION field in the mapfile, not used when service.mapfile is configured
 	Resolution *int32 `json:"resolution,omitempty"`
 
-	// TODO ??
+	// Mapfile setting: Sets the DEFRESOLUTION field in the mapfile, not used when service.mapfile is configured
 	DefResolution *int32 `json:"defResolution,omitempty"`
 
 	// Optional. Required files for the styling of the service
@@ -139,6 +136,10 @@ type ConfigMapRef struct {
 
 // +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
 // +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
+// +kubebuilder:validation:XValidation:message="A layer should have a title when visible", rule="!self.visible || has(self.title)"
+// +kubebuilder:validation:XValidation:message="A layer should have an abstract when visible", rule="!self.visible || has(self.abstract)"
+// +kubebuilder:validation:XValidation:message="A layer should have an authority when visible and has a name", rule="!(self.visible && has(self.name)) || has(self.authority)"
+// +kubebuilder:validation:XValidation:message="A layer should have a datasetMetadataUrl when visible and has a name", rule="!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validations:MinLength:=1
@@ -157,11 +158,12 @@ type Layer struct {
 	Keywords []string `json:"keywords,omitempty"`
 
 	// BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
+	// +kubebuilder:validations:MinItems:=1
 	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes,omitempty"`
 
 	// Whether or not the layer is visible. At least one of the layers must be visible.
 	// +kubebuilder:default:=true
-	Visible *bool `json:"visible,omitempty"`
+	Visible bool `json:"visible"`
 
 	// TODO ??
 	Authority *Authority `json:"authority,omitempty"`
@@ -181,13 +183,14 @@ type Layer struct {
 	// +kubebuilder:validations:MinItems:=1
 	Styles []Style `json:"styles,omitempty"`
 
-	// TODO ??
+	// Mapfile setting, sets "LABEL_NO_CLIP=ON"
 	LabelNoClip bool `json:"labelNoClip,omitempty"`
 
 	// Data (gpkg/postgis/tif) used by the layer
 	Data *Data `json:"data,omitempty"`
 
 	// Sublayers of the layer
+	// +kubebuilder:validations:MinItems:=1
 	Layers []Layer `json:"layers,omitempty"`
 }
 
@@ -229,11 +232,21 @@ type Style struct {
 	Legend *Legend `json:"legend,omitempty"`
 }
 
-// TODO add validations + descriptions
 type Legend struct {
-	Width   int32  `json:"width"`
-	Height  int32  `json:"height"`
-	Format  string `json:"format"`
+	// The width of the legend in px, defaults to 78
+	// + kubebuilder:default=78
+	Width int32 `json:"width,omitempty"`
+
+	// The height of the legend in px, defaults to 20
+	// + kubebuilder:default=20
+	Height int32 `json:"height,omitempty"`
+
+	// Format of the legend, defaults to image/png
+	// +kubebuilder:default="image/png"
+	Format string `json:"format,omitempty"`
+
+	// Location of the legend on the blobstore
+	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 }
 
@@ -313,9 +326,8 @@ type AnnotatedLayer struct {
 func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 	result := make([]AnnotatedLayer, 0)
 
-	firstLayer := AnnotatedLayer{}
 	if wmsService.Layer.Name != nil && len(*wmsService.Layer.Name) > 0 {
-		firstLayer = AnnotatedLayer{
+		firstLayer := AnnotatedLayer{
 			GroupName:    nil,
 			IsTopLayer:   wmsService.Layer.IsTopLayer(),
 			IsGroupLayer: wmsService.Layer.IsGroupLayer(),
@@ -436,10 +448,6 @@ func (layer *Layer) IsTopLayer() bool {
 	return false
 }
 
-func (layer *Layer) IsVisible() bool {
-	return layer.Visible == nil || *layer.Visible
-}
-
 func (layer *Layer) hasBoundingBoxForCRS(crs string) bool {
 	for _, bbox := range layer.BoundingBoxes {
 		if bbox.CRS == crs {
@@ -540,8 +548,8 @@ func (wms *WMS) HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch {
 	return wms.Spec.HorizontalPodAutoscalerPatch
 }
 
-func (wms *WMS) Options() *Options {
-	return &wms.Spec.Options
+func (wms *WMS) Options() Options {
+	return wms.Spec.Options
 }
 
 func (wms *WMS) ID() string {

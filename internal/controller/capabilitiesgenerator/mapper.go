@@ -209,21 +209,9 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 	canonicalServiceURL := hostBaseURL + "/" + pdoknlv3.GetBaseURLPath(wms)
 
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
-	var fees *string
-	if wms.Spec.Service.Fees != nil {
-		feesPtr := mapperutils.EscapeQuotes(*wms.Spec.Service.Fees)
-		fees = &feesPtr
-	} else {
-		fees = asPtr("NONE")
-	}
 
 	maxWidth := 4000
 	maxHeight := 4000
-
-	accessContraints := wms.Spec.Service.AccessConstraints
-	if accessContraints == nil || *accessContraints == "" {
-		accessContraints = smoothoperatorutils.Pointer("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
-	}
 
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
@@ -244,8 +232,8 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.Keywords},
 						OnlineResource:     wms130.OnlineResource{Href: &hostBaseURL},
 						ContactInformation: getContactInformation(ownerInfo),
-						Fees:               fees,
-						AccessConstraints:  accessContraints,
+						Fees:               smoothoperatorutils.Pointer("NONE"),
+						AccessConstraints:  &wms.Spec.Service.AccessConstraints,
 						LayerLimit:         nil,
 						MaxWidth:           &maxWidth,
 						MaxHeight:          &maxHeight,
@@ -350,7 +338,7 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 		OnlineResource: wms130.OnlineResource{
 			Xlink: nil,
 			Type:  nil,
-			Href:  asPtr(url),
+			Href:  smoothoperatorutils.Pointer(url),
 		},
 	}
 
@@ -376,9 +364,9 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 	referenceLayer := wms.Spec.Service.Layer
 	title := referenceLayer.Title
 	if title != nil {
-		title = asPtr(mapperutils.EscapeQuotes(*referenceLayer.Title))
+		title = smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(*referenceLayer.Title))
 	} else {
-		title = asPtr("")
+		title = smoothoperatorutils.Pointer("")
 	}
 
 	defaultCrs := []wms130.CRS{{
@@ -520,11 +508,11 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 	}
 
 	topLayer := wms130.Layer{
-		Queryable:               asPtr(1),
+		Queryable:               smoothoperatorutils.Pointer(1),
 		Opaque:                  nil,
 		Name:                    nil,
 		Title:                   *title,
-		Abstract:                asPtr(mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)),
+		Abstract:                smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)),
 		KeywordList:             &wms130.Keywords{Keyword: referenceLayer.Keywords},
 		CRS:                     defaultCrs,
 		EXGeographicBoundingBox: &defaultBoundingBox,
@@ -564,12 +552,12 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 
 		if layer.DatasetMetadataURL != nil {
 			metadataUrls = append(metadataUrls, &wms130.MetadataURL{
-				Type:   asPtr("TC211"),
-				Format: asPtr("text/plain"),
+				Type:   smoothoperatorutils.Pointer("TC211"),
+				Format: smoothoperatorutils.Pointer("text/plain"),
 				OnlineResource: wms130.OnlineResource{
 					Xlink: nil,
-					Type:  asPtr("simple"),
-					Href:  asPtr("https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=" + layer.DatasetMetadataURL.CSW.MetadataIdentifier),
+					Type:  smoothoperatorutils.Pointer("simple"),
+					Href:  smoothoperatorutils.Pointer("https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=" + layer.DatasetMetadataURL.CSW.MetadataIdentifier),
 				},
 			})
 		}
@@ -582,7 +570,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 		}
 
 		nestedLayer := wms130.Layer{
-			Queryable: asPtr(1),
+			Queryable: smoothoperatorutils.Pointer(1),
 			Opaque:    nil,
 			Name:      layer.Name,
 			Title:     smoothoperatorutils.PointerVal(layer.Title, ""),
@@ -616,8 +604,8 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 					Format: "image/png",
 					OnlineResource: wms130.OnlineResource{
 						Xlink: nil,
-						Type:  asPtr("simple"),
-						Href:  asPtr(canonicalURL + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
+						Type:  smoothoperatorutils.Pointer("simple"),
+						Href:  smoothoperatorutils.Pointer(canonicalURL + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
 					},
 				},
 				StyleSheetURL: nil,
@@ -630,8 +618,4 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 
 	result = append(result, topLayer)
 	return result
-}
-
-func asPtr[T any](value T) *T {
-	return &value
 }
