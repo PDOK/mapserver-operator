@@ -221,7 +221,6 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 		return err
 	}
 	return ctrl.SetControllerReference(obj, deployment, getReconcilerScheme(r))
-
 }
 
 func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]corev1.Container, error) {

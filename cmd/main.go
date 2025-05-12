@@ -20,7 +20,10 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
+	"github.com/go-logr/zapr"
+	"github.com/pdok/smooth-operator/pkg/integrations/logging"
 	"github.com/peterbourgon/ff"
+	"go.uber.org/zap/zapcore"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -120,7 +123,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	//nolint:gosec
+	levelEnabler := zapcore.Level(logLevel)
+	zapLogger, _ := logging.SetupLogger("atom-operator", slackWebhookURL, levelEnabler)
+	logrLogger := zapr.NewLogger(zapLogger)
+	ctrl.SetLogger(logrLogger)
 
 	if host == "" {
 		setupLog.Error(errors.New("baseURL is required"), "A value for baseURL must be specified.")
