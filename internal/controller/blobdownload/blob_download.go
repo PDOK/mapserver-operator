@@ -53,9 +53,7 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 			},
 		},
 		EnvFrom: []corev1.EnvFromSource{
-			// Todo add this ConfigMap
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, blobsConfigName),
-			// Todo add this Secret
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, blobsSecretName),
 		},
 		Resources: corev1.ResourceRequirements{
