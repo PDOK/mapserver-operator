@@ -13,7 +13,7 @@ require (
 	github.com/pdok/featureinfo-generator v1.4.0-beta1
 	github.com/pdok/ogc-capabilities-generator v1.0.0-beta7
 	github.com/pdok/ogc-specifications v1.0.0-beta7
-	github.com/pdok/smooth-operator v0.0.18
+	github.com/pdok/smooth-operator v0.1.0
 	github.com/peterbourgon/ff v1.7.1
 	github.com/stretchr/testify v1.10.0
 	github.com/traefik/traefik/v3 v3.3.4
