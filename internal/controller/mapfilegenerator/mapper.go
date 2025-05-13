@@ -39,6 +39,16 @@ func SetDebugLevel(level int) {
 }
 
 func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (WFSInput, error) {
+	var metadataID string
+	if wfs.Spec.Service.Inspire != nil {
+		metadataID = wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
+	}
+
+	var extent string
+	if wfs.Spec.Service.Bbox != nil {
+		extent = wfs.Spec.Service.Bbox.DefaultCRS.ToExtent()
+	}
+
 	input := WFSInput{
 		BaseServiceInput: BaseServiceInput{
 			Title:           mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
@@ -46,8 +56,8 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			Keywords:        strings.Join(wfs.Spec.Service.Keywords, ","),
 			OnlineResource:  pdoknlv3.GetHost(true),
 			Path:            mapperutils.GetPath(wfs),
-			MetadataID:      wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
-			Extent:          wfs.Spec.Service.Bbox.DefaultCRS.ToExtent(),
+			MetadataID:      metadataID,
+			Extent:          extent,
 			NamespacePrefix: wfs.Spec.Service.Prefix,
 			NamespaceURI:    mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			AutomaticCasing: wfs.Spec.Options.AutomaticCasing,
