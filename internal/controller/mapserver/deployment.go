@@ -218,6 +218,7 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 // Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	resources := v1.ResourceRequirements{
+		Limits: v1.ResourceList{},
 		Requests: v1.ResourceList{
 			v1.ResourceCPU: resource.MustParse("0.15"),
 		},

@@ -237,7 +237,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(containerMapserver.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(containerMapserver.Image).Should(Equal(reconcilerImages.MapserverImage))
 			Expect(containerMapserver.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
-			Expect(containerMapserver.Resources.Limits.Memory().String()).Should(Equal("800M"))
+			Expect(containerMapserver.Resources.Limits.Memory().String()).Should(Equal("12M"))
 			Expect(containerMapserver.Resources.Requests.Cpu().String()).Should(Equal("100m"))
 			Expect(len(containerMapserver.LivenessProbe.Exec.Command)).Should(Equal(3))
 			Expect(containerMapserver.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=wms&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
