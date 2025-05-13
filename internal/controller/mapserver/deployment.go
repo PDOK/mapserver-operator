@@ -254,9 +254,9 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		resources.Requests[v1.ResourceMemory] = *memoryRequest
 	}
 
-	limitMemory := objResources.Limits.Memory()
-	if limitMemory != nil && !limitMemory.IsZero() {
-		resources.Limits[v1.ResourceMemory] = *limitMemory
+	memoryLimit := objResources.Limits.Memory()
+	if memoryLimit != nil && !memoryLimit.IsZero() {
+		resources.Limits[v1.ResourceMemory] = *memoryLimit
 	} else {
 		resources.Limits[v1.ResourceMemory] = resource.MustParse("800M")
 	}
