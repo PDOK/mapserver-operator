@@ -2,73 +2,96 @@ package v3
 
 import (
 	"fmt"
-	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
-	"k8s.io/utils/strings/slices"
 	"maps"
 	"strings"
+
+	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/strings/slices"
 )
 
 func (wms *WMS) ValidateCreate() ([]string, error) {
-	var warnings []string
-	var reasons []string
+	warnings := []string{}
+	allErrs := field.ErrorList{}
 
 	err := sharedValidation.ValidateLabelsOnCreate(wms.Labels)
 	if err != nil {
-		reasons = append(reasons, fmt.Sprintf("%v", err))
+		allErrs = append(allErrs, err)
 	}
 
-	ValidateWMS(wms, &warnings, &reasons)
+	ValidateWMS(wms, &warnings, &allErrs)
 
-	if len(reasons) > 0 {
-		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
+	if len(allErrs) == 0 {
+		return warnings, nil
 	}
 
-	return warnings, nil
+	return warnings, apierrors.NewInvalid(
+		schema.GroupKind{Group: "pdok.nl", Kind: "WMS"},
+		wms.Name, allErrs)
 }
 
 func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
-	var warnings []string
-	var reasons []string
+	warnings := []string{}
+	allErrs := field.ErrorList{}
 
-	// Check labels did not change
-	err := sharedValidation.ValidateLabelsOnUpdate(wmsOld.Labels, wms.Labels)
-	if err != nil {
-		reasons = append(reasons, fmt.Sprintf("%v", err))
-	}
+	sharedValidation.ValidateLabelsOnUpdate(wmsOld.Labels, wms.Labels, &allErrs)
 
-	sharedValidation.CheckBaseUrlImmutability(wmsOld, wms, &reasons)
+	sharedValidation.CheckBaseUrlImmutability(wmsOld, wms, &allErrs)
 
 	if (wms.Spec.Service.Inspire == nil && wmsOld.Spec.Service.Inspire != nil) || (wms.Spec.Service.Inspire != nil && wmsOld.Spec.Service.Inspire == nil) {
-		reasons = append(reasons, "services cannot change from inspire to not inspire or the other way around")
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))
 	}
 
-	ValidateWMS(wms, &warnings, &reasons)
+	ValidateWMS(wms, &warnings, &allErrs)
 
-	if len(reasons) > 0 {
-		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
+	if len(allErrs) == 0 {
+		return warnings, nil
 	}
 
-	return warnings, nil
+	return warnings, apierrors.NewInvalid(
+		schema.GroupKind{Group: "pdok.nl", Kind: "WFS"},
+		wms.Name, allErrs)
 }
 
-func ValidateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
+func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wms.GetName(), "wms") {
-		*warnings = append(*warnings, sharedValidation.FormatValidationWarning("name should not contain wms", wms.GroupVersionKind(), wms.GetName()))
+		sharedValidation.AddWarning(
+			warnings,
+			*field.NewPath("metadata").Child("name"),
+			"name should not contain wms",
+			wms.GroupVersionKind(),
+			wms.GetName(),
+		)
 	}
 
 	service := wms.Spec.Service
+	path := field.NewPath("spec").Child("service")
 
 	err := sharedValidation.ValidateBaseURL(service.URL)
 	if err != nil {
-		*reasons = append(*reasons, fmt.Sprintf("%v", err))
+		*allErrs = append(*allErrs, field.Invalid(path.Child("url"), service.URL, err.Error()))
 	}
 
 	if service.Mapfile != nil {
 		if service.Resolution != nil {
-			*warnings = append(*warnings, sharedValidation.FormatValidationWarning("service.resolution is not used when service.mapfile is configured", wms.GroupVersionKind(), wms.GetName()))
+			sharedValidation.AddWarning(
+				warnings,
+				*path.Child("resolution"),
+				"not used when service.mapfile is configured",
+				wms.GroupVersionKind(),
+				wms.GetName(),
+			)
 		}
 		if service.DefResolution != nil {
-			*warnings = append(*warnings, sharedValidation.FormatValidationWarning("service.defResolution is not used when service.mapfile is configured", wms.GroupVersionKind(), wms.GetName()))
+			sharedValidation.AddWarning(
+				warnings,
+				*path.Child("defResolution"),
+				"not used when service.mapfile is configured",
+				wms.GroupVersionKind(),
+				wms.GetName(),
+			)
 		}
 	}
 
@@ -84,120 +107,207 @@ func ValidateWMS(wms *WMS, warnings *[]string, reasons *[]string) {
 	hasVisibleLayer := false
 	wms.Spec.Service.Layer.setInheritedBoundingBoxes()
 	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
-		var layerReasons []string
+		path = path.Child("layers")
+		var layerErrs field.ErrorList
 
 		layerType := layer.GetLayerType(&service)
 		var layerName string
 		if layer.Name == nil {
 			if layerType != TopLayer {
-				layerReasons = append(layerReasons, "layer.Name is required (except for the toplayer)")
+				layerErrs = append(layerErrs, field.Required(
+					path.Child("[*]").Child("name"),
+					"(except for the topLayer)",
+				))
 			}
 			layerName = "unnamed:" + layerType
 		} else {
 			layerName = *layer.Name
 		}
 
+		path = path.Child(fmt.Sprintf("[%s]", layerName))
+
 		if slices.Contains(names, layerName) {
-			layerReasons = append(layerReasons, fmt.Sprintf("layer names must be unique, layer.name '%s' is duplicated", layerName))
+			layerErrs = append(layerErrs, field.Duplicate(
+				path,
+				layerName,
+			))
 		}
 		names = append(names, layerName)
 
 		if service.Mapfile != nil && layer.BoundingBoxes != nil {
-			*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.boundingBoxes is not used when service.mapfile is configured", wms.GroupVersionKind(), wms.GetName()))
+			sharedValidation.AddWarning(
+				warnings,
+				*path.Child("boundingBoxes"),
+				"is not used when service.mapfile is configured",
+				wms.GroupVersionKind(),
+				wms.GetName(),
+			)
 		}
 		if service.Mapfile == nil && service.DataEPSG != "EPSG:28992" && !layer.hasBoundingBoxForCRS(service.DataEPSG) {
-			layerReasons = append(layerReasons, "layer.boundingBoxes must contain a boundingBox for CRS '"+service.DataEPSG+"' when service.dataEPSG is not 'EPSG:28992'")
+			layerErrs = append(layerErrs, field.Required(
+				path.Child("boundingBoxes").Child("crs"),
+				fmt.Sprintf("must contain a boundingBox for CRS %s when service.dataEPSG is not 'EPSG:28992'", service.DataEPSG),
+			))
 		}
 
 		//nolint:nestif
 		if !layer.Visible {
 			if layer.Title != nil {
-				*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.title is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Child("title"),
+					"is not used when layer.visible=false",
+					wms.GroupVersionKind(),
+					wms.GetName(),
+				)
 			}
 			if layer.Abstract != nil {
-				*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.abstract is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Child("abstrct"),
+					"is not used when layer.visible=false",
+					wms.GroupVersionKind(),
+					wms.GetName(),
+				)
 			}
 			if layer.Keywords != nil {
-				*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.keywords is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Child("keywords"),
+					"is not used when layer.visible=false",
+					wms.GroupVersionKind(),
+					wms.GetName(),
+				)
 			}
 			if layer.DatasetMetadataURL != nil {
-				*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.datasetMetadataURL is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Child("datasetMetadataURL"),
+					"is not used when layer.visible=false",
+					wms.GroupVersionKind(),
+					wms.GetName(),
+				)
 			}
 			if layer.Authority != nil && layer.Authority.SpatialDatasetIdentifier != "" {
-				*warnings = append(*warnings, sharedValidation.FormatValidationWarning("layer.authority.spatialDatasetIdentifier is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Child("authority").Child("spatialDatasetIdentifier"),
+					"is not used when layer.visible=false",
+					wms.GroupVersionKind(),
+					wms.GetName(),
+				)
 			}
-			for _, style := range layer.Styles {
+
+			for i, style := range layer.Styles {
 				if style.Title != nil {
-					*warnings = append(*warnings, sharedValidation.FormatValidationWarning("style.title is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
+					sharedValidation.AddWarning(
+						warnings,
+						*path.Child("styles").Index(i).Child("title"),
+						"is not used when layer.visible=false",
+						wms.GroupVersionKind(),
+						wms.GetName(),
+					)
 				}
 				if style.Abstract != nil {
-					*warnings = append(*warnings, sharedValidation.FormatValidationWarning("style.abstract is not used when layer.visible=false", wms.GroupVersionKind(), wms.GetName()))
+					sharedValidation.AddWarning(
+						warnings,
+						*path.Child("styles").Index(i).Child("abstract"),
+						"is not used when layer.visible=false",
+						wms.GroupVersionKind(),
+						wms.GetName(),
+					)
 				}
 			}
 		}
 
 		if layer.Visible {
-			var fields []string
 			hasVisibleLayer = true
 
 			if layer.Title == nil {
-				fields = append(fields, "layer.title")
+				layerErrs = append(layerErrs, field.Required(path.Child("title"), "required if layer.visible=true"))
 			}
 			if layer.Abstract == nil {
-				fields = append(fields, "layer.abstract")
+				layerErrs = append(layerErrs, field.Required(path.Child("abstract"), "required if layer.visible=true"))
 			}
 			if layer.Keywords == nil {
-				fields = append(fields, "layer.keywords")
+				layerErrs = append(layerErrs, field.Required(path.Child("keywords"), "required if layer.visible=true"))
 			}
-			if len(fields) != 0 {
-				layerReasons = append(layerReasons, "layer.visible=true; missing required fields: "+strings.Join(fields, ", "))
-			}
-			for _, style := range layer.Styles {
+			for i, style := range layer.Styles {
 				if style.Title == nil {
-					layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.title must be set on a visible layer", style.Name))
+					layerErrs = append(layerErrs, field.Required(
+						path.Child("styles").Index(i),
+						"required if layer.visible=true",
+					))
 				}
 			}
 			if !rewriteGroupToDataLayers && validateChildStyleNameEqual {
 				equalStylesNames, ok := equalChildStyleNames[layerName]
 				if ok {
 					for _, styleName := range equalStylesNames {
-						layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.name from parent layer must not be set on a child layer", styleName))
+						layerErrs = append(layerErrs, field.Invalid(
+							path.Child("styles").Child(styleName),
+							styleName,
+							"style.name from parent layer must not be set on a a child layer style",
+						))
 					}
 				}
 			}
 		}
 
 		if layer.IsDataLayer() {
-			for _, style := range layer.Styles {
+			for i, style := range layer.Styles {
 				if wms.Spec.Service.Mapfile == nil && style.Visualization == nil {
-					layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.visualization must be set on a dataLayer", style.Name))
+					layerErrs = append(layerErrs, field.Required(
+						path.Child("styles").Index(i).Child("visualization"),
+						"must be set on a dataLayer",
+					))
 				}
 				if wms.Spec.Service.Mapfile != nil && style.Visualization != nil {
-					layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.visualization must not be set on a layer when a static mapfile is used", style.Name))
+					layerErrs = append(layerErrs, field.Invalid(
+						path.Child("styles").Index(i).Child("visualization"),
+						style.Visualization,
+						"must not be set on a layer with a static mapfile",
+					))
 				}
 			}
 		}
 
 		if layerType == GroupLayer || layerType == TopLayer {
 			if !layer.Visible {
-				layerReasons = append(layerReasons, layerType+" must be visible")
+				layerErrs = append(layerErrs, field.Invalid(
+					path.Child("visible"),
+					layer.Visible,
+					"must be true for a "+layerType,
+				))
 			}
 			if layer.Data != nil {
-				layerReasons = append(layerReasons, "layer.data must not be set on a groupLayer")
+				layerErrs = append(layerErrs, field.Invalid(
+					path.Child("data"),
+					"",
+					"must not be set on a grouplayer",
+				))
 			}
-			for _, style := range layer.Styles {
+			for i, style := range layer.Styles {
 				if style.Visualization != nil {
-					layerReasons = append(layerReasons, fmt.Sprintf("invalid style: '%s': style.visualization must not be set on a groupLayer", style.Name))
+					layerErrs = append(layerErrs, field.Invalid(
+						path.Child("styles").Index(i),
+						style.Visualization,
+						"must not be set on a groupLayer",
+					))
 				}
 			}
 		}
-		if len(layerReasons) != 0 {
-			*reasons = append(*reasons, fmt.Sprintf("%s '%s' is invalid: ", layerType, layerName)+strings.Join(layerReasons, ", "))
+		if len(layerErrs) != 0 {
+			*allErrs = append(*allErrs, layerErrs...)
 		}
 	}
 
 	if !hasVisibleLayer {
-		*reasons = append(*reasons, "at least one layer must be visible")
+		*allErrs = append(*allErrs, field.Invalid(
+			path.Child("layers"),
+			"",
+			"at least one layer must be visible",
+		))
 	}
 }
 

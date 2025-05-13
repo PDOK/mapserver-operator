@@ -1,74 +1,82 @@
 package v3
 
 import (
-	"fmt"
 	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 )
 
 func (wfs *WFS) ValidateCreate() ([]string, error) {
 	warnings := []string{}
-	reasons := []string{}
+	allErrs := field.ErrorList{}
 
 	err := sharedValidation.ValidateLabelsOnCreate(wfs.Labels)
 	if err != nil {
-		reasons = append(reasons, fmt.Sprintf("%v", err))
+		allErrs = append(allErrs, err)
 	}
 
-	ValidateWFS(wfs, &warnings, &reasons)
+	ValidateWFS(wfs, &warnings, &allErrs)
 
-	if len(reasons) > 0 {
-		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
+	if len(allErrs) == 0 {
+		return warnings, nil
 	}
 
-	return warnings, nil
+	return warnings, apierrors.NewInvalid(
+		schema.GroupKind{Group: "pdok.nl", Kind: "WFS"},
+		wfs.Name, allErrs)
 }
 
 func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 	warnings := []string{}
-	reasons := []string{}
+	allErrs := field.ErrorList{}
 
-	// Check labels did not change
-	err := sharedValidation.ValidateLabelsOnUpdate(wfsOld.Labels, wfs.Labels)
-	if err != nil {
-		reasons = append(reasons, fmt.Sprintf("%v", err))
-	}
+	sharedValidation.ValidateLabelsOnUpdate(wfsOld.Labels, wfs.Labels, &allErrs)
 
-	sharedValidation.CheckBaseUrlImmutability(wfsOld, wfs, &reasons)
+	sharedValidation.CheckBaseUrlImmutability(wfsOld, wfs, &allErrs)
 
 	if (wfs.Spec.Service.Inspire == nil && wfsOld.Spec.Service.Inspire != nil) || (wfs.Spec.Service.Inspire != nil && wfsOld.Spec.Service.Inspire == nil) {
-		reasons = append(reasons, "services cannot change from inspire to not inspire or the other way around")
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))
 	}
 
-	ValidateWFS(wfs, &warnings, &reasons)
+	ValidateWFS(wfs, &warnings, &allErrs)
 
-	if len(reasons) > 0 {
-		return warnings, fmt.Errorf("%s", strings.Join(reasons, ". "))
+	if len(allErrs) == 0 {
+		return warnings, nil
 	}
 
-	return warnings, nil
+	return warnings, apierrors.NewInvalid(
+		schema.GroupKind{Group: "pdok.nl", Kind: "WFS"},
+		wfs.Name, allErrs)
 }
 
-func ValidateWFS(wfs *WFS, warnings *[]string, reasons *[]string) {
+func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wfs.GetName(), "wfs") {
-		*warnings = append(*warnings, sharedValidation.FormatValidationWarning("name should not contain wfs", wfs.GroupVersionKind(), wfs.GetName()))
+		sharedValidation.AddWarning(
+			warnings,
+			*field.NewPath("metadata").Child("name"),
+			"name should not contain wfs",
+			wfs.GroupVersionKind(),
+			wfs.GetName(),
+		)
 	}
 
 	service := wfs.Spec.Service
+	path := field.NewPath("spec").Child("service")
 
 	err := sharedValidation.ValidateBaseURL(service.URL)
 	if err != nil {
-		*reasons = append(*reasons, fmt.Sprintf("%v", err))
+		*allErrs = append(*allErrs, field.Invalid(path.Child("url"), service.URL, err.Error()))
 	}
 
 	if service.Mapfile == nil && service.DefaultCrs != "EPSG:28992" && service.Bbox == nil {
-		*reasons = append(*reasons, "service.bbox.defaultCRS is required when service.defaultCRS is not 'EPSG:28992'")
+		*allErrs = append(*allErrs, field.Required(path.Child("bbox").Child("defaultCRS"), "when service.defaultCRS is not 'EPSG:28992'"))
 	}
 
-	if service.Mapfile != nil {
-		if service.Bbox != nil {
-			*warnings = append(*warnings, sharedValidation.FormatValidationWarning("service.bbox is not used when service.mapfile is configured", wfs.GroupVersionKind(), wfs.GetName()))
-		}
+	if service.Mapfile != nil && service.Bbox != nil {
+		sharedValidation.AddWarning(warnings, *path.Child("bbox"), "is not used when service.mapfile is configured", wfs.GroupVersionKind(), wfs.GetName())
 	}
 }

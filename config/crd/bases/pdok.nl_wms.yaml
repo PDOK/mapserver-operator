@@ -1207,19 +1207,19 @@ spec:
                                 properties:
                                   maxx:
                                     description: Rechtsonder X coördinaat
-                                    pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                    pattern: ^-?[0-9]+([.][0-9]*)?$
                                     type: string
                                   maxy:
                                     description: Rechtsonder Y coördinaat
-                                    pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                    pattern: ^-?[0-9]+([.][0-9]*)?$
                                     type: string
                                   minx:
                                     description: Linksboven X coördinaat
-                                    pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                    pattern: ^-?[0-9]+([.][0-9]*)?$
                                     type: string
                                   miny:
                                     description: Linksboven Y coördinaat
-                                    pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                    pattern: ^-?[0-9]+([.][0-9]*)?$
                                     type: string
                                 required:
                                   - maxx
@@ -1415,19 +1415,19 @@ spec:
                                       properties:
                                         maxx:
                                           description: Rechtsonder X coördinaat
-                                          pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                          pattern: ^-?[0-9]+([.][0-9]*)?$
                                           type: string
                                         maxy:
                                           description: Rechtsonder Y coördinaat
-                                          pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                          pattern: ^-?[0-9]+([.][0-9]*)?$
                                           type: string
                                         minx:
                                           description: Linksboven X coördinaat
-                                          pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                          pattern: ^-?[0-9]+([.][0-9]*)?$
                                           type: string
                                         miny:
                                           description: Linksboven Y coördinaat
-                                          pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                          pattern: ^-?[0-9]+([.][0-9]*)?$
                                           type: string
                                       required:
                                         - maxx
@@ -1623,19 +1623,19 @@ spec:
                                             properties:
                                               maxx:
                                                 description: Rechtsonder X coördinaat
-                                                pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                                pattern: ^-?[0-9]+([.][0-9]*)?$
                                                 type: string
                                               maxy:
                                                 description: Rechtsonder Y coördinaat
-                                                pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                                pattern: ^-?[0-9]+([.][0-9]*)?$
                                                 type: string
                                               minx:
                                                 description: Linksboven X coördinaat
-                                                pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                                pattern: ^-?[0-9]+([.][0-9]*)?$
                                                 type: string
                                               miny:
                                                 description: Linksboven Y coördinaat
-                                                pattern: ^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$
+                                                pattern: ^-?[0-9]+([.][0-9]*)?$
                                                 type: string
                                             required:
                                               - maxx
