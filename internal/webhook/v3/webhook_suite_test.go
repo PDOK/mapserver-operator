@@ -29,13 +29,14 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"net"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -74,6 +75,7 @@ func TestAPIs(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
+	//nolint:fatcontext
 	ctx, cancel = context.WithCancel(context.TODO())
 	scheme := runtime.NewScheme()
 

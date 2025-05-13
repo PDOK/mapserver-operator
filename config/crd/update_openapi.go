@@ -1,13 +1,14 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/pkg/errors"
 	goyaml "gopkg.in/yaml.v3"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"os"
-	"path/filepath"
 	kyaml "sigs.k8s.io/yaml"
-	"strings"
 )
 
 // Usage: go run ./update_layersv3_openapi.go <crd_dir_path>
@@ -84,7 +85,7 @@ func updateWMSV3Layers(crdDir string) {
 
 	// Remove the 'status' field from the yaml
 	var rawData map[string]interface{}
-	goyaml.Unmarshal(updatedContent, &rawData)
+	_ = goyaml.Unmarshal(updatedContent, &rawData)
 	delete(rawData, "status")
 
 	f, _ := os.OpenFile(path, os.O_TRUNC|os.O_WRONLY, 0644)

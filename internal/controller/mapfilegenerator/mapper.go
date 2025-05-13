@@ -2,9 +2,10 @@ package mapfilegenerator
 
 import (
 	"fmt"
-	"github.com/pdok/mapserver-operator/api/v2beta1"
 	"strconv"
 	"strings"
+
+	"github.com/pdok/mapserver-operator/api/v2beta1"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"

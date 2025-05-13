@@ -3,8 +3,9 @@ package v3
 import (
 	"encoding/json"
 	"errors"
-	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"os"
+
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"sigs.k8s.io/yaml"
 )
 

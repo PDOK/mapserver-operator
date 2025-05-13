@@ -25,12 +25,13 @@ SOFTWARE.
 package v3
 
 import (
-	shared_model "github.com/pdok/smooth-operator/model"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
 	"slices"
 	"sort"
+
+	shared_model "github.com/pdok/smooth-operator/model"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -582,6 +583,7 @@ func (wms *WMS) GeoPackages() []*Gpkg {
 	return gpkgs
 }
 
+//nolint:revive
 func (wms *WMS) GetBaseUrl() string {
 	return wms.Spec.Service.URL
 }

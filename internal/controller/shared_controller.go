@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
@@ -11,16 +15,13 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"strconv"
-	"strings"
-	"time"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
-	"github.com/pdok/mapserver-operator/internal/controller/static_files"
+	"github.com/pdok/mapserver-operator/internal/controller/static"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"github.com/pdok/smooth-operator/model"
 	smoothoperatork8s "github.com/pdok/smooth-operator/pkg/k8s"
@@ -886,7 +887,7 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 	configMap.Data = map[string]string{}
 
-	staticFileName, contents := static_files.GetStaticFiles()
+	staticFileName, contents := static.GetStaticFiles()
 	for _, name := range staticFileName {
 		content := contents[name]
 		if name == "include.conf" {

@@ -3,6 +3,7 @@ package featureinfogenerator
 import (
 	"encoding/json"
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	corev1 "k8s.io/api/core/v1"

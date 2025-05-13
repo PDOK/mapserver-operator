@@ -4,7 +4,7 @@ run:
   timeout: 5m
 
   # Modules download mode (do not modify go.mod)
-  modules-download-mode: readonly
+  module-download-mode: readonly
 
   # Include test files (see below to exclude certain linters)
   tests: true
@@ -18,11 +18,10 @@ issues:
         - dupl
         - dogsled
         - funlen
+        - gosec
 
 output:
-  formats:
-    - format: colored-line-number
-      path: stdout
+  formats: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 

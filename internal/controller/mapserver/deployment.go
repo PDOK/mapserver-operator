@@ -7,7 +7,7 @@ import (
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
-	"github.com/pdok/mapserver-operator/internal/controller/static_files"
+	"github.com/pdok/mapserver-operator/internal/controller/static"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	v1 "k8s.io/api/core/v1"
@@ -159,7 +159,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 		},
 	}
 
-	staticFiles, _ := static_files.GetStaticFiles()
+	staticFiles, _ := static.GetStaticFiles()
 	for _, name := range staticFiles {
 		volumeMounts = append(volumeMounts, v1.VolumeMount{
 			Name:      "mapserver",

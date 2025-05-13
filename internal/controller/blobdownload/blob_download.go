@@ -3,9 +3,10 @@ package blobdownload
 import (
 	_ "embed"
 	"fmt"
-	"k8s.io/utils/strings/slices"
 	"regexp"
 	"strings"
+
+	"k8s.io/utils/strings/slices"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"

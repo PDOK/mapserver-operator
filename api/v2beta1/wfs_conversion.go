@@ -25,8 +25,9 @@ SOFTWARE.
 package v2beta1
 
 import (
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"log"
+
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 
 	sharedModel "github.com/pdok/smooth-operator/model"
 

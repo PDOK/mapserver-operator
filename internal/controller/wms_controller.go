@@ -26,6 +26,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"

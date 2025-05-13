@@ -1,11 +1,12 @@
 package v3
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/pdok/smooth-operator/model"
 	controller "github.com/pdok/smooth-operator/pkg/util"
-	"reflect"
-	"testing"
 )
 
 func TestLayer_setInheritedBoundingBoxes(t *testing.T) {

@@ -26,11 +26,12 @@ package v2beta1
 
 import (
 	"errors"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"log"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"strconv"
 	"strings"
+
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	sharedModel "github.com/pdok/smooth-operator/model"
