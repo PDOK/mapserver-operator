@@ -13,8 +13,8 @@ import (
 )
 
 func (wms *WMS) ValidateCreate() ([]string, error) {
-	var warnings []string
-	var allErrs field.ErrorList
+	warnings := []string{}
+	allErrs := field.ErrorList{}
 
 	err := sharedValidation.ValidateLabelsOnCreate(wms.Labels)
 	if err != nil {
@@ -33,8 +33,8 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 }
 
 func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
-	var warnings []string
-	var allErrs field.ErrorList
+	warnings := []string{}
+	allErrs := field.ErrorList{}
 
 	sharedValidation.ValidateLabelsOnUpdate(wmsOld.Labels, wms.Labels, &allErrs)
 

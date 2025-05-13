@@ -11,8 +11,8 @@ import (
 )
 
 func (wfs *WFS) ValidateCreate() ([]string, error) {
-	var warnings []string
-	var allErrs field.ErrorList
+	warnings := []string{}
+	allErrs := field.ErrorList{}
 
 	err := sharedValidation.ValidateLabelsOnCreate(wfs.Labels)
 	if err != nil {
@@ -31,8 +31,8 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 }
 
 func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
-	var warnings []string
-	var allErrs field.ErrorList
+	warnings := []string{}
+	allErrs := field.ErrorList{}
 
 	sharedValidation.ValidateLabelsOnUpdate(wfsOld.Labels, wfs.Labels, &allErrs)
 
