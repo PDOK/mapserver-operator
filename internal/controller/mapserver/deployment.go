@@ -218,10 +218,24 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 // Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	resources := v1.ResourceRequirements{
-		Limits: v1.ResourceList{},
-		Requests: v1.ResourceList{
-			v1.ResourceCPU: resource.MustParse("0.15"),
-		},
+		Limits:   v1.ResourceList{},
+		Requests: v1.ResourceList{},
+	}
+
+	maxResourceVal := func(v1 *resource.Quantity, v2 *resource.Quantity) *resource.Quantity {
+		if v1 != nil && v2 != nil {
+			if v1.Value() > v2.Value() {
+				return v1
+			} else {
+				return v2
+			}
+		} else if v1 != nil && v2 == nil {
+			return v1
+		} else if v1 == nil || v2 != nil {
+			return v2
+		}
+
+		return &resource.Quantity{}
 	}
 
 	objResources := &v1.ResourceRequirements{}
@@ -241,46 +255,51 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 
 	}
 
-	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
-		resources.Requests[v1.ResourceCPU] = resource.MustParse("0.1")
+	/**
+	Set CPU request and limit
+	*/
+	cpuRequest := objResources.Requests.Cpu()
+	if cpuRequest == nil || cpuRequest.IsZero() {
+		cpuRequest = smoothoperatorutils.Pointer(resource.MustParse("0.15"))
+		if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
+			cpuRequest = smoothoperatorutils.Pointer(resource.MustParse("0.1"))
+		}
+	}
+	resources.Requests[v1.ResourceCPU] = *cpuRequest
+
+	cpuLimit := objResources.Limits.Cpu()
+	if cpuLimit != nil && !cpuLimit.IsZero() {
+		resources.Limits[v1.ResourceCPU] = *maxResourceVal(cpuLimit, cpuRequest)
 	}
 
-	if objResources.Limits.Cpu() != nil && objResources.Requests.Cpu().Value() > resources.Requests.Cpu().Value() {
-		resources.Limits[v1.ResourceCPU] = *objResources.Limits.Cpu()
-	}
-
+	/**
+	Set memory limit/request if the request is higher than the limit the request is used as limit
+	*/
 	memoryRequest := objResources.Requests.Memory()
 	if memoryRequest != nil && !memoryRequest.IsZero() {
 		resources.Requests[v1.ResourceMemory] = *memoryRequest
 	}
 
 	memoryLimit := objResources.Limits.Memory()
-	if memoryLimit != nil && !memoryLimit.IsZero() {
-		resources.Limits[v1.ResourceMemory] = *memoryLimit
-	} else {
-		resources.Limits[v1.ResourceMemory] = resource.MustParse("800M")
+	if memoryLimit == nil || memoryLimit.IsZero() {
+		memoryLimit = smoothoperatorutils.Pointer(resource.MustParse("800M"))
 	}
+	resources.Limits[v1.ResourceMemory] = *maxResourceVal(memoryLimit, memoryRequest)
 
+	/**
+	Set ephemeral-storage if there is no ephemeral volume
+	*/
 	if use, _ := mapperutils.UseEphemeralVolume(obj); !use {
-		minimumEphemeralStorageLimit := resource.MustParse("200M")
 		ephemeralStorageRequest := mapperutils.EphemeralStorageRequest(obj)
-		ephemeralStorageLimit := mapperutils.EphemeralStorageLimit(obj)
-
 		if ephemeralStorageRequest != nil {
 			resources.Requests[v1.ResourceEphemeralStorage] = *ephemeralStorageRequest
 		}
 
-		if ephemeralStorageLimit != nil && ephemeralStorageLimit.Value() > minimumEphemeralStorageLimit.Value() {
-			// Request higher than limit, use request as limit
-			if ephemeralStorageRequest != nil && ephemeralStorageRequest.Value() > ephemeralStorageLimit.Value() {
-				resources.Limits[v1.ResourceEphemeralStorage] = *ephemeralStorageRequest
-			} else {
-				resources.Limits[v1.ResourceEphemeralStorage] = *ephemeralStorageLimit
-			}
-		} else {
-			// No limit given or the given limit is lower than the default, use default
-			resources.Limits[v1.ResourceEphemeralStorage] = minimumEphemeralStorageLimit
+		ephemeralStorageLimit := mapperutils.EphemeralStorageLimit(obj)
+		if ephemeralStorageLimit == nil || ephemeralStorageLimit.IsZero() {
+			ephemeralStorageLimit = smoothoperatorutils.Pointer(resource.MustParse("200M"))
 		}
+		resources.Limits[v1.ResourceEphemeralStorage] = *maxResourceVal(ephemeralStorageLimit, ephemeralStorageRequest)
 	}
 
 	return resources
