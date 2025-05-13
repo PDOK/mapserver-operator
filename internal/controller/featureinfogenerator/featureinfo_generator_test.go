@@ -1,9 +1,10 @@
 package featureinfogenerator
 
 import (
+	"testing"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
-	"testing"
 )
 
 const (

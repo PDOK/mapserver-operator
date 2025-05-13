@@ -2,11 +2,13 @@ package legendgenerator
 
 import (
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 
 	_ "embed"
-	"sigs.k8s.io/yaml"
 	"strings"
+
+	"sigs.k8s.io/yaml"
 )
 
 // TODO Reuse default_mapserver.conf from static_files?

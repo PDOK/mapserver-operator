@@ -20,16 +20,18 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
+	"os"
+
 	"github.com/go-logr/zapr"
 	"github.com/pdok/smooth-operator/pkg/integrations/logging"
 	"github.com/peterbourgon/ff"
 	"go.uber.org/zap/zapcore"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
 	smoothoperator "github.com/pdok/smooth-operator/api/v1"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

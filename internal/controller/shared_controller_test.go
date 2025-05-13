@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	appsv1 "k8s.io/api/apps/v1"

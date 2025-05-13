@@ -27,6 +27,7 @@ package v3
 //nolint:revive // Complains about the dot imports
 import (
 	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"

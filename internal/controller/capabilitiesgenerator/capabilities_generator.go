@@ -2,6 +2,7 @@ package capabilitiesgenerator
 
 import (
 	"fmt"
+
 	"gopkg.in/yaml.v3"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"

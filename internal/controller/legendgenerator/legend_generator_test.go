@@ -1,11 +1,12 @@
 package legendgenerator
 
 import (
+	"testing"
+
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
-	"testing"
 )
 
 func TestGetConfigMapDataNoLegendFix(t *testing.T) {

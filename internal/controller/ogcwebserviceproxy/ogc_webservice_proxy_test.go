@@ -1,9 +1,10 @@
 package ogcwebserviceproxy
 
 import (
+	"testing"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	controller "github.com/pdok/smooth-operator/pkg/util"
-	"testing"
 )
 
 const expectedConfig = `grouplayers:

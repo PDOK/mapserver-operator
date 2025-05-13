@@ -2,11 +2,12 @@ package mapfilegenerator
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
-	"testing"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"

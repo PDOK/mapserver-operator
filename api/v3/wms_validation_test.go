@@ -1,9 +1,10 @@
 package v3
 
 import (
-	controller "github.com/pdok/smooth-operator/pkg/util"
 	"reflect"
 	"testing"
+
+	controller "github.com/pdok/smooth-operator/pkg/util"
 )
 
 func Test_getEqualChildStyleNames(t *testing.T) {

@@ -1,10 +1,11 @@
 package v2beta1
 
 import (
+	"testing"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
-	"testing"
 )
 
 func TestV2ToV3(t *testing.T) {

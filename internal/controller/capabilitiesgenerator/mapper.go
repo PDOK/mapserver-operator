@@ -2,9 +2,10 @@ package capabilitiesgenerator
 
 import (
 	"fmt"
-	"github.com/pdok/ogc-specifications/pkg/wms130"
 	"strconv"
 	"strings"
+
+	"github.com/pdok/ogc-specifications/pkg/wms130"
 
 	"github.com/cbroglie/mustache"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"

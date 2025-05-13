@@ -1,6 +1,8 @@
 package mapserver
 
 import (
+	"testing"
+
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
@@ -9,7 +11,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/yaml"
-	"testing"
 
 	_ "embed"
 )
@@ -130,6 +131,6 @@ func getV3() *pdoknlv3.WFS {
 		panic(err)
 	}
 	var wfs pdoknlv3.WFS
-	v2wfs.ToV3(&wfs)
+	_ = v2wfs.ToV3(&wfs)
 	return &wfs
 }

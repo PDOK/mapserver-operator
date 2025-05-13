@@ -245,6 +245,7 @@ func (wfs *WFS) GeoPackages() []*Gpkg {
 	return gpkgs
 }
 
+//nolint:revive
 func (wfs *WFS) GetBaseUrl() string {
 	return wfs.Spec.Service.URL
 }
