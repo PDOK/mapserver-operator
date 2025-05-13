@@ -218,9 +218,6 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 // Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	resources := v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceMemory: resource.MustParse("800M"),
-		},
 		Requests: v1.ResourceList{
 			v1.ResourceCPU: resource.MustParse("0.15"),
 		},
@@ -251,8 +248,16 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		resources.Limits[v1.ResourceCPU] = *objResources.Limits.Cpu()
 	}
 
-	if objResources.Requests.Memory() != nil && !objResources.Requests.Memory().IsZero() {
-		resources.Requests[v1.ResourceMemory] = *objResources.Requests.Memory()
+	memoryRequest := objResources.Requests.Memory()
+	if memoryRequest != nil && !memoryRequest.IsZero() {
+		resources.Requests[v1.ResourceMemory] = *memoryRequest
+	}
+
+	limitMemory := objResources.Limits.Memory()
+	if limitMemory != nil && !limitMemory.IsZero() {
+		resources.Limits[v1.ResourceMemory] = *limitMemory
+	} else {
+		resources.Limits[v1.ResourceMemory] = resource.MustParse("800M")
 	}
 
 	if use, _ := mapperutils.UseEphemeralVolume(obj); !use {
