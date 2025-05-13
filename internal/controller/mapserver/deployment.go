@@ -217,11 +217,9 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 
 // Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
-	minimumEphemeralStorageLimit := resource.MustParse("200M")
 	resources := v1.ResourceRequirements{
 		Limits: v1.ResourceList{
-			v1.ResourceMemory:           resource.MustParse("800M"),
-			v1.ResourceEphemeralStorage: minimumEphemeralStorageLimit,
+			v1.ResourceMemory: resource.MustParse("800M"),
 		},
 		Requests: v1.ResourceList{
 			v1.ResourceCPU: resource.MustParse("0.15"),
@@ -258,16 +256,25 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 	}
 
 	if use, _ := mapperutils.UseEphemeralVolume(obj); !use {
-		value := mapperutils.EphemeralStorageLimit(obj)
+		minimumEphemeralStorageLimit := resource.MustParse("200M")
+		ephemeralStorageRequest := mapperutils.EphemeralStorageRequest(obj)
+		ephemeralStorageLimit := mapperutils.EphemeralStorageLimit(obj)
 
-		if objResources.Limits.StorageEphemeral() != nil && objResources.Limits.StorageEphemeral().Value() > minimumEphemeralStorageLimit.Value() {
-			resources.Limits[v1.ResourceEphemeralStorage] = *value
+		if ephemeralStorageRequest != nil {
+			resources.Requests[v1.ResourceEphemeralStorage] = *ephemeralStorageRequest
 		}
-	}
 
-	ephemeralStorageRequest := mapperutils.EphemeralStorageRequest(obj)
-	if ephemeralStorageRequest != nil {
-		resources.Requests[v1.ResourceEphemeralStorage] = *ephemeralStorageRequest
+		if ephemeralStorageLimit != nil && ephemeralStorageLimit.Value() > minimumEphemeralStorageLimit.Value() {
+			// Request higher than limit, use request as limit
+			if ephemeralStorageRequest != nil && ephemeralStorageRequest.Value() > ephemeralStorageLimit.Value() {
+				resources.Limits[v1.ResourceEphemeralStorage] = *ephemeralStorageRequest
+			} else {
+				resources.Limits[v1.ResourceEphemeralStorage] = *ephemeralStorageLimit
+			}
+		} else {
+			// No limit given or the given limit is lower than the default, use default
+			resources.Limits[v1.ResourceEphemeralStorage] = minimumEphemeralStorageLimit
+		}
 	}
 
 	return resources

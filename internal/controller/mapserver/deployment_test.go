@@ -50,10 +50,10 @@ func TestGetResourcesForDeployment(t *testing.T) {
 	expectedRequest := v1.ResourceList{}
 
 	expectedLimits[v1.ResourceMemory] = resource.MustParse("800M")
-	expectedLimits[v1.ResourceEphemeralStorage] = resource.MustParse("1505Mi")
+	expectedLimits[v1.ResourceEphemeralStorage] = resource.MustParse("505Mi")
 
 	expectedRequest[v1.ResourceCPU] = resource.MustParse("0.15")
-	expectedRequest[v1.ResourceEphemeralStorage] = resource.MustParse("1505Mi")
+	expectedRequest[v1.ResourceEphemeralStorage] = resource.MustParse("255Mi")
 
 	var expected = v1.ResourceRequirements{
 		Limits:   expectedLimits,
