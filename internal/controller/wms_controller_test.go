@@ -233,7 +233,7 @@ var _ = Describe("WMS Controller", func() {
 			/**
 			Container tests
 			*/
-			containerMapserver := deployment.Spec.Template.Spec.Containers[1]
+			containerMapserver := deployment.Spec.Template.Spec.Containers[0]
 			Expect(containerMapserver.Name).Should(Equal("mapserver"))
 			Expect(containerMapserver.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(containerMapserver.Image).Should(Equal(reconcilerImages.MapserverImage))
@@ -241,7 +241,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(containerMapserver.Resources.Limits.Memory().String()).Should(Equal("12M"))
 			Expect(containerMapserver.Resources.Requests.Cpu().String()).Should(Equal("100m"))
 			Expect(len(containerMapserver.LivenessProbe.Exec.Command)).Should(Equal(3))
-			Expect(containerMapserver.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=wms&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
+			Expect(containerMapserver.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=WMS&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
 			Expect(containerMapserver.LivenessProbe.FailureThreshold).Should(Equal(int32(3)))
 			Expect(containerMapserver.LivenessProbe.InitialDelaySeconds).Should(Equal(int32(20)))
 			Expect(containerMapserver.LivenessProbe.PeriodSeconds).Should(Equal(int32(10)))
@@ -758,8 +758,9 @@ var _ = Describe("WMS Controller", func() {
 
 			Expect(autoscaler.GetName()).To(Equal(wms.GetName() + "-wms-mapserver"))
 			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(autoscalingv2.CrossVersionObjectReference{
-				Kind: "Deployment",
-				Name: wms.GetName() + "-wms-mapserver",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       wms.GetName() + "-wms-mapserver",
 			}))
 
 			/**
@@ -778,13 +779,13 @@ var _ = Describe("WMS Controller", func() {
 				Policies: []autoscalingv2.HPAScalingPolicy{
 					{
 						PeriodSeconds: int32(600),
-						Value:         int32(1),
-						Type:          autoscalingv2.PodsScalingPolicy,
+						Value:         int32(10),
+						Type:          autoscalingv2.PercentScalingPolicy,
 					},
 					{
 						PeriodSeconds: int32(600),
-						Value:         int32(10),
-						Type:          autoscalingv2.PercentScalingPolicy,
+						Value:         int32(1),
+						Type:          autoscalingv2.PodsScalingPolicy,
 					},
 				},
 			}))
@@ -965,7 +966,7 @@ var _ = Describe("WMS Controller", func() {
 				},
 				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/mapfile.map", ValueFrom: nil},
 			}
-			Expect(deployment.Spec.Template.Spec.Containers[1].Env).Should(Equal(envContainer))
+			Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(Equal(envContainer))
 		})
 	})
 })

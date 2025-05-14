@@ -336,8 +336,7 @@ func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *v1.Probe, 
 }
 
 func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *v1.Probe {
-	webserviceType := strings.ToLower(string(obj.Type()))
-	queryString := "SERVICE=" + webserviceType + "&request=GetCapabilities"
+	queryString := "SERVICE=" + string(obj.Type()) + "&request=GetCapabilities"
 	return getProbe(queryString, mimeTextXML)
 }
 
