@@ -952,6 +952,7 @@ var _ = Describe("WMS Controller", func() {
 					Value:     "/srv/mapserver/config/default_mapserver.conf",
 					ValueFrom: nil,
 				},
+				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/mapfile.map", ValueFrom: nil},
 				{
 					Name:  "AZURE_STORAGE_CONNECTION_STRING",
 					Value: "",
@@ -964,7 +965,6 @@ var _ = Describe("WMS Controller", func() {
 						},
 					},
 				},
-				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/mapfile.map", ValueFrom: nil},
 			}
 			Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(Equal(envContainer))
 		})

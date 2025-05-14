@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"strconv"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
@@ -260,8 +261,8 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 
 	initContainers := []corev1.Container{
 		*blobDownloadInitContainer,
-		*mapfileGeneratorInitContainer,
 		*capabilitiesGeneratorInitContainer,
+		*mapfileGeneratorInitContainer,
 	}
 
 	if wms, ok := any(obj).(*pdoknlv3.WMS); ok {
