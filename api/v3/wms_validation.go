@@ -32,28 +32,8 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 		wms.Name, allErrs)
 }
 
-// TODO fix linting (dupl)
 func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
-	warnings := []string{}
-	allErrs := field.ErrorList{}
-
-	sharedValidation.ValidateLabelsOnUpdate(wmsOld.Labels, wms.Labels, &allErrs)
-
-	sharedValidation.CheckBaseUrlImmutability(wmsOld, wms, &allErrs)
-
-	if (wms.Spec.Service.Inspire == nil && wmsOld.Spec.Service.Inspire != nil) || (wms.Spec.Service.Inspire != nil && wmsOld.Spec.Service.Inspire == nil) {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))
-	}
-
-	ValidateWMS(wms, &warnings, &allErrs)
-
-	if len(allErrs) == 0 {
-		return warnings, nil
-	}
-
-	return warnings, apierrors.NewInvalid(
-		schema.GroupKind{Group: "pdok.nl", Kind: "WFS"},
-		wms.Name, allErrs)
+	return ValidateUpdate(wms, wmsOld, ValidateWMS)
 }
 
 // TODO fix linting (cyclop)

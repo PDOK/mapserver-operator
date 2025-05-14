@@ -29,6 +29,8 @@ import (
 	"slices"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	shared_model "github.com/pdok/smooth-operator/model"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -542,6 +544,14 @@ func (wms *WMS) HasPostgisData() bool {
 	return false
 }
 
+func (wms *WMS) GroupKind() schema.GroupKind {
+	return schema.GroupKind{Group: GroupVersion.Group, Kind: wms.Kind}
+}
+
+func (wms *WMS) Inspire() *Inspire {
+	return wms.Spec.Service.Inspire
+}
+
 func (wms *WMS) Mapfile() *Mapfile {
 	return wms.Spec.Service.Mapfile
 }
@@ -591,9 +601,4 @@ func (wms *WMS) GeoPackages() []*Gpkg {
 	}
 
 	return gpkgs
-}
-
-//nolint:revive
-func (wms *WMS) GetBaseUrl() string {
-	return wms.Spec.Service.URL
 }
