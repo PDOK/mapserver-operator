@@ -29,6 +29,7 @@ const (
 	mimeTextXML = "text/xml"
 )
 
+// TODO fix linting (funlen)
 func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNames) []v1.Volume {
 	baseVolume := v1.Volume{Name: "base"}
 	if use, size := mapperutils.UseEphemeralVolume(obj); use {
@@ -215,6 +216,7 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 	}
 }
 
+// TODO fix linting (cyclop)
 // Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	resources := v1.ResourceRequirements{
@@ -289,6 +291,7 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 	/**
 	Set ephemeral-storage if there is no ephemeral volume
 	*/
+	// TODO fix linting (nestif)
 	if use, _ := mapperutils.UseEphemeralVolume(obj); !use {
 		ephemeralStorageRequest := mapperutils.EphemeralStorageRequest(obj)
 		if ephemeralStorageRequest != nil {

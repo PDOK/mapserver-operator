@@ -64,11 +64,11 @@ var (
 	MapserverName = "mapserver"
 
 	// Service ports
-	mapserverPortName              = "mapserver"
-	mapserverPortNr                = 80
-	mapserverWebserviceProxyPortNr = 9111
-	metricPortName                 = "metric"
-	metricPortNr                   = 9117
+	mapserverPortName                    = "mapserver"
+	mapserverPortNr                int32 = 80
+	mapserverWebserviceProxyPortNr       = 9111
+	metricPortName                       = "metric"
+	metricPortNr                   int32 = 9117
 
 	corsHeadersName = "mapserver-headers"
 )
@@ -398,7 +398,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 			Kind: "Service",
 			Port: intstr.IntOrString{
 				Type:   intstr.Int,
-				IntVal: int32(mapserverPortNr),
+				IntVal: mapserverPortNr,
 			},
 		},
 	}
@@ -423,7 +423,8 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 					Name: getBareService(obj).GetName(),
 					Kind: "Service",
 					Port: intstr.IntOrString{
-						Type:   intstr.Int,
+						Type: intstr.Int,
+						//nolint:gosec
 						IntVal: int32(mapserverWebserviceProxyPortNr),
 					},
 				},
@@ -760,14 +761,14 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 	ports := []corev1.ServicePort{
 		{
 			Name:       mapserverPortName,
-			Port:       int32(mapserverPortNr),
-			TargetPort: intstr.FromInt32(int32(mapserverPortNr)),
+			Port:       mapserverPortNr,
+			TargetPort: intstr.FromInt32(mapserverPortNr),
 			Protocol:   corev1.ProtocolTCP,
 		},
 		{
 			Name:       metricPortName,
-			Port:       int32(metricPortNr),
-			TargetPort: intstr.FromInt32(int32(metricPortNr)),
+			Port:       metricPortNr,
+			TargetPort: intstr.FromInt32(metricPortNr),
 			Protocol:   corev1.ProtocolTCP,
 		},
 	}
@@ -1000,6 +1001,7 @@ func getFinalizerName[O pdoknlv3.WMSWFS](obj O) string {
 	return strings.ToLower(string(obj.Type())) + "." + pdoknlv3.GroupVersion.Group + "/finalizer"
 }
 
+// TODO fix linting (cyclop)
 func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (operationResults map[string]controllerutil.OperationResult, err error) {
 	operationResults = make(map[string]controllerutil.OperationResult)
 	reconcilerClient := getReconcilerClient(r)
@@ -1070,6 +1072,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	}
 	// end region ConfigMap-BlobDownload
 
+	// TODO fix linting (nestif)
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		wms, _ := any(obj).(*pdoknlv3.WMS)
 		wmsReconciler := (*WMSReconciler)(r)
@@ -1205,6 +1208,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	return operationResults, nil
 }
 
+// TODO fix linting (funlen)
 func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (err error) {
 	bareObjects := getSharedBareObjects(obj)
 	var objects []client.Object

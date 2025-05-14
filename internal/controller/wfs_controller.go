@@ -67,6 +67,7 @@ type WFSReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
+// TODO fix linting (dupl)
 func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	lgr := log.FromContext(ctx)
 	lgr.Info("Starting reconcile for WFS resource", "name", req.NamespacedName)

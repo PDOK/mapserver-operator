@@ -78,7 +78,7 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-//nolint:gocyclo
+// TODO fix linting (cyclop)
 func main() {
 	var metricsAddr string
 	var certDir string

@@ -30,6 +30,7 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 		wfs.Name, allErrs)
 }
 
+// TODO fix linting (dupl)
 func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
 	warnings := []string{}
 	allErrs := field.ErrorList{}

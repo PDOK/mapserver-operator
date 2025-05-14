@@ -45,6 +45,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 	return src.ToV3(dst)
 }
 
+//nolint:gosec
 func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 	dst.ObjectMeta = src.ObjectMeta
 
