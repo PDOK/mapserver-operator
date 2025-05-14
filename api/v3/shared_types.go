@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,6 +39,8 @@ type WMSWFS interface {
 	*WFS | *WMS
 	metav1.Object
 
+	GroupKind() schema.GroupKind
+	Inspire() *Inspire
 	Mapfile() *Mapfile
 	PodSpecPatch() *corev1.PodSpec
 	HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch

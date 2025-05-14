@@ -216,7 +216,7 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 	}
 }
 
-// TODO fix linting (cyclop,gocritic,revive)
+// TODO fix linting (cyclop)
 // Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	resources := v1.ResourceRequirements{
@@ -225,16 +225,18 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 	}
 
 	maxResourceVal := func(v1 *resource.Quantity, v2 *resource.Quantity) *resource.Quantity {
-		if v1 != nil && v2 != nil {
+		switch {
+		case v1 != nil && v2 != nil:
 			if v1.Value() > v2.Value() {
 				return v1
-			} else {
-				return v2
 			}
-		} else if v1 != nil && v2 == nil {
-			return v1
-		} else if v1 == nil || v2 != nil {
 			return v2
+		case v1 != nil && v2 == nil:
+			return v1
+		case v1 == nil || v2 != nil:
+			return v2
+		default:
+
 		}
 
 		return &resource.Quantity{}

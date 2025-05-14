@@ -25,9 +25,12 @@ SOFTWARE.
 package v3
 
 import (
+	"slices"
+
 	shared_model "github.com/pdok/smooth-operator/model"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -145,6 +148,15 @@ type WFSService struct {
 	FeatureTypes []FeatureType `json:"featureTypes"`
 }
 
+func (s WFSService) KeywordsIncludingInspireKeyword() []string {
+	keywords := s.Keywords
+	if s.Inspire != nil && !slices.Contains(keywords, "infoFeatureAccessService") {
+		keywords = append(keywords, "infoFeatureAccessService")
+	}
+
+	return keywords
+}
+
 type Bbox struct {
 	// EXTENT/wfs_extent in mapfile
 	//nolint:tagliatelle
@@ -205,6 +217,14 @@ func (wfs *WFS) HasPostgisData() bool {
 	return false
 }
 
+func (wfs *WFS) GroupKind() schema.GroupKind {
+	return schema.GroupKind{Group: GroupVersion.Group, Kind: wfs.Kind}
+}
+
+func (wfs *WFS) Inspire() *Inspire {
+	return wfs.Spec.Service.Inspire
+}
+
 func (wfs *WFS) Mapfile() *Mapfile {
 	return wfs.Spec.Service.Mapfile
 }
@@ -243,9 +263,4 @@ func (wfs *WFS) GeoPackages() []*Gpkg {
 	}
 
 	return gpkgs
-}
-
-//nolint:revive
-func (wfs *WFS) GetBaseUrl() string {
-	return wfs.Spec.Service.URL
 }

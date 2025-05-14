@@ -30,28 +30,8 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 		wfs.Name, allErrs)
 }
 
-// TODO fix linting (dupl)
 func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
-	warnings := []string{}
-	allErrs := field.ErrorList{}
-
-	sharedValidation.ValidateLabelsOnUpdate(wfsOld.Labels, wfs.Labels, &allErrs)
-
-	sharedValidation.CheckBaseUrlImmutability(wfsOld, wfs, &allErrs)
-
-	if (wfs.Spec.Service.Inspire == nil && wfsOld.Spec.Service.Inspire != nil) || (wfs.Spec.Service.Inspire != nil && wfsOld.Spec.Service.Inspire == nil) {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))
-	}
-
-	ValidateWFS(wfs, &warnings, &allErrs)
-
-	if len(allErrs) == 0 {
-		return warnings, nil
-	}
-
-	return warnings, apierrors.NewInvalid(
-		schema.GroupKind{Group: "pdok.nl", Kind: "WFS"},
-		wfs.Name, allErrs)
+	return ValidateUpdate(wfs, wfsOld, ValidateWFS)
 }
 
 func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {

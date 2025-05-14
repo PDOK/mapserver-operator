@@ -35,6 +35,7 @@ services:
             - Hectometerpunten
             - HVD
             - Mobiliteit
+            - infoMapAccessService
         onlineResource:
           xlink: null
           type: null

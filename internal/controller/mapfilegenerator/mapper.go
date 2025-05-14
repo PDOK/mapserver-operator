@@ -54,7 +54,7 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 		BaseServiceInput: BaseServiceInput{
 			Title:           mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
 			Abstract:        mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
-			Keywords:        strings.Join(wfs.Spec.Service.Keywords, ","),
+			Keywords:        strings.Join(wfs.Spec.Service.KeywordsIncludingInspireKeyword(), ","),
 			OnlineResource:  pdoknlv3.GetHost(true),
 			Path:            mapperutils.GetPath(wfs),
 			MetadataID:      metadataID,
@@ -176,7 +176,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 		BaseServiceInput: BaseServiceInput{
 			Title:           service.Title,
 			Abstract:        service.Abstract,
-			Keywords:        strings.Join(service.Keywords, ","),
+			Keywords:        strings.Join(wms.Spec.Service.KeywordsIncludingInspireKeyword(), ","),
 			Extent:          extent,
 			NamespacePrefix: datasetName,
 			NamespaceURI:    fmt.Sprintf("%s://%s.geonovum.nl", protocol, datasetName),
