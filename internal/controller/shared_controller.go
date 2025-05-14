@@ -414,8 +414,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 	}
 
 	middlewareRef := traefikiov1alpha1.MiddlewareRef{
-		Name:      getBareCorsHeadersMiddleware(obj).GetName(),
-		Namespace: obj.GetNamespace(),
+		Name: getBareCorsHeadersMiddleware(obj).GetName(),
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
@@ -462,6 +461,9 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 			Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
 		}}
 	}
+
+	// Add finalizers
+	ingressRoute.Finalizers = []string{"uptime.pdok.nl/finalizer"}
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, ingressRoute, ingressRoute); err != nil {
 		return err
