@@ -68,8 +68,7 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
 
 	service := pdoknlv3.WFSService{
-		// TODO what is prefix, Geonovum subdomain?
-		Prefix:            "prefix",
+		Prefix:            src.Spec.General.Dataset,
 		URL:               CreateBaseURL("https://service.pdok.nl", "wfs", src.Spec.General),
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
