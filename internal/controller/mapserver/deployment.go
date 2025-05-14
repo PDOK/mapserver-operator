@@ -216,7 +216,7 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 	}
 }
 
-// TODO fix linting (cyclop)
+// TODO fix linting (cyclop,gocritic,revive)
 // Resources for mapserver container
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	resources := v1.ResourceRequirements{
