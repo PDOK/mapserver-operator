@@ -582,19 +582,16 @@ func (wms *WMS) URLPath() string {
 
 func (wms *WMS) GeoPackages() []*Gpkg {
 	gpkgs := make([]*Gpkg, 0)
-
-	// TODO fix linting (nestif)
-	if wms.Spec.Service.Layer.Layers != nil {
-		for _, layer := range wms.Spec.Service.Layer.Layers {
-			if layer.Data != nil {
-				if layer.Data.Gpkg != nil {
-					gpkgs = append(gpkgs, layer.Data.Gpkg)
-				}
-			} else if layer.Layers != nil {
-				for _, childLayer := range layer.Layers {
-					if childLayer.Data != nil && childLayer.Data.Gpkg != nil {
-						gpkgs = append(gpkgs, childLayer.Data.Gpkg)
-					}
+	
+	for _, layer := range wms.Spec.Service.Layer.Layers {
+		if layer.Data != nil {
+			if layer.Data.Gpkg != nil {
+				gpkgs = append(gpkgs, layer.Data.Gpkg)
+			}
+		} else if layer.Layers != nil {
+			for _, childLayer := range layer.Layers {
+				if childLayer.Data != nil && childLayer.Data.Gpkg != nil {
+					gpkgs = append(gpkgs, childLayer.Data.Gpkg)
 				}
 			}
 		}
