@@ -25,10 +25,11 @@ SOFTWARE.
 package v3
 
 import (
+	"slices"
+
 	shared_model "github.com/pdok/smooth-operator/model"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"slices"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 

@@ -120,9 +120,9 @@ type WMSService struct {
 	Layer Layer `json:"layer"`
 }
 
-func (s WMSService) KeywordsIncludingInspireKeyword() []string {
-	keywords := s.Keywords
-	if s.Inspire != nil && !slices.Contains(keywords, "infoMapAccessService") {
+func (wmsService WMSService) KeywordsIncludingInspireKeyword() []string {
+	keywords := wmsService.Keywords
+	if wmsService.Inspire != nil && !slices.Contains(keywords, "infoMapAccessService") {
 		keywords = append(keywords, "infoMapAccessService")
 	}
 
@@ -582,7 +582,7 @@ func (wms *WMS) URLPath() string {
 
 func (wms *WMS) GeoPackages() []*Gpkg {
 	gpkgs := make([]*Gpkg, 0)
-	
+
 	for _, layer := range wms.Spec.Service.Layer.Layers {
 		if layer.Data != nil {
 			if layer.Data.Gpkg != nil {
