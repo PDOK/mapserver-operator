@@ -78,14 +78,6 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			Name:         ConfigMapVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.ConfigMap),
 		},
-		{
-			Name:         ConfigMapMapfileGeneratorVolumeName,
-			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
-		},
-		{
-			Name:         ConfigMapCapabilitiesGeneratorVolumeName,
-			VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
-		},
 	}
 
 	if mapfile := obj.Mapfile(); mapfile != nil {
@@ -95,6 +87,23 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		})
 	}
 
+	if obj.Options().PrefetchData {
+		vol := newVolumeSource(configMapNames.BlobDownload)
+		vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
+		volumes = append(volumes, v1.Volume{
+			Name:         ConfigMapBlobDownloadVolumeName,
+			VolumeSource: vol,
+		})
+	}
+
+	// Add capabilitiesgenerator config here to get the same order as the ansible operator
+	// Needed to compare deployments from the ansible operator and this one
+	volumes = append(volumes, v1.Volume{
+		Name:         ConfigMapCapabilitiesGeneratorVolumeName,
+		VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
+	})
+
+	var stylingFilesVolume *v1.Volume
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		lgVolume := v1.Volume{
 			Name:         ConfigMapLegendGeneratorVolumeName,
@@ -119,7 +128,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			}
 		}
 
-		stylingFilesVolume := v1.Volume{
+		stylingFilesVolume = &v1.Volume{
 			Name: ConfigMapStylingFilesVolumeName,
 			VolumeSource: v1.VolumeSource{
 				Projected: &v1.ProjectedVolumeSource{
@@ -127,17 +136,19 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 				},
 			},
 		}
-		volumes = append(volumes, lgVolume, figVolume, stylingFilesVolume)
+		volumes = append(volumes, figVolume, lgVolume)
 	}
 
-	if obj.Options().PrefetchData {
-		vol := newVolumeSource(configMapNames.BlobDownload)
-		vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
-		volumes = append(volumes, v1.Volume{
-			Name:         ConfigMapBlobDownloadVolumeName,
-			VolumeSource: vol,
-		})
+	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
+	// Needed to compare deployments from the ansible operator and this one
+	volumes = append(volumes, v1.Volume{
+		Name:         ConfigMapMapfileGeneratorVolumeName,
+		VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
+	})
+	if stylingFilesVolume != nil {
+		volumes = append(volumes, *stylingFilesVolume)
 	}
+
 	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
 		volumes = append(volumes, v1.Volume{
 			Name:         ConfigMapOgcWebserviceProxyVolumeName,
@@ -201,6 +212,7 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 			Name:  "MAPSERVER_CONFIG_FILE",
 			Value: "/srv/mapserver/config/default_mapserver.conf",
 		},
+		GetMapfileEnvVar(obj),
 		{
 			Name: "AZURE_STORAGE_CONNECTION_STRING",
 			ValueFrom: &v1.EnvVarSource{
@@ -212,7 +224,6 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 				},
 			},
 		},
-		GetMapfileEnvVar(obj),
 	}
 }
 
@@ -338,8 +349,7 @@ func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *v1.Probe, 
 }
 
 func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *v1.Probe {
-	webserviceType := strings.ToLower(string(obj.Type()))
-	queryString := "SERVICE=" + webserviceType + "&request=GetCapabilities"
+	queryString := "SERVICE=" + string(obj.Type()) + "&request=GetCapabilities"
 	return getProbe(queryString, mimeTextXML)
 }
 

@@ -2,7 +2,7 @@ exec:
   command:
   - /bin/sh
   - -c
-  - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=wfs&request=GetCapabilities''
+  - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WFS&request=GetCapabilities''
     2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/xml'''
 failureThreshold: 3
 initialDelaySeconds: 20

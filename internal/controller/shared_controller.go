@@ -8,26 +8,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
-	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
-	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
-	"github.com/pdok/mapserver-operator/internal/controller/types"
-	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
 	"github.com/pdok/mapserver-operator/internal/controller/static"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"github.com/pdok/smooth-operator/model"
 	smoothoperatork8s "github.com/pdok/smooth-operator/pkg/k8s"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	traefikdynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/policy/v1"
@@ -261,8 +261,8 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 
 	initContainers := []corev1.Container{
 		*blobDownloadInitContainer,
-		*mapfileGeneratorInitContainer,
 		*capabilitiesGeneratorInitContainer,
+		*mapfileGeneratorInitContainer,
 	}
 
 	if wms, ok := any(obj).(*pdoknlv3.WMS); ok {
@@ -302,30 +302,6 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 
 	containers := []corev1.Container{
 		{
-			Name:                     "apache-exporter",
-			Image:                    images.ApacheExporterImage,
-			ImagePullPolicy:          corev1.PullIfNotPresent,
-			TerminationMessagePolicy: corev1.TerminationMessageReadFile,
-			TerminationMessagePath:   "/dev/termination-log",
-			Ports: []corev1.ContainerPort{
-				{
-					ContainerPort: 9117,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-			Args: []string{
-				"--scrape_uri=http://localhost/server-status?auto",
-			},
-			Resources: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceMemory: resource.MustParse("48M"),
-				},
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU: resource.MustParse("0.02"),
-				},
-			},
-		},
-		{
 			Name:            MapserverName,
 			Image:           images.MapserverImage,
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -348,6 +324,30 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 					Exec: &corev1.ExecAction{
 						Command: []string{"sleep", "15"},
 					},
+				},
+			},
+		},
+		{
+			Name:                     "apache-exporter",
+			Image:                    images.ApacheExporterImage,
+			ImagePullPolicy:          corev1.PullIfNotPresent,
+			TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+			TerminationMessagePath:   "/dev/termination-log",
+			Ports: []corev1.ContainerPort{
+				{
+					ContainerPort: 9117,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+			Args: []string{
+				"--scrape_uri=http://localhost/server-status?auto",
+			},
+			Resources: corev1.ResourceRequirements{
+				Limits: corev1.ResourceList{
+					corev1.ResourceMemory: resource.MustParse("48M"),
+				},
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU: resource.MustParse("0.02"),
 				},
 			},
 		},
@@ -414,8 +414,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 	}
 
 	middlewareRef := traefikiov1alpha1.MiddlewareRef{
-		Name:      getBareCorsHeadersMiddleware(obj).GetName(),
-		Namespace: obj.GetNamespace(),
+		Name: getBareCorsHeadersMiddleware(obj).GetName(),
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
@@ -462,6 +461,9 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 			Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
 		}}
 	}
+
+	// Add finalizers
+	ingressRoute.Finalizers = []string{"uptime.pdok.nl/finalizer"}
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, ingressRoute, ingressRoute); err != nil {
 		return err
@@ -675,8 +677,9 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 
 	autoscaler.Spec = autoscalingv2.HorizontalPodAutoscalerSpec{
 		ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
-			Kind: "Deployment",
-			Name: getSuffixedName(obj, MapserverName),
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       getSuffixedName(obj, MapserverName),
 		},
 		MinReplicas: &minReplicas,
 		MaxReplicas: maxReplicas,
@@ -698,13 +701,13 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 				SelectPolicy:               smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
 				Policies: []autoscalingv2.HPAScalingPolicy{
 					{
-						Type:          autoscalingv2.PodsScalingPolicy,
-						Value:         1,
+						Type:          autoscalingv2.PercentScalingPolicy,
+						Value:         10,
 						PeriodSeconds: 600,
 					},
 					{
-						Type:          autoscalingv2.PercentScalingPolicy,
-						Value:         10,
+						Type:          autoscalingv2.PodsScalingPolicy,
+						Value:         1,
 						PeriodSeconds: 600,
 					},
 				},

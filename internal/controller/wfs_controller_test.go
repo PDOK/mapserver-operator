@@ -160,6 +160,11 @@ var _ = Describe("WFS Controller", func() {
 			By("Waiting for the owned resources to be deleted")
 			Eventually(func() error {
 				for _, o := range expectedBareObjects {
+					// TODO make finalizers work in the test environment
+					if len(o.GetFinalizers()) > 0 {
+						continue
+					}
+
 					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: o.GetName()}, o)
 					if err == nil {
 						return errors.New("expected " + smoothoperatorutils.GetObjectFullName(k8sClient, o) + " to not be found")
@@ -236,7 +241,7 @@ var _ = Describe("WFS Controller", func() {
 			/**
 			Container tests
 			*/
-			container := deployment.Spec.Template.Spec.Containers[1]
+			container := deployment.Spec.Template.Spec.Containers[0]
 			Expect(container.Name).Should(Equal("mapserver"))
 			Expect(container.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(container.Image).Should(Equal(reconcilerImages.MapserverImage))
@@ -244,7 +249,7 @@ var _ = Describe("WFS Controller", func() {
 			Expect(container.Resources.Limits.Memory().String()).Should(Equal("12M"))
 			Expect(container.Resources.Requests.Cpu().String()).Should(Equal("150m"))
 			Expect(len(container.LivenessProbe.Exec.Command)).Should(Equal(3))
-			Expect(container.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=wfs&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
+			Expect(container.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=WFS&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
 			Expect(container.LivenessProbe.FailureThreshold).Should(Equal(int32(3)))
 			Expect(container.LivenessProbe.InitialDelaySeconds).Should(Equal(int32(20)))
 			Expect(container.LivenessProbe.PeriodSeconds).Should(Equal(int32(10)))
@@ -530,8 +535,9 @@ var _ = Describe("WFS Controller", func() {
 
 			Expect(autoscaler.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
 			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(v2.CrossVersionObjectReference{
-				Kind: "Deployment",
-				Name: wfs.GetName() + "-wfs-mapserver",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       wfs.GetName() + "-wfs-mapserver",
 			}))
 
 			/**
@@ -550,13 +556,13 @@ var _ = Describe("WFS Controller", func() {
 				Policies: []v2.HPAScalingPolicy{
 					{
 						PeriodSeconds: int32(600),
-						Value:         int32(1),
-						Type:          v2.PodsScalingPolicy,
+						Value:         int32(10),
+						Type:          v2.PercentScalingPolicy,
 					},
 					{
 						PeriodSeconds: int32(600),
-						Value:         int32(10),
-						Type:          v2.PercentScalingPolicy,
+						Value:         int32(1),
+						Type:          v2.PodsScalingPolicy,
 					},
 				},
 			}))
@@ -645,7 +651,7 @@ var _ = Describe("WFS Controller", func() {
 			Expect(ingressRoute.Spec.Routes[0]).To(Equal(traefikiov1alpha1.Route{
 				Kind:        "Rule",
 				Match:       "Host(`localhost`) && Path(`/eigenaar/dataset/wfs/1.0.0`)",
-				Middlewares: []traefikiov1alpha1.MiddlewareRef{{Name: wfs.GetName() + "-wfs-mapserver-headers", Namespace: "default"}},
+				Middlewares: []traefikiov1alpha1.MiddlewareRef{{Name: wfs.GetName() + "-wfs-mapserver-headers"}},
 				Services: []traefikiov1alpha1.Service{{
 					LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
 						Kind: "Service",
