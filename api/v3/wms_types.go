@@ -118,6 +118,15 @@ type WMSService struct {
 	Layer Layer `json:"layer"`
 }
 
+func (s WMSService) KeywordsIncludingInspireKeyword() []string {
+	keywords := s.Keywords
+	if s.Inspire != nil && !slices.Contains(keywords, "infoMapAccessService") {
+		keywords = append(keywords, "infoMapAccessService")
+	}
+
+	return keywords
+}
+
 // +kubebuilder:validation:XValidation:message="Either blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
 type StylingAssets struct {
 	// +kubebuilder:validations:MinItems:=1

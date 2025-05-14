@@ -28,6 +28,7 @@ import (
 	shared_model "github.com/pdok/smooth-operator/model"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"slices"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -143,6 +144,15 @@ type WFSService struct {
 	// +kubebuilder:validation:MinItems:=1
 	// +kubebuilder:validation:Type=array
 	FeatureTypes []FeatureType `json:"featureTypes"`
+}
+
+func (s WFSService) KeywordsIncludingInspireKeyword() []string {
+	keywords := s.Keywords
+	if s.Inspire != nil && !slices.Contains(keywords, "infoFeatureAccessService") {
+		keywords = append(keywords, "infoFeatureAccessService")
+	}
+
+	return keywords
 }
 
 type Bbox struct {
