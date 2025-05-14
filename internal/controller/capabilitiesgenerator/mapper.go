@@ -216,8 +216,9 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
-			Namespace:         mapperutils.GetNamespaceURI("prefix", ownerInfo),
-			Prefix:            "prefix",
+			// Prefix is unused for the WMS
+			Namespace:         mapperutils.GetNamespaceURI("", ownerInfo),
+			Prefix:            "",
 			Onlineresourceurl: pdoknlv3.GetHost(true),
 			Path:              "/" + pdoknlv3.GetBaseURLPath(wms),
 			Version:           *mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "service-version"),

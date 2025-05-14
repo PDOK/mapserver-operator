@@ -1,0 +1,433 @@
+global:
+  prefix: ""
+  namespace: http://.geonovum.nl
+  onlineResourceUrl: http://localhost
+  path: /rws/nwbwegen/wms/v1_0
+  version: v1_0
+  additionalSchemaLocations: http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd
+services:
+  wms130:
+    filename: /var/www/config/capabilities_wms_130.xml
+    definition:
+      wmsCapabilities:
+        space: ""
+        local: ""
+      namespaces:
+        wms: ""
+        sld: ""
+        xlink: ""
+        xsi: ""
+        version: ""
+        schemaLocation: ""
+      service:
+        name: WMS
+        title: NWB - Wegen WMS
+        abstract: Dit is de web map service van het Nationaal Wegen Bestand (NWB) - wegen. Deze dataset bevat alleen de wegvakken en hectometerpunten. Het Nationaal Wegen Bestand - Wegen is een digitaal geografisch bestand van alle wegen in Nederland. Opgenomen zijn alle wegen die worden beheerd door wegbeheerders als het Rijk, provincies, gemeenten en waterschappen, echter alleen voor zover deze zijn voorzien van een straatnaam of nummer.
+        keywordList:
+          keyword:
+            - Vervoersnetwerken
+            - Menselijke gezondheid en veiligheid
+            - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
+            - Nationaal
+            - Voertuigen
+            - Verkeer
+            - Wegvakken
+            - Hectometerpunten
+            - HVD
+            - Mobiliteit
+        onlineResource:
+          xlink: null
+          type: null
+          href: https://service.pdok.nl
+        contactInformation:
+          contactPersonPrimary:
+            contactPerson: KlantContactCenter PDOK
+            contactOrganization: PDOK
+          contactPosition: pointOfContact
+          contactAddress:
+            addressType: Work
+            address: ""
+            city: Apeldoorn
+            stateOrProvince: ""
+            postalCode: ""
+            country: The Netherlands
+          contactVoiceTelephone: null
+          contactFacsimileTelephone: null
+          contactElectronicMailAddress: BeheerPDOK@kadaster.nl
+        fees: NONE
+        accessConstraints: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
+        layerLimit: null
+        maxWidth: 4000
+        maxHeight: 4000
+      capability:
+        wmsCapabilities:
+          request:
+            getCapabilities:
+              format:
+                - text/xml
+              dcpType:
+                http:
+                  get:
+                    onlineResource:
+                      xlink: null
+                      type: null
+                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                  post: null
+            getMap:
+              format:
+                - image/png
+                - image/jpeg
+                - image/png; mode=8bit
+                - image/vnd.jpeg-png
+                - image/vnd.jpeg-png8
+              dcpType:
+                http:
+                  get:
+                    onlineResource:
+                      xlink: null
+                      type: null
+                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                  post:
+                    onlineResource:
+                      xlink: null
+                      type: null
+                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+            getFeatureInfo:
+              format:
+                - application/json
+                - application/json; subtype=geojson
+                - application/vnd.ogc.gml
+                - text/html
+                - text/plain
+                - text/xml
+                - text/xml; subtype=gml/3.1.1
+              dcpType:
+                http:
+                  get:
+                    onlineResource:
+                      xlink: null
+                      type: null
+                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                  post:
+                    onlineResource:
+                      xlink: null
+                      type: null
+                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+          exception:
+            format:
+              - XML
+              - BLANK
+          extendedCapabilities:
+            metadataUrl:
+              url: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=f2437a92-ddd3-4777-a1bc-fdf4b4a7fcb8
+              mediaType: application/vnd.ogc.csw.GetRecordByIdResponse_xml
+            supportedLanguages:
+              defaultLanguage:
+                language: dut
+              supportedLanguage:
+                - language: dut
+            responseLanguage:
+              language: dut
+          layer:
+            - queryable: 1
+              opaque: null
+              name: null
+              title: NWB - Wegen WMS
+              abstract: Dit is de web map service van het Nationaal Wegen Bestand (NWB) - wegen. Deze dataset bevat alleen de wegvakken en hectometerpunten. Het Nationaal Wegen Bestand - Wegen is een digitaal geografisch bestand van alle wegen in Nederland. Opgenomen zijn alle wegen die worden beheerd door wegbeheerders als het Rijk, provincies, gemeenten en waterschappen, echter alleen voor zover deze zijn voorzien van een straatnaam of nummer.
+              keywordList:
+                keyword:
+                  - Vervoersnetwerken
+                  - Menselijke gezondheid en veiligheid
+                  - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
+                  - Nationaal
+                  - Voertuigen
+                  - Verkeer
+                  - Wegvakken
+                  - Hectometerpunten
+                  - HVD
+                  - Mobiliteit
+              crs:
+                - EPSG:28992
+                - EPSG:25831
+                - EPSG:25832
+                - EPSG:3034
+                - EPSG:3035
+                - EPSG:3857
+                - EPSG:4258
+                - EPSG:4326
+                - CRS:84
+              exGeographicBoundingBox:
+                westBoundLongitude: 2.52713
+                eastBoundLongitude: 7.37403
+                southBoundLatitude: 50.2129
+                northBoundLatitude: 55.7212
+              boundingBox:
+                - crs: EPSG:28992
+                  minx: -25000
+                  miny: 250000
+                  maxx: 280000
+                  maxy: 860000
+                - crs: EPSG:25831
+                  minx: -470271
+                  miny: 5.56231e+06
+                  maxx: 795163
+                  maxy: 6.18197e+06
+                - crs: EPSG:25832
+                  minx: 62461.6
+                  miny: 5.56555e+06
+                  maxx: 397827
+                  maxy: 6.19042e+06
+                - crs: EPSG:3034
+                  minx: 2.61336e+06
+                  miny: 3.509e+06
+                  maxx: 3.22007e+06
+                  maxy: 3.84003e+06
+                - crs: EPSG:3035
+                  minx: 3.01676e+06
+                  miny: 3.81264e+06
+                  maxx: 3.64485e+06
+                  maxy: 4.15586e+06
+                - crs: EPSG:3857
+                  minx: 281318
+                  miny: 6.48322e+06
+                  maxx: 820873
+                  maxy: 7.50311e+06
+                - crs: EPSG:4258
+                  minx: 50.2129
+                  miny: 2.52713
+                  maxx: 55.7212
+                  maxy: 7.37403
+                - crs: EPSG:4326
+                  minx: 50.2129
+                  miny: 2.52713
+                  maxx: 55.7212
+                  maxy: 7.37403
+                - crs: CRS:84
+                  minx: 2.52713
+                  miny: 50.2129
+                  maxx: 7.37403
+                  maxy: 55.7212
+              dimension: []
+              attribution: null
+              authorityUrl: null
+              identifier: null
+              metadataUrl: []
+              dataUrl: null
+              featureListUrl: null
+              style: []
+              minScaleDenominator: null
+              maxScaleDenominator: null
+              layer:
+                - queryable: 1
+                  opaque: null
+                  name: wegvakken
+                  title: Wegvakken
+                  abstract: Deze laag bevat de wegvakken uit het Nationaal Wegen bestand (NWB) en geeft gedetailleerde informatie per wegvak zoals straatnaam, wegnummer, routenummer, wegbeheerder, huisnummers, enz. weer.
+                  keywordList:
+                    keyword:
+                      - Vervoersnetwerken
+                      - Menselijke gezondheid en veiligheid
+                      - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
+                      - Nationaal
+                      - Voertuigen
+                      - Verkeer
+                      - Wegvakken
+                  crs:
+                    - EPSG:28992
+                    - EPSG:25831
+                    - EPSG:25832
+                    - EPSG:3034
+                    - EPSG:3035
+                    - EPSG:3857
+                    - EPSG:4258
+                    - EPSG:4326
+                    - CRS:84
+                  exGeographicBoundingBox:
+                    westBoundLongitude: 2.52713
+                    eastBoundLongitude: 7.37403
+                    southBoundLatitude: 50.2129
+                    northBoundLatitude: 55.7212
+                  boundingBox:
+                    - crs: EPSG:28992
+                      minx: -25000
+                      miny: 250000
+                      maxx: 280000
+                      maxy: 860000
+                    - crs: EPSG:25831
+                      minx: -470271
+                      miny: 5.56231e+06
+                      maxx: 795163
+                      maxy: 6.18197e+06
+                    - crs: EPSG:25832
+                      minx: 62461.6
+                      miny: 5.56555e+06
+                      maxx: 397827
+                      maxy: 6.19042e+06
+                    - crs: EPSG:3034
+                      minx: 2.61336e+06
+                      miny: 3.509e+06
+                      maxx: 3.22007e+06
+                      maxy: 3.84003e+06
+                    - crs: EPSG:3035
+                      minx: 3.01676e+06
+                      miny: 3.81264e+06
+                      maxx: 3.64485e+06
+                      maxy: 4.15586e+06
+                    - crs: EPSG:3857
+                      minx: 281318
+                      miny: 6.48322e+06
+                      maxx: 820873
+                      maxy: 7.50311e+06
+                    - crs: EPSG:4258
+                      minx: 50.2129
+                      miny: 2.52713
+                      maxx: 55.7212
+                      maxy: 7.37403
+                    - crs: EPSG:4326
+                      minx: 50.2129
+                      miny: 2.52713
+                      maxx: 55.7212
+                      maxy: 7.37403
+                    - crs: CRS:84
+                      minx: 2.52713
+                      miny: 50.2129
+                      maxx: 7.37403
+                      maxy: 55.7212
+                  dimension: []
+                  attribution: null
+                  authorityUrl: null
+                  identifier:
+                    authority: rws
+                    value: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff
+                  metadataUrl:
+                    - type: TC211
+                      format: text/plain
+                      onlineResource:
+                        xlink: null
+                        type: simple
+                        href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=a9b7026e-0a81-4813-93bd-ba49e6f28502
+                  dataUrl: null
+                  featureListUrl: null
+                  style:
+                    - name: wegvakken
+                      title: NWB - Wegvakken
+                      abstract: null
+                      legendUrl:
+                        width: 78
+                        height: 20
+                        format: image/png
+                        onlineResource:
+                          xlink: null
+                          type: simple
+                          href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0/legend/wegvakken/wegvakken.png
+                      styleSheetUrl: null
+                  minScaleDenominator: 1
+                  maxScaleDenominator: 50000
+                  layer: []
+                - queryable: 1
+                  opaque: null
+                  name: hectopunten
+                  title: Hectopunten
+                  abstract: Deze laag bevat de hectopunten uit het Nationaal Wegen Bestand (NWB) en geeft gedetailleerde informatie per hectopunt zoals hectometrering, afstand, zijde en hectoletter weer.
+                  keywordList:
+                    keyword:
+                      - Vervoersnetwerken
+                      - Menselijke gezondheid en veiligheid
+                      - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
+                      - Nationaal
+                      - Voertuigen
+                      - Verkeer
+                      - Hectometerpunten
+                  crs:
+                    - EPSG:28992
+                    - EPSG:25831
+                    - EPSG:25832
+                    - EPSG:3034
+                    - EPSG:3035
+                    - EPSG:3857
+                    - EPSG:4258
+                    - EPSG:4326
+                    - CRS:84
+                  exGeographicBoundingBox:
+                    westBoundLongitude: 2.52713
+                    eastBoundLongitude: 7.37403
+                    southBoundLatitude: 50.2129
+                    northBoundLatitude: 55.7212
+                  boundingBox:
+                    - crs: EPSG:28992
+                      minx: -25000
+                      miny: 250000
+                      maxx: 280000
+                      maxy: 860000
+                    - crs: EPSG:25831
+                      minx: -470271
+                      miny: 5.56231e+06
+                      maxx: 795163
+                      maxy: 6.18197e+06
+                    - crs: EPSG:25832
+                      minx: 62461.6
+                      miny: 5.56555e+06
+                      maxx: 397827
+                      maxy: 6.19042e+06
+                    - crs: EPSG:3034
+                      minx: 2.61336e+06
+                      miny: 3.509e+06
+                      maxx: 3.22007e+06
+                      maxy: 3.84003e+06
+                    - crs: EPSG:3035
+                      minx: 3.01676e+06
+                      miny: 3.81264e+06
+                      maxx: 3.64485e+06
+                      maxy: 4.15586e+06
+                    - crs: EPSG:3857
+                      minx: 281318
+                      miny: 6.48322e+06
+                      maxx: 820873
+                      maxy: 7.50311e+06
+                    - crs: EPSG:4258
+                      minx: 50.2129
+                      miny: 2.52713
+                      maxx: 55.7212
+                      maxy: 7.37403
+                    - crs: EPSG:4326
+                      minx: 50.2129
+                      miny: 2.52713
+                      maxx: 55.7212
+                      maxy: 7.37403
+                    - crs: CRS:84
+                      minx: 2.52713
+                      miny: 50.2129
+                      maxx: 7.37403
+                      maxy: 55.7212
+                  dimension: []
+                  attribution: null
+                  authorityUrl: null
+                  identifier:
+                    authority: rws
+                    value: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff
+                  metadataUrl:
+                    - type: TC211
+                      format: text/plain
+                      onlineResource:
+                        xlink: null
+                        type: simple
+                        href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=a9b7026e-0a81-4813-93bd-ba49e6f28502
+                  dataUrl: null
+                  featureListUrl: null
+                  style:
+                    - name: hectopunten
+                      title: NWB - Hectopunten
+                      abstract: null
+                      legendUrl:
+                        width: 78
+                        height: 20
+                        format: image/png
+                        onlineResource:
+                          xlink: null
+                          type: simple
+                          href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0/legend/hectopunten/hectopunten.png
+                      styleSheetUrl: null
+                  minScaleDenominator: 1
+                  maxScaleDenominator: 50000
+                  layer: []
+        optionalConstraints: {}
