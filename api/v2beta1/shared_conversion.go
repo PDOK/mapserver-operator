@@ -36,6 +36,7 @@ func ConvertOptionsV3ToV2(src pdoknlv3.Options) WMSWFSOptions {
 	}
 }
 
+//nolint:gosec
 func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch {
 	var minReplicas *int32
 	if src.MinReplicas != nil {

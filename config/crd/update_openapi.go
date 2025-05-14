@@ -18,6 +18,7 @@ func main() {
 	updateWMSV3Layers(crdDir)
 }
 
+// TODO fix linting (funlen)
 func updateWMSV3Layers(crdDir string) {
 	path := filepath.Join(crdDir, "pdok.nl_wms.yaml")
 

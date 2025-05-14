@@ -220,6 +220,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 	return result, nil
 }
 
+// TODO fix linting (cyclop)
 func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {
 	layerExtent := serviceExtent
 	if len(serviceLayer.BoundingBoxes) > 0 {

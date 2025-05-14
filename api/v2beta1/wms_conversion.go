@@ -49,6 +49,7 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	return nil
 }
 
+//nolint:gosec
 func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	dst := target
 
@@ -424,9 +425,11 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 	return layer
 }
 
+//nolint:cyclop
 func mapV3LayerToV2Layers(v3Layer pdoknlv3.Layer, parent *pdoknlv3.Layer, serviceEPSG string) []WMSLayer {
 	var layers []WMSLayer
 
+	//nolint:nestif
 	if parent == nil && v3Layer.Name == nil {
 		// Default top layer, do not include in v2 layers
 		if v3Layer.Layers != nil {
