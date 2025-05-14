@@ -155,8 +155,8 @@ github.com/pdok/ogc-capabilities-generator v1.0.0-beta7 h1:w0dP2RQX0KEEovrq57NCM
 github.com/pdok/ogc-capabilities-generator v1.0.0-beta7/go.mod h1:slk89sAgmWU5NCIKwGyciQWnm0RHmwhJYQ431E2CwSk=
 github.com/pdok/ogc-specifications v1.0.0-beta7 h1:AFSO8iCYbD1MrjOS2q+PGp2PmSqAH+O7cuA7JeePCXE=
 github.com/pdok/ogc-specifications v1.0.0-beta7/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
-github.com/pdok/smooth-operator v0.1.0 h1:i1uZa3Niuh6ljl4UTGcC48sC01H3CaWHiIfK7pQTix8=
-github.com/pdok/smooth-operator v0.1.0/go.mod h1:przwM7mBGmNPqabyhImKVZ15WL4zbqLqH4ExbuWKhWE=
+github.com/pdok/smooth-operator v0.1.1 h1:rmsup4HmzJsxt4ZT9GWfj498dKLRfDhyuILeEkjju/A=
+github.com/pdok/smooth-operator v0.1.1/go.mod h1:przwM7mBGmNPqabyhImKVZ15WL4zbqLqH4ExbuWKhWE=
 github.com/pelletier/go-toml v1.6.0/go.mod h1:5N711Q9dKgbdkxHL+MEfF31hpT7l0S0s/t2kKREewys=
 github.com/peterbourgon/ff v1.7.1 h1:xt1lxTG+Nr2+tFtysY7abFgPoH3Lug8CwYJMOmJRXhk=
 github.com/peterbourgon/ff v1.7.1/go.mod h1:fYI5YA+3RDqQRExmFbHnBjEeWzh9TrS8rnRpEq7XIg0=
