@@ -54,7 +54,7 @@ type WMSSpec struct {
 
 // WMSService is the struct for all service level fields
 type WMSService struct {
-	Inspire  bool   `json:"inspire"`
+	Inspire  bool   `json:"inspire,omitempty"`
 	Title    string `json:"title"`
 	Abstract string `json:"abstract"`
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"

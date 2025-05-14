@@ -55,8 +55,8 @@ const (
 	blobsConfigPrefix          = "blobs-"
 	blobsSecretPrefix          = "blobs-"
 	capabilitiesGeneratorInput = "input.yaml"
-	postgisConfigName          = "postgisConfig"
-	postgisSecretName          = "postgisSecret"
+	postgisConfigPrefix        = "postgres-"
+	postgisSecretPrefix        = "postgres-"
 )
 
 var (
@@ -235,12 +235,22 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 		return nil, err
 	}
 
+	postgresConfig, err := smoothoperatork8s.GetConfigMap(getReconcilerClient(r), obj.GetNamespace(), postgisConfigPrefix, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
+	postgresSecret, err := smoothoperatork8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), postgisSecretPrefix, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
 	images := getReconcilerImages(r)
 	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, images.MultitoolImage, blobsConfig.Name, blobsSecret.Name, srvDir)
 	if err != nil {
 		return nil, err
 	}
-	mapfileGeneratorInitContainer, err := mapfilegenerator.GetMapfileGeneratorInitContainer(obj, images.MapfileGeneratorImage, postgisConfigName, postgisSecretName, srvDir)
+	mapfileGeneratorInitContainer, err := mapfilegenerator.GetMapfileGeneratorInitContainer(obj, images.MapfileGeneratorImage, postgresConfig.Name, postgresSecret.Name, srvDir)
 	if err != nil {
 		return nil, err
 	}

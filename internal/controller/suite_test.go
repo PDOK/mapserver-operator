@@ -140,13 +140,32 @@ var _ = BeforeSuite(func() {
 	err = k8sClient.Create(ctx, blobConfig)
 	Expect(err).NotTo(HaveOccurred())
 
-	blobSecret := v1.Secret{
+	blobSecret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      blobsSecretPrefix + "testtest",
 			Namespace: metav1.NamespaceDefault,
 		},
 	}
-	err = k8sClient.Create(ctx, &blobSecret)
+	err = k8sClient.Create(ctx, blobSecret)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Deploy postgres configmap + secret
+	postgresConfig := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      postgisConfigPrefix + "testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, postgresConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	postgresSecret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      postgisSecretPrefix + "testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, postgresSecret)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Load CRD schemas

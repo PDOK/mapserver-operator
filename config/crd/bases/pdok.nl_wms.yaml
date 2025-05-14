@@ -389,7 +389,6 @@ spec:
                     - abstract
                     - authority
                     - dataEPSG
-                    - inspire
                     - keywords
                     - layers
                     - metadataIdentifier
