@@ -491,7 +491,7 @@ var _ = Describe("WFS Controller", func() {
 			checkWFSLabels(middlewareCorsHeaders.GetLabels())
 			// Expect(middlewareCorsHeaders.Spec.Headers.FrameDeny).Should(Equal(true))
 			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Headers"]).Should(Equal("Content-Type"))
-			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Method"]).Should(Equal("GET, HEAD, OPTIONS"))
+			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Method"]).Should(Equal("GET, POST, OPTIONS"))
 			Expect(middlewareCorsHeaders.Spec.Headers.CustomResponseHeaders["Access-Control-Allow-Origin"]).Should(Equal("*"))
 		})
 

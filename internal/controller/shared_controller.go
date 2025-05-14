@@ -831,14 +831,12 @@ func mutateCorsHeadersMiddleware[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, mi
 		Headers: &traefikdynamic.Headers{
 			CustomResponseHeaders: map[string]string{
 				"Access-Control-Allow-Headers": "Content-Type",
-				"Access-Control-Allow-Method":  "GET, HEAD, OPTIONS",
+				"Access-Control-Allow-Method":  "GET, POST, OPTIONS",
 				"Access-Control-Allow-Origin":  "*",
 				"Cache-Control":                "public, max-age=3600, no-transform",
 			},
 		},
 	}
-	// TODO - do we need this in WFS/WMS
-	// middleware.Spec.Headers.FrameDeny = true
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, middleware, middleware); err != nil {
 		return err
