@@ -241,7 +241,7 @@ var _ = Describe("WFS Controller", func() {
 			Expect(container.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(container.Image).Should(Equal(reconcilerImages.MapserverImage))
 			Expect(container.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
-			Expect(container.Resources.Limits.Memory().String()).Should(Equal("800M"))
+			Expect(container.Resources.Limits.Memory().String()).Should(Equal("12M"))
 			Expect(container.Resources.Requests.Cpu().String()).Should(Equal("150m"))
 			Expect(len(container.LivenessProbe.Exec.Command)).Should(Equal(3))
 			Expect(container.LivenessProbe.Exec.Command[2]).Should(Equal("wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?SERVICE=wfs&request=GetCapabilities' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: text/xml'"))
