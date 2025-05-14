@@ -149,7 +149,7 @@ type WFSService struct {
 func (s WFSService) KeywordsIncludingInspireKeyword() []string {
 	keywords := s.Keywords
 	if s.Inspire != nil && !slices.Contains(keywords, "infoFeatureAccessService") {
-		keywords = append(keywords, "infoMapAccessService")
+		keywords = append(keywords, "infoFeatureAccessService")
 	}
 
 	return keywords
