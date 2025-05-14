@@ -49,7 +49,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 						Abstract:          mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
 						AccessConstraints: *wfs.Spec.Service.AccessConstraints,
 						Keywords: &wsc110.Keywords{
-							Keyword: wfs.Spec.Service.Keywords,
+							Keyword: wfs.Spec.Service.KeywordsIncludingInspireKeyword(),
 						},
 					},
 					Capabilities: wfs200.Capabilities{
@@ -232,7 +232,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Name:               "WMS",
 						Title:              mapperutils.EscapeQuotes(wms.Spec.Service.Title),
 						Abstract:           &abstract,
-						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.Keywords},
+						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
 						OnlineResource:     wms130.OnlineResource{Href: &hostBaseURL},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               smoothoperatorutils.Pointer("NONE"),
