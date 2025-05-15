@@ -166,6 +166,7 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 	}
 
 	// TODO fix linting (nestif)
+	//nolint:nestif
 	if provider.ServiceContact != nil {
 		serviceProvider.ServiceContact = &wfs200.ServiceContact{
 			IndividualName: provider.ServiceContact.IndividualName,
@@ -363,6 +364,8 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 }
 
 // TODO fix linting (funlen)
+//
+//nolint:funlen
 func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 	result := make([]wms130.Layer, 0)
 	referenceLayer := wms.Spec.Service.Layer
