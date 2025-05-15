@@ -30,6 +30,8 @@ const (
 )
 
 // TODO fix linting (funlen)
+//
+//nolint:funlen
 func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNames) []v1.Volume {
 	baseVolume := v1.Volume{Name: "base"}
 	if use, size := mapperutils.UseEphemeralVolume(obj); use {
@@ -229,8 +231,10 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 	}
 }
 
-// TODO fix linting (cyclop)
+// TODO fix linting (cyclop,funlen)
 // Resources for mapserver container
+//
+//nolint:cyclop,funlen
 func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
 	resources := v1.ResourceRequirements{
 		Limits:   v1.ResourceList{},
