@@ -608,7 +608,6 @@ func mutateConfigMapMapfileGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O
 		if err != nil {
 			return err
 		}
-		// mapfileGeneratorConfig := "TODO" // TODO Implement mapfilegenerator.GetConfig for WMS
 		configMap.Data = map[string]string{mapfileGeneratorInput: mapfileGeneratorConfig}
 	}
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
