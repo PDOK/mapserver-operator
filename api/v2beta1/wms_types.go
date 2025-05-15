@@ -48,7 +48,7 @@ type WMS struct {
 type WMSSpec struct {
 	General    General       `json:"general"`
 	Service    WMSService    `json:"service"`
-	Options    WMSWFSOptions `json:"options"`
+	Options    WMSWFSOptions `json:"options,omitempty"`
 	Kubernetes Kubernetes    `json:"kubernetes"`
 }
 
