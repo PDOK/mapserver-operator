@@ -87,6 +87,13 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		})
 	}
 
+	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
+		volumes = append(volumes, v1.Volume{
+			Name:         ConfigMapOgcWebserviceProxyVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
+		})
+	}
+
 	if obj.Options().PrefetchData {
 		vol := newVolumeSource(configMapNames.BlobDownload)
 		vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
@@ -141,19 +148,14 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 
 	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
 	// Needed to compare deployments from the ansible operator and this one
-	volumes = append(volumes, v1.Volume{
-		Name:         ConfigMapMapfileGeneratorVolumeName,
-		VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
-	})
-	if stylingFilesVolume != nil {
-		volumes = append(volumes, *stylingFilesVolume)
-	}
-
-	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
+	if obj.Mapfile() == nil {
 		volumes = append(volumes, v1.Volume{
-			Name:         ConfigMapOgcWebserviceProxyVolumeName,
-			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
+			Name:         ConfigMapMapfileGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
 		})
+		if stylingFilesVolume != nil {
+			volumes = append(volumes, *stylingFilesVolume)
+		}
 	}
 
 	return volumes
@@ -194,7 +196,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 func GetMapfileEnvVar[O pdoknlv3.WMSWFS](obj O) v1.EnvVar {
 	mapFileName := "service.map"
 	if obj.Mapfile() != nil {
-		mapFileName = obj.Mapfile().ConfigMapKeyRef.Key
+		mapFileName = obj.Mapfile().ConfigMapKeyRef.Name
 	}
 
 	return v1.EnvVar{
@@ -312,8 +314,9 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		}
 
 		ephemeralStorageLimit := mapperutils.EphemeralStorageLimit(obj)
-		if ephemeralStorageLimit == nil || ephemeralStorageLimit.IsZero() {
-			ephemeralStorageLimit = smoothoperatorutils.Pointer(resource.MustParse("200M"))
+		defaultEphemeralStorageLimit := resource.MustParse("200M")
+		if ephemeralStorageLimit == nil || ephemeralStorageLimit.IsZero() || ephemeralStorageLimit.Value() < defaultEphemeralStorageLimit.Value() {
+			ephemeralStorageLimit = smoothoperatorutils.Pointer(defaultEphemeralStorageLimit)
 		}
 		resources.Limits[v1.ResourceEphemeralStorage] = *maxResourceVal(ephemeralStorageLimit, ephemeralStorageRequest)
 	}

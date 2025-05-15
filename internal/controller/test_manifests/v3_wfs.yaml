@@ -36,7 +36,7 @@ spec:
   options:
     automaticCasing: true
     prefetchData: false
-    includeIngress: false
+    includeIngress: true
   service:
     prefix: "test"
     url: https://service.pdok.nl/eigenaar/dataset/wfs/1.0.0

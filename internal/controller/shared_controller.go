@@ -203,7 +203,7 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 
 	deployment.Spec.Template = corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Annotations: smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations()),
+			Annotations: annotations,
 			Labels:      labels,
 		},
 		Spec: corev1.PodSpec{
@@ -262,21 +262,24 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 	initContainers := []corev1.Container{
 		*blobDownloadInitContainer,
 		*capabilitiesGeneratorInitContainer,
-		*mapfileGeneratorInitContainer,
+	}
+
+	if obj.Mapfile() == nil {
+		initContainers = append(initContainers, *mapfileGeneratorInitContainer)
 	}
 
 	if wms, ok := any(obj).(*pdoknlv3.WMS); ok {
-		legendGeneratorInitContainer, err := legendgenerator.GetLegendGeneratorInitContainer(wms, images.MapserverImage, srvDir)
-		if err != nil {
-			return nil, err
-		}
-		initContainers = append(initContainers, *legendGeneratorInitContainer)
-
 		featureInfoInitContainer, err := featureinfogenerator.GetFeatureinfoGeneratorInitContainer(images.FeatureinfoGeneratorImage, srvDir)
 		if err != nil {
 			return nil, err
 		}
 		initContainers = append(initContainers, *featureInfoInitContainer)
+
+		legendGeneratorInitContainer, err := legendgenerator.GetLegendGeneratorInitContainer(wms, images.MapserverImage, srvDir)
+		if err != nil {
+			return nil, err
+		}
+		initContainers = append(initContainers, *legendGeneratorInitContainer)
 
 		if wms.Spec.Options.RewriteGroupToDataLayers {
 			legendFixerInitContainer := legendgenerator.GetLegendFixerInitContainer(images.MultitoolImage)
@@ -300,66 +303,70 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 		return nil, err
 	}
 
-	containers := []corev1.Container{
-		{
-			Name:            MapserverName,
-			Image:           images.MapserverImage,
-			ImagePullPolicy: corev1.PullIfNotPresent,
-			Ports: []corev1.ContainerPort{
-				{
-					ContainerPort: 80,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-			Env:                      mapserver.GetEnvVarsForDeployment(obj, blobsSecret.Name),
-			VolumeMounts:             mapserver.GetVolumeMountsForDeployment(obj, srvDir),
-			Resources:                mapserver.GetResourcesForDeployment(obj),
-			TerminationMessagePolicy: corev1.TerminationMessageReadFile,
-			TerminationMessagePath:   "/dev/termination-log",
-			LivenessProbe:            livenessProbe,
-			ReadinessProbe:           readinessProbe,
-			StartupProbe:             startupProbe,
-			Lifecycle: &corev1.Lifecycle{
-				PreStop: &corev1.LifecycleHandler{
-					Exec: &corev1.ExecAction{
-						Command: []string{"sleep", "15"},
-					},
-				},
+	mapserverContainer := corev1.Container{
+		Name:            MapserverName,
+		Image:           images.MapserverImage,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: 80,
+				Protocol:      corev1.ProtocolTCP,
 			},
 		},
-		{
-			Name:                     "apache-exporter",
-			Image:                    images.ApacheExporterImage,
-			ImagePullPolicy:          corev1.PullIfNotPresent,
-			TerminationMessagePolicy: corev1.TerminationMessageReadFile,
-			TerminationMessagePath:   "/dev/termination-log",
-			Ports: []corev1.ContainerPort{
-				{
-					ContainerPort: 9117,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-			Args: []string{
-				"--scrape_uri=http://localhost/server-status?auto",
-			},
-			Resources: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceMemory: resource.MustParse("48M"),
-				},
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU: resource.MustParse("0.02"),
+		Env:                      mapserver.GetEnvVarsForDeployment(obj, blobsSecret.Name),
+		VolumeMounts:             mapserver.GetVolumeMountsForDeployment(obj, srvDir),
+		Resources:                mapserver.GetResourcesForDeployment(obj),
+		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+		TerminationMessagePath:   "/dev/termination-log",
+		LivenessProbe:            livenessProbe,
+		ReadinessProbe:           readinessProbe,
+		StartupProbe:             startupProbe,
+		Lifecycle: &corev1.Lifecycle{
+			PreStop: &corev1.LifecycleHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"sleep", "15"},
 				},
 			},
 		},
 	}
 
+	apacheContainer := corev1.Container{
+		Name:                     "apache-exporter",
+		Image:                    images.ApacheExporterImage,
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+		TerminationMessagePath:   "/dev/termination-log",
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: 9117,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		Args: []string{
+			"--scrape_uri=http://localhost/server-status?auto",
+		},
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("48M"),
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("0.02"),
+			},
+		},
+	}
+
+	containers := []corev1.Container{
+		mapserverContainer,
+		apacheContainer,
+	}
 	if wms, ok := any(obj).(*pdoknlv3.WMS); ok {
 		if wms.Options().UseWebserviceProxy() {
 			ogcWebserviceProxyContainer, err := ogcwebserviceproxy.GetOgcWebserviceProxyContainer(wms, images.OgcWebserviceProxyImage)
 			if err != nil {
 				return nil, err
 			}
-			containers = append(containers, *ogcWebserviceProxyContainer)
+
+			return append(containers, *ogcWebserviceProxyContainer), nil
 		}
 	}
 
@@ -545,10 +552,10 @@ func getMatchRule[O pdoknlv3.WMSWFS](obj O) string {
 func getLegendMatchRule(wms *pdoknlv3.WMS) string {
 	host := pdoknlv3.GetHost(false)
 	if strings.Contains(host, "localhost") {
-		return "Host(`localhost`) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
+		return "Host(`localhost`) && PathPrefix(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
 	}
 
-	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
+	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
 }
 
 func getBareConfigMapMapfileGenerator[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
@@ -660,8 +667,10 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 	}
 	if len(metrics) == 0 {
 		var avgU int32 = 90
-		if podSpecPatch != nil && podSpecPatch.Resources != nil && podSpecPatch.Resources.Requests.Cpu() != nil {
-			avgU = 80
+		if podSpecPatch != nil && podSpecPatch.Resources != nil {
+			if cpu := podSpecPatch.Resources.Requests.Cpu(); cpu != nil && !cpu.IsZero() {
+				avgU = 80
+			}
 		}
 		metrics = append(metrics, autoscalingv2.MetricSpec{
 			Type: autoscalingv2.ResourceMetricSourceType,
@@ -778,12 +787,6 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 			TargetPort: intstr.FromInt32(mapserverPortNr),
 			Protocol:   corev1.ProtocolTCP,
 		},
-		{
-			Name:       metricPortName,
-			Port:       metricPortNr,
-			TargetPort: intstr.FromInt32(metricPortNr),
-			Protocol:   corev1.ProtocolTCP,
-		},
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
@@ -794,6 +797,14 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 			})
 		}
 	}
+
+	// Add port here to get the same port order as the odl ansible operator
+	ports = append(ports, corev1.ServicePort{
+		Name:       metricPortName,
+		Port:       metricPortNr,
+		TargetPort: intstr.FromInt32(metricPortNr),
+		Protocol:   corev1.ProtocolTCP,
+	})
 
 	service.Spec = corev1.ServiceSpec{
 		Type:                  corev1.ServiceTypeClusterIP,
@@ -1036,7 +1047,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	// end region ConfigMap
 
 	// region ConfigMap-MapfileGenerator
-	{
+	if obj.Mapfile() == nil {
 		configMapMfg := getBareConfigMapMapfileGenerator(obj)
 		if err = mutateConfigMapMapfileGenerator(r, obj, configMapMfg, ownerInfo); err != nil {
 			return operationResults, err
@@ -1068,7 +1079,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	// end region ConfigMap-CapabilitiesGenerator
 
 	// region ConfigMap-BlobDownload
-	{
+	if obj.Options().PrefetchData {
 		configMapBd := getBareConfigMapBlobDownload(obj)
 		if err = mutateConfigMapBlobDownload(r, obj, configMapBd); err != nil {
 			return operationResults, err
@@ -1157,7 +1168,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	// end region Deployment
 
 	// region TraefikMiddleware
-	{
+	if obj.Options().IncludeIngress {
 		middleware := getBareCorsHeadersMiddleware(obj)
 		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, middleware)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, middleware, func() error {
 			return mutateCorsHeadersMiddleware(r, obj, middleware)
@@ -1193,7 +1204,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	// end region HorizontalAutoScaler
 
 	// region IngressRoute
-	{
+	if obj.Options().IncludeIngress {
 		ingress := getBareIngressRoute(obj)
 		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, ingress)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, ingress, func() error {
 			return mutateIngressRoute(r, obj, ingress)

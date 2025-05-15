@@ -264,7 +264,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(containerMapserver.StartupProbe.PeriodSeconds).Should(Equal(int32(10)))
 			Expect(containerMapserver.StartupProbe.TimeoutSeconds).Should(Equal(int32(10)))
 
-			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[2]
+			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[1]
 			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
 			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-v", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
@@ -526,7 +526,7 @@ var _ = Describe("WMS Controller", func() {
 			err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(wms).GetName()}, deployment)
 			Expect(err).NotTo(HaveOccurred())
 
-			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[2]
+			containerOgcWebserviceProxy := deployment.Spec.Template.Spec.Containers[1]
 			Expect(containerOgcWebserviceProxy.Name).Should(Equal("ogc-webservice-proxy"))
 			ogcWebserviceProxyCommands := []string{"/ogc-webservice-proxy", "-h=http://127.0.0.1/", "-t=wms", "-s=/input/service-config.yaml", "-d=15"}
 			Expect(containerOgcWebserviceProxy.Command).Should(Equal(ogcWebserviceProxyCommands))
@@ -840,16 +840,16 @@ var _ = Describe("WMS Controller", func() {
 					Protocol:   corev1.ProtocolTCP,
 				},
 				{
-					Name:       "metric",
-					Port:       9117,
-					TargetPort: intstr.FromInt32(9117),
-					Protocol:   corev1.ProtocolTCP,
-				},
-				{
 					Name:       "ogc-webservice-proxy",
 					Port:       9111,
 					TargetPort: intstr.FromInt32(9111),
 					Protocol:   "TCP",
+				},
+				{
+					Name:       "metric",
+					Port:       9117,
+					TargetPort: intstr.FromInt32(9117),
+					Protocol:   corev1.ProtocolTCP,
 				},
 			}))
 
