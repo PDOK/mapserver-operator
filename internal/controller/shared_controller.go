@@ -1011,7 +1011,9 @@ func getFinalizerName[O pdoknlv3.WMSWFS](obj O) string {
 	return strings.ToLower(string(obj.Type())) + "." + pdoknlv3.GroupVersion.Group + "/finalizer"
 }
 
-// TODO fix linting (cyclop)
+// TODO fix linting (cyclop,funlen)
+//
+//nolint:cyclop,funlen
 func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (operationResults map[string]controllerutil.OperationResult, err error) {
 	operationResults = make(map[string]controllerutil.OperationResult)
 	reconcilerClient := getReconcilerClient(r)
@@ -1083,6 +1085,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	// end region ConfigMap-BlobDownload
 
 	// TODO fix linting (nestif)
+	//nolint:nestif
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		wms, _ := any(obj).(*pdoknlv3.WMS)
 		wmsReconciler := (*WMSReconciler)(r)
@@ -1219,6 +1222,8 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 }
 
 // TODO fix linting (funlen)
+//
+//nolint:funlen
 func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (err error) {
 	bareObjects := getSharedBareObjects(obj)
 	var objects []client.Object

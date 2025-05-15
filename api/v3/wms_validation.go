@@ -36,7 +36,9 @@ func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
 	return ValidateUpdate(wms, wmsOld, ValidateWMS)
 }
 
-// TODO fix linting (cyclop)
+// TODO fix linting (cyclop,funlen)
+//
+//nolint:cyclop,funlen
 func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wms.GetName(), "wms") {
 		sharedValidation.AddWarning(
@@ -203,6 +205,7 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 		}
 
 		// TODO fix linting (nestif)
+		//nolint:nestif
 		if layer.Visible {
 			hasVisibleLayer = true
 

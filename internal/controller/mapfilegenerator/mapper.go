@@ -238,6 +238,8 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 }
 
 // TODO fix linting (cyclop)
+//
+//nolint:cyclop
 func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {
 	groupName := ""
 	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)

@@ -78,7 +78,9 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-// TODO fix linting (cyclop)
+// TODO fix linting (cyclop,funlen)
+//
+//nolint:cyclop,funlen
 func main() {
 	var metricsAddr string
 	var certDir string
