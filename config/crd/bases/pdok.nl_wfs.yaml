@@ -1541,7 +1541,6 @@ spec:
                 - url
                 type: object
             required:
-            - options
             - service
             type: object
           status:

@@ -1,0 +1,375 @@
+apiVersion: pdok.nl/v2beta1
+kind: WMS
+metadata:
+  name: hwh-hydrografie-v2-0
+  labels:
+    dataset-owner: hwh
+    dataset: hydrografie
+    service-version: v2_0
+    service-type: wms
+  annotations:
+    lifecycle-phase: prod
+    service-bundle-id: d30bdf62-1c12-45a5-a57d-367e642ef118
+spec:
+  general:
+    datasetOwner: hwh
+    dataset: hydrografie
+    serviceVersion: v2_0
+  kubernetes:
+    resources:
+      limits:
+        ephemeralStorage: 1544Mi
+      requests:
+        ephemeralStorage: 1544Mi
+  service:
+    title: Waterschappen Hydrografie (INSPIRE geharmoniseerd) WMS
+    abstract:
+      "Deze dataset is gebaseerd op (niet geharmoniseerde) data van alle waterschappen
+      in Nederland conform INSPIRE. De dataset bevat de volgende INSPIRE objecten:
+      CrossingLine, CrossingPoint, DamOrWeir, DrainageBasin, Embankment, Lock, Sluice,
+      Watercourse."
+    authority:
+      name: hwh
+      url: https://www.hetwaterschapshuis.nl/
+    dataEPSG: EPSG:28992
+    extent: -59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961
+    inspire: true
+    keywords:
+      - Aquaduct
+      - Brug
+      - Duikersifonhevel
+      - Stuw
+      - Vastedam
+      - AfvoerAanvoergebied
+      - Waterkering
+      - Sluis
+      - HydroObject
+      - HVD
+      - Aardobservatie en milieu
+    metadataIdentifier: 871a58f8-c9f1-41a4-be37-0f059e0f886f
+    stylingAssets:
+      configMapRefs:
+        - name: includes
+          keys:
+            - bridge.symbol
+            - x.symbol
+      blobKeys:
+        - resources/images/hwh/hydrografie/bridge.png
+    layers:
+      - abstract: Watercourse
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Waterbody.gpkg
+            columns:
+              - gml_id
+              - beginlifespanversion
+              - condition
+              - delineationknown
+              - endlifespanversion
+              - length
+              - level
+              - localid
+              - localtype
+              - name
+              - namespace
+              - origin
+              - persistence
+              - streamorder
+              - tidal
+              - widthrange
+            geometryType: MultiLineString
+            table: watercourse
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        keywords:
+          - Hydroobject
+          - Waterbody
+          - Watercourse
+          - River
+          - Stream
+          - Lake
+          - Reservoir
+        name: HY.PhysicalWaters.Waterbodies
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.Waterbodies.Default
+            title: Water bodies default style
+            visualization: watercourse.style
+        title: Waterbody
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: true
+      - abstract: Drainage basin
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Catchment.gpkg
+            columns:
+              - gml_id
+              - area
+              - beginlifespanversion
+              - endlifespanversion
+              - localid
+              - name
+              - namespace
+              - order
+              - orderscheme
+              - origin
+              - outlet
+              - scope
+            geometryType: MultiPolygon
+            table: drainagebasin
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        keywords:
+          - AfvoergebiedAanvoergebied
+          - Catchment
+          - Basin
+          - Catchment Area
+          - Drainage basin
+        name: HY.PhysicalWaters.Catchments
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.Catchments.Default
+            title: Drainage Basin default style
+            visualization: drainagebasin.style
+        title: Catchment
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: true
+      - abstract: Crossing line, crossing point, dam or weir, sluice, embankment, lock.
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        keywords:
+          - Man Made
+          - Duikersifonhevel
+          - Aquaduct
+          - Brug
+          - Stuw
+          - Vastedam
+          - Waterkering
+          - Sluis
+          - Bridge
+          - Aquaduct
+          - Dam
+          - Weir
+          - Lock
+          - Ford
+          - Dyke
+        maxScale: 50000.0
+        minScale: 1.0
+        name: HY.PhysicalWaters.ManMadeObject
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.ManMadeObject.Default
+            title: Man-made objects default style
+        title: Man-made Object
+        visible: true
+      - abstract: Crossing line, crossing point, dam or weir, sluice, embankment, lock.
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Man-madeObject.gpkg
+            columns:
+              - gml_id
+              - beginlifespanversion
+              - condition
+              - endlifespanversion
+              - localid
+              - name
+              - namespace
+            geometryType: Point
+            table: lock
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        group: HY.PhysicalWaters.ManMadeObject
+        keywords:
+          - Man Made
+          - Duikersifonhevel
+          - Aquaduct
+          - Brug
+          - Stuw
+          - Vastedam
+          - Waterkering
+          - Sluis.
+        name: HY.PhysicalWaters.ManMadeObject.lock
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.ManMadeObject.Default
+            title: Lock
+            visualization: lock.style
+        title: Man-made Object
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: false
+      - abstract: Crossing line, crossing point, dam or weir, sluice, embankment, lock.
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Man-madeObject.gpkg
+            columns:
+              - gml_id
+              - beginlifespanversion
+              - condition
+              - endlifespanversion
+              - localid
+              - name
+              - namespace
+              - type
+            geometryType: Point
+            table: crossingpoint
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        group: HY.PhysicalWaters.ManMadeObject
+        keywords:
+          - Man Made
+          - Duikersifonhevel
+          - Aquaduct
+          - Brug
+          - Stuw
+          - Vastedam
+          - Waterkering
+          - Sluis.
+        name: HY.PhysicalWaters.ManMadeObject.crossingpoint
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.ManMadeObject.Default
+            title: Crossing Point
+            visualization: crossingpoint.style
+        title: Man-made Object
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: false
+      - abstract: Crossing line, crossing point, dam or weir, sluice, embankment, lock.
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Man-madeObject.gpkg
+            columns:
+              - gml_id
+              - beginlifespanversion
+              - condition
+              - endlifespanversion
+              - localid
+              - name
+              - namespace
+            geometryType: Point
+            table: sluice
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        group: HY.PhysicalWaters.ManMadeObject
+        keywords:
+          - Man Made
+          - Duikersifonhevel
+          - Aquaduct
+          - Brug
+          - Stuw
+          - Vastedam
+          - Waterkering
+          - Sluis.
+        name: HY.PhysicalWaters.ManMadeObject.sluice
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.ManMadeObject.Default
+            title: Sluice
+            visualization: sluice.style
+        title: Man-made Object
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: false
+      - abstract: Crossing line, crossing point, dam or weir, sluice, embankment, lock.
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Man-madeObject.gpkg
+            columns:
+              - gml_id
+              - beginlifespanversion
+              - condition
+              - endlifespanversion
+              - localid
+              - name
+              - namespace
+            geometryType: MultiLineString
+            table: embankment
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        group: HY.PhysicalWaters.ManMadeObject
+        keywords:
+          - Man Made
+          - Duikersifonhevel
+          - Aquaduct
+          - Brug
+          - Stuw
+          - Vastedam
+          - Waterkering
+          - Sluis.
+        name: HY.PhysicalWaters.ManMadeObject.embankment
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.ManMadeObject.Default
+            title: Embankment
+            visualization: embankment.style
+        title: Man-made Object
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: false
+      - abstract: Crossing line, crossing point, dam or weir, sluice, embankment, lock.
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Man-madeObject.gpkg
+            columns:
+              - gml_id
+              - beginlifespanversion
+              - condition
+              - endlifespanversion
+              - localid
+              - name
+              - namespace
+              - type
+            geometryType: MultiLineString
+            table: crossingline
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        group: HY.PhysicalWaters.ManMadeObject
+        keywords:
+          - Man Made
+          - Duikersifonhevel
+          - Aquaduct
+          - Brug
+          - Stuw
+          - Vastedam
+          - Waterkering
+          - Sluis.
+        name: HY.PhysicalWaters.ManMadeObject.crossingline
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.ManMadeObject.Default
+            title: Crossing Line
+            visualization: crossingline.style
+        title: Man-made Object
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: false
+      - abstract: Crossing line, crossing point, dam or weir, sluice, embankment, lock.
+        data:
+          gpkg:
+            blobKey: geopackages/hwh/hydrografie/aaa/1/Man-madeObject.gpkg
+            columns:
+              - gml_id
+              - beginlifespanversion
+              - condition
+              - endlifespanversion
+              - localid
+              - name
+              - namespace
+            geometryType: Point
+            table: damorweir
+        datasetMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        group: HY.PhysicalWaters.ManMadeObject
+        keywords:
+          - Man Made
+          - Duikersifonhevel
+          - Aquaduct
+          - Brug
+          - Stuw
+          - Vastedam
+          - Waterkering
+          - Sluis.
+        name: HY.PhysicalWaters.ManMadeObject.damorweir
+        sourceMetadataIdentifier: 07575774-57a1-4419-bab4-6c88fdeb02b2
+        styles:
+          - name: HY.PhysicalWaters.ManMadeObject.Default
+            title: Dam or Weir
+            visualization: damorweir.style
+        title: Man-made Object
+        maxScale: 50000.0
+        minScale: 1.0
+        visible: false

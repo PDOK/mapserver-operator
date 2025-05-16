@@ -1,0 +1,527 @@
+apiVersion: pdok.nl/v2beta1
+kind: WMS
+metadata:
+  name: kadaster-kadastralekaart
+  labels:
+    dataset-owner: kadaster
+    dataset: kadastralekaart
+    service-version: v5_0
+    service-type: wms
+spec:
+  general:
+    datasetOwner: kadaster
+    dataset: kadastralekaart
+    serviceVersion: v5_0
+  kubernetes:
+    healthCheck:
+      querystring: language=dut&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=193882.0336615453998,470528.1693874415942,193922.4213813782844,470564.250484353397&CRS=EPSG:28992&WIDTH=769&HEIGHT=687&LAYERS=OpenbareRuimteNaam,Bebouwing,Perceel,KadastraleGrens&FORMAT=image/png&DPI=96&MAP_RESOLUTION=96&FORMAT_OPTIONS=dpi:96&TRANSPARENT=TRUE
+      mimetype: image/png
+    resources:
+      limits:
+        memory: "103M"
+        ephemeralStorage: "104M"
+      requests:
+        cpu: "1001"
+        memory: "101M"
+        ephemeralStorage: "102M"
+  options:
+    automaticCasing: true
+    disableWebserviceProxy: false
+    includeIngress: true
+    validateRequests: true
+    rewriteGroupToDataLayers: true
+  service:
+    inspire: false
+    title: Kadastrale Kaart (WMS)
+    abstract: Overzicht van de ligging van de kadastrale percelen in Nederland. Fungeert als schakel tussen terrein en registratie, vervult voor externe gebruiker vaak een referentiefunctie, een ondergrond ten opzichte waarvan de gebruiker eigen informatie kan vastleggen en presenteren.
+    keywords:
+      - Kadaster
+      - Kadastrale percelen
+      - Kadastrale grens
+      - Kadastrale kaart
+      - Bebouwing
+      - Nummeraanduidingreeks
+      - Openbare ruimte naam
+      - Perceel
+      - Grens
+      - Kwaliteit
+      - Kwaliteitslabels
+      - HVD
+      - Geospatiale data
+    metadataIdentifier: 97cf6a64-9cfc-4ce6-9741-2db44fd27fca
+    authority:
+      name: kadaster
+      url: https://www.kadaster.nl
+    dataEPSG: EPSG:28992
+    resolution: 91
+    defResolution: 91
+    extent: "-25000 250000 280000 860000"
+    maxSize: 10000
+    stylingAssets:
+      configMapRefs:
+        - name: includes
+      blobKeys:
+        - resources/fonts/liberation-sans.ttf
+        - resources/fonts/liberation-sans-italic.ttf
+    layers:
+      - name: Kadastralekaart
+        title: KadastraleKaartv5
+        abstract: Overzicht van de ligging van de kadastrale percelen in Nederland. Fungeert als schakel tussen terrein en registratie, vervult voor externe gebruiker vaak een referentiefunctie, een ondergrond ten opzichte waarvan de gebruiker eigen informatie kan vastleggen en presenteren.
+        maxScale: 6001
+        keywords:
+          - Kadaster
+          - Kadastrale percelen
+          - Kadastrale grens
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+      - name: Bebouwing
+        visible: true
+        group: Kadastralekaart
+        title: Bebouwing
+        abstract: De laag Bebouwing is een selectie op panden van de BGT.
+        keywords:
+          - Bebouwing
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 6001
+        styles:
+          - name: standaard:bebouwing
+            title: Standaardvisualisatie Bebouwing
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+          - name: kwaliteit:bebouwing
+            title: Kwaliteitsvisualisatie Bebouwing
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+          - name: print:bebouwing
+            title: Printvisualisatie Bebouwing
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+      - name: Bebouwingvlak
+        visible: true
+        group: Bebouwing
+        title: Bebouwingvlak
+        abstract: De laag Bebouwing is een selectie op panden van de BGT.
+        keywords:
+          - Bebouwing
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 6001
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: bebouwing.style
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: bebouwing_kwaliteit.style
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: bebouwing_print.style
+          - name: standaard:bebouwing
+            title: Standaardvisualisatie Bebouwing
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: bebouwing.group.style
+          - name: kwaliteit:bebouwing
+            title: Kwaliteitsvisualisatie Bebouwing
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: bebouwing_kwaliteit.group.style
+          - name: print:bebouwing
+            title: Printvisualisatie Bebouwing
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: bebouwing_print.group.style
+        data:
+          gpkg:
+            blobKey: geopackages/kadaster/kadastralekaart_brk/aaa/1/pand.gpkg
+            table: pand
+            geometryType: Polygon
+            columns:
+              - object_begin_tijd
+              - lv_publicatiedatum
+              - relatieve_hoogteligging
+              - in_onderzoek
+              - tijdstip_registratie
+              - identificatie_namespace
+              - identificatie_lokaal_id
+              - bronhouder
+              - bgt_status
+              - plus_status
+              - identificatie_bag_pnd
+            aliases:
+              lv_publicatiedatum: LV-publicatiedatum
+              identificatie_lokaal_id: identificatieLokaalID
+              identificatie_bag_pnd: identificatieBAGPND
+              bgt_status: bgt-status
+              plus_status: plus-status
+      - name: Nummeraanduidingreeks
+        visible: true
+        group: Bebouwing
+        title: Nummeraanduidingreeks
+        abstract: De laag Bebouwing is een selectie op panden van de BGT.
+        keywords:
+          - Nummeraanduidingreeks
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 2001
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaarvisualisatie van de nummeraanduidingreeks.
+            visualization: nummeraanduidingreeks.style
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: nummeraanduidingreeks_kwaliteit.style
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: nummeraanduidingreeks_print.style
+          - name: standaard:bebouwing
+            title: Standaardvisualisatie Bebouwing
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: nummeraanduidingreeks.group.style
+          - name: kwaliteit:bebouwing
+            title: Kwaliteitsvisualisatie Bebouwing
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: nummeraanduidingreeks_kwaliteit.group.style
+          - name: print:bebouwing
+            title: Printvisualisatie Bebouwing
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: nummeraanduidingreeks_print.group.style
+        data:
+          gpkg:
+            blobKey: geopackages/kadaster/kadastralekaart_brk/aaa/1/pand_nummeraanduiding.gpkg
+            table: pand_nummeraanduiding
+            geometryType: Point
+            columns:
+              - bebouwing_id
+              - hoek
+              - tekst
+              - bag_vbo_laagste_huisnummer
+              - bag_vbo_hoogste_huisnummer
+              - hoek
+            aliases:
+              bebouwing_id: bebouwingID
+              bag_vbo_laagste_huisnummer: identificatie_BAGVBOLaagsteHuisnummer
+              bag_vbo_hoogste_huisnummer: identificatie_BAGVBOHoogsteHuisnummer
+      - name: OpenbareRuimteNaam
+        visible: true
+        group: Kadastralekaart
+        title: OpenbareRuimteNaam
+        abstract: De laag Openbareruimtenaam is een selectie op de openbare ruimte labels van de BGT met een bgt-status "bestaand" die een classificatie (openbareruimtetype) Weg en Water hebben.
+        keywords:
+          - Openbare ruimte naam
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 2001
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: openbareruimtenaam.style
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: openbareruimtenaam_kwaliteit.style
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: openbareruimtenaam_print.style
+          - name: standaard:openbareruimtenaam
+            title: Standaardvisualisatie OpenbareRuimteNaam
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: openbareruimtenaam.group.style
+          - name: kwaliteit:openbareruimtenaam
+            title: Kwaliteitsvisualisatie OpenbareRuimteNaam
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: openbareruimtenaam_kwaliteit.group.style
+          - name: print:openbareruimtenaam
+            title: Printvisualisatie OpenbareRuimteNaam
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: openbareruimtenaam_print.group.style
+        data:
+          gpkg:
+            blobKey: geopackages/kadaster/kadastralekaart_brk/aaa/1/openbareruimtelabel.gpkg
+            table: openbareruimtelabel
+            geometryType: Point
+            columns:
+              - object_begin_tijd
+              - lv_publicatiedatum
+              - relatieve_hoogteligging
+              - in_onderzoek
+              - tijdstip_registratie
+              - identificatie_namespace
+              - identificatie_lokaal_id
+              - bronhouder
+              - bgt_status
+              - plus_status
+              - identificatie_bag_opr
+              - tekst
+              - hoek
+              - openbare_ruimte_type
+            aliases:
+              lv_publicatiedatum: LV-publicatiedatum
+              identificatie_lokaal_id: identificatieLokaalID
+              identificatie_bag_opr: identificatieBAGOPR
+              bgt_status: bgt-status
+              plus_status: plus-status
+      - name: Perceel
+        visible: true
+        group: Kadastralekaart
+        title: Perceel
+        abstract: Een perceel is een stuk grond waarvan het Kadaster de grenzen heeft gemeten of gaat meten en dat bij het Kadaster een eigen nummer heeft. Een perceel is een begrensd deel van het Nederlands grondgebied dat kadastraal geïdentificeerd is en met kadastrale grenzen begrensd is.
+        keywords:
+          - Perceel
+          - Kadastrale percelen
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 6001
+        styles:
+          - name: standaard:perceel
+            title: Standaardvisualisatie Perceel
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+          - name: kwaliteit:perceel
+            title: Kwaliteitsvisualisatie Perceel
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+          - name: print:perceel
+            title: Printvisualisatie Perceel
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+      - name: Perceelvlak
+        visible: true
+        group: Perceel
+        title: Perceelvlak
+        abstract: Een perceel is een stuk grond waarvan het Kadaster de grenzen heeft gemeten of gaat meten en dat bij het Kadaster een eigen nummer heeft. Een perceel is een begrensd deel van het Nederlands grondgebied dat kadastraal geïdentificeerd is en met kadastrale grenzen begrensd is.
+        keywords:
+          - Kadastrale percelen
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 6001
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: perceelvlak.style
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: perceelvlak_kwaliteit.style
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: perceelvlak_print.style
+          - name: standaard:perceel
+            title: Standaardvisualisatie Perceel
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: perceelvlak.group.style
+          - name: kwaliteit:perceel
+            title: Kwaliteitsvisualisatie Perceel
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: perceelvlak_kwaliteit.group.style
+          - name: print:perceel
+            title: Printvisualisatie Perceel
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: perceelvlak_print.group.style
+        data:
+          gpkg:
+            blobKey: geopackages/kadaster/kadastralekaart_brk/aaa/1/perceel.gpkg
+            table: perceel
+            geometryType: Polygon
+            columns:
+              - identificatie_namespace
+              - identificatie_lokaal_id
+              - begin_geldigheid
+              - tijdstip_registratie
+              - volgnummer
+              - status_historie_code
+              - status_historie_waarde
+              - kadastrale_gemeente_code
+              - kadastrale_gemeente_waarde
+              - sectie
+              - akr_kadastrale_gemeente_code_code
+              - akr_kadastrale_gemeente_code_waarde
+              - kadastrale_grootte_waarde
+              - soort_grootte_code
+              - soort_grootte_waarde
+              - perceelnummer
+              - perceelnummer_rotatie
+              - perceelnummer_verschuiving_delta_x
+              - perceelnummer_verschuiving_delta_y
+              - perceelnummer_plaatscoordinaat_x
+              - perceelnummer_plaatscoordinaat_y
+            aliases:
+              identificatie_lokaal_id: identificatieLokaalID
+              akr_kadastrale_gemeente_code_code: AKRKadastraleGemeenteCodeCode
+              akr_kadastrale_gemeente_code_waarde: AKRKadastraleGemeenteCodeWaarde
+      - name: Label
+        visible: true
+        group: Perceel
+        title: Label
+        abstract: Een perceel is een stuk grond waarvan het Kadaster de grenzen heeft gemeten of gaat meten en dat bij het Kadaster een eigen nummer heeft. Een perceel is een begrensd deel van het Nederlands grondgebied dat kadastraal geïdentificeerd is en met kadastrale grenzen begrensd is.
+        keywords:
+          - Kadastrale percelen
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 6001
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaarvisualisatie van het label.
+            visualization: label.style
+          - name: standaard:perceel
+            title: Standaardvisualisatie Perceel
+            abstract: Standaarvisualisatie van het label.
+            visualization: label.group.style
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: label_kwaliteit.style
+          - name: kwaliteit:perceel
+            title: Kwaliteitsvisualisatie Perceel
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: label_kwaliteit.group.style
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: label_print.style
+          - name: print:perceel
+            title: Printvisualisatie Perceel
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: label_print.group.style
+        data:
+          gpkg:
+            blobKey: geopackages/kadaster/kadastralekaart_brk/aaa/1/perceel_label.gpkg
+            table: perceel_label
+            geometryType: Point
+            columns:
+              - perceel_id
+              - perceelnummer
+              - rotatie
+              - verschuiving_delta_x
+              - verschuiving_delta_y
+            aliases:
+              perceel_id: perceelID
+      - name: Bijpijling
+        visible: true
+        group: Perceel
+        title: Bijpijling
+        abstract: Een perceel is een stuk grond waarvan het Kadaster de grenzen heeft gemeten of gaat meten en dat bij het Kadaster een eigen nummer heeft. Een perceel is een begrensd deel van het Nederlands grondgebied dat kadastraal geïdentificeerd is en met kadastrale grenzen begrensd is.
+        keywords:
+          - Kadastrale percelen
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 6001
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: bijpijling.style
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: bijpijling_kwaliteit.style
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: bijpijling_print.style
+          - name: standaard:perceel
+            title: Standaardvisualisatie Perceel
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: bijpijling.group.style
+          - name: kwaliteit:perceel
+            title: Kwaliteitsvisualisatie Perceel
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: bijpijling_kwaliteit.group.style
+          - name: print:perceel
+            title: Printvisualisatie Perceel
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: bijpijling_print.group.style
+        data:
+          gpkg:
+            blobKey: geopackages/kadaster/kadastralekaart_brk/aaa/1/perceel_bijpijling.gpkg
+            table: perceel_bijpijling
+            geometryType: LineString
+            columns:
+              - perceel_id
+            aliases:
+              perceel_id: perceelID
+      - name: KadastraleGrens
+        visible: true
+        group: Kadastralekaart
+        title: KadastraleGrens
+        abstract: Een Kadastrale Grens is de weergave van een grens op de kadastrale kaart die door de dienst van het Kadaster tussen percelen (voorlopig) vastgesteld wordt, op basis van inlichtingen van belanghebbenden en met  gebruikmaking van de aan de kadastrale kaart ten grondslag liggende bescheiden die in elk geval de landmeetkundige gegevens bevatten van hetgeen op die kaart wordt weergegeven.
+        keywords:
+          - Grens
+          - Kadastrale grenzen
+        datasetMetadataIdentifier: a29917b9-3426-4041-a11b-69bcb2256904
+        sourceMetadataIdentifier: 06b6c650-cdb1-11dd-ad8b-0800200c9a64
+        minScale: 50
+        maxScale: 6001
+        styles:
+          - name: standaard
+            title: Standaardvisualisatie
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: kadastralegrens.style
+          - name: kwaliteit
+            title: Kwaliteitsvisualisatie
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: kadastralegrens_kwaliteit.style
+          - name: print
+            title: Printvisualisatie
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: kadastralegrens_print.style
+          - name: standaard:kadastralegrens
+            title: Standaardvisualisatie KadastraleGrens
+            abstract: Standaardvisualisatie met grenzen op basis van type (definitief, voorlopig of administratief).
+            visualization: kadastralegrens.group.style
+          - name: kwaliteit:kadastralegrens
+            title: Kwaliteitsvisualisatie KadastraleGrens
+            abstract: Kwaliteitsvisualisatie met grenzen op basis van kwaliteitsklasse (B, C, D of E).
+            visualization: kadastralegrens_kwaliteit.group.style
+          - name: print:kadastralegrens
+            title: Printvisualisatie KadastraleGrens
+            abstract: Visualisatie ten behoeve van afdrukken op 180 dpi.
+            visualization: kadastralegrens_print.group.style
+        data:
+          gpkg:
+            blobKey: geopackages/kadaster/kadastralekaart_brk/aaa/1/kadastrale_grens.gpkg
+            table: kadastrale_grens
+            geometryType: LineString
+            columns:
+              - begin_geldigheid
+              - tijdstip_registratie
+              - volgnummer
+              - status_historie_code
+              - status_historie_waarde
+              - identificatie_namespace
+              - identificatie_lokaal_id
+              - type_grens_code
+              - type_grens_waarde
+              - classificatie_kwaliteit_code
+              - classificatie_kwaliteit_waarde
+              - perceel_links_identificatie_namespace
+              - perceel_links_identificatie_lokaal_id
+              - perceel_rechts_identificatie_namespace
+              - perceel_rechts_identificatie_lokaal_id
+            aliases:
+              identificatie_lokaal_id: identificatieLokaalID
+              perceel_links_identificatie_lokaal_id: perceelLinksIdentificatieLokaalID
+              perceel_rechts_identificatie_lokaal_id: perceelRechtsIdentificatieLokaalID
+              classificatie_kwaliteit_code: ClassificatieKwaliteitCode
+              classificatie_kwaliteit_waarde: ClassificatieKwaliteitWaarde

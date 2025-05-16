@@ -10,10 +10,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func ConvertOptionsV2ToV3(src WMSWFSOptions) pdoknlv3.Options {
+func ConvertOptionsV2ToV3(src *WMSWFSOptions) *pdoknlv3.Options {
 	defaults := pdoknlv3.GetDefaultOptions()
 
-	return pdoknlv3.Options{
+	if src == nil {
+		return defaults
+	}
+
+	return &pdoknlv3.Options{
 		AutomaticCasing:             src.AutomaticCasing,
 		IncludeIngress:              src.IncludeIngress,
 		PrefetchData:                smoothoperatorutils.PointerVal(src.PrefetchData, defaults.PrefetchData),
@@ -24,8 +28,12 @@ func ConvertOptionsV2ToV3(src WMSWFSOptions) pdoknlv3.Options {
 	}
 }
 
-func ConvertOptionsV3ToV2(src pdoknlv3.Options) WMSWFSOptions {
-	return WMSWFSOptions{
+func ConvertOptionsV3ToV2(src *pdoknlv3.Options) *WMSWFSOptions {
+	if src == nil {
+		src = pdoknlv3.GetDefaultOptions()
+	}
+
+	return &WMSWFSOptions{
 		AutomaticCasing:             src.AutomaticCasing,
 		IncludeIngress:              src.IncludeIngress,
 		PrefetchData:                &src.PrefetchData,

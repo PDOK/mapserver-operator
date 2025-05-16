@@ -1,0 +1,292 @@
+apiVersion: pdok.nl/v2beta1
+kind: WMS
+metadata:
+  name: bzk-luchtfotolabels-v1-0
+  labels:
+    dataset-owner: bzk
+    dataset: luchtfotolabels
+    service-version: v1_0
+    service-type: wms
+spec:
+  general:
+    datasetOwner: bzk
+    dataset: luchtfotolabels
+    serviceVersion: v1_0
+  kubernetes:
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 2
+    healthCheck:
+      boundingbox: 135036.1077132325445,456913.9317436855054,135531.2729437439411,457377.1306112145539
+    resources:
+      limits:
+        memory: 4G
+        ephemeralStorage: 6G
+      requests:
+        cpu: "1"
+        memory: 4G
+        ephemeralStorage: 6G
+  options:
+    automaticCasing: false
+    disableWebserviceProxy: false
+    includeIngress: false
+    validateRequests: false
+    validateChildStyleNameEqual: false
+  service:
+    inspire: false
+    title: Luchtfoto Labels WMS
+    abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+    keywords:
+      - bzk
+      - luchtfotolabels
+    metadataIdentifier: 70562932-e7dc-4ba2-ba4f-05863d02587c
+    authority:
+      name: kadaster
+      url: http://www.kadaster.nl
+    dataEPSG: EPSG:28992
+    stylingAssets:
+      configMapRefs:
+        - name: ${INCLUDES}
+    layers:
+      - name: lufolabels
+        visible: true
+        title: Luchtfoto labels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+      - name: luchtfotoroads_100pixkm
+        visible: true
+        title: Luchtfoto roads 100pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 24001
+        maxScale: 48001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: roads.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/100pixkm_luforoads/100pixkm_luforoads.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotoroads_200pixkm
+        visible: true
+        title: Luchtfoto roads 200pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 12001
+        maxScale: 24001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: roads.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/200pixkm_luforoads/200pixkm_luforoads.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotoroads_400pixkm
+        visible: true
+        title: Luchtfoto roads 400pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 6001
+        maxScale: 12001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: roads.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/400pixkm_luforoads/400pixkm_luforoads.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotoroads_800pixkm
+        visible: true
+        title: Luchtfoto roads 800pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 3001
+        maxScale: 6001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: roads.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/800pixkm_luforoads/800pixkm_luforoads.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotoroads_1600pixkm
+        visible: true
+        title: Luchtfoto roads 1600pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 1501
+        maxScale: 3001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: roads.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/1600pixkm_luforoads/1600pixkm_luforoads.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotolabels_100pixkm
+        visible: true
+        title: Luchtfoto labels 100pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 24001
+        maxScale: 48001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: labels.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/100pixkm_lufolabels/100pixkm_lufolabels.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotolabels_200pixkm
+        visible: true
+        title: Luchtfoto labels 200pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 12001
+        maxScale: 24001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: labels.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/200pixkm_lufolabels/200pixkm_lufolabels.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotolabels_400pixkm
+        visible: true
+        title: Luchtfoto labels 400pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 6001
+        maxScale: 12001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: labels.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/400pixkm_lufolabels/400pixkm_lufolabels.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotolabels_800pixkm
+        visible: true
+        title: Luchtfoto labels 800pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 3001
+        maxScale: 6001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: labels.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/800pixkm_lufolabels/800pixkm_lufolabels.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotolabels_1600pixkm
+        visible: true
+        title: Luchtfoto labels 1600pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        minScale: 1501
+        maxScale: 3001
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: labels.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/1600pixkm_lufolabels/1600pixkm_lufolabels.vrt
+            offsite: "#978E97"
+            resample: BILINEAR
+      - name: luchtfotolabels_3200pixkm
+        visible: true
+        title: Luchtfoto labels 3200pixkm
+        group: lufolabels
+        abstract: "De luchtfoto labels bestaan uit weglabels en wegassen en kunnen worden gebruikt als laag (overlay) op onder andere de PDOK luchtfoto."
+        keywords:
+          - bzk
+          - luchtfotolabels
+        datasetMetadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
+        sourceMetadataIdentifier: 901647c2-802d-11e6-ae22-56b6b6499611
+        maxScale: 1501
+        styles:
+          - name: luchtfotolabels
+            title: Luchtfotolabels
+            visualization: labels.style
+        data:
+          tif:
+            blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/3200pixkm_lufolabels/3200pixkm_lufolabels.vrt
+            offsite: "#978E97"
+            resample: BILINEAR

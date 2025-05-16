@@ -397,7 +397,6 @@ spec:
               required:
                 - general
                 - kubernetes
-                - options
                 - service
               type: object
             status:
@@ -2097,7 +2096,6 @@ spec:
                     - url
                   type: object
               required:
-                - options
                 - service
               type: object
             status:

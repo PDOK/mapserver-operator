@@ -79,8 +79,8 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 		}
 	}
 
-	var rewriteGroupToDataLayers = wms.Spec.Options.RewriteGroupToDataLayers
-	var validateChildStyleNameEqual = wms.Spec.Options.ValidateChildStyleNameEqual
+	var rewriteGroupToDataLayers = wms.Options().RewriteGroupToDataLayers
+	var validateChildStyleNameEqual = wms.Options().ValidateChildStyleNameEqual
 
 	equalChildStyleNames := map[string][]string{}
 	if rewriteGroupToDataLayers && validateChildStyleNameEqual {

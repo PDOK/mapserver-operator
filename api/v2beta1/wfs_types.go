@@ -54,10 +54,10 @@ type WFSList struct {
 
 // WFSSpec is the struct for all fields defined in the WFS CRD
 type WFSSpec struct {
-	General    General       `json:"general"`
-	Service    WFSService    `json:"service"`
-	Kubernetes Kubernetes    `json:"kubernetes"`
-	Options    WMSWFSOptions `json:"options,omitempty"`
+	General    General        `json:"general"`
+	Service    WFSService     `json:"service"`
+	Kubernetes Kubernetes     `json:"kubernetes"`
+	Options    *WMSWFSOptions `json:"options,omitempty"`
 }
 
 // WFSService is the struct with all service specific options

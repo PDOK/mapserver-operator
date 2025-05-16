@@ -78,7 +78,7 @@ type WFSSpec struct {
 	PodSpecPatch                 *corev1.PodSpec               `json:"podSpecPatch,omitempty"`
 	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
 	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
-	Options Options `json:"options"`
+	Options *Options `json:"options,omitempty"`
 
 	// service configuration
 	Service WFSService `json:"service"`
@@ -242,7 +242,11 @@ func (wfs *WFS) HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch {
 }
 
 func (wfs *WFS) Options() Options {
-	return wfs.Spec.Options
+	if wfs.Spec.Options == nil {
+		return *GetDefaultOptions()
+	}
+
+	return *wfs.Spec.Options
 }
 
 func (wfs *WFS) ID() string {

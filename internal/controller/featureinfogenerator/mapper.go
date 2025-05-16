@@ -13,7 +13,7 @@ const (
 func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, error) {
 
 	input := &featureinfo.Scheme{
-		AutomaticCasing: wms.Spec.Options.AutomaticCasing,
+		AutomaticCasing: wms.Options().AutomaticCasing,
 		Version:         featureinfoGeneratorSchemaVersion,
 		Layers:          []featureinfo.Layer{},
 	}
