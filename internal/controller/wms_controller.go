@@ -78,7 +78,6 @@ type WMSReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
-// TODO fix linting (dupl)
 //
 //nolint:dupl
 func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
