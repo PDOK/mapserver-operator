@@ -16,6 +16,7 @@ import (
 const (
 	defaultMaxFeatures = 1000
 	geopackagePath     = "/srv/data/gpkg"
+	defaultExtent      = "-25000 250000 280000 860000"
 )
 
 var mapserverDebugLevel = 0
@@ -61,32 +62,28 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			Extent:          extent,
 			NamespacePrefix: wfs.Spec.Service.Prefix,
 			NamespaceURI:    mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
-			AutomaticCasing: wfs.Spec.Options.AutomaticCasing,
+			AutomaticCasing: wfs.Options().AutomaticCasing,
 			DataEPSG:        wfs.Spec.Service.DefaultCrs,
 			// TODO Should this be a constant like in v2, or OtherCRS + default
 			EPSGList:   defaultEpsgList, // wfs.Spec.Service.OtherCrs,
 			DebugLevel: mapserverDebugLevel,
 		},
 		MaxFeatures: smoothoperatorutils.PointerVal(wfs.Spec.Service.CountDefault, strconv.Itoa(defaultMaxFeatures)),
-		Layers:      getWFSLayers(wfs.Spec.Service.FeatureTypes),
+		Layers:      getWFSLayers(wfs.Spec.Service),
 	}
 
 	return input, nil
 }
 
-func getWFSLayers(featureTypes []pdoknlv3.FeatureType) (layers []WFSLayer) {
-	for _, featureType := range featureTypes {
-		bbox := pdoknlv3.FeatureBbox{}
-		if featureType.Bbox != nil {
-			bbox = *featureType.Bbox
-		}
+func getWFSLayers(service pdoknlv3.WFSService) (layers []WFSLayer) {
+	for _, featureType := range service.FeatureTypes {
 		layer := WFSLayer{
 			BaseLayer: BaseLayer{
 				Name:           featureType.Name,
 				Title:          mapperutils.EscapeQuotes(featureType.Title),
 				Abstract:       mapperutils.EscapeQuotes(featureType.Abstract),
 				Keywords:       strings.Join(featureType.Keywords, ","),
-				Extent:         bbox.DefaultCRS.ToExtent(),
+				Extent:         getWFSExtent(featureType, service),
 				MetadataID:     featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
 				Columns:        getColumns(featureType.Data),
 				TableName:      featureType.Data.GetTableName(),
@@ -102,6 +99,26 @@ func getWFSLayers(featureTypes []pdoknlv3.FeatureType) (layers []WFSLayer) {
 	}
 
 	return
+}
+
+func getWFSExtent(featureType pdoknlv3.FeatureType, service pdoknlv3.WFSService) string {
+	if featureType.Bbox != nil {
+		return featureType.Bbox.DefaultCRS.ToExtent()
+	}
+	if service.Bbox != nil {
+		return service.Bbox.DefaultCRS.ToExtent()
+	}
+	return defaultExtent
+}
+
+func getWMSExtent(serviceLayer pdoknlv3.Layer, serviceExtent string) string {
+	if len(serviceLayer.BoundingBoxes) > 0 {
+		return serviceLayer.BoundingBoxes[0].ToExtent()
+	}
+	if serviceExtent != "" {
+		return serviceExtent
+	}
+	return defaultExtent
 }
 
 func getColumns(data pdoknlv3.Data) []Column {
@@ -185,7 +202,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 			MetadataID:      metadataID,
 			DatasetOwner:    &datasetOwner,
 			AuthorityURL:    &authorityURL,
-			AutomaticCasing: wms.Spec.Options.AutomaticCasing,
+			AutomaticCasing: wms.Options().AutomaticCasing,
 			DataEPSG:        service.DataEPSG,
 			EPSGList:        epsgs,
 		},
@@ -220,15 +237,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 	return result, nil
 }
 
-// TODO fix linting (cyclop)
-//
-//nolint:cyclop
 func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {
-	layerExtent := serviceExtent
-	if len(serviceLayer.BoundingBoxes) > 0 {
-		layerExtent = serviceLayer.BoundingBoxes[0].ToExtent()
-	}
-
 	groupName := ""
 	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
 	// If the layer falls directly under the toplayer, the groupname is omitted
@@ -257,7 +266,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			Title:          smoothoperatorutils.PointerVal(serviceLayer.Title, ""),
 			Abstract:       smoothoperatorutils.PointerVal(serviceLayer.Abstract, ""),
 			Keywords:       strings.Join(serviceLayer.Keywords, ","),
-			Extent:         layerExtent,
+			Extent:         getWMSExtent(serviceLayer, serviceExtent),
 			MetadataID:     metadataID,
 			Columns:        columns,
 			GeometryType:   nil,

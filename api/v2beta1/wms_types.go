@@ -46,10 +46,10 @@ type WMS struct {
 
 // WMSSpec is the struct for all fields defined in the WMS CRD
 type WMSSpec struct {
-	General    General       `json:"general"`
-	Service    WMSService    `json:"service"`
-	Options    WMSWFSOptions `json:"options"`
-	Kubernetes Kubernetes    `json:"kubernetes"`
+	General    General        `json:"general"`
+	Service    WMSService     `json:"service"`
+	Options    *WMSWFSOptions `json:"options,omitempty"`
+	Kubernetes Kubernetes     `json:"kubernetes"`
 }
 
 // WMSService is the struct for all service level fields

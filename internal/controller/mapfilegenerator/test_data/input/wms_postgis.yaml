@@ -1,0 +1,90 @@
+apiVersion: pdok.nl/v2beta1
+kind: WMS
+metadata:
+  name: v1-0 # name set with namePrefix in base/kustomization.yaml
+  labels:
+    dataset: terugmeldingen
+    dataset-owner: brt
+    service-version: v1_0
+    service-type: wms
+spec:
+  general:
+    datasetOwner: brt
+    dataset: terugmeldingen
+    serviceVersion: v1_0
+  kubernetes:
+    resources:
+      limits:
+        ephemeralStorage: 20Mi
+  options:
+    automaticCasing: true
+    disableWebserviceProxy: false
+    includeIngress: true
+    validateRequests: true
+  service:
+    inspire: false
+    title: BRT Terugmeldingen WMS
+    abstract: De BRT terugmeldingenservice bevat alle recente meldingen op BRT objecten waar twijfel over de juistheid bestaat. Zowel terugmeldingen op de TOP10 als meldingen die gemaakt zijn op de gegeneraliseerde kaartproducten (TOP25, TOP50, TOP100, TOP250) worden hierin geregistreerd. Daarnaast kan je de inhoud en status van de meldingen inzien. Ook een vermoedelijke fout geconstateerd? Doe een melding op https://verbeterdekaart.kadaster.nl
+    keywords:
+      - Basisregistratie Topografie
+      - BRT
+      - terugmeldingen
+      - TOP10NL
+      - TOP25
+      - TOP50
+      - TOP100
+      - TOP250
+      - in onderzoek register
+      - verbeter de kaart
+      - verbeterdekaart
+    metadataIdentifier: fa069f74-9837-4d63-b2ac-b337b5de86b1
+    authority:
+      name: brt
+      url: http://www.brt.nl
+    dataEPSG: EPSG:28992
+    extent: -7000 289000 300000 629000
+    stylingAssets:
+      configMapRefs:
+        - name: includes
+          keys:
+            - terugmeldingen.symbol
+            - terugmeldingen.style
+      blobKeys:
+        - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/afgerond-blauw.png
+        - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/afgewezen-rood.png
+        - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/doorgestuurd-grijs.png
+        - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/geparkeerd-kobaltblauw.png
+        - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/goedgekeurd-groen.png
+        - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/nieuw-geel.png
+        - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/onderzoek-oranje.png
+    layers:
+      - name: brtterugmeldingen
+        visible: true
+        title: BRT Terugmeldingen
+        abstract: Alle recente BRT terugmeldingen gedaan door BRT gebruikers.
+        keywords:
+          - brtterugmeldingen
+        datasetMetadataIdentifier: 7a84c4de-4ec0-4202-a8d0-792fb7d39d1f
+        sourceMetadataIdentifier: 07c7d650-cdb1-11dd-ad8b-0800200c9a60
+        styles:
+          - title: Terugmeldingen
+            name: brtterugmeldingen:terugmeldingen
+            visualization: terugmeldingen.style
+            legendFile:
+              blobKey: ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/terugmeldingen-legend.png
+        data:
+          postgis:
+            table: brtterugmeldingen.brtterugmeldingen_v1
+            geometryType: Point
+            columns:
+              - meldingsnummer_volledig
+              - tijdstip_registratie
+              - status
+              - omschrijving
+              - bronhoudercode
+              - bronhoudernaam
+              - tijdstip_statuswijziging
+              - toelichting
+              - objectid
+              - objecttype
+              - hoogte_vanaf_maaiveld

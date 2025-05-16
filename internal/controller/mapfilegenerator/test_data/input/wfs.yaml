@@ -1,0 +1,95 @@
+metadata:
+  labels:
+    dataset: dataset
+    dataset-owner: datasetOwner
+    service-version: v1_0
+    theme: theme
+spec:
+  options:
+    automaticCasing: true
+    disableWebserviceProxy: false
+    includeIngress: false
+    prefetchData: false
+    rewriteGroupToDataLayers: false
+    validateChildStyleNameEqual: false
+    validateRequests: false
+  service:
+    abstract: some "Service" abstract
+    accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+    bbox:
+      defaultCRS:
+        maxx: "1.0"
+        maxy: "3.0"
+        minx: "0.0"
+        miny: "2.0"
+    defaultCrs: EPSG:28992
+    featureTypes:
+    - abstract: feature "1" abstract
+      bbox:
+        defaultCRS:
+          maxx: "1.0"
+          maxy: "3.0"
+          minx: "0.0"
+          miny: "2.0"
+      data:
+        gpkg:
+          blobKey: public/testme/gpkg/file-1.gpkg
+          columns:
+          - name: featuretype-1-column-1
+          - name: featuretype-1-column-2
+          geometryType: Point
+          tableName: featuretype-1
+      datasetMetadataUrl:
+        csw:
+          metadataIdentifier: datadata-data-data-data-datadatadata
+      keywords:
+      - featuretype-1-keyword-1
+      - featuretype-1-keyword-2
+      name: featuretype-1-name
+      title: featuretype-1-title
+    - abstract: feature "2" abstract
+      bbox:
+        defaultCRS:
+          maxx: "1.0"
+          maxy: "3.0"
+          minx: "0.0"
+          miny: "2.0"
+      data:
+        postgis:
+          columns:
+          - alias: alias_featuretype-2-column-1
+            name: featuretype-2-column-1
+          - name: featuretype-2-column-2
+          geometryType: MultiLine
+          tableName: featuretype-2
+      datasetMetadataUrl:
+        csw:
+          metadataIdentifier: datadata-data-data-data-datadatadata
+      keywords:
+      - featuretype-2-keyword-1
+      - featuretype-2-keyword-2
+      name: featuretype-2-name
+      title: featuretype-2-title
+    inspire:
+      language: ""
+      serviceMetadataUrl:
+        csw:
+          metadataIdentifier: metameta-meta-meta-meta-metametameta
+      spatialDatasetIdentifier: ""
+    keywords:
+    - service-keyword-1
+    - service-keyword-2
+    - infoFeatureAccessService
+    otherCrs:
+    - EPSG:28992
+    - EPSG:25831
+    - EPSG:25832
+    - EPSG:3034
+    - EPSG:3035
+    - EPSG:3857
+    - EPSG:4258
+    - EPSG:4326
+    ownerInfoRef: ""
+    prefix: prefix
+    title: some Service title
+    url: ""

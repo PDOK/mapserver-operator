@@ -61,7 +61,7 @@ type WMSSpec struct {
 
 	// Optional options for the configuration of the service.
 	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
-	Options Options `json:"options"`
+	Options *Options `json:"options,omitempty"`
 
 	// Service specification
 	Service WMSService `json:"service"`
@@ -569,7 +569,11 @@ func (wms *WMS) HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch {
 }
 
 func (wms *WMS) Options() Options {
-	return wms.Spec.Options
+	if wms.Spec.Options == nil {
+		return *GetDefaultOptions()
+	}
+
+	return *wms.Spec.Options
 }
 
 func (wms *WMS) ID() string {

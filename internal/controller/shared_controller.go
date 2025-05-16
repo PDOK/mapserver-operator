@@ -281,7 +281,7 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 		}
 		initContainers = append(initContainers, *legendGeneratorInitContainer)
 
-		if wms.Spec.Options.RewriteGroupToDataLayers {
+		if wms.Options().RewriteGroupToDataLayers {
 			legendFixerInitContainer := legendgenerator.GetLegendFixerInitContainer(images.MultitoolImage)
 			initContainers = append(initContainers, *legendFixerInitContainer)
 		}
@@ -615,7 +615,6 @@ func mutateConfigMapMapfileGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O
 		if err != nil {
 			return err
 		}
-		// mapfileGeneratorConfig := "TODO" // TODO Implement mapfilegenerator.GetConfig for WMS
 		configMap.Data = map[string]string{mapfileGeneratorInput: mapfileGeneratorConfig}
 	}
 	configMap.Immutable = smoothoperatorutils.Pointer(true)

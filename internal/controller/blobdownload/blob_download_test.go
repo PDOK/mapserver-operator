@@ -82,7 +82,7 @@ func TestGetArgsForWFS(t *testing.T) {
 						Service: v3.WFSService{
 							Title: "wfs-prefetch-service-title",
 						},
-						Options: v3.Options{
+						Options: &v3.Options{
 							PrefetchData: true,
 						},
 					},
@@ -99,7 +99,7 @@ func TestGetArgsForWFS(t *testing.T) {
 						Service: v3.WFSService{
 							Title: "wfs-noprefetch-service-title",
 						},
-						Options: v3.Options{
+						Options: &v3.Options{
 							PrefetchData: false,
 						},
 					},
@@ -205,7 +205,7 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: v3.Options{
+						Options: &v3.Options{
 							PrefetchData: true,
 						},
 					},
@@ -272,7 +272,7 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: v3.Options{
+						Options: &v3.Options{
 							PrefetchData: true,
 						},
 					},
