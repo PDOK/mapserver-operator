@@ -351,6 +351,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 
 			env = []corev1.EnvVar{
+				{Name: "MAPSERVER_CONFIG_FILE", Value: "/srv/mapserver/config/default_mapserver.conf", ValueFrom: nil},
 				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/service.map", ValueFrom: nil},
 			}
 			Expect(legendGeneratorContainer.Env).Should(Equal(env))
@@ -840,16 +841,16 @@ var _ = Describe("WMS Controller", func() {
 					Protocol:   corev1.ProtocolTCP,
 				},
 				{
-					Name:       "metric",
-					Port:       9117,
-					TargetPort: intstr.FromInt32(9117),
-					Protocol:   corev1.ProtocolTCP,
-				},
-				{
 					Name:       "ogc-webservice-proxy",
 					Port:       9111,
 					TargetPort: intstr.FromInt32(9111),
 					Protocol:   "TCP",
+				},
+				{
+					Name:       "metric",
+					Port:       9117,
+					TargetPort: intstr.FromInt32(9117),
+					Protocol:   corev1.ProtocolTCP,
 				},
 			}))
 
@@ -884,7 +885,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(len(ingressRoute.Spec.Routes)).To(Equal(2))
 			Expect(ingressRoute.Spec.Routes[0]).To(Equal(traefikiov1alpha1.Route{
 				Kind:        "Rule",
-				Match:       "Host(`localhost`) && Path(`/owner/dataset/wms/1.0.0/legend`)",
+				Match:       "Host(`localhost`) && PathPrefix(`/owner/dataset/wms/1.0.0/legend`)",
 				Middlewares: []traefikiov1alpha1.MiddlewareRef{{Name: wms.GetName() + "-wms-mapserver-headers"}},
 				Services: []traefikiov1alpha1.Service{{
 					LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
@@ -920,7 +921,7 @@ var _ = Describe("WMS Controller", func() {
 
 			sampleWms, err := getUniqueWMSSample(counter)
 			counter++
-			sampleWms.Spec.Service.Mapfile = &pdoknlv3.Mapfile{ConfigMapKeyRef: corev1.ConfigMapKeySelector{Key: "mapfile.map"}}
+			sampleWms.Spec.Service.Mapfile = &pdoknlv3.Mapfile{ConfigMapKeyRef: corev1.ConfigMapKeySelector{Key: "mapfile.map", LocalObjectReference: corev1.LocalObjectReference{Name: "custom-mapfile"}}}
 			typeNamespacedNameWms.Name = sampleWms.Name
 
 			Expect(err).NotTo(HaveOccurred())
@@ -939,14 +940,15 @@ var _ = Describe("WMS Controller", func() {
 			volumeMounts := []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
 				{Name: "data", MountPath: "/var/www", ReadOnly: false},
-				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 				{Name: "mapfile", MountPath: "/srv/data/config/mapfile"},
+				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
 			legendGeneratorContainer, _ := getInitContainer("legend-generator", deployment)
 
 			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 
 			env := []corev1.EnvVar{
+				{Name: "MAPSERVER_CONFIG_FILE", Value: "/srv/mapserver/config/default_mapserver.conf", ValueFrom: nil},
 				{Name: "MS_MAPFILE", Value: "/srv/data/config/mapfile/mapfile.map", ValueFrom: nil},
 			}
 			Expect(legendGeneratorContainer.Env).Should(Equal(env))

@@ -56,7 +56,6 @@ spec:
     resolution:
     defResolution:
     stylingAssets:
-    mapfile:
     layer:
       name: top-layer-name
       title: Top "Layer" Title

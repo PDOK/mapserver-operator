@@ -11,7 +11,13 @@ func GetLegendGeneratorInitContainer(wms *pdoknlv3.WMS, image string, srvDir str
 		Name:            "legend-generator",
 		Image:           image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Env:             []corev1.EnvVar{mapserver.GetMapfileEnvVar(wms)},
+		Env: []corev1.EnvVar{
+			{
+				Name:  "MAPSERVER_CONFIG_FILE",
+				Value: "/srv/mapserver/config/default_mapserver.conf",
+			},
+			mapserver.GetMapfileEnvVar(wms),
+		},
 		Command: []string{
 			"bash",
 			"-c",
@@ -33,7 +39,6 @@ exit $exit_code;
 		VolumeMounts: []corev1.VolumeMount{
 			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
 			getDataVolumeMount(),
-			getConfigVolumeMount(),
 		},
 	}
 
@@ -44,6 +49,9 @@ exit $exit_code;
 		}
 		initContainer.VolumeMounts = append(initContainer.VolumeMounts, volumeMount)
 	}
+
+	// Adding config volumemount here to get the same order as in the old ansible operator
+	initContainer.VolumeMounts = append(initContainer.VolumeMounts, getConfigVolumeMount())
 
 	return &initContainer, nil
 }

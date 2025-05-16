@@ -85,7 +85,14 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	if mapfile := obj.Mapfile(); mapfile != nil {
 		volumes = append(volumes, v1.Volume{
 			Name:         "mapfile",
-			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Key),
+			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Name),
+		})
+	}
+
+	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
+		volumes = append(volumes, v1.Volume{
+			Name:         ConfigMapOgcWebserviceProxyVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
 		})
 	}
 
@@ -143,19 +150,14 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 
 	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
 	// Needed to compare deployments from the ansible operator and this one
-	volumes = append(volumes, v1.Volume{
-		Name:         ConfigMapMapfileGeneratorVolumeName,
-		VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
-	})
-	if stylingFilesVolume != nil {
-		volumes = append(volumes, *stylingFilesVolume)
-	}
-
-	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
+	if obj.Mapfile() == nil {
 		volumes = append(volumes, v1.Volume{
-			Name:         ConfigMapOgcWebserviceProxyVolumeName,
-			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
+			Name:         ConfigMapMapfileGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
 		})
+		if stylingFilesVolume != nil {
+			volumes = append(volumes, *stylingFilesVolume)
+		}
 	}
 
 	return volumes
@@ -316,8 +318,9 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		}
 
 		ephemeralStorageLimit := mapperutils.EphemeralStorageLimit(obj)
-		if ephemeralStorageLimit == nil || ephemeralStorageLimit.IsZero() {
-			ephemeralStorageLimit = smoothoperatorutils.Pointer(resource.MustParse("200M"))
+		defaultEphemeralStorageLimit := resource.MustParse("200M")
+		if ephemeralStorageLimit == nil || ephemeralStorageLimit.IsZero() || ephemeralStorageLimit.Value() < defaultEphemeralStorageLimit.Value() {
+			ephemeralStorageLimit = smoothoperatorutils.Pointer(defaultEphemeralStorageLimit)
 		}
 		resources.Limits[v1.ResourceEphemeralStorage] = *maxResourceVal(ephemeralStorageLimit, ephemeralStorageRequest)
 	}
