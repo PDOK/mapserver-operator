@@ -103,13 +103,13 @@ func GetArgs[W pdoknlv3.WMSWFS](webservice W) (args string, err error) {
 	case *pdoknlv3.WFS:
 		if WFS, ok := any(webservice).(*pdoknlv3.WFS); ok {
 			createConfig(&sb)
-			downloadGeopackage(&sb, WFS.Spec.Options.PrefetchData)
+			downloadGeopackage(&sb, WFS.Options().PrefetchData)
 			// In case of WFS no downloads are needed for TIFFs, styling assets and legends
 		}
 	case *pdoknlv3.WMS:
 		if WMS, ok := any(webservice).(*pdoknlv3.WMS); ok {
 			createConfig(&sb)
-			downloadGeopackage(&sb, WMS.Spec.Options.PrefetchData)
+			downloadGeopackage(&sb, WMS.Options().PrefetchData)
 			if err = downloadTiffs(&sb, WMS); err != nil {
 				return "", err
 			}
@@ -139,7 +139,7 @@ func downloadGeopackage(sb *strings.Builder, prefetchData bool) {
 }
 
 func downloadTiffs(sb *strings.Builder, wms *pdoknlv3.WMS) error {
-	if !wms.Spec.Options.PrefetchData {
+	if !wms.Options().PrefetchData {
 		return nil
 	}
 

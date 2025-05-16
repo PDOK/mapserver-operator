@@ -62,7 +62,7 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			Extent:          extent,
 			NamespacePrefix: wfs.Spec.Service.Prefix,
 			NamespaceURI:    mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
-			AutomaticCasing: wfs.Spec.Options.AutomaticCasing,
+			AutomaticCasing: wfs.Options().AutomaticCasing,
 			DataEPSG:        wfs.Spec.Service.DefaultCrs,
 			// TODO Should this be a constant like in v2, or OtherCRS + default
 			EPSGList:   defaultEpsgList, // wfs.Spec.Service.OtherCrs,
@@ -202,7 +202,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 			MetadataID:      metadataID,
 			DatasetOwner:    &datasetOwner,
 			AuthorityURL:    &authorityURL,
-			AutomaticCasing: wms.Spec.Options.AutomaticCasing,
+			AutomaticCasing: wms.Options().AutomaticCasing,
 			DataEPSG:        service.DataEPSG,
 			EPSGList:        epsgs,
 		},

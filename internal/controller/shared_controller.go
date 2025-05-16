@@ -278,7 +278,7 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 		}
 		initContainers = append(initContainers, *featureInfoInitContainer)
 
-		if wms.Spec.Options.RewriteGroupToDataLayers {
+		if wms.Options().RewriteGroupToDataLayers {
 			legendFixerInitContainer := legendgenerator.GetLegendFixerInitContainer(images.MultitoolImage)
 			initContainers = append(initContainers, *legendFixerInitContainer)
 		}

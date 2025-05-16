@@ -1,0 +1,468 @@
+{
+    "authority_url": "https://www.hetwaterschapshuis.nl/",
+    "automatic_casing": true,
+    "data_epsg": "EPSG:28992",
+    "dataset_owner": "hwh",
+    "epsg_list": [
+        "EPSG:28992",
+        "EPSG:25831",
+        "EPSG:25832",
+        "EPSG:3034",
+        "EPSG:3035",
+        "EPSG:3857",
+        "EPSG:4258",
+        "EPSG:4326",
+        "CRS:84"
+    ],
+    "group_layers": [
+        {
+            "abstract": "Crossing line, crossing point, dam or weir, sluice, embankment, lock.",
+            "name": "HY.PhysicalWaters.ManMadeObject",
+            "style_name": "HY.PhysicalWaters.ManMadeObject.Default",
+            "style_title": "Man-made objects default style",
+            "title": "Man-made Object"
+        }
+    ],
+    "layers": [
+        {
+            "abstract": "Watercourse",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "condition"
+                },
+                {
+                    "name": "delineationknown"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "length"
+                },
+                {
+                    "name": "level"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "localtype"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                },
+                {
+                    "name": "origin"
+                },
+                {
+                    "name": "persistence"
+                },
+                {
+                    "name": "streamorder"
+                },
+                {
+                    "name": "tidal"
+                },
+                {
+                    "name": "widthrange"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "MultiLineString",
+            "gpkg_path": "/srv/data/gpkg/Waterbody.gpkg",
+            "keywords": "Hydroobject,Waterbody,Watercourse,River,Stream,Lake,Reservoir",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.Waterbodies",
+            "styles": [
+                {
+                    "path": "/styling/watercourse.style",
+                    "title": "Water bodies default style"
+                }
+            ],
+            "tablename": "watercourse",
+            "title": "Waterbody"
+        },
+        {
+            "abstract": "Drainage basin",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "area"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                },
+                {
+                    "name": "order"
+                },
+                {
+                    "name": "orderscheme"
+                },
+                {
+                    "name": "origin"
+                },
+                {
+                    "name": "outlet"
+                },
+                {
+                    "name": "scope"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "MultiPolygon",
+            "gpkg_path": "/srv/data/gpkg/Catchment.gpkg",
+            "keywords": "AfvoergebiedAanvoergebied,Catchment,Basin,Catchment Area,Drainage basin",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.Catchments",
+            "styles": [
+                {
+                    "path": "/styling/drainagebasin.style",
+                    "title": "Drainage Basin default style"
+                }
+            ],
+            "tablename": "drainagebasin",
+            "title": "Catchment"
+        },
+        {
+            "abstract": "Crossing line, crossing point, dam or weir, sluice, embankment, lock.",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "condition"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "Point",
+            "gpkg_path": "/srv/data/gpkg/Man-madeObject.gpkg",
+            "group_name": "HY.PhysicalWaters.ManMadeObject",
+            "keywords": "Man Made,Duikersifonhevel,Aquaduct,Brug,Stuw,Vastedam,Waterkering,Sluis.",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.ManMadeObject.lock",
+            "styles": [
+                {
+                    "path": "/styling/lock.style",
+                    "title": "Lock"
+                }
+            ],
+            "tablename": "lock",
+            "title": "Man-made Object"
+        },
+        {
+            "abstract": "Crossing line, crossing point, dam or weir, sluice, embankment, lock.",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "condition"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                },
+                {
+                    "name": "type"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "Point",
+            "gpkg_path": "/srv/data/gpkg/Man-madeObject.gpkg",
+            "group_name": "HY.PhysicalWaters.ManMadeObject",
+            "keywords": "Man Made,Duikersifonhevel,Aquaduct,Brug,Stuw,Vastedam,Waterkering,Sluis.",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.ManMadeObject.crossingpoint",
+            "styles": [
+                {
+                    "path": "/styling/crossingpoint.style",
+                    "title": "Crossing Point"
+                }
+            ],
+            "tablename": "crossingpoint",
+            "title": "Man-made Object"
+        },
+        {
+            "abstract": "Crossing line, crossing point, dam or weir, sluice, embankment, lock.",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "condition"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "Point",
+            "gpkg_path": "/srv/data/gpkg/Man-madeObject.gpkg",
+            "group_name": "HY.PhysicalWaters.ManMadeObject",
+            "keywords": "Man Made,Duikersifonhevel,Aquaduct,Brug,Stuw,Vastedam,Waterkering,Sluis.",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.ManMadeObject.sluice",
+            "styles": [
+                {
+                    "path": "/styling/sluice.style",
+                    "title": "Sluice"
+                }
+            ],
+            "tablename": "sluice",
+            "title": "Man-made Object"
+        },
+        {
+            "abstract": "Crossing line, crossing point, dam or weir, sluice, embankment, lock.",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "condition"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "MultiLineString",
+            "gpkg_path": "/srv/data/gpkg/Man-madeObject.gpkg",
+            "group_name": "HY.PhysicalWaters.ManMadeObject",
+            "keywords": "Man Made,Duikersifonhevel,Aquaduct,Brug,Stuw,Vastedam,Waterkering,Sluis.",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.ManMadeObject.embankment",
+            "styles": [
+                {
+                    "path": "/styling/embankment.style",
+                    "title": "Embankment"
+                }
+            ],
+            "tablename": "embankment",
+            "title": "Man-made Object"
+        },
+        {
+            "abstract": "Crossing line, crossing point, dam or weir, sluice, embankment, lock.",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "condition"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                },
+                {
+                    "name": "type"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "MultiLineString",
+            "gpkg_path": "/srv/data/gpkg/Man-madeObject.gpkg",
+            "group_name": "HY.PhysicalWaters.ManMadeObject",
+            "keywords": "Man Made,Duikersifonhevel,Aquaduct,Brug,Stuw,Vastedam,Waterkering,Sluis.",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.ManMadeObject.crossingline",
+            "styles": [
+                {
+                    "path": "/styling/crossingline.style",
+                    "title": "Crossing Line"
+                }
+            ],
+            "tablename": "crossingline",
+            "title": "Man-made Object"
+        },
+        {
+            "abstract": "Crossing line, crossing point, dam or weir, sluice, embankment, lock.",
+            "columns": [
+                {
+                    "name": "fuuid"
+                },
+                {
+                    "name": "gml_id"
+                },
+                {
+                    "name": "beginlifespanversion"
+                },
+                {
+                    "name": "condition"
+                },
+                {
+                    "name": "endlifespanversion"
+                },
+                {
+                    "name": "localid"
+                },
+                {
+                    "name": "name"
+                },
+                {
+                    "name": "namespace"
+                }
+            ],
+            "dataset_metadata_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "dataset_source_id": "07575774-57a1-4419-bab4-6c88fdeb02b2",
+            "geometry_type": "Point",
+            "gpkg_path": "/srv/data/gpkg/Man-madeObject.gpkg",
+            "group_name": "HY.PhysicalWaters.ManMadeObject",
+            "keywords": "Man Made,Duikersifonhevel,Aquaduct,Brug,Stuw,Vastedam,Waterkering,Sluis.",
+            "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+            "maxscale": "50000",
+            "minscale": "1",
+            "name": "HY.PhysicalWaters.ManMadeObject.damorweir",
+            "styles": [
+                {
+                    "path": "/styling/damorweir.style",
+                    "title": "Dam or Weir"
+                }
+            ],
+            "tablename": "damorweir",
+            "title": "Man-made Object"
+        }
+    ],
+    "maxSize": "4000",
+    "outputformat_jpg": "jpg",
+    "outputformat_png8": "png",
+    "service_abstract": "Deze dataset is gebaseerd op (niet geharmoniseerde) data van alle waterschappen in Nederland conform INSPIRE. De dataset bevat de volgende INSPIRE objecten: CrossingLine, CrossingPoint, DamOrWeir, DrainageBasin, Embankment, Lock, Sluice, Watercourse.",
+    "service_accessconstraints": "https://creativecommons.org/publicdomain/zero/1.0/deed.nl",
+    "service_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
+    "service_keywords": "Aquaduct,Brug,Duikersifonhevel,Stuw,Vastedam,AfvoerAanvoergebied,Waterkering,Sluis,HydroObject,HVD,Aardobservatie en milieu,infoMapAccessService",
+    "service_metadata_id": "871a58f8-c9f1-41a4-be37-0f059e0f886f",
+    "service_namespace_prefix": "hydrografie",
+    "service_namespace_uri": "http://hydrografie.geonovum.nl",
+    "service_onlineresource": "https://service.pdok.nl",
+    "service_path": "/hwh/hydrografie/wms/v2_0",
+    "service_title": "Waterschappen Hydrografie (INSPIRE geharmoniseerd) WMS",
+    "symbols": [
+        "/styling/bridge.symbol",
+        "/styling/x.symbol"
+    ],
+    "templates": "/srv/data/config/templates"
+}

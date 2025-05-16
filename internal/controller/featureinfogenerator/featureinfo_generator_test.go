@@ -74,7 +74,7 @@ func TestGetInput(t *testing.T) {
 			args: args{
 				wms: &pdoknlv3.WMS{
 					Spec: pdoknlv3.WMSSpec{
-						Options: pdoknlv3.Options{
+						Options: &pdoknlv3.Options{
 							AutomaticCasing: true,
 						},
 						Service: pdoknlv3.WMSService{

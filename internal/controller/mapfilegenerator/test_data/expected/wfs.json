@@ -1,0 +1,72 @@
+{
+  "service_title": "some Service title",
+  "service_abstract": "some \\\"Service\\\" abstract",
+  "service_keywords": "service-keyword-1,service-keyword-2,infoFeatureAccessService",
+  "service_extent": "0.0 2.0 1.0 3.0",
+  "service_wfs_maxfeatures": "1000",
+  "service_namespace_prefix": "prefix",
+  "service_namespace_uri": "http://prefix.geonovum.nl",
+  "service_onlineresource": "https://service.pdok.nl",
+  "service_path": "/datasetOwner/dataset/theme/wfs/v1_0",
+  "service_metadata_id": "metameta-meta-meta-meta-metametameta",
+  "automatic_casing": true,
+  "data_epsg": "EPSG:28992",
+  "service_debug_level": 0,
+  "epsg_list": [
+    "EPSG:28992",
+    "EPSG:25831",
+    "EPSG:25832",
+    "EPSG:3034",
+    "EPSG:3035",
+    "EPSG:3857",
+    "EPSG:4258",
+    "EPSG:4326"
+  ],
+  "layers": [
+    {
+      "name": "featuretype-1-name",
+      "title": "featuretype-1-title",
+      "abstract": "feature \\\"1\\\" abstract",
+      "keywords": "featuretype-1-keyword-1,featuretype-1-keyword-2",
+      "layer_extent": "0.0 2.0 1.0 3.0",
+      "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+      "columns": [
+        {
+          "name": "fuuid"
+        },
+        {
+          "name": "featuretype-1-column-1"
+        },
+        {
+          "name": "featuretype-1-column-2"
+        }
+      ],
+      "geometry_type": "Point",
+      "gpkg_path": "/srv/data/gpkg/file-1.gpkg",
+      "tablename": "featuretype-1"
+    },
+    {
+      "name": "featuretype-2-name",
+      "title": "featuretype-2-title",
+      "abstract": "feature \\\"2\\\" abstract",
+      "keywords": "featuretype-2-keyword-1,featuretype-2-keyword-2",
+      "layer_extent": "0.0 2.0 1.0 3.0",
+      "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+      "columns": [
+        {
+          "name": "fuuid"
+        },
+        {
+          "name": "featuretype-2-column-1",
+          "alias": "alias_featuretype-2-column-1"
+        },
+        {
+          "name": "featuretype-2-column-2"
+        }
+      ],
+      "geometry_type": "MultiLine",
+      "tablename": "featuretype-2",
+      "postgis": true
+    }
+  ]
+}

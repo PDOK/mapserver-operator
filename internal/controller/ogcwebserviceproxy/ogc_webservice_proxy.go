@@ -39,10 +39,10 @@ func getCommand(wms *pdoknlv3.WMS) []string {
 		"-s=/input/service-config.yaml",
 	}
 
-	if wms.Spec.Options.ValidateRequests {
+	if wms.Options().ValidateRequests {
 		command = append(command, "-v")
 	}
-	if wms.Spec.Options.RewriteGroupToDataLayers {
+	if wms.Options().RewriteGroupToDataLayers {
 		command = append(command, "-r")
 	}
 
