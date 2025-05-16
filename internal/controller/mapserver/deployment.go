@@ -85,7 +85,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	if mapfile := obj.Mapfile(); mapfile != nil {
 		volumes = append(volumes, v1.Volume{
 			Name:         "mapfile",
-			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Key),
+			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Name),
 		})
 	}
 
@@ -198,7 +198,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 func GetMapfileEnvVar[O pdoknlv3.WMSWFS](obj O) v1.EnvVar {
 	mapFileName := "service.map"
 	if obj.Mapfile() != nil {
-		mapFileName = obj.Mapfile().ConfigMapKeyRef.Name
+		mapFileName = obj.Mapfile().ConfigMapKeyRef.Key
 	}
 
 	return v1.EnvVar{
