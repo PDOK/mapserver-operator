@@ -92,4 +92,4 @@ spec:
     ownerInfoRef: ""
     prefix: prefix
     title: some Service title
-    url: ""
+    url: "http://localhost:32788/datasetOwner/dataset/theme/wfs/v1_0"
