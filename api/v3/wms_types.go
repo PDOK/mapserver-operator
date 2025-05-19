@@ -376,11 +376,10 @@ func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 }
 
 func (wmsService *WMSService) GetAllLayers() (layers []Layer) {
-	return wmsService.Layer.GetAllLayers()
+	return append([]Layer{wmsService.Layer}, wmsService.Layer.GetAllLayers()...)
 }
 
 func (layer *Layer) GetAllLayers() (layers []Layer) {
-	layers = append(layers, *layer)
 	for _, childLayer := range layer.Layers {
 		layers = append(layers, childLayer.GetAllLayers()...)
 	}
@@ -489,7 +488,7 @@ func (layer *Layer) setInheritedBoundingBoxes() {
 }
 
 func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
-	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if !layer.hasData() || len(layer.Styles) == 0 {
 			continue
 		}
@@ -505,7 +504,7 @@ func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
 
 func (wms *WMS) GetUniqueTiffBlobKeys() []string {
 	blobKeys := map[string]bool{}
-	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if layer.hasTIFData() {
 			blobKeys[layer.Data.TIF.BlobKey] = true
 		}
@@ -536,7 +535,7 @@ func (wms *WMS) GetAuthority() *Authority {
 }
 
 func (wms *WMS) HasPostgisData() bool {
-	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if layer.Data != nil && layer.Data.Postgis != nil {
 			return true
 		}

@@ -18,7 +18,7 @@ func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, 
 		Layers:          []featureinfo.Layer{},
 	}
 
-	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if !layer.IsDataLayer() {
 			continue
 		}

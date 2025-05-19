@@ -39,7 +39,7 @@ services:
         onlineResource:
           xlink: null
           type: null
-          href: https://service.pdok.nl
+          href: http://localhost
         contactInformation:
           contactPersonPrimary:
             contactPerson: KlantContactCenter PDOK
@@ -72,7 +72,7 @@ services:
                     onlineResource:
                       xlink: null
                       type: null
-                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0
                   post: null
             getMap:
               format:
@@ -87,12 +87,12 @@ services:
                     onlineResource:
                       xlink: null
                       type: null
-                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0
                   post:
                     onlineResource:
                       xlink: null
                       type: null
-                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0
             getFeatureInfo:
               format:
                 - application/json
@@ -108,12 +108,12 @@ services:
                     onlineResource:
                       xlink: null
                       type: null
-                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0
                   post:
                     onlineResource:
                       xlink: null
                       type: null
-                      href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0
           exception:
             format:
               - XML
@@ -320,7 +320,7 @@ services:
                         onlineResource:
                           xlink: null
                           type: simple
-                          href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0/legend/wegvakken/wegvakken.png
+                          href: http://localhost/rws/nwbwegen/wms/v1_0/legend/wegvakken/wegvakken.png
                       styleSheetUrl: null
                   minScaleDenominator: 1
                   maxScaleDenominator: 50000
@@ -426,7 +426,7 @@ services:
                         onlineResource:
                           xlink: null
                           type: simple
-                          href: https://service.pdok.nl/rws/nwbwegen/wms/v1_0/legend/hectopunten/hectopunten.png
+                          href: http://localhost/rws/nwbwegen/wms/v1_0/legend/hectopunten/hectopunten.png
                       styleSheetUrl: null
                   minScaleDenominator: 1
                   maxScaleDenominator: 50000

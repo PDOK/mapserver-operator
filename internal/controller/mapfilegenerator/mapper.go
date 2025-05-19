@@ -273,6 +273,9 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			GeopackagePath: nil,
 			TableName:      tableName,
 			Postgis:        nil,
+			MinScale:       serviceLayer.MinScaleDenominator,
+			MaxScale:       serviceLayer.MaxScaleDenominator,
+			LabelNoClip:    serviceLayer.LabelNoClip,
 		},
 		GroupName:                   groupName,
 		Styles:                      []Style{},
@@ -306,6 +309,8 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 		case serviceLayer.Data.TIF != nil:
 			tif := serviceLayer.Data.TIF
 			result.GeometryType = smoothoperatorutils.Pointer("Raster")
+			result.BaseLayer.TifPath = tif.BlobKey
+			result.BaseLayer.Resample = tif.Resample
 			result.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
 		case serviceLayer.Data.Postgis != nil:
 			postgis := serviceLayer.Data.Postgis

@@ -48,11 +48,13 @@ func addLayerInput(wms *pdoknlv3.WMS, data map[string]string) {
 	}
 
 	data["input"] = sb.String()
-	referencesYaml, err := yaml.Marshal(legendReferences)
-	if err == nil {
-		data["input2"] = string(referencesYaml)
-	}
 
+	// TODO - current config is hard to read and process down the line
+	// We should alter the legend generation script so it can handle yaml input and pass the data as follows
+	//referencesYaml, err := yaml.Marshal(legendReferences)
+	//if err == nil {
+	//	data["input2"] = string(referencesYaml)
+	//}
 }
 
 func processLayer(layer *pdoknlv3.Layer, legendReferences *[]LegendReference) {

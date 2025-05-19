@@ -18,10 +18,12 @@ import (
 )
 
 const (
-	inspireSchemaLocations  = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd"
-	wfsCapabilitiesFilename = "/var/www/config/capabilities_wfs_200.xml"
-	wmsCapabilitiesFilename = "/var/www/config/capabilities_wms_130.xml"
-	metadataMediaType       = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
+	inspireSchemaLocationsWFS = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd"
+	inspireSchemaLocationsWMS = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd http://inspire.ec.europa.eu/schemas/common/1.0 http://inspire.ec.europa.eu/schemas/common/1.0/common.xsd"
+	wfsCapabilitiesFilename   = "/var/www/config/capabilities_wfs_200.xml"
+	wmsCapabilitiesFilename   = "/var/www/config/capabilities_wms_130.xml"
+	metadataMediaType         = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
+	XLinkURL                  = "http://www.w3.org/1999/xlink"
 )
 
 func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
@@ -61,7 +63,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 	}
 
 	if wfs.Spec.Service.Inspire != nil {
-		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
+		config.Global.AdditionalSchemaLocations = inspireSchemaLocationsWFS
 		metadataURL, _ := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
 
 		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = &wfs200.OperationsMetadata{
@@ -112,7 +114,7 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 		}
 
 		featureType := wfs200.FeatureType{
-			Name:     wfs.Spec.Service.Prefix + fType.Name,
+			Name:     wfs.Spec.Service.Prefix + ":" + fType.Name,
 			Title:    mapperutils.EscapeQuotes(fType.Title),
 			Abstract: mapperutils.EscapeQuotes(fType.Abstract),
 			Keywords: &[]wsc110.Keywords{
@@ -208,8 +210,7 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 }
 
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
-	hostBaseURL := "https://service.pdok.nl"
-	canonicalServiceURL := hostBaseURL + "/" + pdoknlv3.GetBaseURLPath(wms)
+	canonicalServiceURL := pdoknlv3.GetHost(true) + "/" + pdoknlv3.GetBaseURLPath(wms)
 
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
 
@@ -234,13 +235,14 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Title:              mapperutils.EscapeQuotes(wms.Spec.Service.Title),
 						Abstract:           &abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
-						OnlineResource:     wms130.OnlineResource{Href: &hostBaseURL},
+						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(pdoknlv3.GetHost(true))},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               smoothoperatorutils.Pointer("NONE"),
 						AccessConstraints:  &wms.Spec.Service.AccessConstraints,
-						LayerLimit:         nil,
-						MaxWidth:           &maxWidth,
-						MaxHeight:          &maxHeight,
+						OptionalConstraints: &wms130.OptionalConstraints{
+							MaxWidth:  maxWidth,
+							MaxHeight: maxHeight,
+						},
 					},
 					Capabilities: wms130.Capabilities{
 						WMSCapabilities: wms130.WMSCapabilities{
@@ -262,7 +264,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 							ExtendedCapabilities: nil,
 							Layer:                getLayers(wms, canonicalServiceURL),
 						},
-						OptionalConstraints: wms130.OptionalConstraints{},
+						OptionalConstraints: nil,
 					},
 				},
 			},
@@ -270,7 +272,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 	}
 
 	if wms.Spec.Service.Inspire != nil {
-		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
+		config.Global.AdditionalSchemaLocations = inspireSchemaLocationsWMS
 		metadataURL, _ := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wms.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
 
 		defaultLanguage := wms130.Language{Language: wms.Spec.Service.Inspire.Language}
@@ -340,7 +342,7 @@ func getContactInformation(ownerInfo *smoothoperatorv1.OwnerInfo) *wms130.Contac
 func getDcpType(url string, fillPost bool) *wms130.DCPType {
 	get := wms130.Method{
 		OnlineResource: wms130.OnlineResource{
-			Xlink: nil,
+			Xlink: smoothoperatorutils.Pointer(XLinkURL),
 			Type:  nil,
 			Href:  smoothoperatorutils.Pointer(url),
 		},
@@ -376,126 +378,6 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 		title = smoothoperatorutils.Pointer("")
 	}
 
-	defaultCrs := []wms130.CRS{{
-		Namespace: "EPSG",
-		Code:      28992,
-	}, {
-		Namespace: "EPSG",
-		Code:      25831,
-	}, {
-		Namespace: "EPSG",
-		Code:      25832,
-	}, {
-		Namespace: "EPSG",
-		Code:      3034,
-	}, {
-		Namespace: "EPSG",
-		Code:      3035,
-	}, {
-		Namespace: "EPSG",
-		Code:      3857,
-	}, {
-		Namespace: "EPSG",
-		Code:      4258,
-	}, {
-		Namespace: "EPSG",
-		Code:      4326,
-	}, {
-		Namespace: "CRS",
-		Code:      84,
-	}}
-
-	defaultBoundingBox := wms130.EXGeographicBoundingBox{
-		WestBoundLongitude: 2.52713,
-		EastBoundLongitude: 7.37403,
-		SouthBoundLatitude: 50.2129,
-		NorthBoundLatitude: 55.7212,
-	}
-
-	allDefaultBoundingBoxes := make([]*wms130.LayerBoundingBox, 0)
-	allDefaultBoundingBoxes = append(allDefaultBoundingBoxes,
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:28992",
-			Minx: -25000,
-			Miny: 250000,
-			Maxx: 280000,
-			Maxy: 860000,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:25831",
-			Minx: -470271,
-			Miny: 5.56231e+06,
-			Maxx: 795163,
-			Maxy: 6.18197e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:25832",
-			Minx: 62461.6,
-			Miny: 5.56555e+06,
-			Maxx: 397827,
-			Maxy: 6.19042e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:3034",
-			Minx: 2.61336e+06,
-			Miny: 3.509e+06,
-			Maxx: 3.22007e+06,
-			Maxy: 3.84003e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:3035",
-			Minx: 3.01676e+06,
-			Miny: 3.81264e+06,
-			Maxx: 3.64485e+06,
-			Maxy: 4.15586e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:3857",
-			Minx: 281318,
-			Miny: 6.48322e+06,
-			Maxx: 820873,
-			Maxy: 7.50311e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:4258",
-			Minx: 50.2129,
-			Miny: 2.52713,
-			Maxx: 55.7212,
-			Maxy: 7.37403,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:4326",
-			Minx: 50.2129,
-			Miny: 2.52713,
-			Maxx: 55.7212,
-			Maxy: 7.37403,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "CRS:84",
-			Minx: 2.52713,
-			Miny: 50.2129,
-			Maxx: 7.37403,
-			Maxy: 55.7212,
-			Resx: 0,
-			Resy: 0,
-		})
-
 	var authorityURL *wms130.AuthorityURL
 	var identifier *wms130.Identifier
 
@@ -503,7 +385,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 		authorityURL = &wms130.AuthorityURL{
 			Name: referenceLayer.Authority.Name,
 			OnlineResource: wms130.OnlineResource{
-				Xlink: nil,
+				Xlink: smoothoperatorutils.Pointer(XLinkURL),
 				Type:  nil,
 				Href:  &referenceLayer.Authority.URL,
 			},
@@ -515,32 +397,33 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 	}
 
 	topLayer := wms130.Layer{
-		Queryable:               smoothoperatorutils.Pointer(1),
-		Opaque:                  nil,
-		Name:                    nil,
-		Title:                   *title,
-		Abstract:                smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)),
-		KeywordList:             &wms130.Keywords{Keyword: referenceLayer.Keywords},
-		CRS:                     defaultCrs,
-		EXGeographicBoundingBox: &defaultBoundingBox,
-		BoundingBox:             allDefaultBoundingBoxes,
-		Dimension:               nil,
-		Attribution:             nil,
-		AuthorityURL:            authorityURL,
-		Identifier:              identifier,
-		MetadataURL:             nil,
-		DataURL:                 nil,
-		FeatureListURL:          nil,
-		Style:                   nil,
-		MinScaleDenominator:     nil,
-		MaxScaleDenominator:     nil,
-		Layer:                   []*wms130.Layer{},
+		Queryable:   smoothoperatorutils.Pointer(1),
+		Opaque:      nil,
+		Name:        nil,
+		Title:       *title,
+		Abstract:    smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)),
+		KeywordList: &wms130.Keywords{Keyword: referenceLayer.Keywords},
+		//CRS:                     getDefaultWMSCRSes(),
+		//EXGeographicBoundingBox: &defaultWMSBoundingBox,
+		//BoundingBox:             getDefaultWMSLayerBoundingBoxes(),
+		Dimension:           nil,
+		Attribution:         nil,
+		AuthorityURL:        authorityURL,
+		Identifier:          identifier,
+		MetadataURL:         nil,
+		DataURL:             nil,
+		FeatureListURL:      nil,
+		Style:               nil,
+		MinScaleDenominator: nil,
+		MaxScaleDenominator: nil,
+		Layer:               []*wms130.Layer{},
 	}
 
 	for _, layer := range referenceLayer.Layers {
 		var minScaleDenom *float64
 		var maxScaleDenom *float64
 		var innerIdentifier *wms130.Identifier
+		var innerAuthorityURL *wms130.AuthorityURL
 		metadataUrls := make([]*wms130.MetadataURL, 0)
 
 		if layer.MinScaleDenominator != nil {
@@ -562,7 +445,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 				Type:   smoothoperatorutils.Pointer("TC211"),
 				Format: smoothoperatorutils.Pointer("text/plain"),
 				OnlineResource: wms130.OnlineResource{
-					Xlink: nil,
+					Xlink: smoothoperatorutils.Pointer(XLinkURL),
 					Type:  smoothoperatorutils.Pointer("simple"),
 					Href:  smoothoperatorutils.Pointer("https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=" + layer.DatasetMetadataURL.CSW.MetadataIdentifier),
 				},
@@ -570,6 +453,14 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 		}
 
 		if layer.Authority != nil {
+			innerAuthorityURL = &wms130.AuthorityURL{
+				Name: layer.Authority.Name,
+				OnlineResource: wms130.OnlineResource{
+					Xlink: smoothoperatorutils.Pointer(XLinkURL),
+					Type:  nil,
+					Href:  &layer.Authority.URL,
+				},
+			}
 			innerIdentifier = &wms130.Identifier{
 				Authority: layer.Authority.Name,
 				Value:     layer.Authority.SpatialDatasetIdentifier,
@@ -585,20 +476,20 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 			KeywordList: &wms130.Keywords{
 				Keyword: layer.Keywords,
 			},
-			CRS:                     defaultCrs,
-			EXGeographicBoundingBox: &defaultBoundingBox,
-			BoundingBox:             allDefaultBoundingBoxes,
-			Dimension:               nil,
-			Attribution:             nil,
-			AuthorityURL:            authorityURL,
-			Identifier:              innerIdentifier,
-			MetadataURL:             metadataUrls,
-			DataURL:                 nil,
-			FeatureListURL:          nil,
-			Style:                   []*wms130.Style{},
-			MinScaleDenominator:     minScaleDenom,
-			MaxScaleDenominator:     maxScaleDenom,
-			Layer:                   nil,
+			//CRS:                     getDefaultWMSCRSes(),
+			//EXGeographicBoundingBox: &defaultWMSBoundingBox,
+			//BoundingBox:             getDefaultWMSLayerBoundingBoxes(),
+			Dimension:           nil,
+			Attribution:         nil,
+			AuthorityURL:        innerAuthorityURL,
+			Identifier:          innerIdentifier,
+			MetadataURL:         metadataUrls,
+			DataURL:             nil,
+			FeatureListURL:      nil,
+			Style:               []*wms130.Style{},
+			MinScaleDenominator: minScaleDenom,
+			MaxScaleDenominator: maxScaleDenom,
+			Layer:               nil,
 		}
 		for _, style := range layer.Styles {
 			newStyle := wms130.Style{
@@ -610,7 +501,7 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 					Height: 20,
 					Format: "image/png",
 					OnlineResource: wms130.OnlineResource{
-						Xlink: nil,
+						Xlink: smoothoperatorutils.Pointer(XLinkURL),
 						Type:  smoothoperatorutils.Pointer("simple"),
 						Href:  smoothoperatorutils.Pointer(canonicalURL + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
 					},

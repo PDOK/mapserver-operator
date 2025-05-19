@@ -259,6 +259,12 @@ func GetBaseURLPath[T WMSWFS](o T) string {
 	return strings.TrimPrefix(parsed.Path, "/")
 }
 
+func GetBaseURLPathWithoutTypeAndVersion[T WMSWFS](o T) string {
+	serviceURL := o.URLPath()
+	parsed, _ := url.Parse(serviceURL)
+	return strings.TrimPrefix(parsed.Path, "/")
+}
+
 func (d *Data) GetColumns() *[]Column {
 	switch {
 	case d.Gpkg != nil:

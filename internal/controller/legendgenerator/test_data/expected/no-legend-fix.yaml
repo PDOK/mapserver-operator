@@ -1,0 +1,14 @@
+default_mapserver.conf: |
+  CONFIG
+    ENV
+      MS_MAP_NO_PATH "true"
+    END
+  END
+input: |
+  "wegvakken" "wegvakken"
+  "hectopunten" "hectopunten"
+#input2: |
+#  - layer: wegvakken
+#    style: wegvakken
+#  - layer: hectopunten
+#    style: hectopunten

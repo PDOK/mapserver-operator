@@ -666,8 +666,16 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 	}
 	if len(metrics) == 0 {
 		var avgU int32 = 90
-		if podSpecPatch != nil && podSpecPatch.Resources != nil {
-			if cpu := podSpecPatch.Resources.Requests.Cpu(); cpu != nil && !cpu.IsZero() {
+		var containerPatch *corev1.Container
+		if podSpecPatch != nil {
+			for _, c := range podSpecPatch.Containers {
+				if c.Name == "mapserver" {
+					containerPatch = &c
+				}
+			}
+		}
+		if containerPatch != nil {
+			if cpu := containerPatch.Resources.Requests.Cpu(); cpu != nil && !cpu.IsZero() {
 				avgU = 80
 			}
 		}

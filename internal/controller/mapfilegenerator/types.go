@@ -33,7 +33,7 @@ type WMSInput struct {
 	Layers            []WMSLayer   `json:"layers"`
 	GroupLayers       []GroupLayer `json:"group_layers"`
 	Symbols           []string     `json:"symbols"`
-	Fonts             *string      `json:"fonts"`
+	Fonts             *string      `json:"fonts,omitempty"`
 	Templates         string       `json:"templates,omitempty"`
 	OutputFormatJpg   string       `json:"outputformat_jpg"`
 	OutputFormatPng   string       `json:"outputformat_png8"`
@@ -48,11 +48,16 @@ type BaseLayer struct {
 	Keywords       string   `json:"keywords"`
 	Extent         string   `json:"layer_extent"`
 	MetadataID     string   `json:"dataset_metadata_id"`
-	Columns        []Column `json:"columns"`
+	Columns        []Column `json:"columns,omitempty"`
 	GeometryType   *string  `json:"geometry_type,omitempty"`
 	GeopackagePath *string  `json:"gpkg_path,omitempty"`
 	TableName      *string  `json:"tablename,omitempty"`
 	Postgis        *bool    `json:"postgis,omitempty"`
+	MinScale       *string  `json:"minscale,omitempty"`
+	MaxScale       *string  `json:"maxscale,omitempty"`
+	TifPath        string   `json:"tif_path,omitempty"`
+	Resample       *string  `json:"resample,omitempty"`
+	LabelNoClip    bool     `json:"label_no_clip,omitempty"`
 }
 
 type WFSLayer struct {

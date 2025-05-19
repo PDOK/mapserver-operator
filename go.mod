@@ -24,6 +24,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+replace  github.com/pdok/ogc-specifications => ../ogc-specifications
+
 replace github.com/abbot/go-http-auth => github.com/abbot/go-http-auth v0.4.0 // for github.com/traefik/traefik/v3
 
 require (

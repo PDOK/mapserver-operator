@@ -90,7 +90,7 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	var names []string
 	hasVisibleLayer := false
 	wms.Spec.Service.Layer.setInheritedBoundingBoxes()
-	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		path = path.Child("layers")
 		var layerErrs field.ErrorList
 
