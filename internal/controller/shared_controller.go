@@ -131,13 +131,13 @@ func getSharedBareObjects[O pdoknlv3.WMSWFS](obj O) []client.Object {
 		getBareDeployment(obj),
 		getBareIngressRoute(obj),
 		getBareHorizontalPodAutoScaler(obj),
-		getBareConfigMapBlobDownload(obj),
+		getBareConfigMap(obj, InitScriptsName),
 		getBareConfigMap(obj, MapserverName),
 		getBareService(obj),
 		getBareCorsHeadersMiddleware(obj),
 		getBarePodDisruptionBudget(obj),
-		getBareConfigMapMapfileGenerator(obj),
-		getBareConfigMapCapabilitiesGenerator(obj),
+		getBareConfigMap(obj, MapfileGeneratorName),
+		getBareConfigMap(obj, CapabilitiesGeneratorName),
 	}
 }
 
@@ -563,24 +563,6 @@ func getLegendMatchRule(wms *pdoknlv3.WMS) string {
 	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
 }
 
-func getBareConfigMapMapfileGenerator[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, "mapfile-generator"),
-			Namespace: obj.GetNamespace(),
-		},
-	}
-}
-
-func getBareConfigMapCapabilitiesGenerator[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, "capabilities-generator"),
-			Namespace: obj.GetNamespace(),
-		},
-	}
-}
-
 func mutateConfigMapCapabilitiesGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
 	reconcilerClient := getReconcilerClient(r)
 
@@ -732,15 +714,6 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 		return err
 	}
 	return ctrl.SetControllerReference(obj, autoscaler, getReconcilerScheme(r))
-}
-
-func getBareConfigMapBlobDownload[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, "init-scripts"),
-			Namespace: obj.GetNamespace(),
-		},
-	}
 }
 
 func mutateConfigMapBlobDownload[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap) error {
