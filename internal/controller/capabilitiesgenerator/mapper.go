@@ -30,13 +30,17 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		return nil, err
 	}
 
+	serviceVersion := mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version")
+	if serviceVersion == nil {
+		serviceVersion = mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "pdok.nl/service-version")
+	}
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
 			Onlineresourceurl: pdoknlv3.GetHost(true),
 			Path:              "/" + pdoknlv3.GetBaseURLPath(wfs),
-			Version:           *mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version"),
+			Version:           *serviceVersion,
 		},
 		Services: capabilitiesgenerator.Services{
 			WFS200Config: &capabilitiesgenerator.WFS200Config{
@@ -218,6 +222,10 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 
 	maxWidth := 4000
 	maxHeight := 4000
+	serviceVersion := mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "service-version")
+	if serviceVersion == nil {
+		serviceVersion = mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "pdok.nl/service-version")
+	}
 
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
@@ -226,7 +234,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 			Prefix:            "",
 			Onlineresourceurl: pdoknlv3.GetHost(true),
 			Path:              "/" + pdoknlv3.GetBaseURLPath(wms),
-			Version:           *mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "service-version"),
+			Version:           *serviceVersion,
 		},
 		Services: capabilitiesgenerator.Services{
 			WMS130Config: &capabilitiesgenerator.WMS130Config{
