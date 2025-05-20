@@ -39,7 +39,7 @@ func getHashedConfigMapNameFromClient[O pdoknlv3.WMSWFS](ctx context.Context, ob
 	return "", fmt.Errorf("configmap %s not found", volumeName)
 }
 
-func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBlobDownload bool) ([]client.Object, error) {
+func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBlobDownload bool, includeMapfileGeneratorConfigMap bool) ([]client.Object, error) {
 	bareObjects := getSharedBareObjects(obj)
 	var objects []client.Object
 
@@ -59,13 +59,15 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	cm.Name = hashedName
 	objects = append(objects, cm)
 
-	cm = getBareConfigMapMapfileGenerator(obj)
-	hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapMapfileGeneratorVolumeName)
-	if err != nil {
-		return objects, err
+	if includeMapfileGeneratorConfigMap {
+		cm = getBareConfigMapMapfileGenerator(obj)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapMapfileGeneratorVolumeName)
+		if err != nil {
+			return objects, err
+		}
+		cm.Name = hashedName
+		objects = append(objects, cm)
 	}
-	cm.Name = hashedName
-	objects = append(objects, cm)
 
 	cm = getBareConfigMapCapabilitiesGenerator(obj)
 	hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapCapabilitiesGeneratorVolumeName)

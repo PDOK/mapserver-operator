@@ -1020,10 +1020,6 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 	}
 }
 
-func getFinalizerName[O pdoknlv3.WMSWFS](obj O) string {
-	return strings.ToLower(string(obj.Type())) + "." + pdoknlv3.GroupVersion.Group + "/finalizer"
-}
-
 // TODO fix linting (cyclop,funlen)
 //
 //nolint:cyclop,funlen
@@ -1220,82 +1216,4 @@ func getConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, obj O, r
 		return cm, &or, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, cm), err)
 	}
 	return cm, &or, nil
-}
-
-// TODO fix linting (funlen)
-//
-//nolint:funlen
-func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (err error) {
-	bareObjects := getSharedBareObjects(obj)
-	var objects []client.Object
-
-	// Remove ConfigMaps as they have hashed names
-	for _, object := range bareObjects {
-		if _, ok := object.(*corev1.ConfigMap); !ok {
-			objects = append(objects, object)
-		}
-	}
-
-	// ConfigMap
-	cm := getBareConfigMap(obj, MapserverName)
-	err = mutateConfigMap(r, obj, cm)
-	if err != nil {
-		return err
-	}
-	objects = append(objects, cm)
-
-	// ConfigMap-MapfileGenerator
-	cmMg := getBareConfigMapMapfileGenerator(obj)
-	err = mutateConfigMapMapfileGenerator(r, obj, cmMg, ownerInfo)
-	if err != nil {
-		return err
-	}
-	objects = append(objects, cmMg)
-
-	// ConfigMap-CapabilitiesGenerator
-	cmCg := getBareConfigMapCapabilitiesGenerator(obj)
-	err = mutateConfigMapCapabilitiesGenerator(r, obj, cmCg, ownerInfo)
-	if err != nil {
-		return err
-	}
-	objects = append(objects, cmCg)
-
-	// ConfigMap-BlobDownload
-	cmBd := getBareConfigMapBlobDownload(obj)
-	err = mutateConfigMapBlobDownload(r, obj, cmBd)
-	if err != nil {
-		return err
-	}
-	objects = append(objects, cmBd)
-
-	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		wms, _ := any(obj).(*pdoknlv3.WMS)
-		wmsReconciler := (*WMSReconciler)(r)
-
-		// ConfigMap-LegendGenerator
-		cmLg := getBareConfigMap(wms, LegendGeneratorName)
-		err = mutateConfigMapLegendGenerator(wmsReconciler, wms, cmLg)
-		if err != nil {
-			return err
-		}
-		objects = append(objects, cmLg)
-
-		// ConfigMap-FeatureInfo
-		cmFi := getBareConfigMap(wms, FeatureInfoGeneratorName)
-		err = mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, cmFi)
-		if err != nil {
-			return err
-		}
-		objects = append(objects, cmFi)
-
-		// ConfigMap-OgcWebserviceProxy
-		cmOwp := getBareConfigMap(wms, OgcWebserviceProxyName)
-		err = mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, cmOwp)
-		if err != nil {
-			return err
-		}
-		objects = append(objects, cmOwp)
-	}
-
-	return smoothoperatorutils.DeleteObjects(ctx, getReconcilerClient(r), objects)
 }
