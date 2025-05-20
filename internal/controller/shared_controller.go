@@ -59,11 +59,14 @@ const (
 )
 
 var (
-	AppLabelKey              = "app"
-	MapserverName            = "mapserver"
-	LegendGeneratorName      = "legend-generator"
-	FeatureInfoGeneratorName = "featureinfo-generator"
-	OgcWebserviceProxyName   = "ogc-webservice-proxy"
+	AppLabelKey               = "app"
+	MapserverName             = "mapserver"
+	LegendGeneratorName       = "legend-generator"
+	FeatureInfoGeneratorName  = "featureinfo-generator"
+	OgcWebserviceProxyName    = "ogc-webservice-proxy"
+	MapfileGeneratorName      = "mapfile-generator"
+	CapabilitiesGeneratorName = "capabilities-generator"
+	InitScriptsName           = "init-scripts"
 
 	// Service ports
 	mapserverPortName                    = "mapserver"
@@ -1020,106 +1023,12 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 	}
 }
 
-// TODO fix linting (cyclop,funlen)
-//
-//nolint:cyclop,funlen
 func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (operationResults map[string]controllerutil.OperationResult, err error) {
-	operationResults = make(map[string]controllerutil.OperationResult)
 	reconcilerClient := getReconcilerClient(r)
 
-	hashedConfigMapNames := types.HashedConfigMapNames{}
-
-	// region ConfigMap
-	{
-		configMap := getBareConfigMap(obj, MapserverName)
-		if err = mutateConfigMap(r, obj, configMap); err != nil {
-			return operationResults, err
-		}
-		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, configMap)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, configMap, func() error {
-			return mutateConfigMap(r, obj, configMap)
-		})
-		if err != nil {
-			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, configMap), err)
-		}
-		hashedConfigMapNames.ConfigMap = configMap.Name
-	}
-	// end region ConfigMap
-
-	// region ConfigMap-MapfileGenerator
-	if obj.Mapfile() == nil {
-		configMapMfg := getBareConfigMapMapfileGenerator(obj)
-		if err = mutateConfigMapMapfileGenerator(r, obj, configMapMfg, ownerInfo); err != nil {
-			return operationResults, err
-		}
-		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapMfg)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, configMapMfg, func() error {
-			return mutateConfigMapMapfileGenerator(r, obj, configMapMfg, ownerInfo)
-		})
-		if err != nil {
-			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapMfg), err)
-		}
-		hashedConfigMapNames.MapfileGenerator = configMapMfg.Name
-	}
-	// end region ConfigMap-MapfileGenerator
-
-	// region ConfigMap-CapabilitiesGenerator
-	{
-		configMapCg := getBareConfigMapCapabilitiesGenerator(obj)
-		if err = mutateConfigMapCapabilitiesGenerator(r, obj, configMapCg, ownerInfo); err != nil {
-			return operationResults, err
-		}
-		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapCg)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, configMapCg, func() error {
-			return mutateConfigMapCapabilitiesGenerator(r, obj, configMapCg, ownerInfo)
-		})
-		if err != nil {
-			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapCg), err)
-		}
-		hashedConfigMapNames.CapabilitiesGenerator = configMapCg.Name
-	}
-	// end region ConfigMap-CapabilitiesGenerator
-
-	// region ConfigMap-BlobDownload
-	if obj.Options().PrefetchData {
-		configMapBd := getBareConfigMapBlobDownload(obj)
-		if err = mutateConfigMapBlobDownload(r, obj, configMapBd); err != nil {
-			return operationResults, err
-		}
-		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapBd)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, configMapBd, func() error {
-			return mutateConfigMapBlobDownload(r, obj, configMapBd)
-		})
-		if err != nil {
-			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapBd), err)
-		}
-		hashedConfigMapNames.BlobDownload = configMapBd.Name
-	}
-	// end region ConfigMap-BlobDownload
-
-	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		wms, _ := any(obj).(*pdoknlv3.WMS)
-		wmsReconciler := (*WMSReconciler)(r)
-
-		configMaps := make(map[string]func(*WMSReconciler, *pdoknlv3.WMS, *corev1.ConfigMap) error)
-		configMaps[LegendGeneratorName] = mutateConfigMapLegendGenerator
-		configMaps[FeatureInfoGeneratorName] = mutateConfigMapFeatureinfoGenerator
-		configMaps[OgcWebserviceProxyName] = mutateConfigMapOgcWebserviceProxy
-		for cmName, mutate := range configMaps {
-			cm, or, err := getConfigMap(ctx, wms, wmsReconciler, cmName, func(r *WMSReconciler, w *pdoknlv3.WMS, cm *corev1.ConfigMap) error {
-				return mutate(r, w, cm)
-			})
-			if or != nil {
-				operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, cm)] = *or
-			}
-			if err != nil {
-				return operationResults, err
-			}
-			switch cmName {
-			case LegendGeneratorName:
-				hashedConfigMapNames.LegendGenerator = cm.Name
-			case FeatureInfoGeneratorName:
-				hashedConfigMapNames.FeatureInfoGenerator = cm.Name
-			case OgcWebserviceProxyName:
-				hashedConfigMapNames.OgcWebserviceProxy = cm.Name
-			}
-		}
+	hashedConfigMapNames, operationResults, err := createOrUpdateConfigMaps(ctx, r, obj, ownerInfo)
+	if err != nil {
+		return operationResults, err
 	}
 
 	// region Deployment
@@ -1128,12 +1037,6 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, deployment, func() error {
 			return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
 		})
-		// if operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment)] == controllerutil.OperationResultUpdated {
-		//	 deployment = getBareDeployment(obj)
-		//	 smoothoperatork8s.ShowDiff(ctx, reconcilerClient, deployment, func() error {
-		//	 	return mutateDeployment(r, obj, deployment, hashedConfigMapNames)
-		//	 })
-		// }
 		if err != nil {
 			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, deployment), err)
 		}
@@ -1203,7 +1106,66 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	return operationResults, nil
 }
 
-func getConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, obj O, reconciler R, name string, mutate func(R, O, *corev1.ConfigMap) error) (*corev1.ConfigMap, *controllerutil.OperationResult, error) {
+func createOrUpdateConfigMaps[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) {
+	operationResults, configMaps := make(map[string]controllerutil.OperationResult), make(map[string]func(R, O, *corev1.ConfigMap) error)
+	configMaps[MapserverName] = mutateConfigMap
+	if obj.Mapfile() == nil {
+		configMaps[MapfileGeneratorName] = func(r R, o O, cm *corev1.ConfigMap) error {
+			return mutateConfigMapMapfileGenerator(r, o, cm, ownerInfo)
+		}
+	}
+	configMaps[CapabilitiesGeneratorName] = func(r R, o O, cm *corev1.ConfigMap) error {
+		return mutateConfigMapCapabilitiesGenerator(r, o, cm, ownerInfo)
+	}
+	if obj.Options().PrefetchData {
+		configMaps[InitScriptsName] = mutateConfigMapBlobDownload
+	}
+	if obj.Type() == pdoknlv3.ServiceTypeWMS {
+		wms, _ := any(obj).(*pdoknlv3.WMS)
+		wmsReconciler := (*WMSReconciler)(r)
+
+		configMaps[LegendGeneratorName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
+			return mutateConfigMapLegendGenerator(wmsReconciler, wms, cm)
+		}
+		configMaps[FeatureInfoGeneratorName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
+			return mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, cm)
+		}
+		configMaps[OgcWebserviceProxyName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
+			return mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, cm)
+		}
+	}
+	for cmName, mutate := range configMaps {
+		cm, or, err := createOrUpdateConfigMap(ctx, obj, r, cmName, func(r R, o O, cm *corev1.ConfigMap) error {
+			return mutate(r, o, cm)
+		})
+		if or != nil {
+			operationResults[smoothoperatorutils.GetObjectFullName(getReconcilerClient(r), cm)] = *or
+		}
+		if err != nil {
+			return hashedConfigMapNames, operationResults, err
+		}
+		switch cmName {
+		case MapserverName:
+			hashedConfigMapNames.ConfigMap = cm.Name
+		case MapfileGeneratorName:
+			hashedConfigMapNames.MapfileGenerator = cm.Name
+		case CapabilitiesGeneratorName:
+			hashedConfigMapNames.CapabilitiesGenerator = cm.Name
+		case InitScriptsName:
+			hashedConfigMapNames.BlobDownload = cm.Name
+		case LegendGeneratorName:
+			hashedConfigMapNames.LegendGenerator = cm.Name
+		case FeatureInfoGeneratorName:
+			hashedConfigMapNames.FeatureInfoGenerator = cm.Name
+		case OgcWebserviceProxyName:
+			hashedConfigMapNames.OgcWebserviceProxy = cm.Name
+		}
+	}
+
+	return hashedConfigMapNames, operationResults, err
+}
+
+func createOrUpdateConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, obj O, reconciler R, name string, mutate func(R, O, *corev1.ConfigMap) error) (*corev1.ConfigMap, *controllerutil.OperationResult, error) {
 	reconcilerClient := getReconcilerClient(reconciler)
 	cm := getBareConfigMap(obj, name)
 	if err := mutate(reconciler, obj, cm); err != nil {
