@@ -51,7 +51,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	}
 
 	// Add all ConfigMaps with hashed names
-	cm := getBareConfigMap(obj)
+	cm := getBareConfigMap(obj, MapserverName)
 	hashedName, err := getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapVolumeName)
 	if err != nil {
 		return objects, err
@@ -87,7 +87,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		wms, _ := any(obj).(*pdoknlv3.WMS)
-		cm = getBareConfigMapLegendGenerator(wms)
+		cm = getBareConfigMap(wms, LegendGeneratorName)
 		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapLegendGeneratorVolumeName)
 		if err != nil {
 			return objects, err
@@ -95,7 +95,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 		cm.Name = hashedName
 		objects = append(objects, cm)
 
-		cm = getBareConfigMapFeatureinfoGenerator(wms)
+		cm = getBareConfigMap(wms, FeatureInfoGeneratorName)
 		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapFeatureinfoGeneratorVolumeName)
 		if err != nil {
 			return objects, err
@@ -104,7 +104,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 		objects = append(objects, cm)
 
 		if obj.Options().UseWebserviceProxy() {
-			cm = getBareConfigMapOgcWebserviceProxy(wms)
+			cm = getBareConfigMap(wms, OgcWebserviceProxyName)
 			hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapOgcWebserviceProxyVolumeName)
 			if err != nil {
 				return objects, err

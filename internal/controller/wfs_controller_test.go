@@ -372,7 +372,7 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMap(wfs)
+			configMap := getBareConfigMap(wfs, MapserverName)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, mapserver.ConfigMapVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
