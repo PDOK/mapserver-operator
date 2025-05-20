@@ -12,7 +12,7 @@ require (
 	github.com/onsi/gomega v1.36.2
 	github.com/pdok/featureinfo-generator v1.4.0-beta1
 	github.com/pdok/ogc-capabilities-generator v1.0.0-beta7
-	github.com/pdok/ogc-specifications v1.0.0-beta7
+	github.com/pdok/ogc-specifications v1.0.0-beta9
 	github.com/pdok/smooth-operator v0.1.1
 	github.com/peterbourgon/ff v1.7.1
 	github.com/stretchr/testify v1.10.0
@@ -23,8 +23,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/yaml v1.4.0
 )
-
-replace  github.com/pdok/ogc-specifications => ../ogc-specifications
 
 replace github.com/abbot/go-http-auth => github.com/abbot/go-http-auth v0.4.0 // for github.com/traefik/traefik/v3
 

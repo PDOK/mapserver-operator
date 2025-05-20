@@ -18,9 +18,6 @@ func main() {
 	updateWMSV3Layers(crdDir)
 }
 
-// TODO fix linting (funlen)
-//
-//nolint:funlen
 func updateWMSV3Layers(crdDir string) {
 	path := filepath.Join(crdDir, "pdok.nl_wms.yaml")
 
@@ -38,44 +35,7 @@ func updateWMSV3Layers(crdDir string) {
 	versions := make([]v1.CustomResourceDefinitionVersion, 0)
 	for _, version := range crd.Spec.Versions {
 		if version.Name == "v3" {
-			schema := version.Schema.OpenAPIV3Schema
-			spec := schema.Properties["spec"]
-			service := spec.Properties["service"]
-			layer := service.Properties["layer"]
-
-			// Level 3
-			layerSpecLevel3 := layer.DeepCopy()
-			layerSpecLevel3.Required = append(layerSpecLevel3.Required, "name")
-			delete(layerSpecLevel3.Properties, "layers")
-			xvals := v1.ValidationRules{}
-			for _, xval := range layerSpecLevel3.XValidations {
-				if !strings.Contains(xval.Rule, "self.layers") {
-					xvals = append(xvals, xval)
-				}
-			}
-			layerSpecLevel3.XValidations = xvals
-
-			// Level 2
-			layerSpecLevel2 := layer.DeepCopy()
-			layerSpecLevel2.Required = append(layerSpecLevel2.Required, "name")
-			layerSpecLevel2.Properties["layers"] = v1.JSONSchemaProps{
-				Type:        "array",
-				Description: "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]",
-				Items:       &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel3},
-			}
-
-			layer.Properties["layers"] = v1.JSONSchemaProps{
-				Type:        "array",
-				Description: "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]",
-				Items:       &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel2},
-			}
-
-			service.Properties["layer"] = layer
-			spec.Properties["service"] = service
-			schema.Properties["spec"] = spec
-			version.Schema = &v1.CustomResourceValidation{
-				OpenAPIV3Schema: schema,
-			}
+			updateLayersV3(&version)
 
 			versions = append(versions, version)
 		} else {
@@ -99,4 +59,45 @@ func updateWMSV3Layers(crdDir string) {
 
 	enc.SetIndent(2)
 	_ = enc.Encode(rawData)
+}
+
+func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
+	schema := version.Schema.OpenAPIV3Schema
+	spec := schema.Properties["spec"]
+	service := spec.Properties["service"]
+	layer := service.Properties["layer"]
+
+	// Level 3
+	layerSpecLevel3 := layer.DeepCopy()
+	layerSpecLevel3.Required = append(layerSpecLevel3.Required, "name")
+	delete(layerSpecLevel3.Properties, "layers")
+	xvals := v1.ValidationRules{}
+	for _, xval := range layerSpecLevel3.XValidations {
+		if !strings.Contains(xval.Rule, "self.layers") {
+			xvals = append(xvals, xval)
+		}
+	}
+	layerSpecLevel3.XValidations = xvals
+
+	// Level 2
+	layerSpecLevel2 := layer.DeepCopy()
+	layerSpecLevel2.Required = append(layerSpecLevel2.Required, "name")
+	layerSpecLevel2.Properties["layers"] = v1.JSONSchemaProps{
+		Type:        "array",
+		Description: "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]",
+		Items:       &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel3},
+	}
+
+	layer.Properties["layers"] = v1.JSONSchemaProps{
+		Type:        "array",
+		Description: "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]",
+		Items:       &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel2},
+	}
+
+	service.Properties["layer"] = layer
+	spec.Properties["service"] = service
+	schema.Properties["spec"] = spec
+	version.Schema = &v1.CustomResourceValidation{
+		OpenAPIV3Schema: schema,
+	}
 }

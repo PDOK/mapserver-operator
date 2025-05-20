@@ -78,9 +78,7 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-// TODO fix linting (cyclop,funlen)
-//
-//nolint:cyclop,funlen
+//nolint:funlen
 func main() {
 	var metricsAddr string
 	var certDir string
@@ -233,12 +231,6 @@ func main() {
 		}
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
-		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")
-			os.Exit(1)
-		}
-	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

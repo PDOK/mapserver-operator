@@ -29,7 +29,6 @@ import (
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -67,7 +66,6 @@ type WFSReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
-// TODO fix linting (dupl)
 //
 //nolint:dupl
 func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
@@ -99,17 +97,6 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 			lgr.Error(err, "unable to fetch OwnerInfo resource", "error", err)
 		}
 		return result, client.IgnoreNotFound(err)
-	}
-
-	lgr.Info("Get object full name")
-	fullName := smoothoperatorutils.GetObjectFullName(r.Client, wfs)
-	lgr.Info("Finalize if necessary")
-	shouldContinue, err := smoothoperatorutils.FinalizeIfNecessary(ctx, r.Client, wfs, getFinalizerName(wfs), func() error {
-		lgr.Info("deleting resources", "name", fullName)
-		return deleteAllForWMSWFS(ctx, r, wfs, ownerInfo)
-	})
-	if !shouldContinue || err != nil {
-		return result, err
 	}
 
 	lgr.Info("creating resources for wfs", "wfs", wfs)

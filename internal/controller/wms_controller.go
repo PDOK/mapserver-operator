@@ -34,7 +34,6 @@ import (
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -78,7 +77,6 @@ type WMSReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
-// TODO fix linting (dupl)
 //
 //nolint:dupl
 func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
@@ -112,17 +110,6 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, client.IgnoreNotFound(err)
 	}
 
-	lgr.Info("Get object full name")
-	fullName := smoothoperatorutils.GetObjectFullName(r.Client, wms)
-	lgr.Info("Finalize if necessary")
-	shouldContinue, err := smoothoperatorutils.FinalizeIfNecessary(ctx, r.Client, wms, getFinalizerName(wms), func() error {
-		lgr.Info("deleting resources", "name", fullName)
-		return deleteAllForWMSWFS(ctx, r, wms, ownerInfo)
-	})
-	if !shouldContinue || err != nil {
-		return result, err
-	}
-
 	lgr.Info("creating resources for wms", "wms", wms)
 	operationResults, err := createOrUpdateAllForWMSWFS(ctx, r, wms, ownerInfo)
 	if err != nil {
@@ -134,15 +121,6 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	logAndUpdateStatusFinished(ctx, r, wms, operationResults)
 
 	return result, err
-}
-
-func getBareConfigMapLegendGenerator(obj *pdoknlv3.WMS) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, "legend-generator"),
-			Namespace: obj.GetNamespace(),
-		},
-	}
 }
 
 func mutateConfigMapLegendGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, configMap *corev1.ConfigMap) error {
@@ -164,15 +142,6 @@ func mutateConfigMapLegendGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, configM
 	}
 	return smoothoperatorutils.AddHashSuffix(configMap)
 
-}
-
-func getBareConfigMapFeatureinfoGenerator(obj *pdoknlv3.WMS) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, "featureinfo-generator"),
-			Namespace: obj.GetNamespace(),
-		},
-	}
 }
 
 func mutateConfigMapFeatureinfoGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, configMap *corev1.ConfigMap) error {
@@ -197,15 +166,6 @@ func mutateConfigMapFeatureinfoGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, co
 		return err
 	}
 	return smoothoperatorutils.AddHashSuffix(configMap)
-}
-
-func getBareConfigMapOgcWebserviceProxy(obj *pdoknlv3.WMS) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, "ogc-webservice-proxy"),
-			Namespace: obj.GetNamespace(),
-		},
-	}
 }
 
 func mutateConfigMapOgcWebserviceProxy(r *WMSReconciler, wms *pdoknlv3.WMS, configMap *corev1.ConfigMap) error {

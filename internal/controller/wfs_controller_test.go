@@ -28,7 +28,6 @@ package controller
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"slices"
 
@@ -73,6 +72,7 @@ var _ = Describe("WFS Controller", func() {
 			Name:      ownerInfoResourceName,
 		}
 		ownerInfo := &smoothoperatorv1.OwnerInfo{}
+		initScripts, includeMapfileGeneratorConfigMap := true, true
 
 		BeforeEach(func() {
 			pdoknlv3.SetHost("localhost")
@@ -121,6 +121,20 @@ var _ = Describe("WFS Controller", func() {
 
 			By("Cleanup the specific resource instance OwnerInfo")
 			Expect(k8sClient.Delete(ctx, ownerInfoResource)).To(Succeed())
+
+			// the testEnv does not do garbage collection (https://book.kubebuilder.io/reference/envtest#testing-considerations)
+			By("Cleaning Owned Resources")
+			objects, err := getExpectedObjects(ctx, wfs, initScripts, includeMapfileGeneratorConfigMap)
+			Expect(err).NotTo(HaveOccurred())
+			for _, o := range objects {
+				objectKey := client.ObjectKey{
+					Namespace: o.GetNamespace(),
+					Name:      o.GetName(),
+				}
+				err := k8sClient.Get(ctx, objectKey, o)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(k8sClient.Delete(ctx, o)).To(Succeed())
+			}
 		})
 
 		It("Should successfully reconcile the resource", func() {
@@ -130,7 +144,8 @@ var _ = Describe("WFS Controller", func() {
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
 			By("Waiting for the owned resources to be created")
-			expectedBareObjects, err := getExpectedObjects(ctx, wfs, false)
+			initScripts = false
+			expectedBareObjects, err := getExpectedObjects(ctx, wfs, initScripts, includeMapfileGeneratorConfigMap)
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() error {
@@ -149,32 +164,6 @@ var _ = Describe("WFS Controller", func() {
 			// TODO fix
 			Expect(len(wfs.Status.Conditions)).To(BeEquivalentTo(1))
 			Expect(wfs.Status.Conditions[0].Status).To(BeEquivalentTo(metav1.ConditionTrue))
-
-			By("Deleting the WFS")
-			Expect(k8sClient.Delete(ctx, wfs)).To(Succeed())
-
-			By("Reconciling the WFS again")
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWfs})
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Waiting for the owned resources to be deleted")
-			Eventually(func() error {
-				for _, o := range expectedBareObjects {
-					// TODO make finalizers work in the test environment
-					if len(o.GetFinalizers()) > 0 {
-						continue
-					}
-
-					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: o.GetName()}, o)
-					if err == nil {
-						return errors.New("expected " + smoothoperatorutils.GetObjectFullName(k8sClient, o) + " to not be found")
-					}
-					if !k8serrors.IsNotFound(err) {
-						return err
-					}
-				}
-				return nil
-			}, "10s", "1s").Should(Not(HaveOccurred()))
 		})
 
 		It("Should successfully reconcile after a change in an owned resource", func() {
@@ -372,7 +361,7 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMap(wfs)
+			configMap := getBareConfigMap(wfs, MapserverName)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, mapserver.ConfigMapVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
@@ -410,7 +399,7 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMapMapfileGenerator(wfs)
+			configMap := getBareConfigMap(wfs, MapfileGeneratorName)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, mapserver.ConfigMapMapfileGeneratorVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
@@ -435,7 +424,7 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMapBlobDownload(wfs)
+			configMap := getBareConfigMap(wfs, InitScriptsName)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, mapserver.ConfigMapBlobDownloadVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
@@ -460,7 +449,7 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMapCapabilitiesGenerator(wfs)
+			configMap := getBareConfigMap(wfs, CapabilitiesGeneratorName)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, mapserver.ConfigMapCapabilitiesGeneratorVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
@@ -671,14 +660,6 @@ func reconcileWFS(r *WFSReconciler, wfs *pdoknlv3.WFS, typeNamespacedNameWfs typ
 
 	// Check it's there
 	err = k8sClient.Get(ctx, typeNamespacedNameWfs, wfs)
-	Expect(err).NotTo(HaveOccurred())
-
-	// Check finalizers
-	finalizerName := getFinalizerName(wfs)
-	Expect(wfs.Finalizers).To(ContainElement(finalizerName))
-
-	// Reconcile again
-	_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWfs})
 	Expect(err).NotTo(HaveOccurred())
 }
 
