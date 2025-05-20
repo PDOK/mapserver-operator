@@ -215,6 +215,7 @@ type TIF struct {
 	// This option can be used to control the resampling kernel used sampling raster images, optional
 	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:Pattern=`(NEAREST|AVERAGE|BILINEAR)`
+	// +kubebuilder:default=NEAREST
 	Resample *string `json:"resample,omitempty"`
 
 	// Sets the color index to treat as transparent for raster layers, optional, hex or rgb

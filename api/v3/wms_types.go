@@ -376,29 +376,41 @@ func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 }
 
 func (wmsService *WMSService) GetAllLayers() (layers []Layer) {
-	return append([]Layer{wmsService.Layer}, wmsService.Layer.GetAllLayers()...)
+	return wmsService.Layer.FlattenLayers()
 }
 
-func (layer *Layer) GetAllLayers() (layers []Layer) {
+// FlattenLayers - flattens the layer and its sublayers into one array
+func (layer *Layer) FlattenLayers() []Layer {
+	layers := []Layer{*layer}
 	for _, childLayer := range layer.Layers {
-		layers = append(layers, childLayer.GetAllLayers()...)
+		layers = append(layers, childLayer.FlattenLayers()...)
 	}
-	return
+	return layers
 }
 
-func (layer *Layer) GetParent(candidateLayer *Layer) *Layer {
-	if candidateLayer.Layers == nil {
+// GetAllSublayers - get all sublayers of a layer, the result does not include the layer itself
+func (layer *Layer) GetAllSublayers() []Layer {
+	layers := layer.Layers
+	for _, childLayer := range layer.Layers {
+		layers = append(layers, childLayer.GetAllSublayers()...)
+	}
+	return layers
+}
+
+func (wmsService *WMSService) GetParentLayer(layer Layer) *Layer {
+	if wmsService.Layer.Layers == nil {
 		return nil
 	}
 
-	for _, childLayer := range candidateLayer.Layers {
-		if childLayer.Name == layer.Name {
-			return candidateLayer
+	for _, middleLayer := range wmsService.Layer.Layers {
+		if middleLayer.Name == layer.Name {
+			return &wmsService.Layer
 		}
 
-		parent := layer.GetParent(&childLayer)
-		if parent != nil {
-			return parent
+		for _, bottomLayer := range middleLayer.Layers {
+			if bottomLayer.Name == layer.Name {
+				return &middleLayer
+			}
 		}
 	}
 	return nil

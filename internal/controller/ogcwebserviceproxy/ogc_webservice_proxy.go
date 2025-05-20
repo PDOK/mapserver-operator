@@ -76,8 +76,8 @@ func MapWMSToOgcWebserviceProxyConfig(wms *pdoknlv3.WMS) (config Config, err err
 	}
 
 	config.GroupLayers = make(map[string][]string)
-	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
-		if layer.IsGroupLayer() {
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
+		if layer.IsGroupLayer() && wms.Spec.Service.GetParentLayer(layer) != nil {
 			if dataLayers := dataLayersForGroupLayer(layer); len(dataLayers) > 0 {
 				config.GroupLayers[smoothoperatorutils.PointerVal(layer.Name, "")] = dataLayers
 			}

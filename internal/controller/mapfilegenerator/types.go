@@ -55,7 +55,7 @@ type BaseLayer struct {
 	Postgis        *bool    `json:"postgis,omitempty"`
 	MinScale       *string  `json:"minscale,omitempty"`
 	MaxScale       *string  `json:"maxscale,omitempty"`
-	TifPath        string   `json:"tif_path,omitempty"`
+	TifPath        *string  `json:"tif_path,omitempty"`
 	Resample       *string  `json:"resample,omitempty"`
 	LabelNoClip    bool     `json:"label_no_clip,omitempty"`
 }

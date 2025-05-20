@@ -2,6 +2,8 @@ package mapfilegenerator
 
 import (
 	"fmt"
+	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -15,6 +17,7 @@ import (
 
 const (
 	defaultMaxFeatures = 1000
+	tifPath            = "/srv/data/tif"
 	geopackagePath     = "/srv/data/gpkg"
 	defaultExtent      = "-25000 250000 280000 860000"
 )
@@ -239,7 +242,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 
 func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {
 	groupName := ""
-	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
+	parent := wms.Spec.Service.GetParentLayer(serviceLayer)
 	// If the layer falls directly under the toplayer, the groupname is omitted
 	if !parent.IsTopLayer() && parent.IsGroupLayer() && parent.Name != nil && parent.Visible {
 		groupName = *parent.Name
@@ -302,14 +305,20 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 				splitBlobKey := strings.Split(gpkg.BlobKey, "/")
 				geopackageConstructedPath = "/srv/data/gpkg/" + splitBlobKey[len(splitBlobKey)-1]
 			} else {
-				geopackageConstructedPath = "/vsiaz/geopackages/" + gpkg.BlobKey
+				reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
+				geopackageConstructedPath = path.Join("/vsiaz/geopackages", reReplace.ReplaceAllString(gpkg.BlobKey, ""))
 			}
 
 			result.GeopackagePath = &geopackageConstructedPath
 		case serviceLayer.Data.TIF != nil:
 			tif := serviceLayer.Data.TIF
 			result.GeometryType = smoothoperatorutils.Pointer("Raster")
-			result.BaseLayer.TifPath = tif.BlobKey
+			if wms.Options().PrefetchData {
+				result.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join(tifPath, path.Base(tif.BlobKey)))
+			} else {
+				reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
+				result.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join("/vsiaz", reReplace.ReplaceAllString(tif.BlobKey, "")))
+			}
 			result.BaseLayer.Resample = tif.Resample
 			result.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
 		case serviceLayer.Data.Postgis != nil:

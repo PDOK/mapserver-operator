@@ -1329,6 +1329,7 @@ spec:
                                   pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
                                   type: string
                                 resample:
+                                  default: NEAREST
                                   description: This option can be used to control the resampling kernel used sampling raster images, optional
                                   minLength: 1
                                   pattern: (NEAREST|AVERAGE|BILINEAR)
@@ -1537,6 +1538,7 @@ spec:
                                         pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
                                         type: string
                                       resample:
+                                        default: NEAREST
                                         description: This option can be used to control the resampling kernel used sampling raster images, optional
                                         minLength: 1
                                         pattern: (NEAREST|AVERAGE|BILINEAR)
@@ -1745,6 +1747,7 @@ spec:
                                               pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
                                               type: string
                                             resample:
+                                              default: NEAREST
                                               description: This option can be used to control the resampling kernel used sampling raster images, optional
                                               minLength: 1
                                               pattern: (NEAREST|AVERAGE|BILINEAR)
