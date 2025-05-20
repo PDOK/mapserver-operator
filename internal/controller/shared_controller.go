@@ -59,8 +59,11 @@ const (
 )
 
 var (
-	AppLabelKey   = "app"
-	MapserverName = "mapserver"
+	AppLabelKey              = "app"
+	MapserverName            = "mapserver"
+	LegendGeneratorName      = "legend-generator"
+	FeatureInfoGeneratorName = "featureinfo-generator"
+	OgcWebserviceProxyName   = "ogc-webservice-proxy"
 
 	// Service ports
 	mapserverPortName                    = "mapserver"
@@ -126,7 +129,7 @@ func getSharedBareObjects[O pdoknlv3.WMSWFS](obj O) []client.Object {
 		getBareIngressRoute(obj),
 		getBareHorizontalPodAutoScaler(obj),
 		getBareConfigMapBlobDownload(obj),
-		getBareConfigMap(obj),
+		getBareConfigMap(obj, MapserverName),
 		getBareService(obj),
 		getBareCorsHeadersMiddleware(obj),
 		getBarePodDisruptionBudget(obj),
@@ -790,7 +793,7 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		if obj.Options().UseWebserviceProxy() {
 			ports = append(ports, corev1.ServicePort{
-				Name: "ogc-webservice-proxy",
+				Name: OgcWebserviceProxyName,
 				Port: 9111,
 			})
 		}
@@ -888,10 +891,10 @@ func mutatePodDisruptionBudget[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, podD
 	return ctrl.SetControllerReference(obj, podDisruptionBudget, getReconcilerScheme(r))
 }
 
-func getBareConfigMap[O pdoknlv3.WMSWFS](obj O) *corev1.ConfigMap {
+func getBareConfigMap[O pdoknlv3.WMSWFS](obj O, name string) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, MapserverName),
+			Name:      getSuffixedName(obj, name),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -1032,7 +1035,7 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 
 	// region ConfigMap
 	{
-		configMap := getBareConfigMap(obj)
+		configMap := getBareConfigMap(obj, MapserverName)
 		if err = mutateConfigMap(r, obj, configMap); err != nil {
 			return operationResults, err
 		}
@@ -1094,60 +1097,33 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	}
 	// end region ConfigMap-BlobDownload
 
-	// TODO fix linting (nestif)
-	//nolint:nestif
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		wms, _ := any(obj).(*pdoknlv3.WMS)
 		wmsReconciler := (*WMSReconciler)(r)
 
-		// region ConfigMap-LegendGenerator
-		{
-			configMapLg := getBareConfigMapLegendGenerator(wms)
-			if err = mutateConfigMapLegendGenerator(wmsReconciler, wms, configMapLg); err != nil {
+		configMaps := make(map[string]func(*WMSReconciler, *pdoknlv3.WMS, *corev1.ConfigMap) error)
+		configMaps[LegendGeneratorName] = mutateConfigMapLegendGenerator
+		configMaps[FeatureInfoGeneratorName] = mutateConfigMapFeatureinfoGenerator
+		configMaps[OgcWebserviceProxyName] = mutateConfigMapOgcWebserviceProxy
+		for cmName, mutate := range configMaps {
+			cm, or, err := getConfigMap(ctx, wms, wmsReconciler, cmName, func(r *WMSReconciler, w *pdoknlv3.WMS, cm *corev1.ConfigMap) error {
+				return mutate(r, w, cm)
+			})
+			if or != nil {
+				operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, cm)] = *or
+			}
+			if err != nil {
 				return operationResults, err
 			}
-			operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapLg)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, configMapLg, func() error {
-				return mutateConfigMapLegendGenerator(wmsReconciler, wms, configMapLg)
-			})
-			if err != nil {
-				return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapLg), err)
+			switch cmName {
+			case LegendGeneratorName:
+				hashedConfigMapNames.LegendGenerator = cm.Name
+			case FeatureInfoGeneratorName:
+				hashedConfigMapNames.FeatureInfoGenerator = cm.Name
+			case OgcWebserviceProxyName:
+				hashedConfigMapNames.OgcWebserviceProxy = cm.Name
 			}
-			hashedConfigMapNames.LegendGenerator = configMapLg.Name
 		}
-		// end region ConfigMap-LegendGenerator
-
-		// region ConfigMap-FeatureinfoGenerator
-		{
-			configMapFig := getBareConfigMapFeatureinfoGenerator(wms)
-			if err = mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, configMapFig); err != nil {
-				return operationResults, err
-			}
-			operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapFig)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, configMapFig, func() error {
-				return mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, configMapFig)
-			})
-			if err != nil {
-				return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapFig), err)
-			}
-			hashedConfigMapNames.FeatureInfoGenerator = configMapFig.Name
-		}
-
-		// end region ConfigMap-FeatureinfoGenerator
-
-		// region ConfigMap-OgcWebserviceProxy
-		{
-			configMapOwp := getBareConfigMapOgcWebserviceProxy(wms)
-			if err = mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, configMapOwp); err != nil {
-				return operationResults, err
-			}
-			operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapOwp)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, configMapOwp, func() error {
-				return mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, configMapOwp)
-			})
-			if err != nil {
-				return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, configMapOwp), err)
-			}
-			hashedConfigMapNames.OgcWebserviceProxy = configMapOwp.Name
-		}
-		// end  region ConfigMap-OgcWebserviceProxy
 	}
 
 	// region Deployment
@@ -1231,6 +1207,22 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	return operationResults, nil
 }
 
+func getConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, obj O, reconciler R, name string, mutate func(R, O, *corev1.ConfigMap) error) (cm *corev1.ConfigMap, operationResult *controllerutil.OperationResult, err error) {
+	reconcilerClient := getReconcilerClient(reconciler)
+	cm = getBareConfigMap(obj, name)
+	if err = mutate(reconciler, obj, cm); err != nil {
+		return cm, nil, err
+	}
+	or, err := controllerutil.CreateOrUpdate(ctx, reconcilerClient, cm, func() error {
+		return mutate(reconciler, obj, cm)
+	})
+	operationResult = &or
+	if err != nil {
+		return cm, operationResult, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, cm), err)
+	}
+	return
+}
+
 // TODO fix linting (funlen)
 //
 //nolint:funlen
@@ -1246,7 +1238,7 @@ func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r 
 	}
 
 	// ConfigMap
-	cm := getBareConfigMap(obj)
+	cm := getBareConfigMap(obj, MapserverName)
 	err = mutateConfigMap(r, obj, cm)
 	if err != nil {
 		return err
@@ -1282,7 +1274,7 @@ func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r 
 		wmsReconciler := (*WMSReconciler)(r)
 
 		// ConfigMap-LegendGenerator
-		cmLg := getBareConfigMapLegendGenerator(wms)
+		cmLg := getBareConfigMap(wms, LegendGeneratorName)
 		err = mutateConfigMapLegendGenerator(wmsReconciler, wms, cmLg)
 		if err != nil {
 			return err
@@ -1290,7 +1282,7 @@ func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r 
 		objects = append(objects, cmLg)
 
 		// ConfigMap-FeatureInfo
-		cmFi := getBareConfigMapFeatureinfoGenerator(wms)
+		cmFi := getBareConfigMap(wms, FeatureInfoGeneratorName)
 		err = mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, cmFi)
 		if err != nil {
 			return err
@@ -1298,7 +1290,7 @@ func deleteAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r 
 		objects = append(objects, cmFi)
 
 		// ConfigMap-OgcWebserviceProxy
-		cmOwp := getBareConfigMapOgcWebserviceProxy(wms)
+		cmOwp := getBareConfigMap(wms, OgcWebserviceProxyName)
 		err = mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, cmOwp)
 		if err != nil {
 			return err
