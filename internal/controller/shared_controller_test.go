@@ -60,7 +60,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	objects = append(objects, cm)
 
 	if includeMapfileGeneratorConfigMap {
-		cm = getBareConfigMapMapfileGenerator(obj)
+		cm = getBareConfigMap(obj, MapfileGeneratorName)
 		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapMapfileGeneratorVolumeName)
 		if err != nil {
 			return objects, err
@@ -69,7 +69,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 		objects = append(objects, cm)
 	}
 
-	cm = getBareConfigMapCapabilitiesGenerator(obj)
+	cm = getBareConfigMap(obj, CapabilitiesGeneratorName)
 	hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapCapabilitiesGeneratorVolumeName)
 	if err != nil {
 		return objects, err
@@ -78,7 +78,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	objects = append(objects, cm)
 
 	if includeBlobDownload {
-		cm = getBareConfigMapBlobDownload(obj)
+		cm = getBareConfigMap(obj, InitScriptsName)
 		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapBlobDownloadVolumeName)
 		if err != nil {
 			return objects, err

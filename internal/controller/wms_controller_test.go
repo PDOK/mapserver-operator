@@ -575,7 +575,7 @@ var _ = Describe("WMS Controller", func() {
 			By("Reconciling the WMS and checking the configMap")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 
-			configMap := getBareConfigMapMapfileGenerator(wms)
+			configMap := getBareConfigMap(wms, mapfileGeneratorInput)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wms, mapserver.ConfigMapMapfileGeneratorVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
@@ -600,7 +600,7 @@ var _ = Describe("WMS Controller", func() {
 			By("Reconciling the WMS and checking the configMap")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 
-			configMap := getBareConfigMapBlobDownload(wms)
+			configMap := getBareConfigMap(wms, InitScriptsName)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wms, mapserver.ConfigMapBlobDownloadVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
@@ -625,7 +625,7 @@ var _ = Describe("WMS Controller", func() {
 			By("Reconciling the WMS and checking the configMap")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 
-			configMap := getBareConfigMapCapabilitiesGenerator(wms)
+			configMap := getBareConfigMap(wms, CapabilitiesGeneratorName)
 			configMapName, err := getHashedConfigMapNameFromClient(ctx, wms, mapserver.ConfigMapCapabilitiesGeneratorVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {

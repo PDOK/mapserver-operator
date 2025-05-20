@@ -24,6 +24,124 @@ const (
 	metadataMediaType       = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
 )
 
+var defaultCrs = []wms130.CRS{{
+	Namespace: "EPSG",
+	Code:      28992,
+}, {
+	Namespace: "EPSG",
+	Code:      25831,
+}, {
+	Namespace: "EPSG",
+	Code:      25832,
+}, {
+	Namespace: "EPSG",
+	Code:      3034,
+}, {
+	Namespace: "EPSG",
+	Code:      3035,
+}, {
+	Namespace: "EPSG",
+	Code:      3857,
+}, {
+	Namespace: "EPSG",
+	Code:      4258,
+}, {
+	Namespace: "EPSG",
+	Code:      4326,
+}, {
+	Namespace: "CRS",
+	Code:      84,
+}}
+var defaultBoundingBox = wms130.EXGeographicBoundingBox{
+	WestBoundLongitude: 2.52713,
+	EastBoundLongitude: 7.37403,
+	SouthBoundLatitude: 50.2129,
+	NorthBoundLatitude: 55.7212,
+}
+var allDefaultBoundingBoxes = []*wms130.LayerBoundingBox{
+	{
+		CRS:  "EPSG:28992",
+		Minx: -25000,
+		Miny: 250000,
+		Maxx: 280000,
+		Maxy: 860000,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "EPSG:25831",
+		Minx: -470271,
+		Miny: 5.56231e+06,
+		Maxx: 795163,
+		Maxy: 6.18197e+06,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "EPSG:25832",
+		Minx: 62461.6,
+		Miny: 5.56555e+06,
+		Maxx: 397827,
+		Maxy: 6.19042e+06,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "EPSG:3034",
+		Minx: 2.61336e+06,
+		Miny: 3.509e+06,
+		Maxx: 3.22007e+06,
+		Maxy: 3.84003e+06,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "EPSG:3035",
+		Minx: 3.01676e+06,
+		Miny: 3.81264e+06,
+		Maxx: 3.64485e+06,
+		Maxy: 4.15586e+06,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "EPSG:3857",
+		Minx: 281318,
+		Miny: 6.48322e+06,
+		Maxx: 820873,
+		Maxy: 7.50311e+06,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "EPSG:4258",
+		Minx: 50.2129,
+		Miny: 2.52713,
+		Maxx: 55.7212,
+		Maxy: 7.37403,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "EPSG:4326",
+		Minx: 50.2129,
+		Miny: 2.52713,
+		Maxx: 55.7212,
+		Maxy: 7.37403,
+		Resx: 0,
+		Resy: 0,
+	},
+	{
+		CRS:  "CRS:84",
+		Minx: 2.52713,
+		Miny: 50.2129,
+		Maxx: 7.37403,
+		Maxy: 55.7212,
+		Resx: 0,
+		Resy: 0,
+	},
+}
+
 func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
 	featureTypeList, err := getFeatureTypeList(wfs, ownerInfo)
 	if err != nil {
@@ -374,138 +492,9 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 	return &result
 }
 
-// TODO fix linting (funlen)
-//
-//nolint:funlen
 func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 	result := make([]wms130.Layer, 0)
 	referenceLayer := wms.Spec.Service.Layer
-	title := referenceLayer.Title
-	if title != nil {
-		title = smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(*referenceLayer.Title))
-	} else {
-		title = smoothoperatorutils.Pointer("")
-	}
-
-	defaultCrs := []wms130.CRS{{
-		Namespace: "EPSG",
-		Code:      28992,
-	}, {
-		Namespace: "EPSG",
-		Code:      25831,
-	}, {
-		Namespace: "EPSG",
-		Code:      25832,
-	}, {
-		Namespace: "EPSG",
-		Code:      3034,
-	}, {
-		Namespace: "EPSG",
-		Code:      3035,
-	}, {
-		Namespace: "EPSG",
-		Code:      3857,
-	}, {
-		Namespace: "EPSG",
-		Code:      4258,
-	}, {
-		Namespace: "EPSG",
-		Code:      4326,
-	}, {
-		Namespace: "CRS",
-		Code:      84,
-	}}
-
-	defaultBoundingBox := wms130.EXGeographicBoundingBox{
-		WestBoundLongitude: 2.52713,
-		EastBoundLongitude: 7.37403,
-		SouthBoundLatitude: 50.2129,
-		NorthBoundLatitude: 55.7212,
-	}
-
-	allDefaultBoundingBoxes := make([]*wms130.LayerBoundingBox, 0)
-	allDefaultBoundingBoxes = append(allDefaultBoundingBoxes,
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:28992",
-			Minx: -25000,
-			Miny: 250000,
-			Maxx: 280000,
-			Maxy: 860000,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:25831",
-			Minx: -470271,
-			Miny: 5.56231e+06,
-			Maxx: 795163,
-			Maxy: 6.18197e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:25832",
-			Minx: 62461.6,
-			Miny: 5.56555e+06,
-			Maxx: 397827,
-			Maxy: 6.19042e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:3034",
-			Minx: 2.61336e+06,
-			Miny: 3.509e+06,
-			Maxx: 3.22007e+06,
-			Maxy: 3.84003e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:3035",
-			Minx: 3.01676e+06,
-			Miny: 3.81264e+06,
-			Maxx: 3.64485e+06,
-			Maxy: 4.15586e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:3857",
-			Minx: 281318,
-			Miny: 6.48322e+06,
-			Maxx: 820873,
-			Maxy: 7.50311e+06,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:4258",
-			Minx: 50.2129,
-			Miny: 2.52713,
-			Maxx: 55.7212,
-			Maxy: 7.37403,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "EPSG:4326",
-			Minx: 50.2129,
-			Miny: 2.52713,
-			Maxx: 55.7212,
-			Maxy: 7.37403,
-			Resx: 0,
-			Resy: 0,
-		},
-		&wms130.LayerBoundingBox{
-			CRS:  "CRS:84",
-			Minx: 2.52713,
-			Miny: 50.2129,
-			Maxx: 7.37403,
-			Maxy: 55.7212,
-			Resx: 0,
-			Resy: 0,
-		})
 
 	var authorityURL *wms130.AuthorityURL
 	var identifier *wms130.Identifier
@@ -525,7 +514,111 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 		}
 	}
 
-	topLayer := wms130.Layer{
+	topLayer := getTopLayer(wms, referenceLayer, authorityURL, identifier)
+
+	for _, layer := range referenceLayer.Layers {
+		nestedLayer := getNestedLayer(layer, authorityURL, canonicalURL)
+
+		topLayer.Layer = append(topLayer.Layer, &nestedLayer)
+	}
+
+	result = append(result, topLayer)
+	return result
+}
+
+func getNestedLayer(layer pdoknlv3.Layer, authorityURL *wms130.AuthorityURL, canonicalURL string) wms130.Layer {
+	var minScaleDenom *float64
+	var maxScaleDenom *float64
+	var innerIdentifier *wms130.Identifier
+	metadataUrls := make([]*wms130.MetadataURL, 0)
+
+	if layer.MinScaleDenominator != nil {
+		float, err := strconv.ParseFloat(*layer.MinScaleDenominator, 64)
+		if err == nil {
+			minScaleDenom = &float
+		}
+	}
+
+	if layer.MaxScaleDenominator != nil {
+		float, err := strconv.ParseFloat(*layer.MaxScaleDenominator, 64)
+		if err == nil {
+			maxScaleDenom = &float
+		}
+	}
+
+	if layer.DatasetMetadataURL != nil {
+		metadataUrls = append(metadataUrls, &wms130.MetadataURL{
+			Type:   smoothoperatorutils.Pointer("TC211"),
+			Format: smoothoperatorutils.Pointer("text/plain"),
+			OnlineResource: wms130.OnlineResource{
+				Xlink: nil,
+				Type:  smoothoperatorutils.Pointer("simple"),
+				Href:  smoothoperatorutils.Pointer("https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=" + layer.DatasetMetadataURL.CSW.MetadataIdentifier),
+			},
+		})
+	}
+
+	if layer.Authority != nil {
+		innerIdentifier = &wms130.Identifier{
+			Authority: layer.Authority.Name,
+			Value:     layer.Authority.SpatialDatasetIdentifier,
+		}
+	}
+
+	nestedLayer := wms130.Layer{
+		Queryable: smoothoperatorutils.Pointer(1),
+		Opaque:    nil,
+		Name:      layer.Name,
+		Title:     smoothoperatorutils.PointerVal(layer.Title, ""),
+		Abstract:  layer.Abstract,
+		KeywordList: &wms130.Keywords{
+			Keyword: layer.Keywords,
+		},
+		CRS:                     defaultCrs,
+		EXGeographicBoundingBox: &defaultBoundingBox,
+		BoundingBox:             allDefaultBoundingBoxes,
+		Dimension:               nil,
+		Attribution:             nil,
+		AuthorityURL:            authorityURL,
+		Identifier:              innerIdentifier,
+		MetadataURL:             metadataUrls,
+		DataURL:                 nil,
+		FeatureListURL:          nil,
+		Style:                   []*wms130.Style{},
+		MinScaleDenominator:     minScaleDenom,
+		MaxScaleDenominator:     maxScaleDenom,
+		Layer:                   nil,
+	}
+	for _, style := range layer.Styles {
+		newStyle := wms130.Style{
+			Name:     style.Name,
+			Title:    smoothoperatorutils.PointerVal(style.Title, ""),
+			Abstract: style.Abstract,
+			LegendURL: &wms130.LegendURL{
+				Width:  78,
+				Height: 20,
+				Format: "image/png",
+				OnlineResource: wms130.OnlineResource{
+					Xlink: nil,
+					Type:  smoothoperatorutils.Pointer("simple"),
+					Href:  smoothoperatorutils.Pointer(canonicalURL + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
+				},
+			},
+			StyleSheetURL: nil,
+		}
+		nestedLayer.Style = append(nestedLayer.Style, &newStyle)
+	}
+	return nestedLayer
+}
+
+func getTopLayer(wms *pdoknlv3.WMS, referenceLayer pdoknlv3.Layer, authorityURL *wms130.AuthorityURL, identifier *wms130.Identifier) wms130.Layer {
+	title := referenceLayer.Title
+	if title != nil {
+		title = smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(*referenceLayer.Title))
+	} else {
+		title = smoothoperatorutils.Pointer("")
+	}
+	return wms130.Layer{
 		Queryable:               smoothoperatorutils.Pointer(1),
 		Opaque:                  nil,
 		Name:                    nil,
@@ -547,93 +640,4 @@ func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
 		MaxScaleDenominator:     nil,
 		Layer:                   []*wms130.Layer{},
 	}
-
-	for _, layer := range referenceLayer.Layers {
-		var minScaleDenom *float64
-		var maxScaleDenom *float64
-		var innerIdentifier *wms130.Identifier
-		metadataUrls := make([]*wms130.MetadataURL, 0)
-
-		if layer.MinScaleDenominator != nil {
-			float, err := strconv.ParseFloat(*layer.MinScaleDenominator, 64)
-			if err == nil {
-				minScaleDenom = &float
-			}
-		}
-
-		if layer.MaxScaleDenominator != nil {
-			float, err := strconv.ParseFloat(*layer.MaxScaleDenominator, 64)
-			if err == nil {
-				maxScaleDenom = &float
-			}
-		}
-
-		if layer.DatasetMetadataURL != nil {
-			metadataUrls = append(metadataUrls, &wms130.MetadataURL{
-				Type:   smoothoperatorutils.Pointer("TC211"),
-				Format: smoothoperatorutils.Pointer("text/plain"),
-				OnlineResource: wms130.OnlineResource{
-					Xlink: nil,
-					Type:  smoothoperatorutils.Pointer("simple"),
-					Href:  smoothoperatorutils.Pointer("https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=" + layer.DatasetMetadataURL.CSW.MetadataIdentifier),
-				},
-			})
-		}
-
-		if layer.Authority != nil {
-			innerIdentifier = &wms130.Identifier{
-				Authority: layer.Authority.Name,
-				Value:     layer.Authority.SpatialDatasetIdentifier,
-			}
-		}
-
-		nestedLayer := wms130.Layer{
-			Queryable: smoothoperatorutils.Pointer(1),
-			Opaque:    nil,
-			Name:      layer.Name,
-			Title:     smoothoperatorutils.PointerVal(layer.Title, ""),
-			Abstract:  layer.Abstract,
-			KeywordList: &wms130.Keywords{
-				Keyword: layer.Keywords,
-			},
-			CRS:                     defaultCrs,
-			EXGeographicBoundingBox: &defaultBoundingBox,
-			BoundingBox:             allDefaultBoundingBoxes,
-			Dimension:               nil,
-			Attribution:             nil,
-			AuthorityURL:            authorityURL,
-			Identifier:              innerIdentifier,
-			MetadataURL:             metadataUrls,
-			DataURL:                 nil,
-			FeatureListURL:          nil,
-			Style:                   []*wms130.Style{},
-			MinScaleDenominator:     minScaleDenom,
-			MaxScaleDenominator:     maxScaleDenom,
-			Layer:                   nil,
-		}
-		for _, style := range layer.Styles {
-			newStyle := wms130.Style{
-				Name:     style.Name,
-				Title:    smoothoperatorutils.PointerVal(style.Title, ""),
-				Abstract: style.Abstract,
-				LegendURL: &wms130.LegendURL{
-					Width:  78,
-					Height: 20,
-					Format: "image/png",
-					OnlineResource: wms130.OnlineResource{
-						Xlink: nil,
-						Type:  smoothoperatorutils.Pointer("simple"),
-						Href:  smoothoperatorutils.Pointer(canonicalURL + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
-					},
-				},
-				StyleSheetURL: nil,
-			}
-			nestedLayer.Style = append(nestedLayer.Style, &newStyle)
-		}
-
-		topLayer.Layer = append(topLayer.Layer, &nestedLayer)
-	}
-
-	result = append(result, topLayer)
-	return result
 }
