@@ -1207,20 +1207,19 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 	return operationResults, nil
 }
 
-func getConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, obj O, reconciler R, name string, mutate func(R, O, *corev1.ConfigMap) error) (cm *corev1.ConfigMap, operationResult *controllerutil.OperationResult, err error) {
+func getConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, obj O, reconciler R, name string, mutate func(R, O, *corev1.ConfigMap) error) (*corev1.ConfigMap, *controllerutil.OperationResult, error) {
 	reconcilerClient := getReconcilerClient(reconciler)
-	cm = getBareConfigMap(obj, name)
-	if err = mutate(reconciler, obj, cm); err != nil {
+	cm := getBareConfigMap(obj, name)
+	if err := mutate(reconciler, obj, cm); err != nil {
 		return cm, nil, err
 	}
 	or, err := controllerutil.CreateOrUpdate(ctx, reconcilerClient, cm, func() error {
 		return mutate(reconciler, obj, cm)
 	})
-	operationResult = &or
 	if err != nil {
-		return cm, operationResult, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, cm), err)
+		return cm, &or, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, cm), err)
 	}
-	return
+	return cm, &or, nil
 }
 
 // TODO fix linting (funlen)
