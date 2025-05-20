@@ -65,19 +65,27 @@ func GetConfig(wms *pdoknlv3.WMS) (config string, err error) {
 }
 
 func MapWMSToOgcWebserviceProxyConfig(wms *pdoknlv3.WMS) (config Config, err error) {
-	config.GroupLayers = make(map[string][]string)
-	for _, layer := range wms.Spec.Service.Layer.GetAllLayers() {
-		// TODO Should there be a distinction between grouplayers and the toplayer?
-		if layer.IsGroupLayer() {
-			var dataLayers []string
-			for _, childLayer := range layer.Layers {
-				if childLayer.IsDataLayer() {
-					dataLayers = append(dataLayers, *childLayer.Name)
-				}
+	dataLayersForGroupLayer := func(l pdoknlv3.Layer) []string {
+		var dataLayers []string
+		for _, childLayer := range l.Layers {
+			if childLayer.IsDataLayer() {
+				dataLayers = append(dataLayers, *childLayer.Name)
 			}
-			if len(dataLayers) > 0 {
+		}
+		return dataLayers
+	}
+
+	config.GroupLayers = make(map[string][]string)
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
+		if layer.IsGroupLayer() && wms.Spec.Service.GetParentLayer(layer) != nil {
+			if dataLayers := dataLayersForGroupLayer(layer); len(dataLayers) > 0 {
 				config.GroupLayers[smoothoperatorutils.PointerVal(layer.Name, "")] = dataLayers
 			}
+		}
+	}
+	if wms.Spec.Service.Layer.Name != nil {
+		if dataLayers := dataLayersForGroupLayer(wms.Spec.Service.Layer); len(dataLayers) > 0 {
+			config.GroupLayers[smoothoperatorutils.PointerVal(wms.Spec.Service.Layer.Name, "")] = dataLayers
 		}
 	}
 	return

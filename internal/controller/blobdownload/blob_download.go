@@ -148,7 +148,7 @@ func downloadTiffs(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 		if err != nil {
 			return err
 		}
-		writeLine(sb, "rclone copyto blobs:/%s  %s/%s || exit 1;", blobKey, tifPath, fileName)
+		writeLine(sb, "rclone copyto blobs:/%s %s/%s || exit 1;", blobKey, tifPath, fileName)
 	}
 	return nil
 }
@@ -195,7 +195,7 @@ func downloadLegends(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 		for _, layer := range layers {
 			writeLine(sb, "mkdir -p %s/%s;", legendPath, *layer.Name)
 			for _, style := range layer.Styles {
-				writeLine(sb, "rclone copyto blobs:/%s  %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, *layer.Name, style.Name)
+				writeLine(sb, "rclone copyto blobs:/%s %s/%s/%s.png || exit 1;", style.Legend.BlobKey, legendPath, *layer.Name, style.Name)
 				fileName, err := getFilenameFromBlobKey(style.Legend.BlobKey)
 				if err != nil {
 					return err

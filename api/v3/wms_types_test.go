@@ -134,7 +134,7 @@ func TestLayer_GetParent(t *testing.T) {
 	topLayer := Layer{Name: controller.Pointer("toplayer"), Layers: []Layer{childLayer1}}
 
 	type args struct {
-		candidateLayer *Layer
+		service WMSService
 	}
 	tests := []struct {
 		name  string
@@ -145,19 +145,19 @@ func TestLayer_GetParent(t *testing.T) {
 		{
 			name:  "Test GetParent on layer with parent",
 			layer: childLayer2,
-			args:  args{candidateLayer: &topLayer},
+			args:  args{service: WMSService{Layer: topLayer}},
 			want:  &childLayer1,
 		},
 		{
 			name:  "Test GetParent on layer without parent",
 			layer: topLayer,
-			args:  args{candidateLayer: &topLayer},
+			args:  args{service: WMSService{Layer: topLayer}},
 			want:  nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.layer.GetParent(tt.args.candidateLayer); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.args.service.GetParentLayer(tt.layer); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetParent() = %v, want %v", got, tt.want)
 			}
 		})

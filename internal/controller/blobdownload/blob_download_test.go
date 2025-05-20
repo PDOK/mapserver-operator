@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	v3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
@@ -32,10 +34,10 @@ echo font-2 font-2.ttf >> /srv/data/config/fonts/fonts.list;
 echo 'generated fonts.list:';
 cat /srv/data/config/fonts/fonts.list;
 mkdir -p /var/www/legend/wms-gpkg-layer-1-name;
-rclone copyto blobs:/resources-bucket/key/gpkg-layer-1-legend.png  /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png || exit 1;
+rclone copyto blobs:/resources-bucket/key/gpkg-layer-1-legend.png /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png || exit 1;
 Copied legend gpkg-layer-1-legend.png to /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png;
 mkdir -p /var/www/legend/wms-gpkg-layer-2-name;
-rclone copyto blobs:/resources-bucket/key/gpkg-layer-2-legend.png  /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png || exit 1;
+rclone copyto blobs:/resources-bucket/key/gpkg-layer-2-legend.png /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png || exit 1;
 Copied legend gpkg-layer-2-legend.png to /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png;
 chown -R 999:999 /var/www/legend
 `
@@ -44,8 +46,8 @@ chown -R 999:999 /var/www/legend
 mkdir -p /srv/data/config/;
 rclone config create --non-interactive --obscure blobs azureblob endpoint $BLOBS_ENDPOINT account $BLOBS_ACCOUNT key $BLOBS_KEY use_emulator true;
 bash /srv/scripts/gpkg_download.sh;
-rclone copyto blobs:/tifs-bucket/key/tif-layer-1-data.tif  /srv/data/tif/tif-layer-1-data.tif || exit 1;
-rclone copyto blobs:/tifs-bucket/key/tif-layer-2-data.tif  /srv/data/tif/tif-layer-2-data.tif || exit 1;
+rclone copyto blobs:/tifs-bucket/key/tif-layer-1-data.tif /srv/data/tif/tif-layer-1-data.tif || exit 1;
+rclone copyto blobs:/tifs-bucket/key/tif-layer-2-data.tif /srv/data/tif/tif-layer-2-data.tif || exit 1;
 rclone copyto blobs:/resources-bucket/key/tif-symbol.png /srv/data/images/tif-symbol.png || exit 1;
 rclone copyto blobs:/resources-bucket/key/symbol.svg /srv/data/images/symbol.svg || exit 1;
 rclone copyto blobs:/resources-bucket/key/font-1.ttf /srv/data/config/fonts/font-1.ttf || exit 1;
@@ -55,10 +57,10 @@ echo font-2 font-2.ttf >> /srv/data/config/fonts/fonts.list;
 echo 'generated fonts.list:';
 cat /srv/data/config/fonts/fonts.list;
 mkdir -p /var/www/legend/wms-tif-layer-1-name;
-rclone copyto blobs:/resources-bucket/key/tif-layer-1-legend.png  /var/www/legend/wms-tif-layer-1-name/wms-tif-style-1-name.png || exit 1;
+rclone copyto blobs:/resources-bucket/key/tif-layer-1-legend.png /var/www/legend/wms-tif-layer-1-name/wms-tif-style-1-name.png || exit 1;
 Copied legend tif-layer-1-legend.png to /var/www/legend/wms-tif-layer-1-name/wms-tif-style-1-name.png;
 mkdir -p /var/www/legend/wms-tif-layer-2-name;
-rclone copyto blobs:/resources-bucket/key/tif-layer-2-legend.png  /var/www/legend/wms-tif-layer-2-name/wms-tif-style-2-name.png || exit 1;
+rclone copyto blobs:/resources-bucket/key/tif-layer-2-legend.png /var/www/legend/wms-tif-layer-2-name/wms-tif-style-2-name.png || exit 1;
 Copied legend tif-layer-2-legend.png to /var/www/legend/wms-tif-layer-2-name/wms-tif-style-2-name.png;
 chown -R 999:999 /var/www/legend
 `
@@ -290,7 +292,8 @@ func TestGetArgsForWMS(t *testing.T) {
 				return
 			}
 			if args != tt.wantArgs {
-				t.Errorf("GetArgs() = %v, want %v", args, tt.wantArgs)
+				diff := cmp.Diff(tt.wantArgs, args)
+				t.Errorf("GetArgs() -want, +got %s", diff)
 				return
 			}
 		})

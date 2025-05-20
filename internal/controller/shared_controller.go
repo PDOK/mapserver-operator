@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -641,7 +643,6 @@ func getBareHorizontalPodAutoScaler[O pdoknlv3.WMSWFS](obj O) *autoscalingv2.Hor
 
 func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, autoscaler *autoscalingv2.HorizontalPodAutoscaler) error {
 	autoscalerPatch := obj.HorizontalPodAutoscalerPatch()
-	podSpecPatch := obj.PodSpecPatch()
 	var behaviourStabilizationWindowSeconds int32
 	if obj.Type() == pdoknlv3.ServiceTypeWFS {
 		behaviourStabilizationWindowSeconds = 300
@@ -668,10 +669,8 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 	}
 	if len(metrics) == 0 {
 		var avgU int32 = 90
-		if podSpecPatch != nil && podSpecPatch.Resources != nil {
-			if cpu := podSpecPatch.Resources.Requests.Cpu(); cpu != nil && !cpu.IsZero() {
-				avgU = 80
-			}
+		if cpu := mapperutils.GetContainerResourceRequest(obj, "mapserver", corev1.ResourceCPU); cpu != nil {
+			avgU = 80
 		}
 		metrics = append(metrics, autoscalingv2.MetricSpec{
 			Type: autoscalingv2.ResourceMetricSourceType,

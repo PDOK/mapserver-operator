@@ -11,8 +11,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/pdok/featureinfo-generator v1.4.0-beta1
-	github.com/pdok/ogc-capabilities-generator v1.0.0-beta7
-	github.com/pdok/ogc-specifications v1.0.0-beta7
+	github.com/pdok/ogc-capabilities-generator v1.0.0-beta8
+	github.com/pdok/ogc-specifications v1.0.0-beta9
 	github.com/pdok/smooth-operator v0.1.1
 	github.com/peterbourgon/ff v1.7.1
 	github.com/stretchr/testify v1.10.0

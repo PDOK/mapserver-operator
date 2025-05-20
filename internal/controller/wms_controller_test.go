@@ -335,6 +335,7 @@ var _ = Describe("WMS Controller", func() {
 			volumeMounts = []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
 				{Name: "data", MountPath: "/var/www", ReadOnly: false},
+				{Name: "mapserver", MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
 				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
 			Expect(legendGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
@@ -929,6 +930,7 @@ var _ = Describe("WMS Controller", func() {
 			volumeMounts := []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data", ReadOnly: false},
 				{Name: "data", MountPath: "/var/www", ReadOnly: false},
+				{Name: "mapserver", MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
 				{Name: "mapfile", MountPath: "/srv/data/config/mapfile"},
 				{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}

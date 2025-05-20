@@ -2,6 +2,7 @@ package capabilitiesgenerator
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,129 +19,13 @@ import (
 )
 
 const (
-	inspireSchemaLocations  = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd"
-	wfsCapabilitiesFilename = "/var/www/config/capabilities_wfs_200.xml"
-	wmsCapabilitiesFilename = "/var/www/config/capabilities_wms_130.xml"
-	metadataMediaType       = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
+	inspireSchemaLocationsWFS = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd"
+	inspireSchemaLocationsWMS = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd http://inspire.ec.europa.eu/schemas/common/1.0 http://inspire.ec.europa.eu/schemas/common/1.0/common.xsd"
+	wfsCapabilitiesFilename   = "/var/www/config/capabilities_wfs_200.xml"
+	wmsCapabilitiesFilename   = "/var/www/config/capabilities_wms_130.xml"
+	metadataMediaType         = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
+	XLinkURL                  = "http://www.w3.org/1999/xlink"
 )
-
-var defaultCrs = []wms130.CRS{{
-	Namespace: "EPSG",
-	Code:      28992,
-}, {
-	Namespace: "EPSG",
-	Code:      25831,
-}, {
-	Namespace: "EPSG",
-	Code:      25832,
-}, {
-	Namespace: "EPSG",
-	Code:      3034,
-}, {
-	Namespace: "EPSG",
-	Code:      3035,
-}, {
-	Namespace: "EPSG",
-	Code:      3857,
-}, {
-	Namespace: "EPSG",
-	Code:      4258,
-}, {
-	Namespace: "EPSG",
-	Code:      4326,
-}, {
-	Namespace: "CRS",
-	Code:      84,
-}}
-var defaultBoundingBox = wms130.EXGeographicBoundingBox{
-	WestBoundLongitude: 2.52713,
-	EastBoundLongitude: 7.37403,
-	SouthBoundLatitude: 50.2129,
-	NorthBoundLatitude: 55.7212,
-}
-var allDefaultBoundingBoxes = []*wms130.LayerBoundingBox{
-	{
-		CRS:  "EPSG:28992",
-		Minx: -25000,
-		Miny: 250000,
-		Maxx: 280000,
-		Maxy: 860000,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "EPSG:25831",
-		Minx: -470271,
-		Miny: 5.56231e+06,
-		Maxx: 795163,
-		Maxy: 6.18197e+06,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "EPSG:25832",
-		Minx: 62461.6,
-		Miny: 5.56555e+06,
-		Maxx: 397827,
-		Maxy: 6.19042e+06,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "EPSG:3034",
-		Minx: 2.61336e+06,
-		Miny: 3.509e+06,
-		Maxx: 3.22007e+06,
-		Maxy: 3.84003e+06,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "EPSG:3035",
-		Minx: 3.01676e+06,
-		Miny: 3.81264e+06,
-		Maxx: 3.64485e+06,
-		Maxy: 4.15586e+06,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "EPSG:3857",
-		Minx: 281318,
-		Miny: 6.48322e+06,
-		Maxx: 820873,
-		Maxy: 7.50311e+06,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "EPSG:4258",
-		Minx: 50.2129,
-		Miny: 2.52713,
-		Maxx: 55.7212,
-		Maxy: 7.37403,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "EPSG:4326",
-		Minx: 50.2129,
-		Miny: 2.52713,
-		Maxx: 55.7212,
-		Maxy: 7.37403,
-		Resx: 0,
-		Resy: 0,
-	},
-	{
-		CRS:  "CRS:84",
-		Minx: 2.52713,
-		Miny: 50.2129,
-		Maxx: 7.37403,
-		Maxy: 55.7212,
-		Resx: 0,
-		Resy: 0,
-	},
-}
 
 func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
 	featureTypeList, err := getFeatureTypeList(wfs, ownerInfo)
@@ -183,7 +68,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 	}
 
 	if wfs.Spec.Service.Inspire != nil {
-		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
+		config.Global.AdditionalSchemaLocations = inspireSchemaLocationsWFS
 		metadataURL, _ := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
 
 		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = &wfs200.OperationsMetadata{
@@ -234,7 +119,7 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 		}
 
 		featureType := wfs200.FeatureType{
-			Name:     wfs.Spec.Service.Prefix + fType.Name,
+			Name:     wfs.Spec.Service.Prefix + ":" + fType.Name,
 			Title:    mapperutils.EscapeQuotes(fType.Title),
 			Abstract: mapperutils.EscapeQuotes(fType.Abstract),
 			Keywords: &[]wsc110.Keywords{
@@ -333,13 +218,10 @@ func mapContactInfo(contactInfo smoothoperatorv1.ContactInfo) (serviceContactInf
 }
 
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
-	hostBaseURL := "https://service.pdok.nl"
-	canonicalServiceURL := hostBaseURL + "/" + pdoknlv3.GetBaseURLPath(wms)
+	canonicalServiceURL := pdoknlv3.GetHost(true) + "/" + pdoknlv3.GetBaseURLPath(wms)
 
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
 
-	maxWidth := 4000
-	maxHeight := 4000
 	serviceVersion := mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "service-version")
 	if serviceVersion == nil {
 		serviceVersion = mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "pdok.nl/service-version")
@@ -363,13 +245,14 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Title:              mapperutils.EscapeQuotes(wms.Spec.Service.Title),
 						Abstract:           &abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
-						OnlineResource:     wms130.OnlineResource{Href: &hostBaseURL},
+						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(pdoknlv3.GetHost(true))},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               smoothoperatorutils.Pointer("NONE"),
 						AccessConstraints:  &wms.Spec.Service.AccessConstraints,
-						LayerLimit:         nil,
-						MaxWidth:           &maxWidth,
-						MaxHeight:          &maxHeight,
+						OptionalConstraints: &wms130.OptionalConstraints{
+							MaxWidth:  int(smoothoperatorutils.PointerVal(wms.Spec.Service.MaxSize, 4000)),
+							MaxHeight: int(smoothoperatorutils.PointerVal(wms.Spec.Service.MaxSize, 4000)),
+						},
 					},
 					Capabilities: wms130.Capabilities{
 						WMSCapabilities: wms130.WMSCapabilities{
@@ -391,7 +274,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 							ExtendedCapabilities: nil,
 							Layer:                getLayers(wms, canonicalServiceURL),
 						},
-						OptionalConstraints: wms130.OptionalConstraints{},
+						OptionalConstraints: nil,
 					},
 				},
 			},
@@ -399,7 +282,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 	}
 
 	if wms.Spec.Service.Inspire != nil {
-		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
+		config.Global.AdditionalSchemaLocations = inspireSchemaLocationsWMS
 		metadataURL, _ := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wms.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
 
 		defaultLanguage := wms130.Language{Language: wms.Spec.Service.Inspire.Language}
@@ -469,7 +352,7 @@ func getContactInformation(ownerInfo *smoothoperatorv1.OwnerInfo) *wms130.Contac
 func getDcpType(url string, fillPost bool) *wms130.DCPType {
 	get := wms130.Method{
 		OnlineResource: wms130.OnlineResource{
-			Xlink: nil,
+			Xlink: smoothoperatorutils.Pointer(XLinkURL),
 			Type:  nil,
 			Href:  smoothoperatorutils.Pointer(url),
 		},
@@ -493,103 +376,93 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 }
 
 func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
-	result := make([]wms130.Layer, 0)
-	referenceLayer := wms.Spec.Service.Layer
+	return []wms130.Layer{
+		mapLayer(wms.Spec.Service.Layer, canonicalURL, nil, nil, nil),
+	}
+}
 
-	var authorityURL *wms130.AuthorityURL
-	var identifier *wms130.Identifier
-
-	if referenceLayer.Authority != nil {
+func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.AuthorityURL, identifier *wms130.Identifier, parentStyleNames []string) wms130.Layer {
+	if layer.Authority != nil {
 		authorityURL = &wms130.AuthorityURL{
-			Name: referenceLayer.Authority.Name,
+			Name: layer.Authority.Name,
 			OnlineResource: wms130.OnlineResource{
-				Xlink: nil,
+				Xlink: smoothoperatorutils.Pointer(XLinkURL),
 				Type:  nil,
-				Href:  &referenceLayer.Authority.URL,
+				Href:  &layer.Authority.URL,
 			},
 		}
 		identifier = &wms130.Identifier{
-			Authority: referenceLayer.Authority.Name,
-			Value:     referenceLayer.Authority.SpatialDatasetIdentifier,
+			Authority: layer.Authority.Name,
+			Value:     layer.Authority.SpatialDatasetIdentifier,
 		}
 	}
 
-	topLayer := getTopLayer(wms, referenceLayer, authorityURL, identifier)
-
-	for _, layer := range referenceLayer.Layers {
-		nestedLayer := getNestedLayer(layer, authorityURL, canonicalURL)
-
-		topLayer.Layer = append(topLayer.Layer, &nestedLayer)
+	l := wms130.Layer{
+		Queryable:   smoothoperatorutils.Pointer(1),
+		Opaque:      nil,
+		Name:        layer.Name,
+		Title:       mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Title, "")),
+		Abstract:    smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Abstract, ""))),
+		KeywordList: &wms130.Keywords{Keyword: layer.Keywords},
+		//CRS:                     defaultCrs,
+		//EXGeographicBoundingBox: &defaultBoundingBox,
+		//BoundingBox:             allDefaultBoundingBoxes,
+		Dimension:      nil,
+		Attribution:    nil,
+		AuthorityURL:   authorityURL,
+		Identifier:     identifier,
+		DataURL:        nil,
+		FeatureListURL: nil,
+		Style:          getLayerStyles(layer, canonicalURL, parentStyleNames),
+		Layer:          []*wms130.Layer{},
 	}
-
-	result = append(result, topLayer)
-	return result
-}
-
-func getNestedLayer(layer pdoknlv3.Layer, authorityURL *wms130.AuthorityURL, canonicalURL string) wms130.Layer {
-	var minScaleDenom *float64
-	var maxScaleDenom *float64
-	var innerIdentifier *wms130.Identifier
-	metadataUrls := make([]*wms130.MetadataURL, 0)
 
 	if layer.MinScaleDenominator != nil {
 		float, err := strconv.ParseFloat(*layer.MinScaleDenominator, 64)
 		if err == nil {
-			minScaleDenom = &float
+			l.MinScaleDenominator = &float
 		}
 	}
 
 	if layer.MaxScaleDenominator != nil {
 		float, err := strconv.ParseFloat(*layer.MaxScaleDenominator, 64)
 		if err == nil {
-			maxScaleDenom = &float
+			l.MaxScaleDenominator = &float
 		}
 	}
 
 	if layer.DatasetMetadataURL != nil {
-		metadataUrls = append(metadataUrls, &wms130.MetadataURL{
+		l.MetadataURL = append(l.MetadataURL, &wms130.MetadataURL{
 			Type:   smoothoperatorutils.Pointer("TC211"),
 			Format: smoothoperatorutils.Pointer("text/plain"),
 			OnlineResource: wms130.OnlineResource{
-				Xlink: nil,
+				Xlink: smoothoperatorutils.Pointer(XLinkURL),
 				Type:  smoothoperatorutils.Pointer("simple"),
 				Href:  smoothoperatorutils.Pointer("https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=" + layer.DatasetMetadataURL.CSW.MetadataIdentifier),
 			},
 		})
 	}
 
-	if layer.Authority != nil {
-		innerIdentifier = &wms130.Identifier{
-			Authority: layer.Authority.Name,
-			Value:     layer.Authority.SpatialDatasetIdentifier,
-		}
+	layerStyleNames := []string{}
+	for _, s := range l.Style {
+		layerStyleNames = append(layerStyleNames, s.Name)
 	}
 
-	nestedLayer := wms130.Layer{
-		Queryable: smoothoperatorutils.Pointer(1),
-		Opaque:    nil,
-		Name:      layer.Name,
-		Title:     smoothoperatorutils.PointerVal(layer.Title, ""),
-		Abstract:  layer.Abstract,
-		KeywordList: &wms130.Keywords{
-			Keyword: layer.Keywords,
-		},
-		CRS:                     defaultCrs,
-		EXGeographicBoundingBox: &defaultBoundingBox,
-		BoundingBox:             allDefaultBoundingBoxes,
-		Dimension:               nil,
-		Attribution:             nil,
-		AuthorityURL:            authorityURL,
-		Identifier:              innerIdentifier,
-		MetadataURL:             metadataUrls,
-		DataURL:                 nil,
-		FeatureListURL:          nil,
-		Style:                   []*wms130.Style{},
-		MinScaleDenominator:     minScaleDenom,
-		MaxScaleDenominator:     maxScaleDenom,
-		Layer:                   nil,
+	// Map sublayers
+	for _, sublayer := range layer.Layers {
+		mapped := mapLayer(sublayer, canonicalURL, authorityURL, identifier, append(parentStyleNames, layerStyleNames...))
+		l.Layer = append(l.Layer, &mapped)
 	}
+
+	return l
+}
+
+func getLayerStyles(layer pdoknlv3.Layer, canonicalURL string, parentStyleNames []string) (styles []*wms130.Style) {
 	for _, style := range layer.Styles {
+		if slices.Contains(parentStyleNames, style.Name) {
+			continue
+		}
+
 		newStyle := wms130.Style{
 			Name:     style.Name,
 			Title:    smoothoperatorutils.PointerVal(style.Title, ""),
@@ -599,45 +472,14 @@ func getNestedLayer(layer pdoknlv3.Layer, authorityURL *wms130.AuthorityURL, can
 				Height: 20,
 				Format: "image/png",
 				OnlineResource: wms130.OnlineResource{
-					Xlink: nil,
+					Xlink: smoothoperatorutils.Pointer(XLinkURL),
 					Type:  smoothoperatorutils.Pointer("simple"),
 					Href:  smoothoperatorutils.Pointer(canonicalURL + "/legend/" + *layer.Name + "/" + style.Name + ".png"),
 				},
 			},
 			StyleSheetURL: nil,
 		}
-		nestedLayer.Style = append(nestedLayer.Style, &newStyle)
+		styles = append(styles, &newStyle)
 	}
-	return nestedLayer
-}
-
-func getTopLayer(wms *pdoknlv3.WMS, referenceLayer pdoknlv3.Layer, authorityURL *wms130.AuthorityURL, identifier *wms130.Identifier) wms130.Layer {
-	title := referenceLayer.Title
-	if title != nil {
-		title = smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(*referenceLayer.Title))
-	} else {
-		title = smoothoperatorutils.Pointer("")
-	}
-	return wms130.Layer{
-		Queryable:               smoothoperatorutils.Pointer(1),
-		Opaque:                  nil,
-		Name:                    nil,
-		Title:                   *title,
-		Abstract:                smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)),
-		KeywordList:             &wms130.Keywords{Keyword: referenceLayer.Keywords},
-		CRS:                     defaultCrs,
-		EXGeographicBoundingBox: &defaultBoundingBox,
-		BoundingBox:             allDefaultBoundingBoxes,
-		Dimension:               nil,
-		Attribution:             nil,
-		AuthorityURL:            authorityURL,
-		Identifier:              identifier,
-		MetadataURL:             nil,
-		DataURL:                 nil,
-		FeatureListURL:          nil,
-		Style:                   nil,
-		MinScaleDenominator:     nil,
-		MaxScaleDenominator:     nil,
-		Layer:                   []*wms130.Layer{},
-	}
+	return
 }

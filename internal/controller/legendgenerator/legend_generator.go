@@ -39,6 +39,7 @@ exit $exit_code;
 		VolumeMounts: []corev1.VolumeMount{
 			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
 			getDataVolumeMount(),
+			{Name: "mapserver", MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
 		},
 	}
 

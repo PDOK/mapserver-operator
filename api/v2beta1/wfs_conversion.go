@@ -77,9 +77,17 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		Fees:              nil,
 		AccessConstraints: src.Spec.Service.AccessConstraints,
 		DefaultCrs:        src.Spec.Service.DataEPSG,
-		OtherCrs:          []string{},
-		CountDefault:      src.Spec.Service.Maxfeatures,
-		FeatureTypes:      make([]pdoknlv3.FeatureType, 0),
+		OtherCrs: []string{
+			"EPSG::25831",
+			"EPSG::25832",
+			"EPSG::3034",
+			"EPSG::3035",
+			"EPSG::3857",
+			"EPSG::4258",
+			"EPSG::4326",
+		},
+		CountDefault: src.Spec.Service.Maxfeatures,
+		FeatureTypes: make([]pdoknlv3.FeatureType, 0),
 	}
 
 	if src.Spec.Service.Mapfile != nil {

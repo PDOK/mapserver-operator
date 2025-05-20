@@ -15,6 +15,7 @@ import (
 
 const (
 	defaultMaxFeatures = 1000
+	tifPath            = "/srv/data/tif"
 	geopackagePath     = "/srv/data/gpkg"
 	defaultExtent      = "-25000 250000 280000 860000"
 )
@@ -239,7 +240,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 
 func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {
 	groupName := ""
-	parent := serviceLayer.GetParent(&wms.Spec.Service.Layer)
+	parent := wms.Spec.Service.GetParentLayer(serviceLayer)
 	// If the layer falls directly under the toplayer, the groupname is omitted
 	if !parent.IsTopLayer() && parent.IsGroupLayer() && parent.Name != nil && parent.Visible {
 		groupName = *parent.Name
@@ -273,6 +274,9 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			GeopackagePath: nil,
 			TableName:      tableName,
 			Postgis:        nil,
+			MinScale:       serviceLayer.MinScaleDenominator,
+			MaxScale:       serviceLayer.MaxScaleDenominator,
+			LabelNoClip:    serviceLayer.LabelNoClip,
 		},
 		GroupName:                   groupName,
 		Styles:                      []Style{},
@@ -289,29 +293,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	}
 
 	if serviceLayer.Data != nil {
-		switch {
-		case serviceLayer.Data.Gpkg != nil:
-			gpkg := serviceLayer.Data.Gpkg
-
-			result.GeometryType = &gpkg.GeometryType
-			geopackageConstructedPath := ""
-			if wms.Options().PrefetchData {
-				splitBlobKey := strings.Split(gpkg.BlobKey, "/")
-				geopackageConstructedPath = "/srv/data/gpkg/" + splitBlobKey[len(splitBlobKey)-1]
-			} else {
-				geopackageConstructedPath = "/vsiaz/geopackages/" + gpkg.BlobKey
-			}
-
-			result.GeopackagePath = &geopackageConstructedPath
-		case serviceLayer.Data.TIF != nil:
-			tif := serviceLayer.Data.TIF
-			result.GeometryType = smoothoperatorutils.Pointer("Raster")
-			result.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
-		case serviceLayer.Data.Postgis != nil:
-			postgis := serviceLayer.Data.Postgis
-			result.Postgis = smoothoperatorutils.Pointer(true)
-			result.GeometryType = &postgis.GeometryType
-		}
+		SetDataFields(wms, &result, *serviceLayer.Data)
 	}
 
 	return result
