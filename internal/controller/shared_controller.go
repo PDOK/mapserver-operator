@@ -16,7 +16,6 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
-	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
 	"github.com/pdok/mapserver-operator/internal/controller/static"
@@ -921,7 +920,7 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 	for _, name := range staticFileName {
 		content := contents[name]
 		if name == "include.conf" {
-			content = []byte(strings.ReplaceAll(string(content), "/{{ service_path }}", mapperutils.GetPath(obj)))
+			content = []byte(strings.ReplaceAll(string(content), "{{ service_path }}", pdoknlv3.GetBaseURLPath(obj)))
 		}
 		configMap.Data[name] = string(content)
 	}

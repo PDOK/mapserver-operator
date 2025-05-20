@@ -1,7 +1,6 @@
 package mapperutils
 
 import (
-	"fmt"
 	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -52,25 +51,6 @@ func GetNamespaceURI(prefix string, ownerInfo *smoothoperatorv1.OwnerInfo) strin
 
 func EscapeQuotes(s string) string {
 	return strings.ReplaceAll(s, "\"", "\\\"")
-}
-
-func GetPath[O pdoknlv3.WMSWFS](obj O) (path string) {
-	webserviceType := strings.ToLower(string(obj.Type()))
-	datasetOwner := GetLabelValueByKey(obj.GetLabels(), "dataset-owner")
-	dataset := GetLabelValueByKey(obj.GetLabels(), "dataset")
-	theme := GetLabelValueByKey(obj.GetLabels(), "theme")
-	serviceVersion := GetLabelValueByKey(obj.GetLabels(), "service-version")
-
-	path = fmt.Sprintf("/%s/%s", *datasetOwner, *dataset)
-	if theme != nil {
-		path += "/" + *theme
-	}
-	path += "/" + webserviceType
-	if serviceVersion != nil {
-		path += "/" + *serviceVersion
-	}
-
-	return path
 }
 
 func GetLabelValueByKey(labels map[string]string, key string) *string {
