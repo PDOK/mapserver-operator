@@ -110,17 +110,6 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, client.IgnoreNotFound(err)
 	}
 
-	lgr.Info("Get object full name")
-	fullName := smoothoperatorutils.GetObjectFullName(r.Client, wms)
-	lgr.Info("Finalize if necessary")
-	shouldContinue, err := smoothoperatorutils.FinalizeIfNecessary(ctx, r.Client, wms, getFinalizerName(wms), func() error {
-		lgr.Info("deleting resources", "name", fullName)
-		return deleteAllForWMSWFS(ctx, r, wms, ownerInfo)
-	})
-	if !shouldContinue || err != nil {
-		return result, err
-	}
-
 	lgr.Info("creating resources for wms", "wms", wms)
 	operationResults, err := createOrUpdateAllForWMSWFS(ctx, r, wms, ownerInfo)
 	if err != nil {
