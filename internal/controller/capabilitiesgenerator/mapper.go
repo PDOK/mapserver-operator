@@ -62,7 +62,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 
 	if wfs.Spec.Service.Inspire != nil {
 		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
-		metadataURL, _ := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
+		metadataURL, _ := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
 
 		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = &wfs200.OperationsMetadata{
 			ExtendedCapabilities: &wfs200.ExtendedCapabilities{
@@ -106,7 +106,7 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 			otherCRS = append(otherCRS, CRS)
 		}
 
-		metadataURL, err := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
+		metadataURL, err := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
 		if err != nil {
 			return nil, err
 		}
@@ -148,7 +148,7 @@ func createCRSFromEpsgString(epsgString string) (*wfs200.CRS, error) {
 	}, nil
 }
 
-func replaceMustachTemplate(hrefTemplate string, identifier string) (string, error) {
+func replaceMustacheTemplate(hrefTemplate string, identifier string) (string, error) {
 	templateVariable := map[string]string{"identifier": identifier}
 	return mustache.Render(hrefTemplate, templateVariable)
 }
@@ -165,8 +165,6 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 		}
 	}
 
-	// TODO fix linting (nestif)
-	//nolint:nestif
 	if provider.ServiceContact != nil {
 		serviceProvider.ServiceContact = &wfs200.ServiceContact{
 			IndividualName: provider.ServiceContact.IndividualName,
@@ -174,37 +172,42 @@ func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProv
 			Role:           provider.ServiceContact.Role,
 		}
 		if provider.ServiceContact.ContactInfo != nil {
-			serviceProvider.ServiceContact.ContactInfo = &wfs200.ContactInfo{
-				Text:                provider.ServiceContact.ContactInfo.Text,
-				HoursOfService:      provider.ServiceContact.ContactInfo.HoursOfService,
-				ContactInstructions: provider.ServiceContact.ContactInfo.ContactInstructions,
-			}
-			if provider.ServiceContact.ContactInfo.Phone != nil {
-				serviceProvider.ServiceContact.ContactInfo.Phone = &wfs200.Phone{
-					Voice:     provider.ServiceContact.ContactInfo.Phone.Voice,
-					Facsimile: provider.ServiceContact.ContactInfo.Phone.Facsimile,
-				}
-			}
-			if provider.ServiceContact.ContactInfo.Address != nil {
-				serviceProvider.ServiceContact.ContactInfo.Address = &wfs200.Address{
-					DeliveryPoint:         provider.ServiceContact.ContactInfo.Address.DeliveryPoint,
-					City:                  provider.ServiceContact.ContactInfo.Address.City,
-					AdministrativeArea:    provider.ServiceContact.ContactInfo.Address.AdministrativeArea,
-					PostalCode:            provider.ServiceContact.ContactInfo.Address.PostalCode,
-					Country:               provider.ServiceContact.ContactInfo.Address.Country,
-					ElectronicMailAddress: provider.ServiceContact.ContactInfo.Address.ElectronicMailAddress,
-				}
-			}
-			if provider.ServiceContact.ContactInfo.OnlineResource != nil {
-				serviceProvider.ServiceContact.ContactInfo.OnlineResource = &wfs200.OnlineResource{
-					Type: provider.ServiceContact.ContactInfo.OnlineResource.Type,
-					Href: provider.ServiceContact.ContactInfo.OnlineResource.Href,
-				}
-			}
+			serviceProvider.ServiceContact.ContactInfo = mapContactInfo(*provider.ServiceContact.ContactInfo)
 		}
 	}
 
 	return serviceProvider
+}
+
+func mapContactInfo(contactInfo smoothoperatorv1.ContactInfo) (serviceContactInfo *wfs200.ContactInfo) {
+	serviceContactInfo = &wfs200.ContactInfo{
+		Text:                contactInfo.Text,
+		HoursOfService:      contactInfo.HoursOfService,
+		ContactInstructions: contactInfo.ContactInstructions,
+	}
+	if contactInfo.Phone != nil {
+		serviceContactInfo.Phone = &wfs200.Phone{
+			Voice:     contactInfo.Phone.Voice,
+			Facsimile: contactInfo.Phone.Facsimile,
+		}
+	}
+	if contactInfo.Address != nil {
+		serviceContactInfo.Address = &wfs200.Address{
+			DeliveryPoint:         contactInfo.Address.DeliveryPoint,
+			City:                  contactInfo.Address.City,
+			AdministrativeArea:    contactInfo.Address.AdministrativeArea,
+			PostalCode:            contactInfo.Address.PostalCode,
+			Country:               contactInfo.Address.Country,
+			ElectronicMailAddress: contactInfo.Address.ElectronicMailAddress,
+		}
+	}
+	if contactInfo.OnlineResource != nil {
+		serviceContactInfo.OnlineResource = &wfs200.OnlineResource{
+			Type: contactInfo.OnlineResource.Type,
+			Href: contactInfo.OnlineResource.Href,
+		}
+	}
+	return
 }
 
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
@@ -271,7 +274,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 
 	if wms.Spec.Service.Inspire != nil {
 		config.Global.AdditionalSchemaLocations = inspireSchemaLocations
-		metadataURL, _ := replaceMustachTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wms.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
+		metadataURL, _ := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wms.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
 
 		defaultLanguage := wms130.Language{Language: wms.Spec.Service.Inspire.Language}
 
