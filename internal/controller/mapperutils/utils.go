@@ -3,10 +3,38 @@ package mapperutils
 import (
 	"strings"
 
+	v1 "k8s.io/api/core/v1"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
+
+func GetContainerResourceRequest[O pdoknlv3.WMSWFS](obj O, containerName string, resource v1.ResourceName) *resource.Quantity {
+	for _, container := range obj.PodSpecPatch().Containers {
+		if container.Name == containerName {
+			q := container.Resources.Requests[resource]
+			if !q.IsZero() {
+				return &q
+			}
+		}
+	}
+
+	return nil
+}
+
+func GetContainerResourceLimit[O pdoknlv3.WMSWFS](obj O, containerName string, resource v1.ResourceName) *resource.Quantity {
+	for _, container := range obj.PodSpecPatch().Containers {
+		if container.Name == containerName {
+			q := container.Resources.Limits[resource]
+			if !q.IsZero() {
+				return &q
+			}
+		}
+	}
+
+	return nil
+}
 
 // Use ephemeral volume when ephemeral storage is greater then 10Gi
 func UseEphemeralVolume[O pdoknlv3.WMSWFS](obj O) (bool, *resource.Quantity) {
@@ -21,28 +49,11 @@ func UseEphemeralVolume[O pdoknlv3.WMSWFS](obj O) (bool, *resource.Quantity) {
 }
 
 func EphemeralStorageLimit[O pdoknlv3.WMSWFS](obj O) *resource.Quantity {
-	return ephemeralStorage(obj, true)
+	return GetContainerResourceLimit(obj, "mapserver", v1.ResourceEphemeralStorage)
 }
 
 func EphemeralStorageRequest[O pdoknlv3.WMSWFS](obj O) *resource.Quantity {
-	return ephemeralStorage(obj, false)
-}
-
-func ephemeralStorage[O pdoknlv3.WMSWFS](obj O, limit bool) *resource.Quantity {
-	for _, container := range obj.PodSpecPatch().Containers {
-		if container.Name == "mapserver" {
-			if limit {
-				limitVal := container.Resources.Limits.StorageEphemeral()
-				if !limitVal.IsZero() {
-					return limitVal
-				}
-			} else if !container.Resources.Requests.StorageEphemeral().IsZero() {
-				return container.Resources.Requests.StorageEphemeral()
-			}
-		}
-	}
-
-	return nil
+	return GetContainerResourceRequest(obj, "mapserver", v1.ResourceEphemeralStorage)
 }
 
 func GetNamespaceURI(prefix string, ownerInfo *smoothoperatorv1.OwnerInfo) string {

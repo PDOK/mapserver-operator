@@ -1,9 +1,10 @@
 package legendgenerator
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"os"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"

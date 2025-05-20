@@ -1,9 +1,10 @@
 package blobdownload
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	v3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"

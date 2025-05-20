@@ -1,5 +1,13 @@
 package mapfilegenerator
 
+import (
+	"path"
+	"regexp"
+
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+)
+
 //nolint:tagliatelle
 type BaseServiceInput struct {
 	Title           string   `json:"service_title"`
@@ -16,7 +24,7 @@ type BaseServiceInput struct {
 	AutomaticCasing bool     `json:"automatic_casing"`
 	DataEPSG        string   `json:"data_epsg"`
 	EPSGList        []string `json:"epsg_list"`
-	DebugLevel      int      `json:"service_debug_level"`
+	DebugLevel      int      `json:"service_debug_level,omitempty"`
 }
 
 //nolint:tagliatelle
@@ -89,4 +97,33 @@ type Column struct {
 type Style struct {
 	Path  string `json:"path"`
 	Title string `json:"title,omitempty"`
+}
+
+func SetDataFields[O pdoknlv3.WMSWFS](obj O, wmsLayer *WMSLayer, data pdoknlv3.Data) {
+	switch {
+	case data.Gpkg != nil:
+		gpkg := data.Gpkg
+
+		wmsLayer.GeometryType = &gpkg.GeometryType
+		geopackageConstructedPath := "/srv/data/gpkg/" + path.Base(gpkg.BlobKey)
+		if !obj.Options().PrefetchData {
+			reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
+			geopackageConstructedPath = path.Join("/vsiaz/geopackages", reReplace.ReplaceAllString(gpkg.BlobKey, ""))
+		}
+		wmsLayer.GeopackagePath = &geopackageConstructedPath
+	case data.TIF != nil:
+		tif := data.TIF
+		wmsLayer.GeometryType = smoothoperatorutils.Pointer("Raster")
+		wmsLayer.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join(tifPath, path.Base(tif.BlobKey)))
+		if !obj.Options().PrefetchData {
+			reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
+			wmsLayer.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join("/vsiaz", reReplace.ReplaceAllString(tif.BlobKey, "")))
+		}
+		wmsLayer.BaseLayer.Resample = tif.Resample
+		wmsLayer.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
+	case data.Postgis != nil:
+		postgis := data.Postgis
+		wmsLayer.Postgis = smoothoperatorutils.Pointer(true)
+		wmsLayer.GeometryType = &postgis.GeometryType
+	}
 }

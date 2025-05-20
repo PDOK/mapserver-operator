@@ -2,8 +2,6 @@ package mapfilegenerator
 
 import (
 	"fmt"
-	"path"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -295,37 +293,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	}
 
 	if serviceLayer.Data != nil {
-		switch {
-		case serviceLayer.Data.Gpkg != nil:
-			gpkg := serviceLayer.Data.Gpkg
-
-			result.GeometryType = &gpkg.GeometryType
-			geopackageConstructedPath := ""
-			if wms.Options().PrefetchData {
-				splitBlobKey := strings.Split(gpkg.BlobKey, "/")
-				geopackageConstructedPath = "/srv/data/gpkg/" + splitBlobKey[len(splitBlobKey)-1]
-			} else {
-				reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
-				geopackageConstructedPath = path.Join("/vsiaz/geopackages", reReplace.ReplaceAllString(gpkg.BlobKey, ""))
-			}
-
-			result.GeopackagePath = &geopackageConstructedPath
-		case serviceLayer.Data.TIF != nil:
-			tif := serviceLayer.Data.TIF
-			result.GeometryType = smoothoperatorutils.Pointer("Raster")
-			if wms.Options().PrefetchData {
-				result.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join(tifPath, path.Base(tif.BlobKey)))
-			} else {
-				reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
-				result.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join("/vsiaz", reReplace.ReplaceAllString(tif.BlobKey, "")))
-			}
-			result.BaseLayer.Resample = tif.Resample
-			result.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
-		case serviceLayer.Data.Postgis != nil:
-			postgis := serviceLayer.Data.Postgis
-			result.Postgis = smoothoperatorutils.Pointer(true)
-			result.GeometryType = &postgis.GeometryType
-		}
+		SetDataFields(wms, &result, *serviceLayer.Data)
 	}
 
 	return result

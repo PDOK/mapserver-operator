@@ -2,6 +2,9 @@ package capabilitiesgenerator
 
 import "github.com/pdok/ogc-specifications/pkg/wms130"
 
+// TODO Bounding boxes and default CRSes in this file are not used at the moment but are kept so we can use them again later
+
+//nolint:unused
 var defaultWMSBoundingBox = wms130.EXGeographicBoundingBox{
 	WestBoundLongitude: 2.52713,
 	EastBoundLongitude: 7.37403,
@@ -9,6 +12,7 @@ var defaultWMSBoundingBox = wms130.EXGeographicBoundingBox{
 	NorthBoundLatitude: 55.7212,
 }
 
+//nolint:unused
 func getDefaultWMSCRSes() []wms130.CRS {
 	return []wms130.CRS{{
 		Namespace: "EPSG",
@@ -40,9 +44,10 @@ func getDefaultWMSCRSes() []wms130.CRS {
 	}}
 }
 
+//nolint:unused
 func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 	return []*wms130.LayerBoundingBox{
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:28992",
 			Minx: -25000,
 			Miny: 250000,
@@ -51,7 +56,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:25831",
 			Minx: -470271,
 			Miny: 5.56231e+06,
@@ -60,7 +65,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:25832",
 			Minx: 62461.6,
 			Miny: 5.56555e+06,
@@ -69,7 +74,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:3034",
 			Minx: 2.61336e+06,
 			Miny: 3.509e+06,
@@ -78,7 +83,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:3035",
 			Minx: 3.01676e+06,
 			Miny: 3.81264e+06,
@@ -87,7 +92,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:3857",
 			Minx: 281318,
 			Miny: 6.48322e+06,
@@ -96,7 +101,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:4258",
 			Minx: 50.2129,
 			Miny: 2.52713,
@@ -105,7 +110,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "EPSG:4326",
 			Minx: 50.2129,
 			Miny: 2.52713,
@@ -114,7 +119,7 @@ func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 			Resx: 0,
 			Resy: 0,
 		},
-		&wms130.LayerBoundingBox{
+		{
 			CRS:  "CRS:84",
 			Minx: 2.52713,
 			Miny: 50.2129,
