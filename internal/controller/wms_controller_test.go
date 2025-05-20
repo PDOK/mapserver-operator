@@ -28,7 +28,6 @@ package controller
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"slices"
 
@@ -73,6 +72,7 @@ var _ = Describe("WMS Controller", func() {
 			Name:      ownerInfoResourceName,
 		}
 		ownerInfo := &smoothoperatorv1.OwnerInfo{}
+		initScripts, mapfileGenerator := true, true
 
 		BeforeEach(func() {
 			pdoknlv3.SetHost("localhost")
@@ -118,6 +118,20 @@ var _ = Describe("WMS Controller", func() {
 
 			By("Cleanup the specific resource instance OwnerInfo")
 			Expect(k8sClient.Delete(ctx, ownerInfoResource)).To(Succeed())
+
+			// the testEnv does not do garbage collection (https://book.kubebuilder.io/reference/envtest#testing-considerations)
+			By("Cleaning Owned Resources")
+			objects, err := getExpectedObjects(ctx, wms, initScripts, mapfileGenerator)
+			Expect(err).NotTo(HaveOccurred())
+			for _, o := range objects {
+				objectKey := client.ObjectKey{
+					Namespace: o.GetNamespace(),
+					Name:      o.GetName(),
+				}
+				err := k8sClient.Get(ctx, objectKey, o)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(k8sClient.Delete(ctx, o)).To(Succeed())
+			}
 		})
 
 		It("Should successfully reconcile the resource", func() {
@@ -127,7 +141,8 @@ var _ = Describe("WMS Controller", func() {
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 
 			By("Waiting for the owned resources to be created")
-			expectedBareObjects, err := getExpectedObjects(ctx, wms, false)
+			initScripts = false
+			expectedBareObjects, err := getExpectedObjects(ctx, wms, initScripts, mapfileGenerator)
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() error {
@@ -146,32 +161,6 @@ var _ = Describe("WMS Controller", func() {
 
 			Expect(len(wms.Status.Conditions)).To(BeEquivalentTo(1))
 			Expect(wms.Status.Conditions[0].Status).To(BeEquivalentTo(metav1.ConditionTrue))
-
-			By("Deleting the WMS")
-			Expect(k8sClient.Delete(ctx, wms)).To(Succeed())
-
-			By("Reconciling the WMS again")
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWms})
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Waiting for the owned resources to be deleted")
-			Eventually(func() error {
-				for _, o := range expectedBareObjects {
-					// TODO make finalizers work in the test environment
-					if len(o.GetFinalizers()) > 0 {
-						continue
-					}
-
-					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: o.GetName()}, o)
-					if err == nil {
-						return errors.New("expected " + smoothoperatorutils.GetObjectFullName(k8sClient, o) + " to not be found")
-					}
-					if !k8serrors.IsNotFound(err) {
-						return err
-					}
-				}
-				return nil
-			}, "10s", "1s").Should(Not(HaveOccurred()))
 		})
 
 		It("Should successfully reconcile after a change in an owned resource", func() {
@@ -930,7 +919,7 @@ var _ = Describe("WMS Controller", func() {
 			Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
 
 			controllerReconciler := getWMSReconciler()
-
+			mapfileGenerator = false
 			By("Reconciling the WMS and checking the configMap")
 			reconcileWMS(controllerReconciler, wms, typeNamespacedNameWms)
 			deployment := &appsv1.Deployment{}
@@ -985,14 +974,6 @@ func reconcileWMS(r *WMSReconciler, wms *pdoknlv3.WMS, typeNamespacedNameWms typ
 
 	// Check it's there
 	err = k8sClient.Get(ctx, typeNamespacedNameWms, wms)
-	Expect(err).NotTo(HaveOccurred())
-
-	// Check finalizers
-	finalizerName := getFinalizerName(wms)
-	Expect(wms.Finalizers).To(ContainElement(finalizerName))
-
-	// Reconcile again
-	_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: typeNamespacedNameWms})
 	Expect(err).NotTo(HaveOccurred())
 }
 
