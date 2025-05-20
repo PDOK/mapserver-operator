@@ -515,24 +515,40 @@ func makeUptimeName[O pdoknlv3.WMSWFS](obj O) (string, error) {
 
 	ownerID, ok := obj.GetLabels()["dataset-owner"]
 	if !ok {
-		return "", errors.New("dataset-owner label not found in object")
+		// Ve label
+		ownerID, ok = obj.GetLabels()["pdok.nl/owner-id"]
+		if !ok {
+			return "", errors.New("dataset-owner and pdok.nl/owner-id labels are not found in object")
+		}
 	}
 	parts = append(parts, strings.ToUpper(strings.ReplaceAll(ownerID, "-", "")))
 
 	datasetID, ok := obj.GetLabels()["dataset"]
 	if !ok {
-		return "", errors.New("dataset label not found in object")
+		// V3 label
+		datasetID, ok = obj.GetLabels()["pdok.nl/dataset-id"]
+		if !ok {
+			return "", errors.New("dataset label not found in object")
+		}
 	}
 	parts = append(parts, strings.ReplaceAll(datasetID, "-", ""))
 
 	theme, ok := obj.GetLabels()["theme"]
+	if !ok {
+		// V3 label
+		theme, ok = obj.GetLabels()["pdok.nl/tag"]
+	}
+
 	if ok {
 		parts = append(parts, strings.ReplaceAll(theme, "-", ""))
 	}
 
 	version, ok := obj.GetLabels()["service-version"]
 	if !ok {
-		return "", errors.New("service-version label not found in object")
+		version, ok = obj.GetLabels()["pdok.nl/service-version"]
+		if !ok {
+			return "", errors.New("service-version label not found in object")
+		}
 	}
 	parts = append(parts, version)
 
