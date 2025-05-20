@@ -515,7 +515,10 @@ func makeUptimeName[O pdoknlv3.WMSWFS](obj O) (string, error) {
 
 	ownerID, ok := obj.GetLabels()["dataset-owner"]
 	if !ok {
-		return "", errors.New("dataset-owner label not found in object")
+		ownerID, ok = obj.GetLabels()["pdok.nl/owner-id"]
+		if !ok {
+			return "", errors.New("dataset-owner and pdok.nl/owner-id labels are not found in object")
+		}
 	}
 	parts = append(parts, strings.ToUpper(strings.ReplaceAll(ownerID, "-", "")))
 
