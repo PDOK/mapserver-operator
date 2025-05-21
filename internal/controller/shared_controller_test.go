@@ -7,7 +7,7 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -45,7 +45,7 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 
 	// Remove ConfigMaps as they have hashed names
 	for _, object := range bareObjects {
-		if _, ok := object.(*v1.ConfigMap); !ok {
+		if _, ok := object.(*corev1.ConfigMap); !ok {
 			objects = append(objects, object)
 		}
 	}

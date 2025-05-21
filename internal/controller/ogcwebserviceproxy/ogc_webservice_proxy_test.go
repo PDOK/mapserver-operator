@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	controller "github.com/pdok/smooth-operator/pkg/util"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 const expectedConfig = `grouplayers:
@@ -33,30 +33,30 @@ func TestGetConfig(t *testing.T) {
 					Spec: pdoknlv3.WMSSpec{
 						Service: pdoknlv3.WMSService{
 							Layer: pdoknlv3.Layer{
-								Name: controller.Pointer("toplayer"),
+								Name: smoothoperatorutils.Pointer("toplayer"),
 								Layers: []pdoknlv3.Layer{
 									{
-										Name: controller.Pointer("grouplayer-1"),
+										Name: smoothoperatorutils.Pointer("grouplayer-1"),
 										Layers: []pdoknlv3.Layer{
 											{
-												Name: controller.Pointer("datalayer-1"),
+												Name: smoothoperatorutils.Pointer("datalayer-1"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-1"}},
 											},
 											{
-												Name: controller.Pointer("datalayer-2"),
+												Name: smoothoperatorutils.Pointer("datalayer-2"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-2"}},
 											},
 										},
 									},
 									{
-										Name: controller.Pointer("grouplayer-2"),
+										Name: smoothoperatorutils.Pointer("grouplayer-2"),
 										Layers: []pdoknlv3.Layer{
 											{
-												Name: controller.Pointer("datalayer-3"),
+												Name: smoothoperatorutils.Pointer("datalayer-3"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-3"}},
 											},
 											{
-												Name: controller.Pointer("datalayer-4"),
+												Name: smoothoperatorutils.Pointer("datalayer-4"),
 												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-4"}},
 											},
 										},

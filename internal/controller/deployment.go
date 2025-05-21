@@ -1,0 +1,262 @@
+package controller
+
+import (
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
+	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+	"github.com/pdok/smooth-operator/pkg/k8s"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
+)
+
+const (
+	srvDir              = "/srv"
+	blobsConfigPrefix   = "blobs-"
+	blobsSecretPrefix   = "blobs-"
+	postgisConfigPrefix = "postgres-"
+	postgisSecretPrefix = "postgres-"
+)
+
+func getBareDeployment[O pdoknlv3.WMSWFS](obj O) *appsv1.Deployment {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: getSuffixedName(obj, MapserverName),
+			// name might become too long. not handling here. will just fail on apply.
+			Namespace: obj.GetNamespace(),
+		},
+	}
+}
+
+func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
+	reconcilerClient := getReconcilerClient(r)
+
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
+	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, deployment, labels); err != nil {
+		return err
+	}
+
+	matchLabels := smoothoperatorutils.CloneOrEmptyMap(labels)
+	deployment.Spec.Selector = &metav1.LabelSelector{
+		MatchLabels: matchLabels,
+	}
+
+	deployment.Spec.RevisionHistoryLimit = smoothoperatorutils.Pointer(int32(1))
+
+	deployment.Spec.Strategy = appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{
+				IntVal: 1,
+			},
+			MaxSurge: &intstr.IntOrString{
+				IntVal: 1,
+			},
+		},
+	}
+
+	initContainers, err := getInitContainerForDeployment(r, obj)
+	if err != nil {
+		return err
+	}
+	for idx := range initContainers {
+		initContainers[idx].TerminationMessagePolicy = corev1.TerminationMessagePolicy("File")
+		initContainers[idx].TerminationMessagePath = "/dev/termination-log"
+	}
+
+	containers, err := getContainersForDeployment(r, obj)
+	if err != nil {
+		return err
+	}
+
+	annotations := smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations())
+	annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
+
+	annotations["kubectl.kubernetes.io/default-container"] = "mapserver"
+	annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
+	annotations["prometheus.io/scrape"] = "true"
+	annotations["prometheus.io/port"] = "9117"
+	annotations["priority.version-checker.io/mapserver"] = "4"
+	annotations["priority.version-checker.io/ogc-webservice-proxy"] = "4"
+
+	deployment.Spec.Template = corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: annotations,
+			Labels:      labels,
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy:                 corev1.RestartPolicyAlways,
+			TerminationGracePeriodSeconds: smoothoperatorutils.Pointer(int64(60)),
+			InitContainers:                initContainers,
+			Volumes:                       mapserver.GetVolumesForDeployment(obj, configMapNames),
+			Containers:                    containers,
+			SecurityContext:               deployment.Spec.Template.Spec.SecurityContext,
+			SchedulerName:                 deployment.Spec.Template.Spec.SchedulerName,
+			DNSPolicy:                     corev1.DNSClusterFirst,
+		},
+	}
+
+	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, deployment, deployment); err != nil {
+		return err
+	}
+	return ctrl.SetControllerReference(obj, deployment, getReconcilerScheme(r))
+}
+
+func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]corev1.Container, error) {
+	blobsConfig, err := k8s.GetConfigMap(getReconcilerClient(r), obj.GetNamespace(), blobsConfigPrefix, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
+	blobsSecret, err := k8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), blobsSecretPrefix, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
+	postgresConfig, err := k8s.GetConfigMap(getReconcilerClient(r), obj.GetNamespace(), postgisConfigPrefix, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
+	postgresSecret, err := k8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), postgisSecretPrefix, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
+	images := getReconcilerImages(r)
+	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, images.MultitoolImage, blobsConfig.Name, blobsSecret.Name, srvDir)
+	if err != nil {
+		return nil, err
+	}
+	mapfileGeneratorInitContainer, err := mapfilegenerator.GetMapfileGeneratorInitContainer(obj, images.MapfileGeneratorImage, postgresConfig.Name, postgresSecret.Name, srvDir)
+	if err != nil {
+		return nil, err
+	}
+	capabilitiesGeneratorInitContainer, err := capabilitiesgenerator.GetCapabilitiesGeneratorInitContainer(obj, images.CapabilitiesGeneratorImage)
+	if err != nil {
+		return nil, err
+	}
+
+	initContainers := []corev1.Container{
+		*blobDownloadInitContainer,
+		*capabilitiesGeneratorInitContainer,
+	}
+
+	if obj.Mapfile() == nil {
+		initContainers = append(initContainers, *mapfileGeneratorInitContainer)
+	}
+
+	if wms, ok := any(obj).(*pdoknlv3.WMS); ok {
+		featureInfoInitContainer, err := featureinfogenerator.GetFeatureinfoGeneratorInitContainer(images.FeatureinfoGeneratorImage, srvDir)
+		if err != nil {
+			return nil, err
+		}
+		initContainers = append(initContainers, *featureInfoInitContainer)
+
+		legendGeneratorInitContainer, err := legendgenerator.GetLegendGeneratorInitContainer(wms, images.MapserverImage, srvDir)
+		if err != nil {
+			return nil, err
+		}
+		initContainers = append(initContainers, *legendGeneratorInitContainer)
+
+		if wms.Options().RewriteGroupToDataLayers {
+			legendFixerInitContainer := legendgenerator.GetLegendFixerInitContainer(images.MultitoolImage)
+			initContainers = append(initContainers, *legendFixerInitContainer)
+		}
+
+	}
+	return initContainers, nil
+}
+
+func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]corev1.Container, error) {
+	images := getReconcilerImages(r)
+
+	blobsSecret, err := k8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), blobsSecretPrefix, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
+	livenessProbe, readinessProbe, startupProbe, err := mapserver.GetProbesForDeployment(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	mapserverContainer := corev1.Container{
+		Name:            MapserverName,
+		Image:           images.MapserverImage,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: 80,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		Env:                      mapserver.GetEnvVarsForDeployment(obj, blobsSecret.Name),
+		VolumeMounts:             mapserver.GetVolumeMountsForDeployment(obj, srvDir),
+		Resources:                mapserver.GetResourcesForDeployment(obj),
+		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+		TerminationMessagePath:   "/dev/termination-log",
+		LivenessProbe:            livenessProbe,
+		ReadinessProbe:           readinessProbe,
+		StartupProbe:             startupProbe,
+		Lifecycle: &corev1.Lifecycle{
+			PreStop: &corev1.LifecycleHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"sleep", "15"},
+				},
+			},
+		},
+	}
+
+	apacheContainer := corev1.Container{
+		Name:                     "apache-exporter",
+		Image:                    images.ApacheExporterImage,
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+		TerminationMessagePath:   "/dev/termination-log",
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: 9117,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		Args: []string{
+			"--scrape_uri=http://localhost/server-status?auto",
+		},
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("48M"),
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("0.02"),
+			},
+		},
+	}
+
+	containers := []corev1.Container{
+		mapserverContainer,
+		apacheContainer,
+	}
+	if wms, ok := any(obj).(*pdoknlv3.WMS); ok {
+		if wms.Options().UseWebserviceProxy() {
+			ogcWebserviceProxyContainer, err := ogcwebserviceproxy.GetOgcWebserviceProxyContainer(wms, images.OgcWebserviceProxyImage)
+			if err != nil {
+				return nil, err
+			}
+
+			return append(containers, *ogcWebserviceProxyContainer), nil
+		}
+	}
+
+	return containers, nil
+}
