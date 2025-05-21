@@ -26,6 +26,15 @@ const (
 	InitScriptsName           = "init-scripts"
 )
 
+func ensureLabel[O pdoknlv3.WMSWFS](obj O, key, value string) {
+	labels := obj.GetLabels()
+	if _, ok := labels[key]; !ok {
+		labels[key] = value
+	}
+
+	obj.SetLabels(labels)
+}
+
 func getSharedBareObjects[O pdoknlv3.WMSWFS](obj O) []client.Object {
 	return []client.Object{
 		getBareDeployment(obj),

@@ -99,6 +99,8 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, client.IgnoreNotFound(err)
 	}
 
+	ensureLabel(wfs, "pdok.nl/service-type", "wfs")
+
 	lgr.Info("creating resources for wfs", "wfs", wfs)
 	operationResults, err := createOrUpdateAllForWMSWFS(ctx, r, wfs, ownerInfo)
 	if err != nil {
