@@ -629,10 +629,10 @@ var _ = Describe("WFS Controller", func() {
 			checkWFSLabels(ingressRoute.GetLabels())
 
 			Expect(ingressRoute.Annotations).To(Equal(map[string]string{
-				"uptime.pdok.nl/id":   wfs.ID(),
-				"uptime.pdok.nl/name": "EIGENAAR dataset 1.0.0 INSPIRE WFS",
+				"uptime.pdok.nl/id":   utils.Sha1Hash(wfs.TypedName()),
+				"uptime.pdok.nl/name": "WFS resource 13 INSPIRE WFS",
 				"uptime.pdok.nl/tags": "public-stats,wfs,inspire",
-				"uptime.pdok.nl/url":  "https://service.pdok.nl/eigenaar/dataset/wfs/1.0.0",
+				"uptime.pdok.nl/url":  "https://service.pdok.nl/eigenaar/dataset/wfs/1.0.0?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=FeatureType1&STARTINDEX=0&COUNT=1",
 			}))
 
 			Expect(ingressRoute.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))

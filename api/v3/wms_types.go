@@ -25,9 +25,12 @@ SOFTWARE.
 package v3
 
 import (
+	"errors"
+	"fmt"
 	"maps"
 	"slices"
 	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -571,6 +574,17 @@ func (wms *WMS) Type() ServiceType {
 	return ServiceTypeWMS
 }
 
+func (wms *WMS) TypedName() string {
+	name := wms.GetName()
+	typeSuffix := strings.ToLower(string(ServiceTypeWMS))
+
+	if strings.HasSuffix(name, typeSuffix) {
+		return name
+	}
+
+	return name + "-" + typeSuffix
+}
+
 func (wms *WMS) PodSpecPatch() *corev1.PodSpec {
 	return wms.Spec.PodSpecPatch
 }
@@ -585,10 +599,6 @@ func (wms *WMS) Options() Options {
 	}
 
 	return *wms.Spec.Options
-}
-
-func (wms *WMS) ID() string {
-	return Sha1HashOfName(wms)
 }
 
 func (wms *WMS) URLPath() string {
@@ -613,4 +623,25 @@ func (wms *WMS) GeoPackages() []*Gpkg {
 	}
 
 	return gpkgs
+}
+
+func (wms *WMS) HealthCheckBBox() string {
+	// TODO make dynamic
+	return "190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914"
+}
+
+func (wms *WMS) ReadinessQueryString() (string, error) {
+	// TODO implement healthcheck from CR
+	firstDataLayerName := ""
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
+		if layer.IsDataLayer() {
+			firstDataLayerName = *layer.Name
+			break
+		}
+	}
+	if firstDataLayerName == "" {
+		return "", errors.New("cannot get readiness probe for WMS, the first datalayer could not be found")
+	}
+
+	return fmt.Sprintf("SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=%s&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=%s&STYLES=&FORMAT=image/png", wms.HealthCheckBBox(), firstDataLayerName), nil
 }
