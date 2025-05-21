@@ -865,10 +865,10 @@ var _ = Describe("WMS Controller", func() {
 			checkWMSLabels(ingressRoute.GetLabels())
 
 			Expect(ingressRoute.Annotations).To(Equal(map[string]string{
-				"uptime.pdok.nl/id":   wms.ID(),
-				"uptime.pdok.nl/name": "OWNER dataset 1.0.0 INSPIRE WMS",
+				"uptime.pdok.nl/id":   utils.Sha1Hash(wms.TypedName()),
+				"uptime.pdok.nl/name": "WMS resource 22 INSPIRE WMS",
 				"uptime.pdok.nl/tags": "public-stats,wms,inspire",
-				"uptime.pdok.nl/url":  "https://service.pdok.nl/owner/dataset/wms/1.0.0",
+				"uptime.pdok.nl/url":  "https://service.pdok.nl/owner/dataset/wms/1.0.0?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=gpkg-layer-name&STYLES=&FORMAT=image/png",
 			}))
 
 			Expect(ingressRoute.GetName()).To(Equal(wms.GetName() + "-wms-mapserver"))

@@ -1,10 +1,6 @@
 package v3
 
 import (
-	//nolint:gosec
-	"crypto/sha1"
-	"encoding/hex"
-	"io"
 	"net/url"
 	"strings"
 
@@ -45,14 +41,20 @@ type WMSWFS interface {
 	PodSpecPatch() *corev1.PodSpec
 	HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch
 	Type() ServiceType
+	TypedName() string
 	Options() Options
 	HasPostgisData() bool
-	// Sha1 hash of the objects name
-	ID() string
+
 	// URLPath returns the configured service URL
 	URLPath() string
 
 	GeoPackages() []*Gpkg
+
+	ReadinessQueryString() (string, error)
+
+	// TODO implement healthcheck in CR
+	// StartUpQueryString() string
+	// LivenessQueryString() string
 }
 
 // Mapfile references a ConfigMap key where an external mapfile is stored.
@@ -260,12 +262,6 @@ func GetBaseURLPath[T WMSWFS](o T) string {
 	return strings.TrimPrefix(parsed.Path, "/")
 }
 
-func GetBaseURLPathWithoutTypeAndVersion[T WMSWFS](o T) string {
-	serviceURL := o.URLPath()
-	parsed, _ := url.Parse(serviceURL)
-	return strings.TrimPrefix(parsed.Path, "/")
-}
-
 func (d *Data) GetColumns() *[]Column {
 	switch {
 	case d.Gpkg != nil:
@@ -297,14 +293,6 @@ func (d *Data) GetGeometryType() *string {
 	default:
 		return nil
 	}
-}
-
-func Sha1HashOfName[O WMSWFS](obj O) string {
-	//nolint:gosec
-	s := sha1.New()
-	_, _ = io.WriteString(s, obj.GetName())
-
-	return hex.EncodeToString(s.Sum(nil))
 }
 
 func (o Options) UseWebserviceProxy() bool {

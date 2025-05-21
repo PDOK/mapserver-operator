@@ -1,8 +1,10 @@
 package controller
 
 import (
-	"errors"
+	"regexp"
 	"strings"
+
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -11,6 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
+
+var setUptimeOperatorAnnotations = true
+
+func SetUptimeOperatorAnnotations(set bool) {
+	setUptimeOperatorAnnotations = set
+}
 
 func getBareIngressRoute[O pdoknlv3.WMSWFS](obj O) *traefikiov1alpha1.IngressRoute {
 	return &traefikiov1alpha1.IngressRoute{
@@ -29,23 +37,24 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 		return err
 	}
 
-	var uptimeURL string
-	switch any(obj).(type) {
-	case *pdoknlv3.WFS:
-		uptimeURL = any(obj).(*pdoknlv3.WFS).Spec.Service.URL // TODO add healthcheck query
-	case *pdoknlv3.WMS:
-		uptimeURL = any(obj).(*pdoknlv3.WMS).Spec.Service.URL // TODO add healthcheck query
-	}
-
-	uptimeName, err := makeUptimeName(obj)
-	if err != nil {
-		return err
-	}
 	annotations := smoothoperatorutils.CloneOrEmptyMap(obj.GetAnnotations())
-	annotations["uptime.pdok.nl/id"] = obj.ID()
-	annotations["uptime.pdok.nl/name"] = uptimeName
-	annotations["uptime.pdok.nl/url"] = uptimeURL
-	annotations["uptime.pdok.nl/tags"] = strings.Join(makeUptimeTags(obj), ",")
+	if setUptimeOperatorAnnotations {
+		tags := []string{"public-stats", strings.ToLower(string(obj.Type()))}
+
+		if obj.Inspire() != nil {
+			tags = append(tags, "inspire")
+		}
+
+		queryString, err := obj.ReadinessQueryString()
+		if err != nil {
+			return err
+		}
+
+		annotations["uptime.pdok.nl/id"] = utils.Sha1Hash(obj.TypedName())
+		annotations["uptime.pdok.nl/name"] = getUptimeName(obj)
+		annotations["uptime.pdok.nl/url"] = obj.URLPath() + "?" + queryString
+		annotations["uptime.pdok.nl/tags"] = strings.Join(tags, ",")
+	}
 	ingressRoute.SetAnnotations(annotations)
 
 	mapserverService := traefikiov1alpha1.Service{
@@ -108,90 +117,33 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 		}}
 	}
 
-	// Add finalizers
-	ingressRoute.Finalizers = []string{"uptime.pdok.nl/finalizer"}
-
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, ingressRoute, ingressRoute); err != nil {
 		return err
 	}
 	return ctrl.SetControllerReference(obj, ingressRoute, getReconcilerScheme(r))
 }
 
-func makeUptimeTags[O pdoknlv3.WMSWFS](obj O) []string {
-	tags := []string{"public-stats", strings.ToLower(string(obj.Type()))}
+// getUptimeName transforms the CR name into a uptime.pdok.nl/name value
+// owner-dataset-v1-0 -> OWNER dataset v1_0 [INSPIRE] [WMS|WFS]
+func getUptimeName[O pdoknlv3.WMSWFS](obj O) string {
+	// Extract the version from the CR name, owner-dataset-v1-0 -> owner-dataset + v1-0
+	versionMatcher := regexp.MustCompile("^(.*)(?:-(v?[1-9](?:-[0-9])?))?$")
+	match := versionMatcher.FindStringSubmatch(obj.GetName())
 
-	switch any(obj).(type) {
-	case *pdoknlv3.WFS:
-		wfs, _ := any(obj).(*pdoknlv3.WFS)
-		if wfs.Spec.Service.Inspire != nil {
-			tags = append(tags, "inspire")
-		}
-	case *pdoknlv3.WMS:
-		wms, _ := any(obj).(*pdoknlv3.WMS)
-		if wms.Spec.Service.Inspire != nil {
-			tags = append(tags, "inspire")
-		}
+	nameParts := strings.Split(match[1], "-")
+	nameParts[0] = strings.ToUpper(nameParts[0])
+
+	// Add service version if found
+	if len(match) > 2 && len(match[2]) > 0 {
+		nameParts = append(nameParts, strings.ReplaceAll(match[2], "-", "_"))
 	}
 
-	return tags
-}
-
-func makeUptimeName[O pdoknlv3.WMSWFS](obj O) (string, error) {
-	var parts []string
-
-	inspire := false
-	switch any(obj).(type) {
-	case *pdoknlv3.WFS:
-		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
-	case *pdoknlv3.WMS:
-		inspire = any(obj).(*pdoknlv3.WMS).Spec.Service.Inspire != nil
+	// Add inspire
+	if obj.Inspire() != nil {
+		nameParts = append(nameParts, "INSPIRE")
 	}
 
-	ownerID, ok := obj.GetLabels()["dataset-owner"]
-	if !ok {
-		ownerID, ok = obj.GetLabels()["pdok.nl/owner-id"]
-		if !ok {
-			return "", errors.New("dataset-owner and pdok.nl/owner-id labels are not found in object")
-		}
-	}
-	parts = append(parts, strings.ToUpper(strings.ReplaceAll(ownerID, "-", "")))
-
-	datasetID, ok := obj.GetLabels()["dataset"]
-	if !ok {
-		// V3 label
-		datasetID, ok = obj.GetLabels()["pdok.nl/dataset-id"]
-		if !ok {
-			return "", errors.New("dataset label not found in object")
-		}
-	}
-	parts = append(parts, strings.ReplaceAll(datasetID, "-", ""))
-
-	theme, ok := obj.GetLabels()["theme"]
-	if !ok {
-		// V3 label
-		theme, ok = obj.GetLabels()["pdok.nl/tag"]
-	}
-
-	if ok {
-		parts = append(parts, strings.ReplaceAll(theme, "-", ""))
-	}
-
-	version, ok := obj.GetLabels()["service-version"]
-	if !ok {
-		version, ok = obj.GetLabels()["pdok.nl/service-version"]
-		if !ok {
-			return "", errors.New("service-version label not found in object")
-		}
-	}
-	parts = append(parts, version)
-
-	if inspire {
-		parts = append(parts, "INSPIRE")
-	}
-
-	parts = append(parts, string(obj.Type()))
-
-	return strings.Join(parts, " "), nil
+	return strings.Join(append(nameParts, string(obj.Type())), " ")
 }
 
 func getMatchRule[O pdoknlv3.WMSWFS](obj O) string {

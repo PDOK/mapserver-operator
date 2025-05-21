@@ -23,8 +23,6 @@ const (
 	ConfigMapLegendGeneratorVolumeName       = "legend-generator-config"
 	ConfigMapFeatureinfoGeneratorVolumeName  = "featureinfo-generator-config"
 	ConfigMapStylingFilesVolumeName          = "styling-files"
-	// TODO How should we determine this boundingbox?
-	healthCheckBbox = "190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914"
 
 	mimeTextXML = "text/xml"
 )
@@ -361,26 +359,18 @@ func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *corev1.Probe {
 }
 
 func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
-	if len(wfs.Spec.Service.FeatureTypes) == 0 {
-		return nil, errors.New("cannot get readiness probe for WFS, featuretypes could not be found")
+	queryString, err := wfs.ReadinessQueryString()
+	if err != nil {
+		return nil, err
 	}
-	queryString := "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + wfs.Spec.Service.FeatureTypes[0].Name + "&STARTINDEX=0&COUNT=1"
 	return getProbe(queryString, mimeTextXML), nil
 }
 
 func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
-	firstDataLayerName := ""
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
-		if layer.IsDataLayer() {
-			firstDataLayerName = *layer.Name
-			break
-		}
+	queryString, err := wms.ReadinessQueryString()
+	if err != nil {
+		return nil, err
 	}
-	if firstDataLayerName == "" {
-		return nil, errors.New("cannot get readiness probe for WMS, the first datalayer could not be found")
-	}
-
-	queryString := "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=" + healthCheckBbox + "&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=" + firstDataLayerName + "&STYLES=&FORMAT=image/png"
 	mimeType := "image/png"
 
 	return getProbe(queryString, mimeType), nil
@@ -411,7 +401,7 @@ func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
 		return nil, errors.New("cannot get startup probe for WMS, layers could not be found")
 	}
 
-	queryString := "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=" + healthCheckBbox + "&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=" + strings.Join(layerNames, ",") + "&STYLES=&FORMAT=image/png"
+	queryString := "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=" + wms.HealthCheckBBox() + "&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=" + strings.Join(layerNames, ",") + "&STYLES=&FORMAT=image/png"
 	mimeType := "image/png"
 	return getProbe(queryString, mimeType), nil
 }

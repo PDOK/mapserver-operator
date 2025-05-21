@@ -1,6 +1,13 @@
 package utils
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	//nolint:gosec
+	"crypto/sha1"
+	"encoding/hex"
+	"io"
+
+	corev1 "k8s.io/api/core/v1"
+)
 
 type EnvFromSourceType string
 
@@ -30,4 +37,12 @@ func NewEnvFromSource(t EnvFromSourceType, name string) corev1.EnvFromSource {
 	default:
 		return corev1.EnvFromSource{}
 	}
+}
+
+func Sha1Hash(v string) string {
+	//nolint:gosec
+	s := sha1.New()
+	_, _ = io.WriteString(s, v)
+
+	return hex.EncodeToString(s.Sum(nil))
 }

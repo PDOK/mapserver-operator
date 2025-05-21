@@ -25,7 +25,9 @@ SOFTWARE.
 package v3
 
 import (
+	"errors"
 	"slices"
+	"strings"
 
 	shared_model "github.com/pdok/smooth-operator/model"
 	corev1 "k8s.io/api/core/v1"
@@ -233,6 +235,17 @@ func (wfs *WFS) Type() ServiceType {
 	return ServiceTypeWFS
 }
 
+func (wfs *WFS) TypedName() string {
+	name := wfs.GetName()
+	typeSuffix := strings.ToLower(string(ServiceTypeWFS))
+
+	if strings.HasSuffix(name, typeSuffix) {
+		return name
+	}
+
+	return name + "-" + typeSuffix
+}
+
 func (wfs *WFS) PodSpecPatch() *corev1.PodSpec {
 	return wfs.Spec.PodSpecPatch
 }
@@ -249,10 +262,6 @@ func (wfs *WFS) Options() Options {
 	return *wfs.Spec.Options
 }
 
-func (wfs *WFS) ID() string {
-	return Sha1HashOfName(wfs)
-}
-
 func (wfs *WFS) URLPath() string {
 	return wfs.Spec.Service.URL
 }
@@ -267,4 +276,11 @@ func (wfs *WFS) GeoPackages() []*Gpkg {
 	}
 
 	return gpkgs
+}
+
+func (wfs *WFS) ReadinessQueryString() (string, error) {
+	if len(wfs.Spec.Service.FeatureTypes) == 0 {
+		return "nil", errors.New("cannot get readiness probe for WFS, featuretypes could not be found")
+	}
+	return "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + wfs.Spec.Service.FeatureTypes[0].Name + "&STARTINDEX=0&COUNT=1", nil
 }
