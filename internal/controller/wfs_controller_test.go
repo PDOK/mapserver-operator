@@ -40,9 +40,9 @@ import (
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	v2 "k8s.io/api/autoscaling/v2"
-	v1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -88,7 +88,7 @@ var _ = Describe("WFS Controller", func() {
 
 			By("creating the custom resource for the Kind WFS")
 			err = k8sClient.Get(ctx, typeNamespacedNameWfs, wfs)
-			if err != nil && k8serrors.IsNotFound(err) {
+			if err != nil && apierrors.IsNotFound(err) {
 				resource := sampleWfs.DeepCopy()
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 				Expect(k8sClient.Get(ctx, typeNamespacedNameWfs, wfs)).To(Succeed())
@@ -99,7 +99,7 @@ var _ = Describe("WFS Controller", func() {
 			ownerInfo.Namespace = namespace
 			Expect(err).To(BeNil())
 			err = k8sClient.Get(ctx, typeNamespacedNameOwnerInfo, ownerInfo)
-			if err != nil && k8serrors.IsNotFound(err) {
+			if err != nil && apierrors.IsNotFound(err) {
 				Expect(k8sClient.Create(ctx, ownerInfo)).To(Succeed())
 				Expect(k8sClient.Get(ctx, typeNamespacedNameOwnerInfo, ownerInfo)).To(Succeed())
 			}
@@ -234,7 +234,7 @@ var _ = Describe("WFS Controller", func() {
 			Expect(container.Name).Should(Equal("mapserver"))
 			Expect(container.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(container.Image).Should(Equal(reconcilerImages.MapserverImage))
-			Expect(container.ImagePullPolicy).Should(Equal(v1.PullIfNotPresent))
+			Expect(container.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
 			Expect(container.Resources.Limits.Memory().String()).Should(Equal("12M"))
 			Expect(container.Resources.Requests.Cpu().String()).Should(Equal("150m"))
 			Expect(len(container.LivenessProbe.Exec.Command)).Should(Equal(3))
@@ -259,25 +259,25 @@ var _ = Describe("WFS Controller", func() {
 			/**
 			Init container tests
 			*/
-			getInitContainer := func(name string) (v1.Container, error) {
+			getInitContainer := func(name string) (corev1.Container, error) {
 				for _, container := range deployment.Spec.Template.Spec.InitContainers {
 					if container.Name == name {
 						return container, nil
 					}
 				}
 
-				return v1.Container{}, fmt.Errorf("init container with name %s not found", name)
+				return corev1.Container{}, fmt.Errorf("init container with name %s not found", name)
 			}
 
 			blobDownloadContainer, err := getInitContainer("blob-download")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(blobDownloadContainer.Image).Should(Equal(reconcilerImages.MultitoolImage))
-			volumeMounts := []v1.VolumeMount{
+			volumeMounts := []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data"},
 				{Name: "data", MountPath: "/var/www"},
 				{Name: mapserver.ConfigMapBlobDownloadVolumeName, MountPath: "/srv/scripts", ReadOnly: true},
 			}
-			envFrom := []v1.EnvFromSource{
+			envFrom := []corev1.EnvFromSource{
 				utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, "blobs-testtest"),
 				utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, "blobs-testtest"),
 			}
@@ -289,7 +289,7 @@ var _ = Describe("WFS Controller", func() {
 			mapfileGeneratorContainer, err := getInitContainer("mapfile-generator")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mapfileGeneratorContainer.Image).Should(Equal(reconcilerImages.MapfileGeneratorImage))
-			volumeMounts = []v1.VolumeMount{
+			volumeMounts = []corev1.VolumeMount{
 				{Name: "base", MountPath: "/srv/data"},
 				{Name: mapserver.ConfigMapMapfileGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
@@ -300,12 +300,12 @@ var _ = Describe("WFS Controller", func() {
 			capabilitiesGeneratorContainer, err := getInitContainer("capabilities-generator")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capabilitiesGeneratorContainer.Image).Should(Equal(reconcilerImages.CapabilitiesGeneratorImage))
-			volumeMounts = []v1.VolumeMount{
+			volumeMounts = []corev1.VolumeMount{
 				{Name: "data", MountPath: "/var/www"},
 				{Name: mapserver.ConfigMapCapabilitiesGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
 			}
 			Expect(capabilitiesGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
-			env := []v1.EnvVar{
+			env := []corev1.EnvVar{
 				{Name: "SERVICECONFIG", Value: "/input/input.yaml"},
 			}
 			Expect(capabilitiesGeneratorContainer.Env).Should(Equal(env))
@@ -322,7 +322,7 @@ var _ = Describe("WFS Controller", func() {
 				mapserver.ConfigMapMapfileGeneratorVolumeName,
 			}
 			for _, ev := range expectedVolumes {
-				Expect(slices.IndexFunc(deployment.Spec.Template.Spec.Volumes, func(v v1.Volume) bool {
+				Expect(slices.IndexFunc(deployment.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
 					return v.Name == ev
 				})).ShouldNot(BeEquivalentTo(-1))
 			}
@@ -523,7 +523,7 @@ var _ = Describe("WFS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 
 			Expect(autoscaler.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
-			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(v2.CrossVersionObjectReference{
+			Expect(autoscaler.Spec.ScaleTargetRef).To(Equal(autoscalingv2.CrossVersionObjectReference{
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 				Name:       wfs.GetName() + "-wfs-mapserver",
@@ -539,40 +539,40 @@ var _ = Describe("WFS Controller", func() {
 			Expect(autoscaler.Spec.Behavior).ToNot(BeNil())
 			Expect(autoscaler.Spec.Behavior.ScaleDown).ToNot(BeNil())
 			Expect(autoscaler.Spec.Behavior.ScaleUp).ToNot(BeNil())
-			Expect(autoscaler.Spec.Behavior.ScaleDown).To(Equal(&v2.HPAScalingRules{
+			Expect(autoscaler.Spec.Behavior.ScaleDown).To(Equal(&autoscalingv2.HPAScalingRules{
 				StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(3600)),
-				SelectPolicy:               smoothoperatorutils.Pointer(v2.MaxChangePolicySelect),
-				Policies: []v2.HPAScalingPolicy{
+				SelectPolicy:               smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
+				Policies: []autoscalingv2.HPAScalingPolicy{
 					{
 						PeriodSeconds: int32(600),
 						Value:         int32(10),
-						Type:          v2.PercentScalingPolicy,
+						Type:          autoscalingv2.PercentScalingPolicy,
 					},
 					{
 						PeriodSeconds: int32(600),
 						Value:         int32(1),
-						Type:          v2.PodsScalingPolicy,
+						Type:          autoscalingv2.PodsScalingPolicy,
 					},
 				},
 			}))
-			Expect(autoscaler.Spec.Behavior.ScaleUp).To(Equal(&v2.HPAScalingRules{
+			Expect(autoscaler.Spec.Behavior.ScaleUp).To(Equal(&autoscalingv2.HPAScalingRules{
 				StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(300)),
-				SelectPolicy:               smoothoperatorutils.Pointer(v2.MaxChangePolicySelect),
-				Policies: []v2.HPAScalingPolicy{
+				SelectPolicy:               smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
+				Policies: []autoscalingv2.HPAScalingPolicy{
 					{
 						PeriodSeconds: int32(60),
 						Value:         int32(20),
-						Type:          v2.PodsScalingPolicy,
+						Type:          autoscalingv2.PodsScalingPolicy,
 					},
 				},
 			}))
-			Expect(autoscaler.Spec.Metrics).To(Equal([]v2.MetricSpec{
+			Expect(autoscaler.Spec.Metrics).To(Equal([]autoscalingv2.MetricSpec{
 				{
-					Type: v2.ResourceMetricSourceType,
-					Resource: &v2.ResourceMetricSource{
-						Name: v1.ResourceCPU,
-						Target: v2.MetricTarget{
-							Type:               v2.UtilizationMetricType,
+					Type: autoscalingv2.ResourceMetricSourceType,
+					Resource: &autoscalingv2.ResourceMetricSource{
+						Name: corev1.ResourceCPU,
+						Target: autoscalingv2.MetricTarget{
+							Type:               autoscalingv2.UtilizationMetricType,
 							AverageUtilization: smoothoperatorutils.Pointer(int32(60)),
 						},
 					},
@@ -593,18 +593,18 @@ var _ = Describe("WFS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 
 			Expect(service.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
-			Expect(service.Spec.Ports).To(Equal([]v1.ServicePort{
+			Expect(service.Spec.Ports).To(Equal([]corev1.ServicePort{
 				{
 					Name:       "mapserver",
 					Port:       80,
 					TargetPort: intstr.FromInt32(80),
-					Protocol:   v1.ProtocolTCP,
+					Protocol:   corev1.ProtocolTCP,
 				},
 				{
 					Name:       "metric",
 					Port:       9117,
 					TargetPort: intstr.FromInt32(9117),
-					Protocol:   v1.ProtocolTCP,
+					Protocol:   corev1.ProtocolTCP,
 				},
 			}))
 

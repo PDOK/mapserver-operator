@@ -3,14 +3,14 @@ package mapperutils
 import (
 	"strings"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func GetContainerResourceRequest[O pdoknlv3.WMSWFS](obj O, containerName string, resource v1.ResourceName) *resource.Quantity {
+func GetContainerResourceRequest[O pdoknlv3.WMSWFS](obj O, containerName string, resource corev1.ResourceName) *resource.Quantity {
 	for _, container := range obj.PodSpecPatch().Containers {
 		if container.Name == containerName {
 			q := container.Resources.Requests[resource]
@@ -23,7 +23,7 @@ func GetContainerResourceRequest[O pdoknlv3.WMSWFS](obj O, containerName string,
 	return nil
 }
 
-func GetContainerResourceLimit[O pdoknlv3.WMSWFS](obj O, containerName string, resource v1.ResourceName) *resource.Quantity {
+func GetContainerResourceLimit[O pdoknlv3.WMSWFS](obj O, containerName string, resource corev1.ResourceName) *resource.Quantity {
 	for _, container := range obj.PodSpecPatch().Containers {
 		if container.Name == containerName {
 			q := container.Resources.Limits[resource]
@@ -49,11 +49,11 @@ func UseEphemeralVolume[O pdoknlv3.WMSWFS](obj O) (bool, *resource.Quantity) {
 }
 
 func EphemeralStorageLimit[O pdoknlv3.WMSWFS](obj O) *resource.Quantity {
-	return GetContainerResourceLimit(obj, "mapserver", v1.ResourceEphemeralStorage)
+	return GetContainerResourceLimit(obj, "mapserver", corev1.ResourceEphemeralStorage)
 }
 
 func EphemeralStorageRequest[O pdoknlv3.WMSWFS](obj O) *resource.Quantity {
-	return GetContainerResourceRequest(obj, "mapserver", v1.ResourceEphemeralStorage)
+	return GetContainerResourceRequest(obj, "mapserver", corev1.ResourceEphemeralStorage)
 }
 
 func GetNamespaceURI(prefix string, ownerInfo *smoothoperatorv1.OwnerInfo) string {
