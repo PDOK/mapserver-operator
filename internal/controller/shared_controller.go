@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
@@ -16,14 +18,7 @@ import (
 )
 
 const (
-	AppLabelKey               = "app"
-	MapserverName             = "mapserver"
-	LegendGeneratorName       = "legend-generator"
-	FeatureInfoGeneratorName  = "featureinfo-generator"
-	OgcWebserviceProxyName    = "ogc-webservice-proxy"
-	MapfileGeneratorName      = "mapfile-generator"
-	CapabilitiesGeneratorName = "capabilities-generator"
-	InitScriptsName           = "init-scripts"
+	AppLabelKey = "app"
 )
 
 func getSharedBareObjects[O pdoknlv3.WMSWFS](obj O) []client.Object {
@@ -31,13 +26,13 @@ func getSharedBareObjects[O pdoknlv3.WMSWFS](obj O) []client.Object {
 		getBareDeployment(obj),
 		getBareIngressRoute(obj),
 		getBareHorizontalPodAutoScaler(obj),
-		getBareConfigMap(obj, InitScriptsName),
-		getBareConfigMap(obj, MapserverName),
+		getBareConfigMap(obj, utils.InitScriptsName),
+		getBareConfigMap(obj, utils.MapserverName),
 		getBareService(obj),
 		getBareCorsHeadersMiddleware(obj),
 		getBarePodDisruptionBudget(obj),
-		getBareConfigMap(obj, MapfileGeneratorName),
-		getBareConfigMap(obj, CapabilitiesGeneratorName),
+		getBareConfigMap(obj, utils.MapfileGeneratorName),
+		getBareConfigMap(obj, utils.CapabilitiesGeneratorName),
 	}
 }
 
@@ -46,7 +41,7 @@ func getSuffixedName[O pdoknlv3.WMSWFS](obj O, suffix string) string {
 }
 
 func addCommonLabels[O pdoknlv3.WMSWFS](obj O, labels map[string]string) map[string]string {
-	labels[AppLabelKey] = MapserverName
+	labels[AppLabelKey] = utils.MapserverName
 
 	inspire := false
 	switch any(obj).(type) {
@@ -146,29 +141,29 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 
 func createOrUpdateConfigMaps[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) {
 	operationResults, configMaps := make(map[string]controllerutil.OperationResult), make(map[string]func(R, O, *corev1.ConfigMap) error)
-	configMaps[MapserverName] = mutateConfigMap
+	configMaps[utils.MapserverName] = mutateConfigMap
 	if obj.Mapfile() == nil {
-		configMaps[MapfileGeneratorName] = func(r R, o O, cm *corev1.ConfigMap) error {
+		configMaps[utils.MapfileGeneratorName] = func(r R, o O, cm *corev1.ConfigMap) error {
 			return mutateConfigMapMapfileGenerator(r, o, cm, ownerInfo)
 		}
 	}
-	configMaps[CapabilitiesGeneratorName] = func(r R, o O, cm *corev1.ConfigMap) error {
+	configMaps[utils.CapabilitiesGeneratorName] = func(r R, o O, cm *corev1.ConfigMap) error {
 		return mutateConfigMapCapabilitiesGenerator(r, o, cm, ownerInfo)
 	}
 	if obj.Options().PrefetchData {
-		configMaps[InitScriptsName] = mutateConfigMapBlobDownload
+		configMaps[utils.InitScriptsName] = mutateConfigMapBlobDownload
 	}
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		wms, _ := any(obj).(*pdoknlv3.WMS)
 		wmsReconciler := (*WMSReconciler)(r)
 
-		configMaps[LegendGeneratorName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
+		configMaps[utils.LegendGeneratorName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
 			return mutateConfigMapLegendGenerator(wmsReconciler, wms, cm)
 		}
-		configMaps[FeatureInfoGeneratorName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
+		configMaps[utils.FeatureinfoGeneratorName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
 			return mutateConfigMapFeatureinfoGenerator(wmsReconciler, wms, cm)
 		}
-		configMaps[OgcWebserviceProxyName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
+		configMaps[utils.OgcWebserviceProxyName] = func(_ R, _ O, cm *corev1.ConfigMap) error {
 			return mutateConfigMapOgcWebserviceProxy(wmsReconciler, wms, cm)
 		}
 	}
@@ -183,19 +178,19 @@ func createOrUpdateConfigMaps[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Conte
 			return hashedConfigMapNames, operationResults, err
 		}
 		switch cmName {
-		case MapserverName:
+		case utils.MapserverName:
 			hashedConfigMapNames.ConfigMap = cm.Name
-		case MapfileGeneratorName:
+		case utils.MapfileGeneratorName:
 			hashedConfigMapNames.MapfileGenerator = cm.Name
-		case CapabilitiesGeneratorName:
+		case utils.CapabilitiesGeneratorName:
 			hashedConfigMapNames.CapabilitiesGenerator = cm.Name
-		case InitScriptsName:
+		case utils.InitScriptsName:
 			hashedConfigMapNames.BlobDownload = cm.Name
-		case LegendGeneratorName:
+		case utils.LegendGeneratorName:
 			hashedConfigMapNames.LegendGenerator = cm.Name
-		case FeatureInfoGeneratorName:
+		case utils.FeatureinfoGeneratorName:
 			hashedConfigMapNames.FeatureInfoGenerator = cm.Name
-		case OgcWebserviceProxyName:
+		case utils.OgcWebserviceProxyName:
 			hashedConfigMapNames.OgcWebserviceProxy = cm.Name
 		}
 	}

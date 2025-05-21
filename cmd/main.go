@@ -22,6 +22,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
 	"github.com/go-logr/zapr"
 	"github.com/pdok/smooth-operator/pkg/integrations/logging"
 	"github.com/peterbourgon/ff"
@@ -192,7 +194,7 @@ func main() {
 	if err = (&controller.WMSReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Images: controller.Images{
+		Images: types.Images{
 			MultitoolImage:             multitoolImage,
 			MapfileGeneratorImage:      mapfileGeneratorImage,
 			MapserverImage:             mapserverImage,
@@ -208,7 +210,7 @@ func main() {
 	if err = (&controller.WFSReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Images: controller.Images{
+		Images: types.Images{
 			MultitoolImage:             multitoolImage,
 			MapfileGeneratorImage:      mapfileGeneratorImage,
 			MapserverImage:             mapserverImage,

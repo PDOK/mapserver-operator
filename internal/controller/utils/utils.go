@@ -9,6 +9,28 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const (
+	MapserverName             = "mapserver"
+	OgcWebserviceProxyName    = "ogc-webservice-proxy"
+	MapfileGeneratorName      = "mapfile-generator"
+	CapabilitiesGeneratorName = "capabilities-generator"
+	BlobDownloadName          = "blob-download"
+	InitScriptsName           = "init-scripts"
+	LegendGeneratorName       = "legend-generator"
+	LegendFixerName           = "legend-fixer"
+	FeatureinfoGeneratorName  = "featureinfo-generator"
+
+	configSuffix                             = "-config"
+	ConfigMapMapfileGeneratorVolumeName      = MapfileGeneratorName + configSuffix
+	ConfigMapStylingFilesVolumeName          = "styling-files"
+	ConfigMapCapabilitiesGeneratorVolumeName = CapabilitiesGeneratorName + configSuffix
+	ConfigMapOgcWebserviceProxyVolumeName    = OgcWebserviceProxyName + configSuffix
+	ConfigMapLegendGeneratorVolumeName       = LegendGeneratorName + configSuffix
+	ConfigMapFeatureinfoGeneratorVolumeName  = FeatureinfoGeneratorName + configSuffix
+
+	HTMLTemplatesPath = "/srv/data/config/templates"
+)
+
 type EnvFromSourceType string
 
 const (
@@ -37,6 +59,18 @@ func NewEnvFromSource(t EnvFromSourceType, name string) corev1.EnvFromSource {
 	default:
 		return corev1.EnvFromSource{}
 	}
+}
+
+func GetBaseVolumeMount() corev1.VolumeMount {
+	return corev1.VolumeMount{Name: "base", MountPath: "/srv/data", ReadOnly: false}
+}
+
+func GetDataVolumeMount() corev1.VolumeMount {
+	return corev1.VolumeMount{Name: "data", MountPath: "/var/www", ReadOnly: false}
+}
+
+func GetConfigVolumeMount(volumeName string) corev1.VolumeMount {
+	return corev1.VolumeMount{Name: volumeName, MountPath: "/input", ReadOnly: true}
 }
 
 func Sha1Hash(v string) string {

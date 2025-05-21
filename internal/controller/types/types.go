@@ -9,3 +9,13 @@ type HashedConfigMapNames struct {
 	LegendGenerator       string
 	FeatureInfoGenerator  string
 }
+
+type Images struct {
+	MapserverImage             string
+	MultitoolImage             string
+	MapfileGeneratorImage      string
+	CapabilitiesGeneratorImage string
+	FeatureinfoGeneratorImage  string
+	OgcWebserviceProxyImage    string
+	ApacheExporterImage        string
+}

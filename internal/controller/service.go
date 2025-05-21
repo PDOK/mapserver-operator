@@ -2,6 +2,8 @@ package controller
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,8 +12,6 @@ import (
 )
 
 const (
-	mapserverPortName                    = "mapserver"
-	mapserverPortNr                int32 = 80
 	mapserverWebserviceProxyPortNr       = 9111
 	metricPortName                       = "metric"
 	metricPortNr                   int32 = 9117
@@ -20,7 +20,7 @@ const (
 func getBareService[O pdoknlv3.WMSWFS](obj O) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, MapserverName),
+			Name:      getSuffixedName(obj, utils.MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}
@@ -37,9 +37,9 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 
 	ports := []corev1.ServicePort{
 		{
-			Name:       mapserverPortName,
-			Port:       mapserverPortNr,
-			TargetPort: intstr.FromInt32(mapserverPortNr),
+			Name:       utils.MapserverName,
+			Port:       mapserver.MapserverPortNr,
+			TargetPort: intstr.FromInt32(mapserver.MapserverPortNr),
 			Protocol:   corev1.ProtocolTCP,
 		},
 	}
@@ -47,7 +47,7 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		if obj.Options().UseWebserviceProxy() {
 			ports = append(ports, corev1.ServicePort{
-				Name: OgcWebserviceProxyName,
+				Name: utils.OgcWebserviceProxyName,
 				Port: 9111,
 			})
 		}

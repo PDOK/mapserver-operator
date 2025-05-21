@@ -3,18 +3,19 @@ package capabilitiesgenerator
 import (
 	"fmt"
 
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	"gopkg.in/yaml.v3"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](_ O, image string) (*corev1.Container, error) {
+func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](_ O, images types.Images) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            "capabilities-generator",
-		Image:           image,
+		Name:            utils.CapabilitiesGeneratorName,
+		Image:           images.CapabilitiesGeneratorImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env: []corev1.EnvVar{
 			{
@@ -23,8 +24,8 @@ func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](_ O, image string)
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: "data", MountPath: "/var/www", ReadOnly: false},
-			{Name: mapserver.ConfigMapCapabilitiesGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+			utils.GetDataVolumeMount(),
+			utils.GetConfigVolumeMount(utils.ConfigMapCapabilitiesGeneratorVolumeName),
 		},
 	}
 	return &initContainer, nil

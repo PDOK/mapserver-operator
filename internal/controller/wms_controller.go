@@ -27,6 +27,8 @@ package controller
 import (
 	"context"
 
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
 	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
@@ -51,7 +53,7 @@ const (
 type WMSReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Images Images
+	Images types.Images
 }
 
 // +kubebuilder:rbac:groups=pdok.nl,resources=wms,verbs=get;list;watch;create;update;patch;delete

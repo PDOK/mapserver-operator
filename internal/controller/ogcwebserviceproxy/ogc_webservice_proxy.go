@@ -2,7 +2,7 @@ package ogcwebserviceproxy
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -17,7 +17,7 @@ func GetOgcWebserviceProxyContainer(wms *pdoknlv3.WMS, image string) (*corev1.Co
 		Ports:           []corev1.ContainerPort{{ContainerPort: 9111}},
 		Command:         getCommand(wms),
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: true},
+			utils.GetConfigVolumeMount(utils.ConfigMapOgcWebserviceProxyVolumeName),
 		},
 		Resources: corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{

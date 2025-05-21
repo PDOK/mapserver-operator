@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapserver-operator/internal/controller/static"
@@ -15,17 +17,35 @@ import (
 )
 
 const (
-	ConfigMapVolumeName                      = "mapserver"
-	ConfigMapMapfileGeneratorVolumeName      = "mapfile-generator-config"
-	ConfigMapCapabilitiesGeneratorVolumeName = "capabilities-generator-config"
-	ConfigMapBlobDownloadVolumeName          = "init-scripts"
-	ConfigMapOgcWebserviceProxyVolumeName    = "ogc-webservice-proxy-config"
-	ConfigMapLegendGeneratorVolumeName       = "legend-generator-config"
-	ConfigMapFeatureinfoGeneratorVolumeName  = "featureinfo-generator-config"
-	ConfigMapStylingFilesVolumeName          = "styling-files"
+	MapserverPortNr int32 = 80
+
+	// TODO How should we determine this boundingbox?
+	// healthCheckBbox = "190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914"
 
 	mimeTextXML = "text/xml"
 )
+
+func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*corev1.Container, error) {
+
+	container := corev1.Container{
+		Name:            utils.MapserverName,
+		Image:           images.MapserverImage,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Ports:           []corev1.ContainerPort{{ContainerPort: MapserverPortNr}},
+		Env: []corev1.EnvVar{
+			{
+				Name:  "SERVICE_TYPE",
+				Value: string(obj.Type()),
+			},
+			{
+				Name:  "MAPSERVER_CONFIG_FILE",
+				Value: "/srv/mapserver/config/default_mapserver.conf",
+			},
+		},
+	}
+
+	return &container, nil
+}
 
 // TODO fix linting (funlen)
 //
@@ -75,7 +95,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			},
 		},
 		{
-			Name:         ConfigMapVolumeName,
+			Name:         utils.MapserverName,
 			VolumeSource: newVolumeSource(configMapNames.ConfigMap),
 		},
 	}
@@ -89,7 +109,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
 		volumes = append(volumes, corev1.Volume{
-			Name:         ConfigMapOgcWebserviceProxyVolumeName,
+			Name:         utils.ConfigMapOgcWebserviceProxyVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
 		})
 	}
@@ -98,7 +118,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		vol := newVolumeSource(configMapNames.BlobDownload)
 		vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
 		volumes = append(volumes, corev1.Volume{
-			Name:         ConfigMapBlobDownloadVolumeName,
+			Name:         utils.InitScriptsName,
 			VolumeSource: vol,
 		})
 	}
@@ -106,18 +126,18 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	// Add capabilitiesgenerator config here to get the same order as the ansible operator
 	// Needed to compare deployments from the ansible operator and this one
 	volumes = append(volumes, corev1.Volume{
-		Name:         ConfigMapCapabilitiesGeneratorVolumeName,
+		Name:         utils.ConfigMapCapabilitiesGeneratorVolumeName,
 		VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
 	})
 
 	var stylingFilesVolume *corev1.Volume
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		lgVolume := corev1.Volume{
-			Name:         ConfigMapLegendGeneratorVolumeName,
+			Name:         utils.ConfigMapLegendGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.LegendGenerator),
 		}
 		figVolume := corev1.Volume{
-			Name:         ConfigMapFeatureinfoGeneratorVolumeName,
+			Name:         utils.ConfigMapFeatureinfoGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.FeatureInfoGenerator),
 		}
 
@@ -136,7 +156,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		}
 
 		stylingFilesVolume = &corev1.Volume{
-			Name: ConfigMapStylingFilesVolumeName,
+			Name: utils.ConfigMapStylingFilesVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				Projected: &corev1.ProjectedVolumeSource{
 					Sources: stylingFilesVolumeProjections,
@@ -150,7 +170,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	// Needed to compare deployments from the ansible operator and this one
 	if obj.Mapfile() == nil {
 		volumes = append(volumes, corev1.Volume{
-			Name:         ConfigMapMapfileGeneratorVolumeName,
+			Name:         utils.ConfigMapMapfileGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
 		})
 		if stylingFilesVolume != nil {
@@ -161,7 +181,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	return volumes
 }
 
-func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []corev1.VolumeMount {
+func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O) []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "base",
@@ -176,8 +196,8 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []cor
 	staticFiles, _ := static.GetStaticFiles()
 	for _, name := range staticFiles {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "mapserver",
-			MountPath: srvDir + "/mapserver/config/" + name,
+			Name:      utils.MapserverName,
+			MountPath: "/srv/mapserver/config/" + name,
 			SubPath:   name,
 		})
 	}
@@ -261,7 +281,7 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) corev1.ResourceRequirem
 	if obj.PodSpecPatch() != nil {
 		found := false
 		for _, container := range obj.PodSpecPatch().Containers {
-			if container.Name == "mapserver" {
+			if container.Name == utils.MapserverName {
 				objResources = &container.Resources
 				found = true
 				break

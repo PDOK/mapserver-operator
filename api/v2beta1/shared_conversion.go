@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	shared_model "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -93,7 +94,7 @@ func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 	return &corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
-				Name:      "mapserver",
+				Name:      utils.MapserverName,
 				Resources: targetResources,
 			},
 		},

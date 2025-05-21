@@ -3,6 +3,8 @@ package mapperutils
 import (
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
+
 	corev1 "k8s.io/api/core/v1"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -49,11 +51,11 @@ func UseEphemeralVolume[O pdoknlv3.WMSWFS](obj O) (bool, *resource.Quantity) {
 }
 
 func EphemeralStorageLimit[O pdoknlv3.WMSWFS](obj O) *resource.Quantity {
-	return GetContainerResourceLimit(obj, "mapserver", corev1.ResourceEphemeralStorage)
+	return GetContainerResourceLimit(obj, utils.MapserverName, corev1.ResourceEphemeralStorage)
 }
 
 func EphemeralStorageRequest[O pdoknlv3.WMSWFS](obj O) *resource.Quantity {
-	return GetContainerResourceRequest(obj, "mapserver", corev1.ResourceEphemeralStorage)
+	return GetContainerResourceRequest(obj, utils.MapserverName, corev1.ResourceEphemeralStorage)
 }
 
 func GetNamespaceURI(prefix string, ownerInfo *smoothoperatorv1.OwnerInfo) string {

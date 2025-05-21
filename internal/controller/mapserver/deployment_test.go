@@ -3,6 +3,8 @@ package mapserver
 import (
 	"testing"
 
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
+
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
@@ -21,7 +23,7 @@ var expectedVolumeMountsYaml []byte
 func TestGetVolumeMountsForDeployment(t *testing.T) {
 	var wfs = getV3()
 	pdoknlv3.SetHost("https://service.pdok.nl")
-	result := GetVolumeMountsForDeployment(wfs, "/srv")
+	result := GetVolumeMountsForDeployment(wfs)
 
 	var expectedVolumeMounts struct{ VolumeMounts []corev1.VolumeMount }
 	err := yaml.Unmarshal(expectedVolumeMountsYaml, &expectedVolumeMounts)
@@ -113,7 +115,7 @@ func TestGetVolumesForDeployment(t *testing.T) {
 	expected := []corev1.Volume{
 		{Name: "base", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
 		{Name: "data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-		{Name: "mapserver", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
+		{Name: utils.MapserverName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
 		{Name: "capabilities-generator-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-capabilities-generator-6m4mfkgb5d"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
 		{Name: "mapfile-generator-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapfile-generator-bbbtd999dh"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
 	}
