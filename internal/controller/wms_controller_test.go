@@ -1033,6 +1033,7 @@ func checkWMSLabels(labelSets ...map[string]string) {
 		"dataset":                      "dataset",
 		"dataset-owner":                "owner",
 		"service-type":                 "wms",
+		"pdok.nl/service-type":         "wms",
 		"service-version":              "1.0.0",
 		"app.kubernetes.io/managed-by": "kustomize",
 		"app.kubernetes.io/name":       "mapserver-operator",

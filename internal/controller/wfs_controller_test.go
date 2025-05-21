@@ -715,6 +715,7 @@ func checkWFSLabels(labelSets ...map[string]string) {
 		"dataset":                      "dataset",
 		"dataset-owner":                "eigenaar",
 		"service-type":                 "wfs",
+		"pdok.nl/service-type":         "wfs",
 		"service-version":              "1.0.0",
 		"app.kubernetes.io/managed-by": "kustomize",
 		"app.kubernetes.io/name":       "mapserver-operator",
