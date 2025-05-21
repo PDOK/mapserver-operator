@@ -44,7 +44,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -85,7 +85,7 @@ var _ = Describe("WMS Controller", func() {
 
 			By("creating the custom resource for the Kind WMS")
 			err = k8sClient.Get(ctx, typeNamespacedNameWms, wms)
-			if err != nil && k8serrors.IsNotFound(err) {
+			if err != nil && apierrors.IsNotFound(err) {
 				resource := sampleWms.DeepCopy()
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 				Expect(k8sClient.Get(ctx, typeNamespacedNameWms, wms)).To(Succeed())
@@ -96,7 +96,7 @@ var _ = Describe("WMS Controller", func() {
 			ownerInfo.Namespace = namespace
 			Expect(err).To(BeNil())
 			err = k8sClient.Get(ctx, typeNamespacedNameOwnerInfo, ownerInfo)
-			if err != nil && k8serrors.IsNotFound(err) {
+			if err != nil && apierrors.IsNotFound(err) {
 				Expect(k8sClient.Create(ctx, ownerInfo)).To(Succeed())
 				Expect(k8sClient.Get(ctx, typeNamespacedNameOwnerInfo, ownerInfo)).To(Succeed())
 			}

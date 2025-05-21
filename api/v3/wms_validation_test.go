@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	controller "github.com/pdok/smooth-operator/pkg/util"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 func Test_getEqualChildStyleNames(t *testing.T) {
@@ -21,21 +21,21 @@ func Test_getEqualChildStyleNames(t *testing.T) {
 			name: "Test equal style names",
 			args: args{
 				layer: &Layer{
-					Name: controller.Pointer("toplayer"),
+					Name: smoothoperatorutils.Pointer("toplayer"),
 					Styles: []Style{
 						{Name: "stylename-1"},
 						{Name: "stylename-2"},
 					},
 					Layers: []Layer{
 						{
-							Name: controller.Pointer("childlayer-1"),
+							Name: smoothoperatorutils.Pointer("childlayer-1"),
 							Styles: []Style{
 								{Name: "stylename-2"},
 								{Name: "stylename-3"},
 							},
 							Layers: []Layer{
 								{
-									Name: controller.Pointer("childlayer-2"),
+									Name: smoothoperatorutils.Pointer("childlayer-2"),
 									Styles: []Style{
 										{Name: "stylename-3"},
 										{Name: "stylename-4"},
@@ -56,21 +56,21 @@ func Test_getEqualChildStyleNames(t *testing.T) {
 			name: "Test no equal style names",
 			args: args{
 				layer: &Layer{
-					Name: controller.Pointer("toplayer"),
+					Name: smoothoperatorutils.Pointer("toplayer"),
 					Styles: []Style{
 						{Name: "stylename-1"},
 						{Name: "stylename-2"},
 					},
 					Layers: []Layer{
 						{
-							Name: controller.Pointer("childlayer-1"),
+							Name: smoothoperatorutils.Pointer("childlayer-1"),
 							Styles: []Style{
 								{Name: "stylename-3"},
 								{Name: "stylename-4"},
 							},
 							Layers: []Layer{
 								{
-									Name: controller.Pointer("childlayer-2"),
+									Name: smoothoperatorutils.Pointer("childlayer-2"),
 									Styles: []Style{
 										{Name: "stylename-5"},
 										{Name: "stylename-6"},

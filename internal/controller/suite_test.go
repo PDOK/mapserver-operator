@@ -35,11 +35,11 @@ import (
 	"testing"
 
 	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
-	smoothoperator1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"golang.org/x/tools/go/packages"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -91,7 +91,7 @@ var _ = BeforeSuite(func() {
 	err = traefikiov1alpha1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = smoothoperator1.AddToScheme(scheme)
+	err = smoothoperatorv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = clientgoscheme.AddToScheme(scheme)
@@ -131,7 +131,7 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).NotTo(BeNil())
 
 	// Deploy blob configmap + secret
-	blobConfig := &v1.ConfigMap{
+	blobConfig := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      blobsConfigPrefix + "testtest",
 			Namespace: metav1.NamespaceDefault,
@@ -140,7 +140,7 @@ var _ = BeforeSuite(func() {
 	err = k8sClient.Create(ctx, blobConfig)
 	Expect(err).NotTo(HaveOccurred())
 
-	blobSecret := &v1.Secret{
+	blobSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      blobsSecretPrefix + "testtest",
 			Namespace: metav1.NamespaceDefault,
@@ -150,7 +150,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Deploy postgres configmap + secret
-	postgresConfig := &v1.ConfigMap{
+	postgresConfig := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      postgisConfigPrefix + "testtest",
 			Namespace: metav1.NamespaceDefault,
@@ -159,7 +159,7 @@ var _ = BeforeSuite(func() {
 	err = k8sClient.Create(ctx, postgresConfig)
 	Expect(err).NotTo(HaveOccurred())
 
-	postgresSecret := &v1.Secret{
+	postgresSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      postgisSecretPrefix + "testtest",
 			Namespace: metav1.NamespaceDefault,

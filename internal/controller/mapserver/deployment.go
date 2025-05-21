@@ -10,7 +10,7 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/static"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -30,16 +30,16 @@ const (
 // TODO fix linting (funlen)
 //
 //nolint:funlen
-func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNames) []v1.Volume {
-	baseVolume := v1.Volume{Name: "base"}
+func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNames) []corev1.Volume {
+	baseVolume := corev1.Volume{Name: "base"}
 	if use, size := mapperutils.UseEphemeralVolume(obj); use {
-		baseVolume.Ephemeral = &v1.EphemeralVolumeSource{
-			VolumeClaimTemplate: &v1.PersistentVolumeClaimTemplate{
-				Spec: v1.PersistentVolumeClaimSpec{
-					AccessModes: []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
-					Resources: v1.VolumeResourceRequirements{
-						Requests: v1.ResourceList{
-							v1.ResourceStorage: *size,
+		baseVolume.Ephemeral = &corev1.EphemeralVolumeSource{
+			VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
+				Spec: corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+					Resources: corev1.VolumeResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceStorage: *size,
 						},
 					},
 				},
@@ -50,28 +50,28 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &value
 		}
 	} else {
-		baseVolume.VolumeSource = v1.VolumeSource{
-			EmptyDir: &v1.EmptyDirVolumeSource{},
+		baseVolume.VolumeSource = corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		}
 	}
 
-	newVolumeSource := func(name string) v1.VolumeSource {
-		return v1.VolumeSource{
-			ConfigMap: &v1.ConfigMapVolumeSource{
+	newVolumeSource := func(name string) corev1.VolumeSource {
+		return corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
 				DefaultMode: smoothoperatorutils.Pointer(int32(0644)),
-				LocalObjectReference: v1.LocalObjectReference{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: name,
 				},
 			},
 		}
 	}
 
-	volumes := []v1.Volume{
+	volumes := []corev1.Volume{
 		baseVolume,
 		{
 			Name: "data",
-			VolumeSource: v1.VolumeSource{
-				EmptyDir: &v1.EmptyDirVolumeSource{},
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
 		{
@@ -81,14 +81,14 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	}
 
 	if mapfile := obj.Mapfile(); mapfile != nil {
-		volumes = append(volumes, v1.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name:         "mapfile",
 			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Name),
 		})
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
-		volumes = append(volumes, v1.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name:         ConfigMapOgcWebserviceProxyVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
 		})
@@ -97,7 +97,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	if obj.Options().PrefetchData {
 		vol := newVolumeSource(configMapNames.BlobDownload)
 		vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
-		volumes = append(volumes, v1.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name:         ConfigMapBlobDownloadVolumeName,
 			VolumeSource: vol,
 		})
@@ -105,29 +105,29 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 
 	// Add capabilitiesgenerator config here to get the same order as the ansible operator
 	// Needed to compare deployments from the ansible operator and this one
-	volumes = append(volumes, v1.Volume{
+	volumes = append(volumes, corev1.Volume{
 		Name:         ConfigMapCapabilitiesGeneratorVolumeName,
 		VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
 	})
 
-	var stylingFilesVolume *v1.Volume
+	var stylingFilesVolume *corev1.Volume
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		lgVolume := v1.Volume{
+		lgVolume := corev1.Volume{
 			Name:         ConfigMapLegendGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.LegendGenerator),
 		}
-		figVolume := v1.Volume{
+		figVolume := corev1.Volume{
 			Name:         ConfigMapFeatureinfoGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.FeatureInfoGenerator),
 		}
 
 		wms, _ := any(obj).(*pdoknlv3.WMS)
-		stylingFilesVolumeProjections := []v1.VolumeProjection{}
+		stylingFilesVolumeProjections := []corev1.VolumeProjection{}
 		if wms.Spec.Service.StylingAssets != nil && wms.Spec.Service.StylingAssets.ConfigMapRefs != nil {
 			for _, cf := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
-				stylingFilesVolumeProjections = append(stylingFilesVolumeProjections, v1.VolumeProjection{
-					ConfigMap: &v1.ConfigMapProjection{
-						LocalObjectReference: v1.LocalObjectReference{
+				stylingFilesVolumeProjections = append(stylingFilesVolumeProjections, corev1.VolumeProjection{
+					ConfigMap: &corev1.ConfigMapProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
 							Name: cf.Name,
 						},
 					},
@@ -135,10 +135,10 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			}
 		}
 
-		stylingFilesVolume = &v1.Volume{
+		stylingFilesVolume = &corev1.Volume{
 			Name: ConfigMapStylingFilesVolumeName,
-			VolumeSource: v1.VolumeSource{
-				Projected: &v1.ProjectedVolumeSource{
+			VolumeSource: corev1.VolumeSource{
+				Projected: &corev1.ProjectedVolumeSource{
 					Sources: stylingFilesVolumeProjections,
 				},
 			},
@@ -149,7 +149,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
 	// Needed to compare deployments from the ansible operator and this one
 	if obj.Mapfile() == nil {
-		volumes = append(volumes, v1.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name:         ConfigMapMapfileGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
 		})
@@ -161,8 +161,8 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	return volumes
 }
 
-func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.VolumeMount {
-	volumeMounts := []v1.VolumeMount{
+func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []corev1.VolumeMount {
+	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "base",
 			MountPath: "/srv/data",
@@ -175,7 +175,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 
 	staticFiles, _ := static.GetStaticFiles()
 	for _, name := range staticFiles {
-		volumeMounts = append(volumeMounts, v1.VolumeMount{
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "mapserver",
 			MountPath: srvDir + "/mapserver/config/" + name,
 			SubPath:   name,
@@ -184,7 +184,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 
 	// Custom mapfile
 	if mapfile := obj.Mapfile(); mapfile != nil {
-		volumeMounts = append(volumeMounts, v1.VolumeMount{
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "mapfile",
 			MountPath: "/srv/data/config/mapfile",
 		})
@@ -193,20 +193,20 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O, srvDir string) []v1.
 	return volumeMounts
 }
 
-func GetMapfileEnvVar[O pdoknlv3.WMSWFS](obj O) v1.EnvVar {
+func GetMapfileEnvVar[O pdoknlv3.WMSWFS](obj O) corev1.EnvVar {
 	mapFileName := "service.map"
 	if obj.Mapfile() != nil {
 		mapFileName = obj.Mapfile().ConfigMapKeyRef.Key
 	}
 
-	return v1.EnvVar{
+	return corev1.EnvVar{
 		Name:  "MS_MAPFILE",
 		Value: "/srv/data/config/mapfile/" + mapFileName,
 	}
 }
 
-func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) []v1.EnvVar {
-	return []v1.EnvVar{
+func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) []corev1.EnvVar {
+	return []corev1.EnvVar{
 		{
 			Name:  "SERVICE_TYPE",
 			Value: string(obj.Type()),
@@ -217,9 +217,9 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 		GetMapfileEnvVar(obj),
 		{
 			Name: "AZURE_STORAGE_CONNECTION_STRING",
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
 						Name: blobsSecretName, // TODO
 					},
 					Key: "AZURE_STORAGE_CONNECTION_STRING",
@@ -233,10 +233,10 @@ func GetEnvVarsForDeployment[O pdoknlv3.WMSWFS](obj O, blobsSecretName string) [
 // Resources for mapserver container
 //
 //nolint:cyclop,funlen
-func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements {
-	resources := v1.ResourceRequirements{
-		Limits:   v1.ResourceList{},
-		Requests: v1.ResourceList{},
+func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) corev1.ResourceRequirements {
+	resources := corev1.ResourceRequirements{
+		Limits:   corev1.ResourceList{},
+		Requests: corev1.ResourceList{},
 	}
 
 	maxResourceVal := func(v1 *resource.Quantity, v2 *resource.Quantity) *resource.Quantity {
@@ -257,7 +257,7 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		return &resource.Quantity{}
 	}
 
-	objResources := &v1.ResourceRequirements{}
+	objResources := &corev1.ResourceRequirements{}
 	if obj.PodSpecPatch() != nil {
 		found := false
 		for _, container := range obj.PodSpecPatch().Containers {
@@ -284,11 +284,11 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 			cpuRequest = smoothoperatorutils.Pointer(resource.MustParse("0.1"))
 		}
 	}
-	resources.Requests[v1.ResourceCPU] = *cpuRequest
+	resources.Requests[corev1.ResourceCPU] = *cpuRequest
 
 	cpuLimit := objResources.Limits.Cpu()
 	if cpuLimit != nil && !cpuLimit.IsZero() {
-		resources.Limits[v1.ResourceCPU] = *maxResourceVal(cpuLimit, cpuRequest)
+		resources.Limits[corev1.ResourceCPU] = *maxResourceVal(cpuLimit, cpuRequest)
 	}
 
 	/**
@@ -296,14 +296,14 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 	*/
 	memoryRequest := objResources.Requests.Memory()
 	if memoryRequest != nil && !memoryRequest.IsZero() {
-		resources.Requests[v1.ResourceMemory] = *memoryRequest
+		resources.Requests[corev1.ResourceMemory] = *memoryRequest
 	}
 
 	memoryLimit := objResources.Limits.Memory()
 	if memoryLimit == nil || memoryLimit.IsZero() {
 		memoryLimit = smoothoperatorutils.Pointer(resource.MustParse("800M"))
 	}
-	resources.Limits[v1.ResourceMemory] = *maxResourceVal(memoryLimit, memoryRequest)
+	resources.Limits[corev1.ResourceMemory] = *maxResourceVal(memoryLimit, memoryRequest)
 
 	/**
 	Set ephemeral-storage if there is no ephemeral volume
@@ -312,7 +312,7 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 	if use, _ := mapperutils.UseEphemeralVolume(obj); !use {
 		ephemeralStorageRequest := mapperutils.EphemeralStorageRequest(obj)
 		if ephemeralStorageRequest != nil {
-			resources.Requests[v1.ResourceEphemeralStorage] = *ephemeralStorageRequest
+			resources.Requests[corev1.ResourceEphemeralStorage] = *ephemeralStorageRequest
 		}
 
 		ephemeralStorageLimit := mapperutils.EphemeralStorageLimit(obj)
@@ -320,13 +320,13 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) v1.ResourceRequirements
 		if ephemeralStorageLimit == nil || ephemeralStorageLimit.IsZero() || ephemeralStorageLimit.Value() < defaultEphemeralStorageLimit.Value() {
 			ephemeralStorageLimit = smoothoperatorutils.Pointer(defaultEphemeralStorageLimit)
 		}
-		resources.Limits[v1.ResourceEphemeralStorage] = *maxResourceVal(ephemeralStorageLimit, ephemeralStorageRequest)
+		resources.Limits[corev1.ResourceEphemeralStorage] = *maxResourceVal(ephemeralStorageLimit, ephemeralStorageRequest)
 	}
 
 	return resources
 }
 
-func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *v1.Probe, readinessProbe *v1.Probe, startupProbe *v1.Probe, err error) {
+func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *corev1.Probe, readinessProbe *corev1.Probe, startupProbe *corev1.Probe, err error) {
 	livenessProbe = getLivenessProbe(obj)
 	switch any(obj).(type) {
 	case *pdoknlv3.WFS:
@@ -353,12 +353,12 @@ func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *v1.Probe, 
 	return
 }
 
-func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *v1.Probe {
+func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *corev1.Probe {
 	queryString := "SERVICE=" + string(obj.Type()) + "&request=GetCapabilities"
 	return getProbe(queryString, mimeTextXML)
 }
 
-func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
+func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
 	queryString, err := wfs.ReadinessQueryString()
 	if err != nil {
 		return nil, err
@@ -366,7 +366,7 @@ func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
 	return getProbe(queryString, mimeTextXML), nil
 }
 
-func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
+func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
 	queryString, err := wms.ReadinessQueryString()
 	if err != nil {
 		return nil, err
@@ -376,7 +376,7 @@ func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
 	return getProbe(queryString, mimeType), nil
 }
 
-func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
+func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
 	var typeNames []string
 	for _, ft := range wfs.Spec.Service.FeatureTypes {
 		typeNames = append(typeNames, ft.Name)
@@ -389,7 +389,7 @@ func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*v1.Probe, error) {
 	return getProbe(queryString, mimeTextXML), nil
 }
 
-func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
+func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
 	var layerNames []string
 	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if layer.Name != nil {
@@ -406,10 +406,10 @@ func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*v1.Probe, error) {
 	return getProbe(queryString, mimeType), nil
 }
 
-func getProbe(queryString string, mimeType string) *v1.Probe {
+func getProbe(queryString string, mimeType string) *corev1.Probe {
 	probeCmd := "wget -SO- -T 10 -t 2 'http://127.0.0.1:80/mapserver?" + queryString + "' 2>&1 | egrep -aiA10 'HTTP/1.1 200' | egrep -i 'Content-Type: " + mimeType + "'"
-	return &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{Exec: &v1.ExecAction{
+	return &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{Exec: &corev1.ExecAction{
 			Command: []string{
 				"/bin/sh",
 				"-c",

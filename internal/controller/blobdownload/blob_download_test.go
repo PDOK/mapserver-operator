@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	v3 "github.com/pdok/mapserver-operator/api/v3"
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
@@ -68,7 +68,7 @@ chown -R 999:999 /var/www/legend
 
 func TestGetArgsForWFS(t *testing.T) {
 	type args struct {
-		WFS *v3.WFS
+		WFS *pdoknlv3.WFS
 	}
 	tests := []struct {
 		name     string
@@ -79,12 +79,12 @@ func TestGetArgsForWFS(t *testing.T) {
 		{
 			name: "GetArgs for WFS with prefetchData",
 			args: args{
-				WFS: &v3.WFS{
-					Spec: v3.WFSSpec{
-						Service: v3.WFSService{
+				WFS: &pdoknlv3.WFS{
+					Spec: pdoknlv3.WFSSpec{
+						Service: pdoknlv3.WFSService{
 							Title: "wfs-prefetch-service-title",
 						},
-						Options: &v3.Options{
+						Options: &pdoknlv3.Options{
 							PrefetchData: true,
 						},
 					},
@@ -96,12 +96,12 @@ func TestGetArgsForWFS(t *testing.T) {
 		{
 			name: "GetArgs for WFS without prefetchData",
 			args: args{
-				WFS: &v3.WFS{
-					Spec: v3.WFSSpec{
-						Service: v3.WFSService{
+				WFS: &pdoknlv3.WFS{
+					Spec: pdoknlv3.WFSSpec{
+						Service: pdoknlv3.WFSService{
 							Title: "wfs-noprefetch-service-title",
 						},
-						Options: &v3.Options{
+						Options: &pdoknlv3.Options{
 							PrefetchData: false,
 						},
 					},
@@ -131,7 +131,7 @@ func TestGetArgsForWFS(t *testing.T) {
 
 func TestGetArgsForWMS(t *testing.T) {
 	type args struct {
-		WMS v3.WMS
+		WMS pdoknlv3.WMS
 	}
 	tests := []struct {
 		name     string
@@ -142,29 +142,29 @@ func TestGetArgsForWMS(t *testing.T) {
 		{
 			name: "GetArgs for WMS GeoPackage layer",
 			args: args{
-				WMS: v3.WMS{
-					Spec: v3.WMSSpec{
-						Service: v3.WMSService{
+				WMS: pdoknlv3.WMS{
+					Spec: pdoknlv3.WMSSpec{
+						Service: pdoknlv3.WMSService{
 							Title: "wms-gpkg-service-title",
-							Layer: v3.Layer{
+							Layer: pdoknlv3.Layer{
 								Name:  smoothoperatorutils.Pointer("wms-gpkg-layer-name"),
 								Title: smoothoperatorutils.Pointer("wms-gpkg-layer-title"),
-								Styles: []v3.Style{
+								Styles: []pdoknlv3.Style{
 									{
-										Legend: &v3.Legend{
+										Legend: &pdoknlv3.Legend{
 											BlobKey: "key/gpkg-layer-legend.png",
 										},
 									},
 								},
-								Layers: []v3.Layer{
+								Layers: []pdoknlv3.Layer{
 									{
 										Name:  smoothoperatorutils.Pointer("wms-gpkg-layer-1-name"),
 										Title: smoothoperatorutils.Pointer("wms-gpkg-layer-1-title"),
-										Styles: []v3.Style{
+										Styles: []pdoknlv3.Style{
 											{
 												Name:  "wms-gpkg-style-1-name",
 												Title: smoothoperatorutils.Pointer("wms-gpkg-style-1-title"),
-												Legend: &v3.Legend{
+												Legend: &pdoknlv3.Legend{
 													Width:   50,
 													Height:  50,
 													Format:  "png",
@@ -172,8 +172,8 @@ func TestGetArgsForWMS(t *testing.T) {
 												},
 											},
 										},
-										Data: &v3.Data{
-											Gpkg: &v3.Gpkg{
+										Data: &pdoknlv3.Data{
+											Gpkg: &pdoknlv3.Gpkg{
 												BlobKey: "geopackages-bucket/key/gpkg-layer-1-data.gpkg",
 											},
 										},
@@ -181,24 +181,24 @@ func TestGetArgsForWMS(t *testing.T) {
 									{
 										Name:  smoothoperatorutils.Pointer("wms-gpkg-layer-2-name"),
 										Title: smoothoperatorutils.Pointer("wms-gpkg-layer-2-title"),
-										Styles: []v3.Style{
+										Styles: []pdoknlv3.Style{
 											{
 												Name:  "wms-gpkg-style-2-name",
 												Title: smoothoperatorutils.Pointer("wms-gpkg-style-2-title"),
-												Legend: &v3.Legend{
+												Legend: &pdoknlv3.Legend{
 													BlobKey: "resources-bucket/key/gpkg-layer-2-legend.png",
 												},
 											},
 										},
-										Data: &v3.Data{
-											Gpkg: &v3.Gpkg{
+										Data: &pdoknlv3.Data{
+											Gpkg: &pdoknlv3.Gpkg{
 												BlobKey: "geopackages-bucket/key/gpkg-layer-2-data.gpkg",
 											},
 										},
 									},
 								},
 							},
-							StylingAssets: &v3.StylingAssets{
+							StylingAssets: &pdoknlv3.StylingAssets{
 								BlobKeys: []string{
 									"resources-bucket/key/gpkg-symbol.png",
 									"resources-bucket/key/symbol.svg",
@@ -207,7 +207,7 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: &v3.Options{
+						Options: &pdoknlv3.Options{
 							PrefetchData: true,
 						},
 					},
@@ -219,28 +219,28 @@ func TestGetArgsForWMS(t *testing.T) {
 		{
 			name: "GetArgs for WMS TIF layer",
 			args: args{
-				WMS: v3.WMS{
-					Spec: v3.WMSSpec{
-						Service: v3.WMSService{
+				WMS: pdoknlv3.WMS{
+					Spec: pdoknlv3.WMSSpec{
+						Service: pdoknlv3.WMSService{
 							Title: "wms-tif-service-title",
-							Layer: v3.Layer{
+							Layer: pdoknlv3.Layer{
 								Name:  smoothoperatorutils.Pointer("wms-tif-layer-name"),
 								Title: smoothoperatorutils.Pointer("wms-tif-layer-title"),
-								Layers: []v3.Layer{
+								Layers: []pdoknlv3.Layer{
 									{
 										Name:  smoothoperatorutils.Pointer("wms-tif-layer-1-name"),
 										Title: smoothoperatorutils.Pointer("wms-tif-layer-1-title"),
-										Styles: []v3.Style{
+										Styles: []pdoknlv3.Style{
 											{
 												Name:  "wms-tif-style-1-name",
 												Title: smoothoperatorutils.Pointer("wms-tif-style-1-title"),
-												Legend: &v3.Legend{
+												Legend: &pdoknlv3.Legend{
 													BlobKey: "resources-bucket/key/tif-layer-1-legend.png",
 												},
 											},
 										},
-										Data: &v3.Data{
-											TIF: &v3.TIF{
+										Data: &pdoknlv3.Data{
+											TIF: &pdoknlv3.TIF{
 												BlobKey: "tifs-bucket/key/tif-layer-1-data.tif",
 											},
 										},
@@ -248,24 +248,24 @@ func TestGetArgsForWMS(t *testing.T) {
 									{
 										Name:  smoothoperatorutils.Pointer("wms-tif-layer-2-name"),
 										Title: smoothoperatorutils.Pointer("wms-tif-layer-2-title"),
-										Styles: []v3.Style{
+										Styles: []pdoknlv3.Style{
 											{
 												Name:  "wms-tif-style-2-name",
 												Title: smoothoperatorutils.Pointer("wms-tif-style-2-title"),
-												Legend: &v3.Legend{
+												Legend: &pdoknlv3.Legend{
 													BlobKey: "resources-bucket/key/tif-layer-2-legend.png",
 												},
 											},
 										},
-										Data: &v3.Data{
-											TIF: &v3.TIF{
+										Data: &pdoknlv3.Data{
+											TIF: &pdoknlv3.TIF{
 												BlobKey: "tifs-bucket/key/tif-layer-2-data.tif",
 											},
 										},
 									},
 								},
 							},
-							StylingAssets: &v3.StylingAssets{
+							StylingAssets: &pdoknlv3.StylingAssets{
 								BlobKeys: []string{
 									"resources-bucket/key/tif-symbol.png",
 									"resources-bucket/key/symbol.svg",
@@ -274,7 +274,7 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: &v3.Options{
+						Options: &pdoknlv3.Options{
 							PrefetchData: true,
 						},
 					},
