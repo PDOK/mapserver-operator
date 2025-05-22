@@ -3,7 +3,7 @@ package mapserver
 import (
 	"testing"
 
-	"github.com/pdok/mapserver-operator/internal/controller/utils"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -102,8 +102,8 @@ func TestGetVolumesForDeployment(t *testing.T) {
 	pdoknlv3.SetHost("https://service.pdok.nl")
 
 	hashedConfigMapNames := types.HashedConfigMapNames{
-		ConfigMap:             "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4",
-		BlobDownload:          "2",
+		Mapserver:             "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4",
+		InitScripts:           "2",
 		MapfileGenerator:      "rws-nwbwegen-v1-0-wfs-mapfile-generator-bbbtd999dh",
 		CapabilitiesGenerator: "rws-nwbwegen-v1-0-wfs-capabilities-generator-6m4mfkgb5d",
 		OgcWebserviceProxy:    "3",
@@ -113,11 +113,11 @@ func TestGetVolumesForDeployment(t *testing.T) {
 	result := GetVolumesForDeployment(wfs, hashedConfigMapNames)
 
 	expected := []corev1.Volume{
-		{Name: "base", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-		{Name: "data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-		{Name: utils.MapserverName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
-		{Name: "capabilities-generator-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-capabilities-generator-6m4mfkgb5d"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
-		{Name: "mapfile-generator-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapfile-generator-bbbtd999dh"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
+		{Name: constants.BaseVolumeName, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		{Name: constants.DataVolumeName, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		{Name: constants.MapserverName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
+		{Name: constants.ConfigMapCapabilitiesGeneratorVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-capabilities-generator-6m4mfkgb5d"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
+		{Name: constants.ConfigMapMapfileGeneratorVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapfile-generator-bbbtd999dh"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
 	}
 
 	assert.Equal(t, expected, result)

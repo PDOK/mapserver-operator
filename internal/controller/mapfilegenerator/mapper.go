@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pdok/mapserver-operator/internal/controller/utils"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 
@@ -216,7 +216,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 		Fonts:             fonts,
 		OutputFormatJpg:   "jpg",
 		OutputFormatPng:   "png",
-		Templates:         utils.HTMLTemplatesPath,
+		Templates:         constants.HTMLTemplatesPath,
 		MaxSize:           maxSize,
 	}
 

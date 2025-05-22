@@ -3,6 +3,8 @@ package capabilitiesgenerator
 import (
 	"fmt"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	"gopkg.in/yaml.v3"
@@ -14,7 +16,7 @@ import (
 
 func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](_ O, images types.Images) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            utils.CapabilitiesGeneratorName,
+		Name:            constants.CapabilitiesGeneratorName,
 		Image:           images.CapabilitiesGeneratorImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env: []corev1.EnvVar{
@@ -25,7 +27,7 @@ func GetCapabilitiesGeneratorInitContainer[O pdoknlv3.WMSWFS](_ O, images types.
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			utils.GetDataVolumeMount(),
-			utils.GetConfigVolumeMount(utils.ConfigMapCapabilitiesGeneratorVolumeName),
+			utils.GetConfigVolumeMount(constants.ConfigMapCapabilitiesGeneratorVolumeName),
 		},
 	}
 	return &initContainer, nil

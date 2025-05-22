@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -51,8 +52,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	}
 
 	// Add all ConfigMaps with hashed names
-	cm := getBareConfigMap(obj, utils.MapserverName)
-	hashedName, err := getHashedConfigMapNameFromClient(ctx, obj, utils.MapserverName)
+	cm := getBareConfigMap(obj, constants.MapserverName)
+	hashedName, err := getHashedConfigMapNameFromClient(ctx, obj, constants.MapserverName)
 	if err != nil {
 		return objects, err
 	}
@@ -60,8 +61,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	objects = append(objects, cm)
 
 	if includeMapfileGeneratorConfigMap {
-		cm = getBareConfigMap(obj, utils.MapfileGeneratorName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, utils.ConfigMapMapfileGeneratorVolumeName)
+		cm = getBareConfigMap(obj, constants.MapfileGeneratorName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapMapfileGeneratorVolumeName)
 		if err != nil {
 			return objects, err
 		}
@@ -69,8 +70,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 		objects = append(objects, cm)
 	}
 
-	cm = getBareConfigMap(obj, utils.CapabilitiesGeneratorName)
-	hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, utils.ConfigMapCapabilitiesGeneratorVolumeName)
+	cm = getBareConfigMap(obj, constants.CapabilitiesGeneratorName)
+	hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapCapabilitiesGeneratorVolumeName)
 	if err != nil {
 		return objects, err
 	}
@@ -78,8 +79,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	objects = append(objects, cm)
 
 	if includeBlobDownload {
-		cm = getBareConfigMap(obj, utils.InitScriptsName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, utils.InitScriptsName)
+		cm = getBareConfigMap(obj, constants.InitScriptsName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.InitScriptsName)
 		if err != nil {
 			return objects, err
 		}
@@ -89,16 +90,16 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		wms, _ := any(obj).(*pdoknlv3.WMS)
-		cm = getBareConfigMap(wms, utils.LegendGeneratorName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, utils.ConfigMapLegendGeneratorVolumeName)
+		cm = getBareConfigMap(wms, constants.LegendGeneratorName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapLegendGeneratorVolumeName)
 		if err != nil {
 			return objects, err
 		}
 		cm.Name = hashedName
 		objects = append(objects, cm)
 
-		cm = getBareConfigMap(wms, utils.FeatureinfoGeneratorName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, utils.ConfigMapFeatureinfoGeneratorVolumeName)
+		cm = getBareConfigMap(wms, constants.FeatureinfoGeneratorName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapFeatureinfoGeneratorVolumeName)
 		if err != nil {
 			return objects, err
 		}
@@ -106,8 +107,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 		objects = append(objects, cm)
 
 		if obj.Options().UseWebserviceProxy() {
-			cm = getBareConfigMap(wms, utils.OgcWebserviceProxyName)
-			hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, utils.ConfigMapOgcWebserviceProxyVolumeName)
+			cm = getBareConfigMap(wms, constants.OgcWebserviceProxyName)
+			hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapOgcWebserviceProxyVolumeName)
 			if err != nil {
 				return objects, err
 			}

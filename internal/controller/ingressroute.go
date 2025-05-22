@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
@@ -25,7 +27,7 @@ func SetUptimeOperatorAnnotations(set bool) {
 func getBareIngressRoute[O pdoknlv3.WMSWFS](obj O) *traefikiov1alpha1.IngressRoute {
 	return &traefikiov1alpha1.IngressRoute{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, utils.MapserverName),
+			Name:      getSuffixedName(obj, constants.MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}

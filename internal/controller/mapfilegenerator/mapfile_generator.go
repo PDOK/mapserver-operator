@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -15,7 +17,7 @@ import (
 
 func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, postgisConfigName, postgisSecretName string) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            utils.MapfileGeneratorName,
+		Name:            constants.MapfileGeneratorName,
 		Image:           images.MapfileGeneratorImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command:         []string{"generate-mapfile"},
@@ -27,12 +29,12 @@ func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Ima
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			utils.GetBaseVolumeMount(),
-			utils.GetConfigVolumeMount(utils.ConfigMapMapfileGeneratorVolumeName),
+			utils.GetConfigVolumeMount(constants.ConfigMapMapfileGeneratorVolumeName),
 		},
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		stylingFilesVolMount := corev1.VolumeMount{Name: utils.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true}
+		stylingFilesVolMount := corev1.VolumeMount{Name: constants.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true}
 		initContainer.VolumeMounts = append(initContainer.VolumeMounts, stylingFilesVolMount)
 	}
 	// Additional mapfile-generator configuration

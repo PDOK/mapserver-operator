@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 
 	"k8s.io/utils/strings/slices"
@@ -40,7 +42,7 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images,
 		}
 	}
 	initContainer := corev1.Container{
-		Name:            utils.BlobDownloadName,
+		Name:            constants.BlobDownloadName,
 		Image:           images.MultitoolImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env: []corev1.EnvVar{
@@ -85,7 +87,7 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images,
 	}
 
 	if obj.Options().PrefetchData {
-		mount := corev1.VolumeMount{Name: utils.InitScriptsName, MountPath: "/srv/scripts", ReadOnly: true}
+		mount := corev1.VolumeMount{Name: constants.InitScriptsName, MountPath: "/srv/scripts", ReadOnly: true}
 		initContainer.VolumeMounts = append(initContainer.VolumeMounts, mount)
 	}
 

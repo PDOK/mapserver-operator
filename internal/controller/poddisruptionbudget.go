@@ -2,7 +2,7 @@ package controller
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller/utils"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +13,7 @@ import (
 func getBarePodDisruptionBudget[O pdoknlv3.WMSWFS](obj O) *policyv1.PodDisruptionBudget {
 	return &policyv1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, utils.MapserverName),
+			Name:      getSuffixedName(obj, constants.MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}

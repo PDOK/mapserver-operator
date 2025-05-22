@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -25,10 +27,14 @@ const (
 	mimeTextXML = "text/xml"
 )
 
-func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*corev1.Container, error) {
+func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, blobsSecretName string) (*corev1.Container, error) {
+	livenessProbe, readinessProbe, startupProbe, err := GetProbesForDeployment(obj)
+	if err != nil {
+		return nil, err
+	}
 
 	container := corev1.Container{
-		Name:            utils.MapserverName,
+		Name:            constants.MapserverName,
 		Image:           images.MapserverImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports:           []corev1.ContainerPort{{ContainerPort: MapserverPortNr}},
@@ -41,17 +47,65 @@ func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*core
 				Name:  "MAPSERVER_CONFIG_FILE",
 				Value: "/srv/mapserver/config/default_mapserver.conf",
 			},
+			GetMapfileEnvVar(obj),
+			{
+				Name: "AZURE_STORAGE_CONNECTION_STRING",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{Name: blobsSecretName},
+						Key:                  "AZURE_STORAGE_CONNECTION_STRING",
+					},
+				},
+			},
 		},
+		VolumeMounts: getVolumeMounts(obj.Mapfile() != nil),
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("800M"),
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("0.15"),
+			},
+		},
+		Lifecycle:      &corev1.Lifecycle{PreStop: &corev1.LifecycleHandler{Exec: &corev1.ExecAction{Command: []string{"sleep", "15"}}}},
+		StartupProbe:   startupProbe,
+		ReadinessProbe: readinessProbe,
+		LivenessProbe:  livenessProbe,
+	}
+
+	if obj.Type() == pdoknlv3.ServiceTypeWMS && !obj.Options().DisableWebserviceProxy {
+		container.Resources.Requests[corev1.ResourceCPU] = resource.MustParse("0.1")
 	}
 
 	return &container, nil
+}
+
+func getVolumeMounts(customMapfile bool) []corev1.VolumeMount {
+	volumeMounts := []corev1.VolumeMount{
+		utils.GetBaseVolumeMount(),
+		utils.GetDataVolumeMount(),
+	}
+
+	staticFiles, _ := static.GetStaticFiles()
+	for _, name := range staticFiles {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      constants.MapserverName,
+			MountPath: "/srv/mapserver/config/" + name,
+			SubPath:   name,
+		})
+	}
+	if customMapfile {
+		volumeMounts = append(volumeMounts, utils.GetMapfileVolumeMount())
+	}
+
+	return volumeMounts
 }
 
 // TODO fix linting (funlen)
 //
 //nolint:funlen
 func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNames) []corev1.Volume {
-	baseVolume := corev1.Volume{Name: "base"}
+	baseVolume := corev1.Volume{Name: constants.BaseVolumeName}
 	if use, size := mapperutils.UseEphemeralVolume(obj); use {
 		baseVolume.Ephemeral = &corev1.EphemeralVolumeSource{
 			VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
@@ -89,36 +143,36 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	volumes := []corev1.Volume{
 		baseVolume,
 		{
-			Name: "data",
+			Name: constants.DataVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
 		{
-			Name:         utils.MapserverName,
-			VolumeSource: newVolumeSource(configMapNames.ConfigMap),
+			Name:         constants.MapserverName,
+			VolumeSource: newVolumeSource(configMapNames.Mapserver),
 		},
 	}
 
 	if mapfile := obj.Mapfile(); mapfile != nil {
 		volumes = append(volumes, corev1.Volume{
-			Name:         "mapfile",
+			Name:         constants.ConfigMapCustomMapfileVolumeName,
 			VolumeSource: newVolumeSource(mapfile.ConfigMapKeyRef.Name),
 		})
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
 		volumes = append(volumes, corev1.Volume{
-			Name:         utils.ConfigMapOgcWebserviceProxyVolumeName,
+			Name:         constants.ConfigMapOgcWebserviceProxyVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.OgcWebserviceProxy),
 		})
 	}
 
 	if obj.Options().PrefetchData {
-		vol := newVolumeSource(configMapNames.BlobDownload)
+		vol := newVolumeSource(configMapNames.InitScripts)
 		vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
 		volumes = append(volumes, corev1.Volume{
-			Name:         utils.InitScriptsName,
+			Name:         constants.InitScriptsName,
 			VolumeSource: vol,
 		})
 	}
@@ -126,18 +180,18 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	// Add capabilitiesgenerator config here to get the same order as the ansible operator
 	// Needed to compare deployments from the ansible operator and this one
 	volumes = append(volumes, corev1.Volume{
-		Name:         utils.ConfigMapCapabilitiesGeneratorVolumeName,
+		Name:         constants.ConfigMapCapabilitiesGeneratorVolumeName,
 		VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
 	})
 
 	var stylingFilesVolume *corev1.Volume
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		lgVolume := corev1.Volume{
-			Name:         utils.ConfigMapLegendGeneratorVolumeName,
+			Name:         constants.ConfigMapLegendGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.LegendGenerator),
 		}
 		figVolume := corev1.Volume{
-			Name:         utils.ConfigMapFeatureinfoGeneratorVolumeName,
+			Name:         constants.ConfigMapFeatureinfoGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.FeatureInfoGenerator),
 		}
 
@@ -156,7 +210,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		}
 
 		stylingFilesVolume = &corev1.Volume{
-			Name: utils.ConfigMapStylingFilesVolumeName,
+			Name: constants.ConfigMapStylingFilesVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				Projected: &corev1.ProjectedVolumeSource{
 					Sources: stylingFilesVolumeProjections,
@@ -170,7 +224,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 	// Needed to compare deployments from the ansible operator and this one
 	if obj.Mapfile() == nil {
 		volumes = append(volumes, corev1.Volume{
-			Name:         utils.ConfigMapMapfileGeneratorVolumeName,
+			Name:         constants.ConfigMapMapfileGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
 		})
 		if stylingFilesVolume != nil {
@@ -184,7 +238,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O) []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      "base",
+			Name:      constants.BaseVolumeName,
 			MountPath: "/srv/data",
 		},
 		{
@@ -196,7 +250,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O) []corev1.VolumeMount
 	staticFiles, _ := static.GetStaticFiles()
 	for _, name := range staticFiles {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      utils.MapserverName,
+			Name:      constants.MapserverName,
 			MountPath: "/srv/mapserver/config/" + name,
 			SubPath:   name,
 		})
@@ -205,7 +259,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O) []corev1.VolumeMount
 	// Custom mapfile
 	if mapfile := obj.Mapfile(); mapfile != nil {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "mapfile",
+			Name:      constants.ConfigMapCustomMapfileVolumeName,
 			MountPath: "/srv/data/config/mapfile",
 		})
 	}
@@ -281,7 +335,7 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) corev1.ResourceRequirem
 	if obj.PodSpecPatch() != nil {
 		found := false
 		for _, container := range obj.PodSpecPatch().Containers {
-			if container.Name == utils.MapserverName {
+			if container.Name == constants.MapserverName {
 				objResources = &container.Resources
 				found = true
 				break
@@ -348,8 +402,8 @@ func GetResourcesForDeployment[O pdoknlv3.WMSWFS](obj O) corev1.ResourceRequirem
 
 func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *corev1.Probe, readinessProbe *corev1.Probe, startupProbe *corev1.Probe, err error) {
 	livenessProbe = getLivenessProbe(obj)
-	switch any(obj).(type) {
-	case *pdoknlv3.WFS:
+	switch obj.Type() {
+	case pdoknlv3.ServiceTypeWFS:
 		wfs, _ := any(obj).(*pdoknlv3.WFS)
 		readinessProbe, err = getReadinessProbeForWFS(wfs)
 		if err != nil {
@@ -359,7 +413,7 @@ func GetProbesForDeployment[O pdoknlv3.WMSWFS](obj O) (livenessProbe *corev1.Pro
 		if err != nil {
 			return nil, nil, nil, err
 		}
-	case *pdoknlv3.WMS:
+	case pdoknlv3.ServiceTypeWMS:
 		wms, _ := any(obj).(*pdoknlv3.WMS)
 		readinessProbe, err = getReadinessProbeForWMS(wms)
 		if err != nil {

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
@@ -12,21 +14,21 @@ import (
 
 func GetFeatureinfoGeneratorInitContainer(images types.Images) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            utils.FeatureinfoGeneratorName,
+		Name:            constants.FeatureinfoGeneratorName,
 		Image:           images.FeatureinfoGeneratorImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Command:         []string{utils.FeatureinfoGeneratorName},
+		Command:         []string{constants.FeatureinfoGeneratorName},
 		Args: []string{
 			"--input-path",
 			"/input/input.json",
 			"--dest-folder",
-			utils.HTMLTemplatesPath,
+			constants.HTMLTemplatesPath,
 			"--file-name",
 			"feature-info",
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			utils.GetBaseVolumeMount(),
-			utils.GetConfigVolumeMount(utils.ConfigMapFeatureinfoGeneratorVolumeName),
+			utils.GetConfigVolumeMount(constants.ConfigMapFeatureinfoGeneratorVolumeName),
 		},
 	}
 

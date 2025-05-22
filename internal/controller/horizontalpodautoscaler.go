@@ -2,8 +2,8 @@ package controller
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
-	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -39,7 +39,7 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 	}
 	if len(metrics) == 0 {
 		var avgU int32 = 90
-		if cpu := mapperutils.GetContainerResourceRequest(obj, utils.MapserverName, corev1.ResourceCPU); cpu != nil {
+		if cpu := mapperutils.GetContainerResourceRequest(obj, constants.MapserverName, corev1.ResourceCPU); cpu != nil {
 			avgU = 80
 		}
 		metrics = append(metrics, autoscalingv2.MetricSpec{
@@ -58,7 +58,7 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 		ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       getSuffixedName(obj, utils.MapserverName),
+			Name:       getSuffixedName(obj, constants.MapserverName),
 		},
 		MinReplicas: &minReplicas,
 		MaxReplicas: maxReplicas,
@@ -103,7 +103,7 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 func getBareHorizontalPodAutoScaler[O pdoknlv3.WMSWFS](obj O) *autoscalingv2.HorizontalPodAutoscaler {
 	return &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, utils.MapserverName),
+			Name:      getSuffixedName(obj, constants.MapserverName),
 			Namespace: obj.GetNamespace(),
 		},
 	}

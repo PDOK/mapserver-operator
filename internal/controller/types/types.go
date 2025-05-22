@@ -1,8 +1,8 @@
 package types
 
 type HashedConfigMapNames struct {
-	ConfigMap             string
-	BlobDownload          string
+	Mapserver             string
+	InitScripts           string
 	MapfileGenerator      string
 	CapabilitiesGenerator string
 	OgcWebserviceProxy    string

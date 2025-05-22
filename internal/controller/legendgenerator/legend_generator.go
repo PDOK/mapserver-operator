@@ -2,6 +2,7 @@ package legendgenerator
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
@@ -10,7 +11,7 @@ import (
 
 func GetLegendGeneratorInitContainer(wms *pdoknlv3.WMS, images types.Images) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            utils.LegendGeneratorName,
+		Name:            constants.LegendGeneratorName,
 		Image:           images.MapserverImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env: []corev1.EnvVar{
@@ -41,24 +42,23 @@ func GetLegendGeneratorInitContainer(wms *pdoknlv3.WMS, images types.Images) (*c
 		VolumeMounts: []corev1.VolumeMount{
 			utils.GetBaseVolumeMount(),
 			utils.GetDataVolumeMount(),
-			{Name: utils.MapserverName, MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
+			{Name: constants.MapserverName, MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
 		},
 	}
 
 	if wms.Spec.Service.Mapfile != nil {
-		volumeMount := corev1.VolumeMount{Name: "mapfile", MountPath: "/srv/data/config/mapfile"}
-		initContainer.VolumeMounts = append(initContainer.VolumeMounts, volumeMount)
+		initContainer.VolumeMounts = append(initContainer.VolumeMounts, utils.GetMapfileVolumeMount())
 	}
 
 	// Adding config volumemount here to get the same order as in the old ansible operator
-	initContainer.VolumeMounts = append(initContainer.VolumeMounts, utils.GetConfigVolumeMount(utils.ConfigMapLegendGeneratorVolumeName))
+	initContainer.VolumeMounts = append(initContainer.VolumeMounts, utils.GetConfigVolumeMount(constants.ConfigMapLegendGeneratorVolumeName))
 
 	return &initContainer, nil
 }
 
 func GetLegendFixerInitContainer(images types.Images) *corev1.Container {
 	return &corev1.Container{
-		Name:            utils.LegendFixerName,
+		Name:            constants.LegendFixerName,
 		Image:           images.MultitoolImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command: []string{
@@ -67,7 +67,7 @@ func GetLegendFixerInitContainer(images types.Images) *corev1.Container {
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			utils.GetDataVolumeMount(),
-			utils.GetConfigVolumeMount(utils.ConfigMapLegendGeneratorVolumeName),
+			utils.GetConfigVolumeMount(constants.ConfigMapLegendGeneratorVolumeName),
 		},
 	}
 }

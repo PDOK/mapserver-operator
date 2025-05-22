@@ -1,16 +1,19 @@
 package controller
 
 import (
+	"os"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapserver-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	"github.com/pdok/mapserver-operator/internal/controller/featureinfogenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
+	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
-	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	"github.com/pdok/smooth-operator/pkg/k8s"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -31,7 +34,7 @@ const (
 func getBareDeployment[O pdoknlv3.WMSWFS](obj O) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: getSuffixedName(obj, utils.MapserverName),
+			Name: getSuffixedName(obj, constants.MapserverName),
 			// name might become too long. not handling here. will just fail on apply.
 			Namespace: obj.GetNamespace(),
 		},
@@ -58,18 +61,33 @@ func test[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deploy
 
 	annotations := smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations())
 	annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
-	annotations["kubectl.kubernetes.io/default-container"] = utils.MapserverName
+	annotations["kubectl.kubernetes.io/default-container"] = constants.MapserverName
 	annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
 	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/port"] = "9117"
+	annotations["prometheus.io/port"] = string(constants.ApachePortNr)
 	annotations["priority.version-checker.io/mapserver"] = "4"
 	annotations["priority.version-checker.io/ogc-webservice-proxy"] = "4"
+
+	blobsSecret, err := k8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), blobsSecretPrefix, make(map[string]string))
+	if err != nil {
+		return err
+	}
 
 	initContainers, err := getInitContainerForDeployment(r, obj)
 	if err != nil {
 		return err
 	}
-	containers := []corev1.Container{}
+
+	images := getReconcilerImages(r)
+	mapserverContainer, err := mapserver.GetMapserverContainer(obj, *images, blobsSecret.Name)
+	if err != nil {
+		return err
+	}
+	containers := []corev1.Container{
+		*mapserverContainer,
+		getApacheContainer(*images),
+	}
+
 	volumes := []corev1.Volume{}
 
 	podTemplateSpec := corev1.PodTemplateSpec{
@@ -94,10 +112,84 @@ func test[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deploy
 	}
 
 	deployment.Spec.Template = podTemplateSpec
-	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, deployment, deployment); err != nil {
+	if err = smoothoperatorutils.EnsureSetGVK(reconcilerClient, deployment, deployment); err != nil {
 		return err
 	}
 	return ctrl.SetControllerReference(obj, deployment, getReconcilerScheme(r))
+}
+
+func getApacheContainer(images types.Images) corev1.Container {
+	return corev1.Container{
+		Name:            "apache-exporter",
+		Image:           images.ApacheExporterImage,
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Ports:           []corev1.ContainerPort{{ContainerPort: constants.ApachePortNr}},
+		Args:            []string{"-scrape_uri=http://localhost/server-status?auto"},
+		Resources: corev1.ResourceRequirements{
+			Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("48M")},
+			Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("0.02")},
+		},
+	}
+}
+
+func getVolumes[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNames) []corev1.Volume {
+	baseVolume := corev1.Volume{Name: constants.BaseVolumeName}
+	if use, size := mapperutils.UseEphemeralVolume(obj); use {
+		baseVolume.Ephemeral = &corev1.EphemeralVolumeSource{
+			VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
+				Spec: corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+					Resources: corev1.VolumeResourceRequirements{Requests: corev1.ResourceList{
+						corev1.ResourceStorage: *size,
+					}},
+				},
+			},
+		}
+		if value, set := os.LookupEnv("STORAGE_CLASS_NAME"); set {
+			baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &value
+		}
+	} else {
+		baseVolume.EmptyDir = &corev1.EmptyDirVolumeSource{}
+	}
+
+	volumes := []corev1.Volume{
+		baseVolume,
+		{Name: constants.DataVolumeName, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		getConfigMapVolume(constants.MapserverName, configMapNames.Mapserver),
+	}
+
+	if mapfile := obj.Mapfile(); mapfile != nil {
+		volumes = append(volumes, getConfigMapVolume(constants.ConfigMapCustomMapfileVolumeName, mapfile.ConfigMapKeyRef.Name))
+	}
+
+	if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
+		volumes = append(volumes, getConfigMapVolume(constants.ConfigMapOgcWebserviceProxyVolumeName, configMapNames.OgcWebserviceProxy))
+	}
+
+	if obj.Options().PrefetchData {
+		volumes = append(volumes, getConfigMapVolume(constants.InitScriptsName, configMapNames.InitScripts))
+	}
+
+	volumes = append(volumes, getConfigMapVolume(constants.ConfigMapCapabilitiesGeneratorVolumeName, configMapNames.CapabilitiesGenerator))
+
+	if obj.Mapfile() != nil {
+		volumes = append(volumes, getConfigMapVolume(constants.ConfigMapMapfileGeneratorVolumeName, configMapNames.MapfileGenerator))
+
+		if obj.Type() == pdoknlv3.ServiceTypeWMS {
+
+		}
+	}
+
+	return volumes
+}
+
+func getConfigMapVolume(name, configMap string) corev1.Volume {
+	return corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+			LocalObjectReference: corev1.LocalObjectReference{Name: configMap}},
+		},
+	}
 }
 
 func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
@@ -144,7 +236,7 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 	annotations := smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations())
 	annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
 
-	annotations["kubectl.kubernetes.io/default-container"] = utils.MapserverName
+	annotations["kubectl.kubernetes.io/default-container"] = constants.MapserverName
 	annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
 	annotations["prometheus.io/scrape"] = "true"
 	annotations["prometheus.io/port"] = "9117"
@@ -253,7 +345,7 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 	}
 
 	mapserverContainer := corev1.Container{
-		Name:            utils.MapserverName,
+		Name:            constants.MapserverName,
 		Image:           images.MapserverImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{

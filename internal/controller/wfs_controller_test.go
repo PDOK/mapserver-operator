@@ -31,6 +31,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
 	types2 "github.com/pdok/mapserver-operator/internal/controller/types"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -232,7 +234,7 @@ var _ = Describe("WFS Controller", func() {
 			Container tests
 			*/
 			container := deployment.Spec.Template.Spec.Containers[0]
-			Expect(container.Name).Should(Equal(utils.MapserverName))
+			Expect(container.Name).Should(Equal(constants.MapserverName))
 			Expect(container.Ports[0].ContainerPort).Should(Equal(int32(80)))
 			Expect(container.Image).Should(Equal(reconcilerImages.MapserverImage))
 			Expect(container.ImagePullPolicy).Should(Equal(corev1.PullIfNotPresent))
@@ -270,13 +272,13 @@ var _ = Describe("WFS Controller", func() {
 				return corev1.Container{}, fmt.Errorf("init container with name %s not found", name)
 			}
 
-			blobDownloadContainer, err := getInitContainer(utils.BlobDownloadName)
+			blobDownloadContainer, err := getInitContainer(constants.BlobDownloadName)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(blobDownloadContainer.Image).Should(Equal(reconcilerImages.MultitoolImage))
 			volumeMounts := []corev1.VolumeMount{
-				{Name: "base", MountPath: "/srv/data"},
-				{Name: "data", MountPath: "/var/www"},
-				{Name: utils.InitScriptsName, MountPath: "/srv/scripts", ReadOnly: true},
+				{Name: constants.BaseVolumeName, MountPath: "/srv/data"},
+				{Name: constants.DataVolumeName, MountPath: "/var/www"},
+				{Name: constants.InitScriptsName, MountPath: "/srv/scripts", ReadOnly: true},
 			}
 			envFrom := []corev1.EnvFromSource{
 				utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, "blobs-testtest"),
@@ -287,23 +289,23 @@ var _ = Describe("WFS Controller", func() {
 			Expect(blobDownloadContainer.Command).Should(Equal([]string{"/bin/sh", "-c"}))
 			Expect(len(blobDownloadContainer.Args)).Should(BeNumerically(">", 0))
 
-			mapfileGeneratorContainer, err := getInitContainer(utils.MapfileGeneratorName)
+			mapfileGeneratorContainer, err := getInitContainer(constants.MapfileGeneratorName)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mapfileGeneratorContainer.Image).Should(Equal(reconcilerImages.MapfileGeneratorImage))
 			volumeMounts = []corev1.VolumeMount{
-				{Name: "base", MountPath: "/srv/data"},
-				utils.GetConfigVolumeMount(utils.ConfigMapMapfileGeneratorVolumeName),
+				{Name: constants.BaseVolumeName, MountPath: "/srv/data"},
+				utils.GetConfigVolumeMount(constants.ConfigMapMapfileGeneratorVolumeName),
 			}
 			Expect(mapfileGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 			Expect(mapfileGeneratorContainer.Command).Should(Equal([]string{"generate-mapfile"}))
 			Expect(mapfileGeneratorContainer.Args).Should(Equal([]string{"--not-include", "wfs", "/input/input.json", "/srv/data/config/mapfile"}))
 
-			capabilitiesGeneratorContainer, err := getInitContainer(utils.CapabilitiesGeneratorName)
+			capabilitiesGeneratorContainer, err := getInitContainer(constants.CapabilitiesGeneratorName)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capabilitiesGeneratorContainer.Image).Should(Equal(reconcilerImages.CapabilitiesGeneratorImage))
 			volumeMounts = []corev1.VolumeMount{
-				{Name: "data", MountPath: "/var/www"},
-				utils.GetConfigVolumeMount(utils.ConfigMapCapabilitiesGeneratorVolumeName),
+				{Name: constants.DataVolumeName, MountPath: "/var/www"},
+				utils.GetConfigVolumeMount(constants.ConfigMapCapabilitiesGeneratorVolumeName),
 			}
 			Expect(capabilitiesGeneratorContainer.VolumeMounts).Should(Equal(volumeMounts))
 			env := []corev1.EnvVar{
@@ -315,12 +317,12 @@ var _ = Describe("WFS Controller", func() {
 			Volumes tests
 			*/
 			expectedVolumes := []string{"" +
-				"base",
-				"data",
-				utils.MapserverName,
-				utils.InitScriptsName,
-				utils.ConfigMapCapabilitiesGeneratorVolumeName,
-				utils.ConfigMapMapfileGeneratorVolumeName,
+				constants.BaseVolumeName,
+				constants.DataVolumeName,
+				constants.MapserverName,
+				constants.InitScriptsName,
+				constants.ConfigMapCapabilitiesGeneratorVolumeName,
+				constants.ConfigMapMapfileGeneratorVolumeName,
 			}
 			for _, ev := range expectedVolumes {
 				Expect(slices.IndexFunc(deployment.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
@@ -352,7 +354,7 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			_, err = getHashedConfigMapNameFromClient(ctx, wfs, utils.InitScriptsName)
+			_, err = getHashedConfigMapNameFromClient(ctx, wfs, constants.InitScriptsName)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -362,8 +364,8 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMap(wfs, utils.MapserverName)
-			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, utils.MapserverName)
+			configMap := getBareConfigMap(wfs, constants.MapserverName)
+			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, constants.MapserverName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
 				err = k8sClient.Get(ctx, client.ObjectKey{Namespace: wfs.GetNamespace(), Name: configMapName}, configMap)
@@ -400,8 +402,8 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMap(wfs, utils.MapfileGeneratorName)
-			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, utils.ConfigMapMapfileGeneratorVolumeName)
+			configMap := getBareConfigMap(wfs, constants.MapfileGeneratorName)
+			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, constants.ConfigMapMapfileGeneratorVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
 				err = k8sClient.Get(ctx, client.ObjectKey{Namespace: wfs.GetNamespace(), Name: configMapName}, configMap)
@@ -425,8 +427,8 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMap(wfs, utils.InitScriptsName)
-			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, utils.InitScriptsName)
+			configMap := getBareConfigMap(wfs, constants.InitScriptsName)
+			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, constants.InitScriptsName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
 				err = k8sClient.Get(ctx, client.ObjectKey{Namespace: wfs.GetNamespace(), Name: configMapName}, configMap)
@@ -450,8 +452,8 @@ var _ = Describe("WFS Controller", func() {
 			By("Reconciling the WFS and checking the configMap")
 			reconcileWFS(controllerReconciler, wfs, typeNamespacedNameWfs)
 
-			configMap := getBareConfigMap(wfs, utils.CapabilitiesGeneratorName)
-			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, utils.ConfigMapCapabilitiesGeneratorVolumeName)
+			configMap := getBareConfigMap(wfs, constants.CapabilitiesGeneratorName)
+			configMapName, err := getHashedConfigMapNameFromClient(ctx, wfs, constants.ConfigMapCapabilitiesGeneratorVolumeName)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() bool {
 				err = k8sClient.Get(ctx, client.ObjectKey{Namespace: wfs.GetNamespace(), Name: configMapName}, configMap)
@@ -596,7 +598,7 @@ var _ = Describe("WFS Controller", func() {
 			Expect(service.GetName()).To(Equal(wfs.GetName() + "-wfs-mapserver"))
 			Expect(service.Spec.Ports).To(Equal([]corev1.ServicePort{
 				{
-					Name:       utils.MapserverName,
+					Name:       constants.MapserverName,
 					Port:       80,
 					TargetPort: intstr.FromInt32(80),
 					Protocol:   corev1.ProtocolTCP,
@@ -712,7 +714,7 @@ func getWFSReconciler() *WFSReconciler {
 
 func checkWFSLabels(labelSets ...map[string]string) {
 	expectedLabels := map[string]string{
-		"app":                          utils.MapserverName,
+		"app":                          constants.MapserverName,
 		"dataset":                      "dataset",
 		"dataset-owner":                "eigenaar",
 		"service-type":                 "wfs",
