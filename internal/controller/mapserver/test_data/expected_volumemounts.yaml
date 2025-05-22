@@ -3,15 +3,15 @@ volumeMounts:
   name: base
 - mountPath: /var/www
   name: data
-- mountPath: /srv/mapserver/config/default_mapserver.conf
-  name: mapserver
-  subPath: default_mapserver.conf
 - mountPath: /srv/mapserver/config/include.conf
   name: mapserver
   subPath: include.conf
 - mountPath: /srv/mapserver/config/ogc.lua
   name: mapserver
   subPath: ogc.lua
+- mountPath: /srv/mapserver/config/default_mapserver.conf
+  name: mapserver
+  subPath: default_mapserver.conf
 - mountPath: /srv/mapserver/config/scraping-error.xml
   name: mapserver
   subPath: scraping-error.xml

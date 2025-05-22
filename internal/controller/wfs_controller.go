@@ -66,8 +66,6 @@ type WFSReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
-//
-//nolint:dupl
 func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	lgr := log.FromContext(ctx)
 	lgr.Info("Starting reconcile for WFS resource", "name", req.NamespacedName)
@@ -96,7 +94,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		} else {
 			lgr.Error(err, "unable to fetch OwnerInfo resource", "error", err)
 		}
-		return result, client.IgnoreNotFound(err)
+		return result, err
 	}
 
 	ensureLabel(wfs, "pdok.nl/service-type", "wfs")

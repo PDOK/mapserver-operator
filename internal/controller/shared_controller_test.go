@@ -3,7 +3,23 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
+	"slices"
+	"strings"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/pdok/mapserver-operator/api/v2beta1"
+	controllertypes "github.com/pdok/mapserver-operator/internal/controller/types"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	v2 "k8s.io/api/autoscaling/v2"
+	policyv1 "k8s.io/api/policy/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
+
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // ginkgo bdd
+	. "github.com/onsi/gomega"    //nolint:revive // ginkgo bdd
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,7 +42,7 @@ const (
 
 func getHashedConfigMapNameFromClient[O pdoknlv3.WMSWFS](ctx context.Context, obj O, volumeName string) (string, error) {
 	deployment := &appsv1.Deployment{}
-	err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: getBareDeployment(obj).GetName()}, deployment)
+	err := k8sClient.Get(ctx, types.NamespacedName{Namespace: obj.GetNamespace(), Name: getBareDeployment(obj).GetName()}, deployment)
 	if err != nil {
 		return "", err
 	}
@@ -117,4 +133,282 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	}
 
 	return objects, nil
+}
+
+func testPath(t pdoknlv3.ServiceType, test string) string {
+	return fmt.Sprintf("test_data/%s/%s/", strings.ToLower(string(t)), test)
+}
+
+func testMutate[T any](kind string, result *T, expectedFile string, mutate func(*T) error) {
+	By("Testing mutating the " + kind)
+	err := mutate(result)
+	Expect(err).NotTo(HaveOccurred())
+
+	var expected T
+	data, err := os.ReadFile(expectedFile)
+	Expect(err).NotTo(HaveOccurred())
+	err = yaml.UnmarshalStrict(data, &expected)
+	Expect(err).NotTo(HaveOccurred())
+
+	diff := cmp.Diff(expected, *result)
+	if diff != "" {
+		Fail(diff)
+	}
+
+	By(fmt.Sprintf("Testing mutating the %s twice has the same result", kind))
+	generated := *result
+	err = mutate(result)
+	Expect(err).NotTo(HaveOccurred())
+	diff = cmp.Diff(generated, *result)
+	if diff != "" {
+		Fail(diff)
+	}
+}
+
+//nolint:unparam
+func testMutateConfigMap(m *corev1.ConfigMap, expectedFile string, mutate func(*corev1.ConfigMap) error, ignoreValues bool) {
+	clearConfigMapValues := func(cm *corev1.ConfigMap) {
+		newMap := map[string]string{}
+		for k := range cm.Data {
+			newMap[k] = "IGNORED"
+		}
+		cm.Data = newMap
+	}
+
+	if !ignoreValues {
+		testMutate("ConfigMap", m, expectedFile, mutate)
+	} else {
+		By("Testing mutating the ConfigMap")
+		err := mutate(m)
+		Expect(err).NotTo(HaveOccurred())
+
+		expected := &corev1.ConfigMap{}
+		data, err := os.ReadFile(expectedFile)
+		Expect(err).NotTo(HaveOccurred())
+		err = yaml.UnmarshalStrict(data, expected)
+		Expect(err).NotTo(HaveOccurred())
+
+		c := m.DeepCopy()
+		clearConfigMapValues(c)
+		clearConfigMapValues(expected)
+
+		diff := cmp.Diff(*expected, *c)
+		if diff != "" {
+			Fail(diff)
+		}
+	}
+}
+
+func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resource O, name string, ignoreFiles ...string) {
+	inputPath := testPath(resource.Type(), name) + "input/"
+	outputPath := testPath(resource.Type(), name) + "expected/"
+
+	shouldIncludeFile := func(name string) (string, bool) {
+		if slices.Contains(ignoreFiles, name) {
+			return "", false
+		}
+
+		return outputPath + name, true
+	}
+
+	var fileName string
+	switch resource.Type() {
+	case pdoknlv3.ServiceTypeWFS:
+		fileName = "wfs.yaml"
+	case pdoknlv3.ServiceTypeWMS:
+		fileName = "wms.yaml"
+	default:
+		panic("unknown servicetype")
+	}
+
+	owner := smoothoperatorv1.OwnerInfo{}
+
+	It("Should parse the input files correctly", func() {
+		data, err := readTestFile(inputPath + fileName)
+		Expect(err).NotTo(HaveOccurred())
+		err = yaml.UnmarshalStrict(data, &resource)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resource.GetName()).Should(Equal(name))
+
+		data, err = os.ReadFile(inputPath + "ownerinfo.yaml")
+		Expect(err).NotTo(HaveOccurred())
+		err = yaml.UnmarshalStrict(data, &owner)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(owner.Name).Should(Equal("owner"))
+
+		var validationError error
+		switch any(resource).(type) {
+		case *pdoknlv3.WMS:
+			wms := any(resource).(*pdoknlv3.WMS)
+			_, validationError = wms.ValidateCreate()
+		case *pdoknlv3.WFS:
+			wfs := any(resource).(*pdoknlv3.WFS)
+			_, validationError = wfs.ValidateCreate()
+		}
+		Expect(validationError).NotTo(HaveOccurred())
+	})
+
+	configMapNames := controllertypes.HashedConfigMapNames{}
+
+	It("Should generate a correct Configmap", func() {
+		cm := getBareConfigMap(resource, MapserverName)
+		testMutateConfigMap(cm, outputPath+"configmap-mapserver.yaml", func(cm *corev1.ConfigMap) error {
+			return mutateConfigMap(reconcilerFn(), resource, cm)
+		}, true)
+		configMapNames.ConfigMap = cm.Name
+	})
+
+	It("Should generate a correct BlobDownload Configmap", func() {
+		if path, include := shouldIncludeFile("configmap-init-scripts.yaml"); include {
+			cm := getBareConfigMap(resource, InitScriptsName)
+			testMutateConfigMap(cm, path, func(cm *corev1.ConfigMap) error {
+				return mutateConfigMapBlobDownload(reconcilerFn(), resource, cm)
+			}, true)
+			configMapNames.BlobDownload = cm.Name
+		}
+	})
+
+	It("Should generate a correct MapfileGenerator Configmap", func() {
+		cm := getBareConfigMap(resource, MapfileGeneratorName)
+		testMutateConfigMap(cm, outputPath+"configmap-mapfile-generator.yaml", func(cm *corev1.ConfigMap) error {
+			return mutateConfigMapMapfileGenerator(reconcilerFn(), resource, cm, &owner)
+		}, true)
+		configMapNames.MapfileGenerator = cm.Name
+	})
+
+	It("Should generate a correct CapabilitiesGenerator Configmap", func() {
+		cm := getBareConfigMap(resource, CapabilitiesGeneratorName)
+		testMutateConfigMap(cm, outputPath+"configmap-capabilities-generator.yaml", func(cm *corev1.ConfigMap) error {
+			return mutateConfigMapCapabilitiesGenerator(reconcilerFn(), resource, cm, &owner)
+		}, true)
+		configMapNames.CapabilitiesGenerator = cm.Name
+	})
+
+	if resource.Type() == pdoknlv3.ServiceTypeWMS {
+		wms := any(resource).(*pdoknlv3.WMS)
+		It("Should generate a correct FeatureInfo Configmap", func() {
+			cm := getBareConfigMap(resource, FeatureInfoGeneratorName)
+			testMutateConfigMap(cm, outputPath+"configmap-featureinfo-generator.yaml", func(cm *corev1.ConfigMap) error {
+				return mutateConfigMapFeatureinfoGenerator(getWMSReconciler(), wms, cm)
+			}, true)
+			configMapNames.FeatureInfoGenerator = cm.Name
+		})
+
+		It("Should generate a correct LegendGenerator Configmap", func() {
+			cm := getBareConfigMap(resource, LegendGeneratorName)
+			testMutateConfigMap(cm, outputPath+"configmap-legend-generator.yaml", func(cm *corev1.ConfigMap) error {
+				return mutateConfigMapLegendGenerator(getWMSReconciler(), wms, cm)
+			}, true)
+			configMapNames.LegendGenerator = cm.Name
+		})
+
+		It("Should generate a correct OGC webservice proxy Configmap", func() {
+			cm := getBareConfigMap(resource, OgcWebserviceProxyName)
+			testMutateConfigMap(cm, outputPath+"configmap-ogc-webservice-proxy.yaml", func(cm *corev1.ConfigMap) error {
+				return mutateConfigMapOgcWebserviceProxy(getWMSReconciler(), wms, cm)
+			}, true)
+			configMapNames.OgcWebserviceProxy = cm.Name
+		})
+	}
+
+	It("Should generate a Deployment correctly", func() {
+		testMutate("Deployment", getBareDeployment(resource), outputPath+"deployment.yaml", func(d *appsv1.Deployment) error {
+			return mutateDeployment(reconcilerFn(), resource, d, configMapNames)
+		})
+	})
+
+	It("Should generate a correct Service", func() {
+		testMutate("Service", getBareService(resource), outputPath+"service.yaml", func(s *corev1.Service) error {
+			return mutateService(reconcilerFn(), resource, s)
+		})
+	})
+
+	It("Should generate a correct Headers Middleware", func() {
+		testMutate("Headers Middleware", getBareCorsHeadersMiddleware(resource), outputPath+"middleware-headers.yaml", func(m *traefikiov1alpha1.Middleware) error {
+			return mutateCorsHeadersMiddleware(reconcilerFn(), resource, m)
+		})
+	})
+
+	It("Should generate a correct IngressRoute", func() {
+		testMutate("IngressRoute", getBareIngressRoute(resource), outputPath+"ingressroute.yaml", func(i *traefikiov1alpha1.IngressRoute) error {
+			return mutateIngressRoute(reconcilerFn(), resource, i)
+		})
+	})
+
+	It("Should generate a correct PodDisruptionBudget", func() {
+		testMutate("PodDisruptionBudget", getBarePodDisruptionBudget(resource), outputPath+"poddisruptionbudget.yaml", func(p *policyv1.PodDisruptionBudget) error {
+			return mutatePodDisruptionBudget(reconcilerFn(), resource, p)
+		})
+	})
+
+	It("Should generate a correct HorizontalPodAutoscaler", func() {
+		testMutate("PodDisruptionBudget", getBareHorizontalPodAutoScaler(resource), outputPath+"horizontalpodautoscaler.yaml", func(h *v2.HorizontalPodAutoscaler) error {
+			return mutateHorizontalPodAutoscaler(reconcilerFn(), resource, h)
+		})
+	})
+}
+
+func readTestFile(fileName string) ([]byte, error) {
+	dat, err := os.ReadFile(fileName)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// Temporary check if the input file is a v2, if so, convert to v3
+	dat, err = convertAndWriteIfWMSWFS(dat, fileName)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// Apply defaults
+	un := unstructured.Unstructured{}
+	err = yaml.Unmarshal(dat, &un)
+	if slices.Contains([]string{"WMS", "WFS"}, un.GetKind()) {
+		defaulted, err := smoothoperatorvalidation.ApplySchemaDefaults(un.Object)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		return yaml.Marshal(defaulted)
+	}
+
+	return dat, err
+}
+
+func convertAndWriteIfWMSWFS(data []byte, fileName string) ([]byte, error) {
+	un := unstructured.Unstructured{}
+	err := yaml.Unmarshal(data, &un)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	if un.GetAPIVersion() == "pdok.nl/v2beta1" {
+		switch un.GetKind() {
+		case "WFS":
+			v2Wfs := v2beta1.WFS{}
+			err = yaml.UnmarshalStrict(data, &v2Wfs)
+			if err != nil {
+				return []byte{}, err
+			}
+			v3 := pdoknlv3.WFS{}
+			err = v2Wfs.ToV3(&v3)
+			if err != nil {
+				return []byte{}, err
+			}
+			data, err = yaml.Marshal(v3)
+		case "WMS":
+			v2Wms := v2beta1.WMS{}
+			err = yaml.UnmarshalStrict(data, &v2Wms)
+			if err != nil {
+				return []byte{}, err
+			}
+			v3 := pdoknlv3.WMS{}
+			v2Wms.ToV3(&v3)
+			data, err = yaml.Marshal(v3)
+		}
+
+		_ = os.WriteFile(fileName, data, 0644)
+	}
+
+	return data, err
 }

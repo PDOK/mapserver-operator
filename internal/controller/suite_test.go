@@ -173,6 +173,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	err = smoothoperatorvalidation.LoadSchemasForCRD(cfg, "default", "wms.pdok.nl")
 	Expect(err).NotTo(HaveOccurred())
+
+	pdoknlv3.SetHost("http://localhost:32788")
 })
 
 var _ = AfterSuite(func() {
