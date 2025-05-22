@@ -41,7 +41,7 @@ func getBareDeployment[O pdoknlv3.WMSWFS](obj O) *appsv1.Deployment {
 	}
 }
 
-func test[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deployment) error {
+func test[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
 	reconcilerClient := getReconcilerClient(r)
 	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, deployment, labels); err != nil {
@@ -88,7 +88,7 @@ func test[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deploy
 		getApacheContainer(*images),
 	}
 
-	volumes := []corev1.Volume{}
+	volumes := getVolumes(obj, configMapNames)
 
 	podTemplateSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -111,7 +111,19 @@ func test[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deploy
 		podTemplateSpec.Spec = *patchedSpec
 	}
 
+	if use, _ := mapperutils.UseEphemeralVolume(obj); use {
+		ephStorage := podTemplateSpec.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]
+		threshold := resource.MustParse("200M")
+
+		if ephStorage.Value() < threshold.Value() {
+			podTemplateSpec.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage] = threshold
+		}
+	} else {
+		delete(podTemplateSpec.Spec.Containers[0].Resources.Requests, corev1.ResourceEphemeralStorage)
+	}
+
 	deployment.Spec.Template = podTemplateSpec
+
 	if err = smoothoperatorutils.EnsureSetGVK(reconcilerClient, deployment, deployment); err != nil {
 		return err
 	}
@@ -176,8 +188,27 @@ func getVolumes[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNa
 		volumes = append(volumes, getConfigMapVolume(constants.ConfigMapMapfileGeneratorVolumeName, configMapNames.MapfileGenerator))
 
 		if obj.Type() == pdoknlv3.ServiceTypeWMS {
+			wms, _ := any(obj).(*pdoknlv3.WMS)
+			volumeProjections := []corev1.VolumeProjection{}
+			for _, cm := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
+				volumeProjections = append(volumeProjections, corev1.VolumeProjection{
+					ConfigMap: &corev1.ConfigMapProjection{LocalObjectReference: corev1.LocalObjectReference{Name: cm.Name}},
+				})
+			}
 
+			volumes = append(volumes, corev1.Volume{
+				Name:         constants.ConfigMapStylingFilesVolumeName,
+				VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: volumeProjections}},
+			})
 		}
+	}
+
+	if obj.Type() == pdoknlv3.ServiceTypeWMS {
+		volumes = append(
+			volumes,
+			getConfigMapVolume(constants.ConfigMapFeatureinfoGeneratorVolumeName, configMapNames.FeatureInfoGenerator),
+			getConfigMapVolume(constants.ConfigMapFeatureinfoGeneratorVolumeName, configMapNames.FeatureInfoGenerator),
+		)
 	}
 
 	return volumes
