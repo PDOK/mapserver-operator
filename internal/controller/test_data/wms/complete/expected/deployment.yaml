@@ -170,6 +170,8 @@ spec:
           image: test.test/image:test6
           imagePullPolicy: IfNotPresent
           name: ogc-webservice-proxy
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
           ports:
             - containerPort: 9111
           resources:

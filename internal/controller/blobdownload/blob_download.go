@@ -6,11 +6,14 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
 	"k8s.io/utils/strings/slices"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -30,7 +33,7 @@ func GetScript() string {
 	return GpkgDownloadScript
 }
 
-func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigName, blobsSecretName, srvDir string) (*corev1.Container, error) {
+func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, blobsConfigName, blobsSecretName string) (*corev1.Container, error) {
 	blobkeys := []string{}
 	for _, gpkg := range obj.GeoPackages() {
 		// Deduplicate blobkeys to prevent double downloads
@@ -38,10 +41,9 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 			blobkeys = append(blobkeys, gpkg.BlobKey)
 		}
 	}
-
 	initContainer := corev1.Container{
-		Name:            "blob-download",
-		Image:           image,
+		Name:            constants.BlobDownloadName,
+		Image:           images.MultitoolImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env: []corev1.EnvVar{
 			{
@@ -64,8 +66,8 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 		},
 		Command: []string{"/bin/sh", "-c"},
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
-			{Name: "data", MountPath: "/var/www", ReadOnly: false},
+			utils.GetBaseVolumeMount(),
+			utils.GetDataVolumeMount(),
 		},
 	}
 
@@ -85,11 +87,7 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, image, blobsConfigNa
 	}
 
 	if obj.Options().PrefetchData {
-		mount := corev1.VolumeMount{
-			Name:      mapserver.ConfigMapBlobDownloadVolumeName,
-			MountPath: "/srv/scripts",
-			ReadOnly:  true,
-		}
+		mount := corev1.VolumeMount{Name: constants.InitScriptsName, MountPath: "/srv/scripts", ReadOnly: true}
 		initContainer.VolumeMounts = append(initContainer.VolumeMounts, mount)
 	}
 

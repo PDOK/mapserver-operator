@@ -5,14 +5,15 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/pdok/smooth-operator/model"
+
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
 func TestLayer_setInheritedBoundingBoxes(t *testing.T) {
 	first28992BoundingBox := WMSBoundingBox{
 		CRS: "EPSG:28992",
-		BBox: model.BBox{
+		BBox: smoothoperatormodel.BBox{
 			MinX: "482.06",
 			MaxX: "306602.42",
 			MinY: "284182.97",
@@ -21,7 +22,7 @@ func TestLayer_setInheritedBoundingBoxes(t *testing.T) {
 	}
 	first4326BoundingBox := WMSBoundingBox{
 		CRS: "EPSG:4326",
-		BBox: model.BBox{
+		BBox: smoothoperatormodel.BBox{
 			MinX: "2.35417303",
 			MaxX: "7.5553525",
 			MinY: "50.71447164",
@@ -30,7 +31,7 @@ func TestLayer_setInheritedBoundingBoxes(t *testing.T) {
 	}
 	first4258BoundingBox := WMSBoundingBox{
 		CRS: "EPSG:4258",
-		BBox: model.BBox{
+		BBox: smoothoperatormodel.BBox{
 			MinX: "2.354173",
 			MaxX: "7.5553527",
 			MinY: "50.71447",
@@ -38,7 +39,7 @@ func TestLayer_setInheritedBoundingBoxes(t *testing.T) {
 		}}
 	second28992BoundingBox := WMSBoundingBox{
 		CRS: "EPSG:28992",
-		BBox: model.BBox{
+		BBox: smoothoperatormodel.BBox{
 			MinX: "0.00",
 			MaxX: "310000.00",
 			MinY: "275000.00",

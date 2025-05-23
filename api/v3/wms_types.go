@@ -32,11 +32,11 @@ import (
 	"sort"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 
-	shared_model "github.com/pdok/smooth-operator/model"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -51,7 +51,7 @@ const (
 // WMSSpec defines the desired state of WMS.
 type WMSSpec struct {
 	// Optional lifecycle settings
-	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
+	Lifecycle *smoothoperatormodel.Lifecycle `json:"lifecycle,omitempty"`
 
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
@@ -144,7 +144,7 @@ type HealthCheckWMS struct {
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype *string `json:"mimetype,omitempty"`
 
-	Boundingbox *shared_model.BBox `json:"boundingbox,omitempty"`
+	Boundingbox *smoothoperatormodel.BBox `json:"boundingbox,omitempty"`
 }
 
 // +kubebuilder:validation:XValidation:message="Either blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
@@ -226,8 +226,8 @@ type Layer struct {
 }
 
 type WMSBoundingBox struct {
-	CRS  string            `json:"crs"`
-	BBox shared_model.BBox `json:"bbox"`
+	CRS  string                   `json:"crs"`
+	BBox smoothoperatormodel.BBox `json:"bbox"`
 }
 
 func (wmsBoundingBox *WMSBoundingBox) ToExtent() string {
@@ -294,8 +294,8 @@ type WMS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   WMSSpec                     `json:"spec,omitempty"`
-	Status shared_model.OperatorStatus `json:"status,omitempty"`
+	Spec   WMSSpec                            `json:"spec,omitempty"`
+	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -333,7 +333,7 @@ func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 
 	return WMSBoundingBox{
 		CRS: "EPSG:28992",
-		BBox: shared_model.BBox{
+		BBox: smoothoperatormodel.BBox{
 			MinX: "-25000",
 			MaxX: "280000",
 			MinY: "250000",

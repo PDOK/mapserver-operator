@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	shared_model "github.com/pdok/smooth-operator/model"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -93,7 +95,7 @@ func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 	return &corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
-				Name:      "mapserver",
+				Name:      constants.MapserverName,
 				Resources: targetResources,
 			},
 		},
@@ -207,7 +209,7 @@ func ConvertV3DataToV2(v3 pdoknlv3.Data) Data {
 	return v2
 }
 
-func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *corev1.PodSpec, scalingSpec *pdoknlv3.HorizontalPodAutoscalerPatch) Kubernetes {
+func NewV2KubernetesObject(lifecycle *smoothoperatormodel.Lifecycle, podSpecPatch *corev1.PodSpec, scalingSpec *pdoknlv3.HorizontalPodAutoscalerPatch) Kubernetes {
 	kub := Kubernetes{}
 
 	if lifecycle != nil && lifecycle.TTLInDays != nil {

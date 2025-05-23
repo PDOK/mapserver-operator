@@ -29,13 +29,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ginkgo bdd
 	. "github.com/onsi/gomega"    //nolint:revive // ginkgo bdd
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
@@ -68,16 +70,16 @@ var _ = Describe("Testing WMS Controller", func() {
 		testWMS := pdoknlv3.WMS{}
 		clusterWMS := &pdoknlv3.WMS{}
 
-		objectKeyWMS := types.NamespacedName{}
+		objectKeyWMS := k8stypes.NamespacedName{}
 
 		testOwner := smoothoperatorv1.OwnerInfo{}
 		clusterOwner := &smoothoperatorv1.OwnerInfo{}
 
-		objectKeyOwner := types.NamespacedName{}
+		objectKeyOwner := k8stypes.NamespacedName{}
 
 		var expectedResources []struct {
 			obj client.Object
-			key types.NamespacedName
+			key k8stypes.NamespacedName
 		}
 
 		It("Should create a WMS and OwnerInfo resource on the cluster", func() {
@@ -89,7 +91,7 @@ var _ = Describe("Testing WMS Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(testWMS.Name).Should(Equal("minimal"))
 
-			objectKeyWMS = types.NamespacedName{
+			objectKeyWMS = k8stypes.NamespacedName{
 				Namespace: testWMS.GetNamespace(),
 				Name:      testWMS.GetName(),
 			}
@@ -109,7 +111,7 @@ var _ = Describe("Testing WMS Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(testOwner.Name).Should(Equal("owner"))
 
-			objectKeyOwner = types.NamespacedName{
+			objectKeyOwner = k8stypes.NamespacedName{
 				Namespace: testOwner.GetNamespace(),
 				Name:      testOwner.GetName(),
 			}
@@ -136,7 +138,7 @@ var _ = Describe("Testing WMS Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			for _, expectedResource := range expectedResources {
 				Eventually(func() bool {
-					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: expectedResource.GetNamespace(), Name: expectedResource.GetName()}, expectedResource)
+					err := k8sClient.Get(ctx, k8stypes.NamespacedName{Namespace: expectedResource.GetNamespace(), Name: expectedResource.GetName()}, expectedResource)
 					return Expect(err).NotTo(HaveOccurred())
 				}, "10s", "1s").Should(BeTrue())
 			}
@@ -156,7 +158,7 @@ var _ = Describe("Testing WMS Controller", func() {
 			Expect(originalRevisionHistoryLimit).Should(Not(Equal(expectedRevisionHistoryLimit)))
 
 			By("Altering the Deployment")
-			err := k8sClient.Patch(ctx, deployment, client.RawPatch(types.MergePatchType, []byte(
+			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, []byte(
 				fmt.Sprintf(`{"spec": {"revisionHistoryLimit": %d}}`, expectedRevisionHistoryLimit))))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -229,7 +231,7 @@ func getWMSReconciler() *WMSReconciler {
 	return &WMSReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
-		Images: Images{
+		Images: types.Images{
 			MultitoolImage:             testImageName1,
 			MapfileGeneratorImage:      testImageName2,
 			MapserverImage:             testImageName3,
