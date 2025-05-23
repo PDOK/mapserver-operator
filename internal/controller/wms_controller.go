@@ -77,8 +77,6 @@ type WMSReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
-//
-//nolint:dupl
 func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	lgr := log.FromContext(ctx)
 	lgr.Info("Starting reconcile for WMS resource", "name", req.NamespacedName)
@@ -109,6 +107,8 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		}
 		return result, client.IgnoreNotFound(err)
 	}
+
+	ensureLabel(wms, "pdok.nl/service-type", "wms")
 
 	lgr.Info("creating resources for wms", "wms", wms)
 	operationResults, err := createOrUpdateAllForWMSWFS(ctx, r, wms, ownerInfo)

@@ -1135,7 +1135,6 @@ spec:
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
-                                  format: uuid
                                   minLength: 1
                                   type: string
                               required:
@@ -1349,7 +1348,6 @@ spec:
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
-                                  format: uuid
                                   minLength: 1
                                   type: string
                               required:
@@ -1558,7 +1556,6 @@ spec:
                                     properties:
                                       metadataIdentifier:
                                         description: MetadataIdentifier is the record's UUID
-                                        format: uuid
                                         minLength: 1
                                         type: string
                                     required:
@@ -1767,7 +1764,6 @@ spec:
                                           properties:
                                             metadataIdentifier:
                                               description: MetadataIdentifier is the record's UUID
-                                              format: uuid
                                               minLength: 1
                                               type: string
                                           required:
@@ -1862,6 +1858,8 @@ spec:
                                     - name
                                   type: object
                                   x-kubernetes-validations:
+                                    - message: A layer with data attribute should have styling
+                                      rule: '!has(self.data) || has(self.styles)'
                                     - message: A layer should have keywords when visible
                                       rule: '!self.visible || has(self.keywords)'
                                     - message: A layer should have a title when visible
@@ -1935,6 +1933,8 @@ spec:
                             x-kubernetes-validations:
                               - message: A layer should have sublayers or data, not both
                                 rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
+                              - message: A layer with data attribute should have styling
+                                rule: '!has(self.data) || has(self.styles)'
                               - message: A layer should have keywords when visible
                                 rule: '!self.visible || has(self.keywords)'
                               - message: A layer should have a title when visible
@@ -2007,6 +2007,8 @@ spec:
                       x-kubernetes-validations:
                         - message: A layer should have sublayers or data, not both
                           rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
+                        - message: A layer with data attribute should have styling
+                          rule: '!has(self.data) || has(self.styles)'
                         - message: A layer should have keywords when visible
                           rule: '!self.visible || has(self.keywords)'
                         - message: A layer should have a title when visible

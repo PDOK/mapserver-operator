@@ -137,7 +137,6 @@ type MetadataURL struct {
 // Metadata holds the UUID of a CSW metadata record
 type Metadata struct {
 	// MetadataIdentifier is the record's UUID
-	// +kubebuilder:validation:Format:=uuid
 	// +kubebuilder:validation:MinLength:=1
 	MetadataIdentifier string `json:"metadataIdentifier"`
 }
@@ -247,9 +246,7 @@ func SetHost(url string) {
 }
 
 func GetHost(includeProtocol bool) string {
-	if includeProtocol {
-		return host
-	} else if strings.HasPrefix(host, "http") {
+	if !includeProtocol && strings.HasPrefix(host, "http") {
 		return strings.Split(host, "://")[1]
 	}
 

@@ -1,0 +1,22 @@
+apiVersion: v1
+data:
+  input.yaml: "..."
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: 'false'
+    service-type: wfs
+    service-version: v1_0
+  name: noprefetch-wfs-capabilities-generator-446d5ddh62
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: noprefetch
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

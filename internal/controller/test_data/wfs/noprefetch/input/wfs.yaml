@@ -1,0 +1,59 @@
+apiVersion: pdok.nl/v3
+kind: WFS
+metadata:
+  labels:
+    dataset: dataset
+    dataset-owner: datasetOwner
+    service-type: wfs
+    service-version: v1_0
+  name: noprefetch
+  namespace: default
+spec:
+  options:
+    prefetchData: false
+  podSpecPatch:
+    containers:
+    - name: mapserver
+      resources:
+        limits:
+          ephemeral-storage: 100M
+  service:
+    abstract: service-abstract
+    accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+    bbox:
+      defaultCRS:
+        maxx: "280000"
+        maxy: "860000"
+        minx: "-25000"
+        miny: "250000"
+    defaultCrs: EPSG:28992
+    featureTypes:
+    - abstract: featuretype-abstract
+      data:
+        gpkg:
+          blobKey: ${BLOBS_GEOPACKAGES_BUCKET}/key/file.gpkg
+          columns:
+          - name: featuretype-column
+          geometryType: Point
+          tableName: featuretype
+      datasetMetadataUrl:
+        csw:
+          metadataIdentifier: datadata-data-data-data-datadatadata
+      keywords:
+      - featuretype-keyword
+      name: featuretype-name
+      title: featuretype-title
+    keywords:
+    - service-keyword
+    otherCrs:
+    - EPSG::25831
+    - EPSG::25832
+    - EPSG::3034
+    - EPSG::3035
+    - EPSG::3857
+    - EPSG::4258
+    - EPSG::4326
+    ownerInfoRef: owner
+    prefix: dataset
+    title: service-title
+    url: http://localhost:32788/datasetOwner/dataset/wfs/v1_0

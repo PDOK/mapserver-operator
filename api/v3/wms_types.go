@@ -150,6 +150,7 @@ type ConfigMapRef struct {
 }
 
 // +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
+// +kubebuilder:validation:XValidation:message="A layer with data attribute should have styling", rule="!has(self.data) || has(self.styles)"
 // +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 // +kubebuilder:validation:XValidation:message="A layer should have a title when visible", rule="!self.visible || has(self.title)"
 // +kubebuilder:validation:XValidation:message="A layer should have an abstract when visible", rule="!self.visible || has(self.abstract)"

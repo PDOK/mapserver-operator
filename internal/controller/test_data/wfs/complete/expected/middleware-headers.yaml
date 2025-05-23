@@ -1,0 +1,27 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: true
+    service-type: wfs
+    service-version: v1_0
+    theme: theme
+  name: complete-wfs-mapserver-headers
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  headers:
+    customResponseHeaders:
+      Access-Control-Allow-Headers: Content-Type
+      Access-Control-Allow-Method: GET, POST, OPTIONS
+      Access-Control-Allow-Origin: '*'
+      Cache-Control: public, max-age=3600, no-transform

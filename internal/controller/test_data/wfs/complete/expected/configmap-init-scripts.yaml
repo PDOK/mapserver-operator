@@ -1,0 +1,190 @@
+apiVersion: v1
+data:
+  gpkg_download.sh: |-
+    #!/usr/bin/env bash
+
+    set -euo pipefail
+
+    function download_gpkg() {
+        local gpkg=$1
+        local file=$2
+        local url=$3
+
+        if [ -f "$file" ] && [ ! -f "$file".st ]; then
+            echo msg=\"File already downloaded\" file=\""$file"\"
+        else
+            echo msg=\"Starting download\" gpkg=\""$gpkg"\" file=\""$file"\" url=\""$url"\"
+
+            # use curl to check if resource exists
+            # axel blocks on non-existing resources
+            curl -IfsS "$url" > /dev/null
+
+            echo start "$gpkg"
+            ret=0
+            # Connection timeout causes file corruption https://github.com/axel-download-accelerator/axel/issues/303, therefore we set the timeout to 2 minutes.
+            axel -n 1 -T 120 -o "$file" "$url" \
+                | sed -r 's|\[[[:space:]]*(.*)%\].*\[(.*)/s\]|progress \1 \2|p' \
+                | sed -r 's|\[[[:space:]]*(.*)%\].*|progress \1|p' || ret=$?
+
+            if [ $ret -ne 0 ]
+            then
+                echo -e '\n'
+                # Download failed ($? != 0).
+                if [ $ret -eq 1 ]
+                then
+                    # Axel was not able to resume ($? == 1). Remove file and state file.
+                    if [ -f "$file" ]; then
+                        echo msg=\"Resume failed, removing file\" file=\""$file"\"
+                        rm "$file"
+                    fi
+                    if [ -f "$file.st" ]; then
+                        echo msg=\"Resume failed, removing file\" file=\""$file".st\"
+                        rm "$file".st
+                    fi
+                else
+                    # Download failed with other error ($? > 1). Remove file if state file does not exist.
+                    if [ ! -f "$file.st" ]; then
+                        echo msg=\"Download failed without state file, removing file\" file=\""$file"\"
+                        rm "$file"
+                    fi
+                fi
+
+                # Retry the download
+                echo msg=\"Retry file\" file=\""$file"\"
+                download_gpkg $gpkg $file $url
+            fi
+        fi
+    }
+
+    function download() {
+        if [ -z "$BLOBS_ENDPOINT" ];
+        then
+            echo echo "Empty BLOBS_ENDPOINT variable, start script with 'blobs' configmap";
+            exit 1;
+        fi
+
+        local gpkg=$1
+        local file=/srv/data/gpkg/$2
+        local url=${BLOBS_ENDPOINT}/${gpkg}
+
+        download_gpkg $gpkg $file $url
+
+        # Check Content-length
+        download_size=$(curl -sI "$url" | grep -i Content-Length | awk '{print $2}' | tr -d '\r')
+        file_size=$(wc -c "$file" | awk '{print $1}')
+        if [ "$download_size" != "$file_size" ]
+        then
+            echo msg=\"Content-length mismatch\" file=\""$file"\" file_size=\""$file_size"\" download_size=\""$download_size"\"
+            rm_file_and_exit
+        else
+            echo msg=\"Content-length match\" file=\""$file"\" file_size=\""$file_size"\" download_size=\""$download_size"\"
+            chown 999:999 "$file"
+        fi
+
+        # Check ogrinfo
+        echo "Check gpkg with ogrinfo"
+        if ! ogrinfo -so "$file"
+        then
+            echo "ERROR: ogrinfo check on $file failed"
+            rm_file_and_exit
+        fi
+
+        # Only check md5 hash if a valid md5 value is returned (for large blobs Azure doesn't return a md5sum)
+        echo "Check if md5 hash value exists in blob storage"
+        rclone md5sum "blobs:${gpkg}" --output-file "${file}.md5sum-remote"
+
+        # If file contains valid hash, then check it, else skip
+        hash=$(awk '{ print $1 }' "${file}.md5sum-remote")
+        if [[ $hash =~ ^[a-f0-9]{32}$ ]]
+        then
+            echo "Valid hash value found"
+            echo "Compare MD5 hash of remote and downloaded gpkg"
+            if ! (echo "$hash $file" | md5sum --check); then
+            rm_file_and_exit
+            fi
+        else
+            echo "No hash found for $file in blob storage, skipping checksum."
+        fi
+
+        echo "done"
+    }
+
+    function download_all() {
+        echo msg=\"Starting GeoPackage downloader\"
+
+        local start_time=$(date '+%s')
+
+        # create target location if not exists
+        mkdir -p /srv/data/gpkg
+        chown 999:999 /srv/data/gpkg
+
+        download ${BLOBS_GEOPACKAGES_BUCKET}/key/file-1.gpkg file-1.gpkg;
+        download ${BLOBS_GEOPACKAGES_BUCKET}/key/file-2.gpkg file-2.gpkg;
+
+        echo msg=\"All GeoPackages downloaded\" total_time_seconds=$(expr $(date '+%s') - $start_time)
+    }
+
+    function rm_file_and_exit() {
+        echo "Removing $file, to ensure a fresh new download is started when script is executed again"
+        rm -rf "$file"
+
+        if [ -f "$file.st" ]; then
+            rm "$file".st
+        fi
+
+        echo "Exiting..."
+        exit 1
+    }
+
+    download_all | awk -W interactive '
+    BEGIN {
+        state="idle";
+    }
+
+    {
+        if ($0 != "") {
+        if ($1 == "start") {
+            gpkg=$2;
+            state="downloading";
+        } else if ($1 == "done") {
+            state="idle";
+        } else if (state == "downloading") {
+            if ($1 == "progress") {
+            # reduce output to prevent loki from choking on large log volume
+            if (last_percentage != $2) {
+                if ($3 == "") {
+                print "msg=\"Downloading\" gpkg=" gpkg " percentage=" $2;
+                } else {
+                print "msg=\"Downloading\" gpkg=" gpkg " percentage=" $2 " bytes_per_second=" $3;
+                }
+            }
+            last_percentage=$2;
+            } else {
+            print "msg=\"" $0 "\" gpkg=" gpkg;
+            }
+        } else {
+            print $0;
+        }
+        }
+    }
+    '
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: true
+    service-type: wfs
+    service-version: v1_0
+    theme: theme
+  name: complete-wfs-init-scripts-fft29bbtdd
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

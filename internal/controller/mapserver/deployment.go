@@ -110,8 +110,43 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
 	})
 
-	var stylingFilesVolume *corev1.Volume
+	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
+	// Needed to compare deployments from the ansible operator and this one
+	if obj.Mapfile() == nil {
+		volumes = append(volumes, corev1.Volume{
+			Name:         ConfigMapMapfileGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
+		})
+	}
+
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
+		if obj.Mapfile() == nil {
+			wms, _ := any(obj).(*pdoknlv3.WMS)
+			stylingFilesVolumeProjections := []corev1.VolumeProjection{}
+			if wms.Spec.Service.StylingAssets != nil && wms.Spec.Service.StylingAssets.ConfigMapRefs != nil {
+				for _, cf := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
+					stylingFilesVolumeProjections = append(stylingFilesVolumeProjections, corev1.VolumeProjection{
+						ConfigMap: &corev1.ConfigMapProjection{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: cf.Name,
+							},
+						},
+					})
+				}
+			}
+
+			stylingFilesVolume := corev1.Volume{
+				Name: ConfigMapStylingFilesVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					Projected: &corev1.ProjectedVolumeSource{
+						Sources: stylingFilesVolumeProjections,
+					},
+				},
+			}
+
+			volumes = append(volumes, stylingFilesVolume)
+		}
+
 		lgVolume := corev1.Volume{
 			Name:         ConfigMapLegendGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.LegendGenerator),
@@ -120,42 +155,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			Name:         ConfigMapFeatureinfoGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.FeatureInfoGenerator),
 		}
-
-		wms, _ := any(obj).(*pdoknlv3.WMS)
-		stylingFilesVolumeProjections := []corev1.VolumeProjection{}
-		if wms.Spec.Service.StylingAssets != nil && wms.Spec.Service.StylingAssets.ConfigMapRefs != nil {
-			for _, cf := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
-				stylingFilesVolumeProjections = append(stylingFilesVolumeProjections, corev1.VolumeProjection{
-					ConfigMap: &corev1.ConfigMapProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: cf.Name,
-						},
-					},
-				})
-			}
-		}
-
-		stylingFilesVolume = &corev1.Volume{
-			Name: ConfigMapStylingFilesVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				Projected: &corev1.ProjectedVolumeSource{
-					Sources: stylingFilesVolumeProjections,
-				},
-			},
-		}
 		volumes = append(volumes, figVolume, lgVolume)
-	}
-
-	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
-	// Needed to compare deployments from the ansible operator and this one
-	if obj.Mapfile() == nil {
-		volumes = append(volumes, corev1.Volume{
-			Name:         ConfigMapMapfileGeneratorVolumeName,
-			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
-		})
-		if stylingFilesVolume != nil {
-			volumes = append(volumes, *stylingFilesVolume)
-		}
 	}
 
 	return volumes
