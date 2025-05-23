@@ -175,6 +175,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	pdoknlv3.SetHost("http://localhost:32788")
+	SetStorageClassName("test-storage")
 })
 
 var _ = AfterSuite(func() {

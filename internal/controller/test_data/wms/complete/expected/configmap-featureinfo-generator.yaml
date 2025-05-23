@@ -1,0 +1,72 @@
+apiVersion: v1
+data:
+  input.json: |-
+    {
+        "Projection": "EPSG:28992",
+        "AutomaticCasing": true,
+        "Version": 2,
+        "Layers": [
+            {
+                "Name": "gpkg-layer-name",
+                "GroupName": "group-layer-name",
+                "Properties": [
+                    {
+                        "Name": "fuuid"
+                    },
+                    {
+                        "Name": "column-1",
+                        "Alias": "ALIAS_column-1"
+                    },
+                    {
+                        "Name": "column-2"
+                    }
+                ]
+            },
+            {
+                "Name": "postgis-layer-name",
+                "GroupName": "group-layer-name",
+                "Properties": [
+                    {
+                        "Name": "fuuid"
+                    },
+                    {
+                        "Name": "column-1"
+                    },
+                    {
+                        "Name": "column-2"
+                    }
+                ]
+            },
+            {
+                "Name": "tif-layer-name",
+                "Properties": [
+                    {
+                        "Name": "value_list"
+                    },
+                    {
+                        "Name": "class"
+                    }
+                ]
+            }
+        ]
+    }
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "true"
+    service-type: wms
+    service-version: v1_0
+    theme: '2016'
+  name: complete-wms-featureinfo-generator-f8fbtkkfft
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

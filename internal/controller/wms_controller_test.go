@@ -49,13 +49,17 @@ var _ = Describe("Testing WMS Controller", func() {
 		testMutates(getWMSReconciler, &pdoknlv3.WMS{}, "minimal")
 	})
 
-	// Context("Testing Mutate functions for Complete WMS", func() {
-	// 	testMutates(getWMSReconciler(), &pdoknlv3.WMS{}, "complete")
-	// })
-	//
-	// Context("Testing Mutate functions for WMS with prefetchData false", func() {
-	// 	testMutates(getWMSReconciler(), &pdoknlv3.WMS{}, "noprefetch", "configmap-init-scripts.yaml")
-	// })
+	Context("Testing Mutate functions for Minimal WMS without prefetch", func() {
+		testMutates(getWMSReconciler, &pdoknlv3.WMS{}, "noprefetch", "configmap-init-scripts.yaml")
+	})
+
+	Context("Testing Mutate functions for Minimal WMS with a custom mapfile", func() {
+		testMutates(getWMSReconciler, &pdoknlv3.WMS{}, "custom-mapfile", "configmap-mapfile-generator.yaml")
+	})
+
+	Context("Testing Mutate functions for Complete WMS", func() {
+		testMutates(getWMSReconciler, &pdoknlv3.WMS{}, "complete")
+	})
 
 	Context("When reconciling a resource", func() {
 

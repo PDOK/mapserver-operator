@@ -1,0 +1,118 @@
+apiVersion: v1
+data:
+  input.json: |-
+    {
+        "service_title": "service-title",
+        "service_abstract": "service-abstract",
+        "service_keywords": "service-keyword",
+        "service_accessconstraints": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
+        "service_extent": "-25000 250000 280000 860000",
+        "maxSize": "4000",
+        "service_namespace_prefix": "dataset",
+        "service_namespace_uri": "http://dataset.geonovum.nl",
+        "service_onlineresource": "http://localhost",
+        "service_path": "/datasetOwner/dataset/wms/v1_0",
+        "service_metadata_id": "metameta-meta-meta-meta-metametameta",
+        "dataset_owner": "authority-name",
+        "authority_url": "http://authority-url",
+        "automatic_casing": false,
+        "data_epsg": "EPSG:28992",
+        "epsg_list": [
+            "EPSG:28992",
+            "EPSG:25831",
+            "EPSG:25832",
+            "EPSG:3034",
+            "EPSG:3035",
+            "EPSG:3857",
+            "EPSG:4258",
+            "EPSG:4326",
+            "CRS:84"
+        ],
+        "templates": "/srv/data/config/templates",
+        "outputformat_jpg": "jpg",
+        "outputformat_png8": "png",
+        "symbols": [],
+        "group_layers": [
+            {
+                "name": "group",
+                "title": "group",
+                "abstract": "group",
+                "style_name": "group",
+                "style_title": "group"
+            }
+        ],
+        "layers": [
+            {
+                "name": "layer-name",
+                "gpkg_path": "/srv/data/gpkg/file.gpkg",
+                "tablename": "layer",
+                "geometry_type": "Point",
+                "columns": [
+                    {
+                        "name": "fuuid"
+                    },
+                    {
+                        "name": "layer-column"
+                    }
+                ],
+                "title": "layer-title",
+                "abstract": "layer-abstract",
+                "keywords": "layer-keyword",
+                "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+                "dataset_source_id": "bronbron-bron-bron-bron-bronbronbron",
+                "layer_extent": "-25000 250000 280000 860000",
+                "styles": [
+                    {
+                        "title": "layer-style-title",
+                        "path": "/styling/layer-style.style"
+                    }
+                ]
+            },
+            {
+                "name": "group-child",
+                "group_name": "group",
+                "gpkg_path": "/srv/data/gpkg/file.gpkg",
+                "tablename": "layer",
+                "geometry_type": "Point",
+                "columns": [
+                    {
+                        "name": "fuuid"
+                    },
+                    {
+                        "name": "layer-column"
+                    }
+                ],
+                "title": "group-child",
+                "abstract": "group-child",
+                "keywords": "",
+                "dataset_metadata_id": "ds-md-id",
+                "dataset_source_id": "src-md-id",
+                "layer_extent": "-25000 250000 280000 860000",
+                "styles": [
+                    {
+                        "title": "group-child",
+                        "path": "/styling/layer-style.style"
+                    }
+                ]
+            }
+        ]
+    }
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "false"
+    service-type: wms
+    service-version: v1_0
+  name: custom-mapfile-wms-mapfile-generator-gbcm54mbtm
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: custom-mapfile
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

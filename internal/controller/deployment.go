@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"os"
 	"strconv"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -31,6 +30,12 @@ const (
 	postgisConfigPrefix = "postgres-"
 	postgisSecretPrefix = "postgres-"
 )
+
+var storageClassName string
+
+func SetStorageClassName(name string) {
+	storageClassName = name
+}
 
 func getBareDeployment[O pdoknlv3.WMSWFS](obj O) *appsv1.Deployment {
 	return &appsv1.Deployment{
@@ -253,8 +258,8 @@ func getVolumes[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNa
 				},
 			},
 		}
-		if value, set := os.LookupEnv("STORAGE_CLASS_NAME"); set {
-			baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &value
+		if storageClassName != "" {
+			baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &storageClassName
 		}
 	} else {
 		baseVolume.EmptyDir = &corev1.EmptyDirVolumeSource{}

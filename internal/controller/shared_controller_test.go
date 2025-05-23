@@ -269,11 +269,13 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 	})
 
 	It("Should generate a correct MapfileGenerator Configmap", func() {
-		cm := getBareConfigMap(resource, constants.MapfileGeneratorName)
-		testMutateConfigMap(cm, outputPath+"configmap-mapfile-generator.yaml", func(cm *corev1.ConfigMap) error {
-			return mutateConfigMapMapfileGenerator(reconcilerFn(), resource, cm, &owner)
-		}, true)
-		configMapNames.MapfileGenerator = cm.Name
+		if path, include := shouldIncludeFile("configmap-mapfile-generator.yaml"); include {
+			cm := getBareConfigMap(resource, constants.MapfileGeneratorName)
+			testMutateConfigMap(cm, path, func(cm *corev1.ConfigMap) error {
+				return mutateConfigMapMapfileGenerator(reconcilerFn(), resource, cm, &owner)
+			}, true)
+			configMapNames.MapfileGenerator = cm.Name
+		}
 	})
 
 	It("Should generate a correct CapabilitiesGenerator Configmap", func() {
