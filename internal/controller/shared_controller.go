@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/pdok/smooth-operator/model"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
@@ -25,6 +28,26 @@ const (
 	CapabilitiesGeneratorName = "capabilities-generator"
 	InitScriptsName           = "init-scripts"
 )
+
+func ttlExpired[O pdoknlv3.WMSWFS](obj O) bool {
+	var lifecycle *model.Lifecycle
+	switch any(obj).(type) {
+	case *pdoknlv3.WFS:
+		wfs := any(obj).(*pdoknlv3.WFS)
+		lifecycle = wfs.Spec.Lifecycle
+	case *pdoknlv3.WMS:
+		wms := any(obj).(*pdoknlv3.WMS)
+		lifecycle = wms.Spec.Lifecycle
+	}
+
+	if lifecycle != nil && lifecycle.TTLInDays != nil {
+		expiresAt := obj.GetCreationTimestamp().Add(time.Duration(*lifecycle.TTLInDays) * 24 * time.Hour)
+
+		return expiresAt.Before(time.Now())
+	}
+
+	return false
+}
 
 func ensureLabel[O pdoknlv3.WMSWFS](obj O, key, value string) {
 	labels := obj.GetLabels()

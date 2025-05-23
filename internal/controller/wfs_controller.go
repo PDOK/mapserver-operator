@@ -97,6 +97,13 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, err
 	}
 
+	// Check TTL, delete if expired
+	if ttlExpired(wfs) {
+		err = r.Client.Delete(ctx, wfs)
+
+		return result, err
+	}
+
 	ensureLabel(wfs, "pdok.nl/service-type", "wfs")
 
 	lgr.Info("creating resources for wfs", "wfs", wfs)

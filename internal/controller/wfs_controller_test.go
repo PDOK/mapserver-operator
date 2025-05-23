@@ -29,6 +29,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pdok/smooth-operator/model"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ginkgo bdd
 	. "github.com/onsi/gomega"    //nolint:revive // ginkgo bdd
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -173,6 +176,34 @@ var _ = Describe("Testing WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred()) &&
 					Expect(*deployment.Spec.RevisionHistoryLimit).To(BeEquivalentTo(originalRevisionHistoryLimit))
 			}, "10s", "1s").Should(BeTrue())
+		})
+
+		It("Respects the TTL of the WFS", func() {
+			By("Creating a new resource for the Kind WFS")
+
+			ttlName := testWfs.GetName() + "-ttl"
+			ttlWfs := testWfs.DeepCopy()
+			ttlWfs.Name = ttlName
+			ttlWfs.Spec.Lifecycle = &model.Lifecycle{TTLInDays: smoothoperatorutils.Pointer(int32(0))}
+			objectKeyTTLWFS := client.ObjectKeyFromObject(ttlWfs)
+
+			err := k8sClient.Get(ctx, objectKeyTTLWFS, ttlWfs)
+			Expect(client.IgnoreNotFound(err)).To(Not(HaveOccurred()))
+			if err != nil && apierrors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, ttlWfs)).To(Succeed())
+			}
+
+			// Reconcile
+			_, err = getWFSReconciler().Reconcile(ctx, reconcile.Request{NamespacedName: objectKeyTTLWFS})
+			Expect(err).To(Not(HaveOccurred()))
+
+			// Check the WFS cannot be found anymore
+			Eventually(func() bool {
+				err = k8sClient.Get(ctx, objectKeyTTLWFS, ttlWfs)
+				return apierrors.IsNotFound(err)
+			}, "10s", "1s").Should(BeTrue())
+
+			// Not checking owned resources because the test env does not do garbage collection
 		})
 
 		It("Should cleanup the cluster", func() {

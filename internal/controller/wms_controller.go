@@ -108,6 +108,13 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, client.IgnoreNotFound(err)
 	}
 
+	// Check TTL, delete if expired
+	if ttlExpired(wms) {
+		err = r.Client.Delete(ctx, wms)
+
+		return result, err
+	}
+
 	ensureLabel(wms, "pdok.nl/service-type", "wms")
 
 	lgr.Info("creating resources for wms", "wms", wms)
