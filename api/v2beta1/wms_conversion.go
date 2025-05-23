@@ -30,11 +30,11 @@ import (
 	"strconv"
 	"strings"
 
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
-
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	sharedModel "github.com/pdok/smooth-operator/model"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 const ServiceMetatdataIdentifierAnnotation = "pdok.nl/wms-service-metadata-uuid"
@@ -60,7 +60,7 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
-		dst.Spec.Lifecycle = &sharedModel.Lifecycle{
+		dst.Spec.Lifecycle = &smoothoperatormodel.Lifecycle{
 			TTLInDays: smoothoperatorutils.Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
 		}
 	}
@@ -151,7 +151,7 @@ func convertHealthCheckToV3(v2 *HealthCheck) *pdoknlv3.HealthCheckWMS {
 			}
 		case v2.Boundingbox != nil:
 			return &pdoknlv3.HealthCheckWMS{
-				Boundingbox: smoothoperatorutils.Pointer(sharedModel.ExtentToBBox(strings.ReplaceAll(*v2.Boundingbox, ",", " "))),
+				Boundingbox: smoothoperatorutils.Pointer(smoothoperatormodel.ExtentToBBox(strings.ReplaceAll(*v2.Boundingbox, ",", " "))),
 			}
 		}
 	}
@@ -247,8 +247,8 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 			if service.Extent == nil {
 				service.Extent = l.Extent
 			} else {
-				bbox := smoothoperatorutils.Pointer(sharedModel.ExtentToBBox(*service.Extent)).DeepCopy()
-				bbox.Combine(sharedModel.ExtentToBBox(*l.Extent))
+				bbox := smoothoperatorutils.Pointer(smoothoperatormodel.ExtentToBBox(*service.Extent)).DeepCopy()
+				bbox.Combine(smoothoperatormodel.ExtentToBBox(*l.Extent))
 				service.Extent = smoothoperatorutils.Pointer(bbox.ToExtent())
 			}
 		}
@@ -344,7 +344,7 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			bboxStringList := strings.Split(*v2Service.Extent, " ")
 			bbox := pdoknlv3.WMSBoundingBox{
 				CRS: v2Service.DataEPSG,
-				BBox: sharedModel.BBox{
+				BBox: smoothoperatormodel.BBox{
 					MinX: bboxStringList[0],
 					MaxX: bboxStringList[2],
 					MinY: bboxStringList[1],
@@ -421,12 +421,12 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 	if v2Layer.Extent != nil {
 		layer.BoundingBoxes = append(layer.BoundingBoxes, pdoknlv3.WMSBoundingBox{
 			CRS:  v2Service.DataEPSG,
-			BBox: sharedModel.ExtentToBBox(*v2Layer.Extent),
+			BBox: smoothoperatormodel.ExtentToBBox(*v2Layer.Extent),
 		})
 	} else if v2Service.Extent != nil {
 		layer.BoundingBoxes = append(layer.BoundingBoxes, pdoknlv3.WMSBoundingBox{
 			CRS:  v2Service.DataEPSG,
-			BBox: sharedModel.ExtentToBBox(*v2Service.Extent),
+			BBox: smoothoperatormodel.ExtentToBBox(*v2Service.Extent),
 		})
 	}
 

@@ -3,11 +3,11 @@ package v3
 import (
 	"strings"
 
+	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 )
 
 func (wfs *WFS) ValidateCreate() ([]string, error) {

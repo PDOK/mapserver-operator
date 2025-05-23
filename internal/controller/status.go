@@ -5,7 +5,7 @@ import (
 	"time"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/smooth-operator/model"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +63,7 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 		return
 	}
 
-	var status *model.OperatorStatus
+	var status *smoothoperatormodel.OperatorStatus
 	switch any(obj).(type) {
 	case *pdoknlv3.WFS:
 		status = &any(obj).(*pdoknlv3.WFS).Status

@@ -27,13 +27,11 @@ package v2beta1
 import (
 	"log"
 
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 
-	sharedModel "github.com/pdok/smooth-operator/model"
-
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-
-	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
 
 // ConvertTo converts this WFS (v2beta1) to the Hub version (v3).
@@ -51,7 +49,7 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 
 	// Set LifeCycle if defined
 	if src.Spec.Kubernetes.Lifecycle != nil && src.Spec.Kubernetes.Lifecycle.TTLInDays != nil {
-		dst.Spec.Lifecycle = &sharedModel.Lifecycle{
+		dst.Spec.Lifecycle = &smoothoperatormodel.Lifecycle{
 			TTLInDays: smoothoperatorutils.Pointer(int32(*src.Spec.Kubernetes.Lifecycle.TTLInDays)),
 		}
 	}
@@ -104,11 +102,11 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 
 	if src.Spec.Service.Extent != nil && *src.Spec.Service.Extent != "" {
 		service.Bbox = &pdoknlv3.Bbox{
-			DefaultCRS: sharedModel.ExtentToBBox(*src.Spec.Service.Extent),
+			DefaultCRS: smoothoperatormodel.ExtentToBBox(*src.Spec.Service.Extent),
 		}
 	} else {
 		service.Bbox = &pdoknlv3.Bbox{
-			DefaultCRS: sharedModel.BBox{
+			DefaultCRS: smoothoperatormodel.BBox{
 				MinX: "-25000",
 				MaxX: "280000",
 				MinY: "250000",
@@ -155,7 +153,7 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 
 	if src.Extent != nil {
 		featureTypeV3.Bbox = &pdoknlv3.FeatureBbox{
-			DefaultCRS: sharedModel.ExtentToBBox(*src.Extent),
+			DefaultCRS: smoothoperatormodel.ExtentToBBox(*src.Extent),
 		}
 	}
 

@@ -3,12 +3,13 @@ package controller
 import (
 	"context"
 	"fmt"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"slices"
 	"strings"
 	"testing"
+
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 

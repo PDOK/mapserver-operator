@@ -230,7 +230,7 @@ func getApacheContainer(images types.Images) corev1.Container {
 		Image:           images.ApacheExporterImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports:           []corev1.ContainerPort{{ContainerPort: constants.ApachePortNr, Protocol: corev1.ProtocolTCP}},
-		Args:            []string{"-scrape_uri=http://localhost/server-status?auto"},
+		Args:            []string{"--scrape_uri=http://localhost/server-status?auto"},
 		Resources: corev1.ResourceRequirements{
 			Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("48M")},
 			Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("0.02")},

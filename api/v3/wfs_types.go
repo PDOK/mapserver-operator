@@ -29,7 +29,8 @@ import (
 	"slices"
 	"strings"
 
-	shared_model "github.com/pdok/smooth-operator/model"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,8 +52,8 @@ type WFS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   WFSSpec                     `json:"spec,omitempty"`
-	Status shared_model.OperatorStatus `json:"status,omitempty"`
+	Spec   WFSSpec                            `json:"spec,omitempty"`
+	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -71,7 +72,7 @@ func init() {
 // WFSSpec vertegenwoordigt de hoofdstruct voor de YAML-configuratie
 type WFSSpec struct {
 	// Optional lifecycle settings
-	Lifecycle *shared_model.Lifecycle `json:"lifecycle,omitempty"`
+	Lifecycle *smoothoperatormodel.Lifecycle `json:"lifecycle,omitempty"`
 
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
@@ -174,7 +175,7 @@ type Bbox struct {
 	// EXTENT/wfs_extent in mapfile
 	//nolint:tagliatelle
 	// +kubebuilder:validation:Type=object
-	DefaultCRS shared_model.BBox `json:"defaultCRS"`
+	DefaultCRS smoothoperatormodel.BBox `json:"defaultCRS"`
 }
 
 // FeatureType defines a WFS feature
@@ -214,11 +215,11 @@ type FeatureBbox struct {
 	// DefaultCRS defines the feature’s bounding box in the service’s own CRS
 	//nolint:tagliatelle
 	// +kubebuilder:validation:Type=object
-	DefaultCRS shared_model.BBox `json:"defaultCRS"`
+	DefaultCRS smoothoperatormodel.BBox `json:"defaultCRS"`
 
 	// WGS84, if provided, gives the same bounding box reprojected into EPSG:4326.
 	// +kubebuilder:validation:Type=object
-	WGS84 *shared_model.BBox `json:"wgs84,omitempty"`
+	WGS84 *smoothoperatormodel.BBox `json:"wgs84,omitempty"`
 }
 
 func (wfs *WFS) HasPostgisData() bool {
