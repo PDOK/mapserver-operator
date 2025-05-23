@@ -50,11 +50,7 @@ type WMSWFS interface {
 
 	GeoPackages() []*Gpkg
 
-	ReadinessQueryString() (string, error)
-
-	// TODO implement healthcheck in CR
-	// StartUpQueryString() string
-	// LivenessQueryString() string
+	ReadinessQueryString() (string, string, error)
 }
 
 // Mapfile references a ConfigMap key where an external mapfile is stored.

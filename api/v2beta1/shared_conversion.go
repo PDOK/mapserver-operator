@@ -2,7 +2,6 @@ package v2beta1
 
 import (
 	"fmt"
-
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	shared_model "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -216,7 +215,6 @@ func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *core
 		}
 	}
 
-	// TODO - healthcheck
 	if podSpecPatch != nil {
 		kub.Resources = &podSpecPatch.Containers[0].Resources
 	}

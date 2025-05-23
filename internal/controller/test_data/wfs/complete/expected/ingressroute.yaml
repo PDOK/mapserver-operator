@@ -22,7 +22,7 @@ metadata:
     uptime.pdok.nl/id: fbe1241d4fed04fb85d2135f182427861156f692
     uptime.pdok.nl/name: COMPLETE INSPIRE WFS
     uptime.pdok.nl/tags: public-stats,wfs,inspire
-    uptime.pdok.nl/url: http://localhost:32788/datasetOwner/dataset/theme/wfs/v1_0?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=featuretype-1-name&STARTINDEX=0&COUNT=1
+    uptime.pdok.nl/url: http://localhost:32788/datasetOwner/dataset/theme/wfs/v1_0?test=123
 spec:
   routes:
     - kind: Rule

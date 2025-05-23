@@ -69,12 +69,24 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
 	}
 
-	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
 	if src.Spec.Kubernetes.Resources != nil {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
 	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
+	if hc := src.Spec.Kubernetes.HealthCheck; hc != nil {
+		switch {
+		case hc.Querystring != nil:
+			dst.Spec.HealthCheck = &pdoknlv3.HealthCheckWMS{
+				Querystring: hc.Querystring,
+				Mimetype:    hc.Mimetype,
+			}
+		case hc.Boundingbox != nil:
+			dst.Spec.HealthCheck = &pdoknlv3.HealthCheckWMS{
+				Boundingbox: smoothoperatorutils.Pointer(sharedModel.ExtentToBBox(strings.ReplaceAll(*hc.Boundingbox, ",", " "))),
+			}
+		}
+	}
 
 	service := pdoknlv3.WMSService{
 		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
@@ -154,6 +166,19 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.General = LabelsToV2General(src.ObjectMeta.Labels)
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
+	if src.Spec.HealthCheck != nil {
+		switch {
+		case src.Spec.HealthCheck.Querystring != nil:
+			dst.Spec.Kubernetes.HealthCheck = &HealthCheck{
+				Querystring: src.Spec.HealthCheck.Querystring,
+				Mimetype:    src.Spec.HealthCheck.Mimetype,
+			}
+		case src.Spec.HealthCheck.Boundingbox != nil:
+			dst.Spec.Kubernetes.HealthCheck = &HealthCheck{
+				Boundingbox: smoothoperatorutils.Pointer(strings.ReplaceAll(src.Spec.HealthCheck.Boundingbox.ToExtent(), " ", ",")),
+			}
+		}
+	}
 
 	dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
 

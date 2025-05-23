@@ -359,24 +359,27 @@ func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *corev1.Probe {
 }
 
 func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
-	queryString, err := wfs.ReadinessQueryString()
+	queryString, mime, err := wfs.ReadinessQueryString()
 	if err != nil {
 		return nil, err
 	}
-	return getProbe(queryString, mimeTextXML), nil
+	return getProbe(queryString, mime), nil
 }
 
 func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
-	queryString, err := wms.ReadinessQueryString()
+	queryString, mime, err := wms.ReadinessQueryString()
 	if err != nil {
 		return nil, err
 	}
-	mimeType := "image/png"
 
-	return getProbe(queryString, mimeType), nil
+	return getProbe(queryString, mime), nil
 }
 
 func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
+	if hc := wfs.Spec.HealthCheck; hc != nil {
+		return getProbe(hc.Querystring, hc.Mimetype), nil
+	}
+
 	var typeNames []string
 	for _, ft := range wfs.Spec.Service.FeatureTypes {
 		typeNames = append(typeNames, ft.Name)
@@ -390,6 +393,10 @@ func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
 }
 
 func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
+	if hc := wms.Spec.HealthCheck; hc != nil && hc.Querystring != nil {
+		return getProbe(*hc.Querystring, *hc.Mimetype), nil
+	}
+
 	var layerNames []string
 	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if layer.Name != nil {
