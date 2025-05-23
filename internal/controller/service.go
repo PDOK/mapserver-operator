@@ -3,7 +3,6 @@ package controller
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,8 +36,8 @@ func mutateService[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, service *corev1.
 	ports := []corev1.ServicePort{
 		{
 			Name:       constants.MapserverName,
-			Port:       mapserver.MapserverPortNr,
-			TargetPort: intstr.FromInt32(mapserver.MapserverPortNr),
+			Port:       constants.MapserverPortNr,
+			TargetPort: intstr.FromInt32(constants.MapserverPortNr),
 			Protocol:   corev1.ProtocolTCP,
 		},
 	}

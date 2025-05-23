@@ -24,5 +24,6 @@ const (
 	ConfigMapCustomMapfileVolumeName         = "mapfile"
 
 	HTMLTemplatesPath       = "/srv/data/config/templates"
+	MapserverPortNr   int32 = 80
 	ApachePortNr      int32 = 9117
 )

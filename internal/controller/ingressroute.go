@@ -6,8 +6,6 @@ import (
 
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
-
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -67,7 +65,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 			Kind: "Service",
 			Port: intstr.IntOrString{
 				Type:   intstr.Int,
-				IntVal: mapserver.MapserverPortNr,
+				IntVal: constants.MapserverPortNr,
 			},
 		},
 	}
