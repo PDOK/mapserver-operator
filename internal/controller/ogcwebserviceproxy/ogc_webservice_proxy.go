@@ -12,7 +12,7 @@ import (
 
 func GetOgcWebserviceProxyContainer(wms *pdoknlv3.WMS, image string) (*corev1.Container, error) {
 	container := corev1.Container{
-		Name:            "ogc-webservice-proxy",
+		Name:            constants.OgcWebserviceProxyName,
 		Image:           image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports:           []corev1.ContainerPort{{ContainerPort: 9111}},

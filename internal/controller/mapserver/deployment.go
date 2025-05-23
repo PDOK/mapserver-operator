@@ -184,8 +184,43 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 		VolumeSource: newVolumeSource(configMapNames.CapabilitiesGenerator),
 	})
 
-	var stylingFilesVolume *corev1.Volume
+	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
+	// Needed to compare deployments from the ansible operator and this one
+	if obj.Mapfile() == nil {
+		volumes = append(volumes, corev1.Volume{
+			Name:         constants.ConfigMapMapfileGeneratorVolumeName,
+			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
+		})
+	}
+
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
+		if obj.Mapfile() == nil {
+			wms, _ := any(obj).(*pdoknlv3.WMS)
+			stylingFilesVolumeProjections := []corev1.VolumeProjection{}
+			if wms.Spec.Service.StylingAssets != nil && wms.Spec.Service.StylingAssets.ConfigMapRefs != nil {
+				for _, cf := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
+					stylingFilesVolumeProjections = append(stylingFilesVolumeProjections, corev1.VolumeProjection{
+						ConfigMap: &corev1.ConfigMapProjection{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: cf.Name,
+							},
+						},
+					})
+				}
+			}
+
+			stylingFilesVolume := corev1.Volume{
+				Name: constants.ConfigMapStylingFilesVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					Projected: &corev1.ProjectedVolumeSource{
+						Sources: stylingFilesVolumeProjections,
+					},
+				},
+			}
+
+			volumes = append(volumes, stylingFilesVolume)
+		}
+
 		lgVolume := corev1.Volume{
 			Name:         constants.ConfigMapLegendGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.LegendGenerator),
@@ -194,42 +229,7 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			Name:         constants.ConfigMapFeatureinfoGeneratorVolumeName,
 			VolumeSource: newVolumeSource(configMapNames.FeatureInfoGenerator),
 		}
-
-		wms, _ := any(obj).(*pdoknlv3.WMS)
-		stylingFilesVolumeProjections := []corev1.VolumeProjection{}
-		if wms.Spec.Service.StylingAssets != nil && wms.Spec.Service.StylingAssets.ConfigMapRefs != nil {
-			for _, cf := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
-				stylingFilesVolumeProjections = append(stylingFilesVolumeProjections, corev1.VolumeProjection{
-					ConfigMap: &corev1.ConfigMapProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: cf.Name,
-						},
-					},
-				})
-			}
-		}
-
-		stylingFilesVolume = &corev1.Volume{
-			Name: constants.ConfigMapStylingFilesVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				Projected: &corev1.ProjectedVolumeSource{
-					Sources: stylingFilesVolumeProjections,
-				},
-			},
-		}
 		volumes = append(volumes, figVolume, lgVolume)
-	}
-
-	// Add mapfilegenerator config and styling-files (if applicable) here to get the same order as the ansible operator
-	// Needed to compare deployments from the ansible operator and this one
-	if obj.Mapfile() == nil {
-		volumes = append(volumes, corev1.Volume{
-			Name:         constants.ConfigMapMapfileGeneratorVolumeName,
-			VolumeSource: newVolumeSource(configMapNames.MapfileGenerator),
-		})
-		if stylingFilesVolume != nil {
-			volumes = append(volumes, *stylingFilesVolume)
-		}
 	}
 
 	return volumes
@@ -237,14 +237,8 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 
 func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O) []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      constants.BaseVolumeName,
-			MountPath: "/srv/data",
-		},
-		{
-			Name:      "data",
-			MountPath: "/var/www",
-		},
+		utils.GetBaseVolumeMount(),
+		utils.GetDataVolumeMount(),
 	}
 
 	staticFiles, _ := static.GetStaticFiles()
@@ -258,10 +252,7 @@ func GetVolumeMountsForDeployment[O pdoknlv3.WMSWFS](obj O) []corev1.VolumeMount
 
 	// Custom mapfile
 	if mapfile := obj.Mapfile(); mapfile != nil {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      constants.ConfigMapCustomMapfileVolumeName,
-			MountPath: "/srv/data/config/mapfile",
-		})
+		volumeMounts = append(volumeMounts, utils.GetMapfileVolumeMount())
 	}
 
 	return volumeMounts
@@ -433,24 +424,27 @@ func getLivenessProbe[O pdoknlv3.WMSWFS](obj O) *corev1.Probe {
 }
 
 func getReadinessProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
-	queryString, err := wfs.ReadinessQueryString()
+	queryString, mime, err := wfs.ReadinessQueryString()
 	if err != nil {
 		return nil, err
 	}
-	return getProbe(queryString, mimeTextXML), nil
+	return getProbe(queryString, mime), nil
 }
 
 func getReadinessProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
-	queryString, err := wms.ReadinessQueryString()
+	queryString, mime, err := wms.ReadinessQueryString()
 	if err != nil {
 		return nil, err
 	}
-	mimeType := "image/png"
 
-	return getProbe(queryString, mimeType), nil
+	return getProbe(queryString, mime), nil
 }
 
 func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
+	if hc := wfs.Spec.HealthCheck; hc != nil {
+		return getProbe(hc.Querystring, hc.Mimetype), nil
+	}
+
 	var typeNames []string
 	for _, ft := range wfs.Spec.Service.FeatureTypes {
 		typeNames = append(typeNames, ft.Name)
@@ -464,6 +458,10 @@ func getStartupProbeForWFS(wfs *pdoknlv3.WFS) (*corev1.Probe, error) {
 }
 
 func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
+	if hc := wms.Spec.HealthCheck; hc != nil && hc.Querystring != nil {
+		return getProbe(*hc.Querystring, *hc.Mimetype), nil
+	}
+
 	var layerNames []string
 	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if layer.Name != nil {

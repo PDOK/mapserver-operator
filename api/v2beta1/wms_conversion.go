@@ -69,12 +69,12 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
 	}
 
-	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
 	if src.Spec.Kubernetes.Resources != nil {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
 	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.HealthCheck = convertHealthCheckToV3(src.Spec.Kubernetes.HealthCheck)
 
 	service := pdoknlv3.WMSService{
 		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
@@ -141,6 +141,24 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	dst.Spec.Service = service
 }
 
+func convertHealthCheckToV3(v2 *HealthCheck) *pdoknlv3.HealthCheckWMS {
+	if v2 != nil {
+		switch {
+		case v2.Querystring != nil:
+			return &pdoknlv3.HealthCheckWMS{
+				Querystring: v2.Querystring,
+				Mimetype:    v2.Mimetype,
+			}
+		case v2.Boundingbox != nil:
+			return &pdoknlv3.HealthCheckWMS{
+				Boundingbox: smoothoperatorutils.Pointer(sharedModel.ExtentToBBox(strings.ReplaceAll(*v2.Boundingbox, ",", " "))),
+			}
+		}
+	}
+
+	return nil
+}
+
 // ConvertFrom converts the Hub version (v3) to this WMS (v2beta1).
 //
 //nolint:revive
@@ -154,6 +172,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.General = LabelsToV2General(src.ObjectMeta.Labels)
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
+	dst.Spec.Kubernetes.HealthCheck = convertHealthCheckToV2(src.Spec.HealthCheck)
 
 	dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
 
@@ -236,6 +255,24 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Service = service
+
+	return nil
+}
+
+func convertHealthCheckToV2(v3 *pdoknlv3.HealthCheckWMS) *HealthCheck {
+	if v3 != nil {
+		switch {
+		case v3.Querystring != nil:
+			return &HealthCheck{
+				Querystring: v3.Querystring,
+				Mimetype:    v3.Mimetype,
+			}
+		case v3.Boundingbox != nil:
+			return &HealthCheck{
+				Boundingbox: smoothoperatorutils.Pointer(strings.ReplaceAll(v3.Boundingbox.ToExtent(), " ", ",")),
+			}
+		}
+	}
 
 	return nil
 }

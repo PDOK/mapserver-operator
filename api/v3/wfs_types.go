@@ -82,6 +82,9 @@ type WFSSpec struct {
 	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
 	Options *Options `json:"options,omitempty"`
 
+	// Custom healthcheck options
+	HealthCheck *HealthCheckWFS `json:"healthCheck,omitempty"`
+
 	// service configuration
 	Service WFSService `json:"service"`
 }
@@ -157,6 +160,14 @@ func (s WFSService) KeywordsIncludingInspireKeyword() []string {
 	}
 
 	return keywords
+}
+
+// HealthCheck is the struct with all fields to configure custom healthchecks
+type HealthCheckWFS struct {
+	// +kubebuilder:validation:MinLength:=1
+	Querystring string `json:"querystring"`
+	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
+	Mimetype string `json:"mimetype"`
 }
 
 type Bbox struct {
@@ -278,9 +289,14 @@ func (wfs *WFS) GeoPackages() []*Gpkg {
 	return gpkgs
 }
 
-func (wfs *WFS) ReadinessQueryString() (string, error) {
-	if len(wfs.Spec.Service.FeatureTypes) == 0 {
-		return "nil", errors.New("cannot get readiness probe for WFS, featuretypes could not be found")
+func (wfs *WFS) ReadinessQueryString() (string, string, error) {
+	if hc := wfs.Spec.HealthCheck; hc != nil {
+		return hc.Querystring, hc.Mimetype, nil
 	}
-	return "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + wfs.Spec.Service.FeatureTypes[0].Name + "&STARTINDEX=0&COUNT=1", nil
+
+	if len(wfs.Spec.Service.FeatureTypes) == 0 {
+		return "", "", errors.New("cannot get readiness probe for WFS, featuretypes could not be found")
+	}
+
+	return "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + wfs.Spec.Service.FeatureTypes[0].Name + "&STARTINDEX=0&COUNT=1", "text/xml", nil
 }

@@ -60,12 +60,18 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		dst.Spec.HorizontalPodAutoscalerPatch = ConvertAutoscaling(*src.Spec.Kubernetes.Autoscaling)
 	}
 
-	// TODO converse src.Spec.Kubernetes.HealthCheck when we know what the implementation in v3 will be
 	if src.Spec.Kubernetes.Resources != nil {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
 	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
+
+	if src.Spec.Kubernetes.HealthCheck != nil {
+		dst.Spec.HealthCheck = &pdoknlv3.HealthCheckWFS{
+			Querystring: *src.Spec.Kubernetes.HealthCheck.Querystring,
+			Mimetype:    *src.Spec.Kubernetes.HealthCheck.Mimetype,
+		}
+	}
 
 	service := pdoknlv3.WFSService{
 		Prefix:            src.Spec.General.Dataset,
@@ -173,6 +179,13 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
 	dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
+
+	if src.Spec.HealthCheck != nil {
+		dst.Spec.Kubernetes.HealthCheck = &HealthCheck{
+			Querystring: &src.Spec.HealthCheck.Querystring,
+			Mimetype:    &src.Spec.HealthCheck.Mimetype,
+		}
+	}
 
 	service := WFSService{
 		Title:             src.Spec.Service.Title,

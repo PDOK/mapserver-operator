@@ -66,6 +66,9 @@ type WMSSpec struct {
 	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
 	Options *Options `json:"options,omitempty"`
 
+	// Custom healthcheck options
+	HealthCheck *HealthCheckWMS `json:"healthCheck,omitempty"`
+
 	// Service specification
 	Service WMSService `json:"service"`
 }
@@ -132,6 +135,18 @@ func (wmsService WMSService) KeywordsIncludingInspireKeyword() []string {
 	return keywords
 }
 
+// HealthCheck is the struct with all fields to configure custom healthchecks
+// +kubebuilder:validation:XValidation:rule="!has(self.querystring) || has(self.mimetype)",message="mimetype is required when a querystring is used"
+// +kubebuilder:validation:XValidation:rule="(has(self.boundingbox) || has(self.querystring)) && !(has(self.querystring) && has(self.boundingbox))", message="healthcheck should have querystring + mimetype or boundingbox, not both"
+type HealthCheckWMS struct {
+	// +kubebuilder:validation:MinLength:=1
+	Querystring *string `json:"querystring,omitempty"`
+	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
+	Mimetype *string `json:"mimetype,omitempty"`
+
+	Boundingbox *shared_model.BBox `json:"boundingbox,omitempty"`
+}
+
 // +kubebuilder:validation:XValidation:message="Either blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
 type StylingAssets struct {
 	// +kubebuilder:validations:MinItems:=1
@@ -150,6 +165,7 @@ type ConfigMapRef struct {
 }
 
 // +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
+// +kubebuilder:validation:XValidation:message="A layer with data attribute should have styling", rule="!has(self.data) || has(self.styles)"
 // +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 // +kubebuilder:validation:XValidation:message="A layer should have a title when visible", rule="!self.visible || has(self.title)"
 // +kubebuilder:validation:XValidation:message="A layer should have an abstract when visible", rule="!self.visible || has(self.abstract)"
@@ -626,12 +642,18 @@ func (wms *WMS) GeoPackages() []*Gpkg {
 }
 
 func (wms *WMS) HealthCheckBBox() string {
-	// TODO make dynamic
+	if hc := wms.Spec.HealthCheck; hc != nil && hc.Boundingbox != nil {
+		return strings.ReplaceAll(hc.Boundingbox.ToExtent(), " ", ",")
+	}
+
 	return "190061.4619730016857,462435.5987861062749,202917.7508707302331,473761.6884966178914"
 }
 
-func (wms *WMS) ReadinessQueryString() (string, error) {
-	// TODO implement healthcheck from CR
+func (wms *WMS) ReadinessQueryString() (string, string, error) {
+	if hc := wms.Spec.HealthCheck; hc != nil && hc.Querystring != nil {
+		return *hc.Querystring, *hc.Mimetype, nil
+	}
+
 	firstDataLayerName := ""
 	for _, layer := range wms.Spec.Service.GetAllLayers() {
 		if layer.IsDataLayer() {
@@ -640,8 +662,8 @@ func (wms *WMS) ReadinessQueryString() (string, error) {
 		}
 	}
 	if firstDataLayerName == "" {
-		return "", errors.New("cannot get readiness probe for WMS, the first datalayer could not be found")
+		return "", "", errors.New("cannot get readiness probe for WMS, the first datalayer could not be found")
 	}
 
-	return fmt.Sprintf("SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=%s&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=%s&STYLES=&FORMAT=image/png", wms.HealthCheckBBox(), firstDataLayerName), nil
+	return fmt.Sprintf("SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=%s&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=%s&STYLES=&FORMAT=image/png", wms.HealthCheckBBox(), firstDataLayerName), "image/png", nil
 }

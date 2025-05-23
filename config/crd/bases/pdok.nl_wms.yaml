@@ -494,6 +494,46 @@ spec:
             spec:
               description: WMSSpec defines the desired state of WMS.
               properties:
+                healthCheck:
+                  description: Custom healthcheck options
+                  properties:
+                    boundingbox:
+                      description: BBox defines a bounding box with coordinates
+                      properties:
+                        maxx:
+                          description: Rechtsonder X coördinaat
+                          pattern: ^-?[0-9]+([.][0-9]*)?$
+                          type: string
+                        maxy:
+                          description: Rechtsonder Y coördinaat
+                          pattern: ^-?[0-9]+([.][0-9]*)?$
+                          type: string
+                        minx:
+                          description: Linksboven X coördinaat
+                          pattern: ^-?[0-9]+([.][0-9]*)?$
+                          type: string
+                        miny:
+                          description: Linksboven Y coördinaat
+                          pattern: ^-?[0-9]+([.][0-9]*)?$
+                          type: string
+                      required:
+                        - maxx
+                        - maxy
+                        - minx
+                        - miny
+                      type: object
+                    mimetype:
+                      pattern: (image/png|text/xml|text/html)
+                      type: string
+                    querystring:
+                      minLength: 1
+                      type: string
+                  type: object
+                  x-kubernetes-validations:
+                    - message: mimetype is required when a querystring is used
+                      rule: '!has(self.querystring) || has(self.mimetype)'
+                    - message: healthcheck should have querystring + mimetype or boundingbox, not both
+                      rule: (has(self.boundingbox) || has(self.querystring)) && !(has(self.querystring) && has(self.boundingbox))
                 horizontalPodAutoscalerPatch:
                   description: Optional specification for the HorizontalAutoscaler
                   properties:
@@ -1135,7 +1175,6 @@ spec:
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
-                                  format: uuid
                                   minLength: 1
                                   type: string
                               required:
@@ -1349,7 +1388,6 @@ spec:
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
-                                  format: uuid
                                   minLength: 1
                                   type: string
                               required:
@@ -1558,7 +1596,6 @@ spec:
                                     properties:
                                       metadataIdentifier:
                                         description: MetadataIdentifier is the record's UUID
-                                        format: uuid
                                         minLength: 1
                                         type: string
                                     required:
@@ -1767,7 +1804,6 @@ spec:
                                           properties:
                                             metadataIdentifier:
                                               description: MetadataIdentifier is the record's UUID
-                                              format: uuid
                                               minLength: 1
                                               type: string
                                           required:
@@ -1862,6 +1898,8 @@ spec:
                                     - name
                                   type: object
                                   x-kubernetes-validations:
+                                    - message: A layer with data attribute should have styling
+                                      rule: '!has(self.data) || has(self.styles)'
                                     - message: A layer should have keywords when visible
                                       rule: '!self.visible || has(self.keywords)'
                                     - message: A layer should have a title when visible
@@ -1935,6 +1973,8 @@ spec:
                             x-kubernetes-validations:
                               - message: A layer should have sublayers or data, not both
                                 rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
+                              - message: A layer with data attribute should have styling
+                                rule: '!has(self.data) || has(self.styles)'
                               - message: A layer should have keywords when visible
                                 rule: '!self.visible || has(self.keywords)'
                               - message: A layer should have a title when visible
@@ -2007,6 +2047,8 @@ spec:
                       x-kubernetes-validations:
                         - message: A layer should have sublayers or data, not both
                           rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
+                        - message: A layer with data attribute should have styling
+                          rule: '!has(self.data) || has(self.styles)'
                         - message: A layer should have keywords when visible
                           rule: '!self.visible || has(self.keywords)'
                         - message: A layer should have a title when visible

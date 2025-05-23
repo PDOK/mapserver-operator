@@ -49,7 +49,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 			tags = append(tags, "inspire")
 		}
 
-		queryString, err := obj.ReadinessQueryString()
+		queryString, _, err := obj.ReadinessQueryString()
 		if err != nil {
 			return err
 		}

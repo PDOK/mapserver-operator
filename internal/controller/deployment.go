@@ -2,6 +2,7 @@ package controller
 
 import (
 	"os"
+	"strconv"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/blobdownload"
@@ -64,7 +65,7 @@ func test[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deploy
 	annotations["kubectl.kubernetes.io/default-container"] = constants.MapserverName
 	annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
 	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/port"] = string(constants.ApachePortNr)
+	annotations["prometheus.io/port"] = strconv.Itoa(int(constants.ApachePortNr))
 	annotations["priority.version-checker.io/mapserver"] = "4"
 	annotations["priority.version-checker.io/ogc-webservice-proxy"] = "4"
 
@@ -270,7 +271,7 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 	annotations["kubectl.kubernetes.io/default-container"] = constants.MapserverName
 	annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
 	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/port"] = "9117"
+	annotations["prometheus.io/port"] = strconv.Itoa(int(constants.ApachePortNr))
 	annotations["priority.version-checker.io/mapserver"] = "4"
 	annotations["priority.version-checker.io/ogc-webservice-proxy"] = "4"
 
@@ -410,7 +411,7 @@ func getContainersForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]
 		TerminationMessagePath:   "/dev/termination-log",
 		Ports: []corev1.ContainerPort{
 			{
-				ContainerPort: 9117,
+				ContainerPort: constants.ApachePortNr,
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},

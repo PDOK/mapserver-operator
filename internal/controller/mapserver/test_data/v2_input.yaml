@@ -16,9 +16,6 @@ spec:
     dataset: nwbwegen
     serviceVersion: v1_0
   kubernetes:
-    healthCheck:
-      mimetype: text/xml
-      querystring: SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities
     resources:
       limits:
         ephemeralStorage: 505Mi

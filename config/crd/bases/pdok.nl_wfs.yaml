@@ -457,6 +457,19 @@ spec:
           spec:
             description: WFSSpec vertegenwoordigt de hoofdstruct voor de YAML-configuratie
             properties:
+              healthCheck:
+                description: Custom healthcheck options
+                properties:
+                  mimetype:
+                    pattern: (image/png|text/xml|text/html)
+                    type: string
+                  querystring:
+                    minLength: 1
+                    type: string
+                required:
+                - mimetype
+                - querystring
+                type: object
               horizontalPodAutoscalerPatch:
                 description: |-
                   HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
@@ -1362,7 +1375,6 @@ spec:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's
                                     UUID
-                                  format: uuid
                                   minLength: 1
                                   type: string
                               required:
@@ -1435,7 +1447,6 @@ spec:
                             properties:
                               metadataIdentifier:
                                 description: MetadataIdentifier is the record's UUID
-                                format: uuid
                                 minLength: 1
                                 type: string
                             required:
