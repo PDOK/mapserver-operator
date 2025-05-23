@@ -20,8 +20,9 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"os"
+
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 
 	"github.com/go-logr/zapr"
 	"github.com/pdok/smooth-operator/pkg/integrations/logging"

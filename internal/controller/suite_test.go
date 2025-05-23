@@ -29,11 +29,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 
 	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
