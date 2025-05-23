@@ -1,0 +1,252 @@
+apiVersion: pdok.nl/v3
+kind: WMS
+metadata:
+  creationTimestamp: "2022-09-01T12:00:00Z"
+  labels:
+    dataset: dataset
+    dataset-owner: datasetOwner
+    service-type: wms
+    service-version: v1_0
+    theme: 2016
+  name: complete
+  namespace: default
+spec:
+  healthCheck:
+    boundingbox:
+      maxx: "33"
+      maxy: "44"
+      minx: "11"
+      miny: "22"
+  horizontalPodAutoscalerPatch:
+    maxReplicas: 50
+    metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 20
+          type: Utilization
+      type: Resource
+    minReplicas: 1
+  lifecycle:
+    ttlInDays: 730000
+  options:
+    rewriteGroupToDataLayers: true
+  podSpecPatch:
+    containers:
+    - name: mapserver
+      resources:
+        limits:
+          cpu: "4"
+          ephemeral-storage: 11G
+          memory: 100M
+        requests:
+          cpu: "2"
+          ephemeral-storage: 11G
+          memory: 50M
+  service:
+    abstract: some "service" abstract
+    accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+    dataEPSG: EPSG:28992
+    defResolution: 10
+    inspire:
+      language: dut
+      serviceMetadataUrl:
+        csw:
+          metadataIdentifier: metameta-meta-meta-meta-metametameta
+      spatialDatasetIdentifier: bronbron-bron-bron-bron-bronbronbron
+    keywords:
+    - service-keyword-1
+    - service-keyword-2
+    layer:
+      abstract: Top "Layer" Abstract
+      authority:
+        name: authority-name
+        spatialDatasetIdentifier: bronbron-bron-bron-bron-bronbronbron
+        url: http://authority-url
+      boundingBoxes:
+      - bbox:
+          maxx: "3"
+          maxy: "4"
+          minx: "1"
+          miny: "2"
+        crs: EPSG:28992
+      datasetMetadataUrl:
+        csw:
+          metadataIdentifier: datadata-data-data-data-datadatadata
+      keywords:
+      - top-layer-keyword-1
+      - top-layer-keyword-2
+      layers:
+      - abstract: group layer abstract "1"
+        authority:
+          name: authority-name
+          spatialDatasetIdentifier: bronbron-bron-bron-bron-bronbronbron
+          url: http://authority-url
+        boundingBoxes:
+        - bbox:
+            maxx: "3"
+            maxy: "4"
+            minx: "1"
+            miny: "2"
+          crs: EPSG:28992
+        datasetMetadataUrl:
+          csw:
+            metadataIdentifier: datadata-data-data-data-datadatadata
+        keywords:
+        - group-layer-keyword-1
+        - group-layer-keyword-2
+        layers:
+        - abstract: gpkg-layer-abstract "2"
+          authority:
+            name: authority-name
+            spatialDatasetIdentifier: bronbron-bron-bron-bron-bronbronbron
+            url: http://authority-url
+          boundingBoxes:
+          - bbox:
+              maxx: "7"
+              maxy: "8"
+              minx: "5"
+              miny: "6"
+            crs: EPSG:28992
+          data:
+            gpkg:
+              blobKey: ${BLOBS_GEOPACKAGES_BUCKET}/key/file.gpkg
+              columns:
+              - alias: ALIAS_column-1
+                name: column-1
+              - name: column-2
+              geometryType: Point
+              tableName: gpkg-layer
+          datasetMetadataUrl:
+            csw:
+              metadataIdentifier: datadata-data-data-data-datadatadata
+          keywords:
+          - gpkg-layer-keyword-1
+          - gpkg-layer-keyword-2
+          maxscaledenominator: "20"
+          minscaledenominator: "30"
+          name: gpkg-layer-name
+          styles:
+          - abstract: gpkg-layer-style-1-abstract
+            name: gpkg-layer-style-1-name
+            title: gpkg-layer-style-1-title
+            visualization: gpkg-layer-style-1.style
+          - name: gpkg-layer-style-2-name
+            title: gpkg-layer-style-2-title
+            visualization: gpkg-layer-style-2.style
+          - abstract: gpkg-layer-style-3-abstract
+            name: top-layer-style-1-name
+            title: gpkg-layer-style-3-title
+            visualization: gpkg-layer-style-3.style
+          - abstract: gpkg-layer-style-4-abstract
+            name: group-layer-style-2-name
+            title: gpkg-layer-style-4-title
+            visualization: gpkg-layer-style-4.style
+          title: gpkg-layer-title "2"
+          visible: true
+        - abstract: postgis-layer-abstract
+          authority:
+            name: authority-name
+            spatialDatasetIdentifier: bronbron-bron-bron-bron-bronbronbron
+            url: http://authority-url
+          boundingBoxes:
+          - bbox:
+              maxx: "5"
+              maxy: "7"
+              minx: "1"
+              miny: "3"
+            crs: EPSG:28992
+          data:
+            postgis:
+              columns:
+              - name: column-1
+              - name: column-2
+              geometryType: Point
+              tableName: postgis-layer
+          datasetMetadataUrl:
+            csw:
+              metadataIdentifier: datadata-data-data-data-datadatadata
+          keywords:
+          - postgis-layer-keyword-1
+          - postgis-layer-keyword-2
+          maxscaledenominator: "20"
+          minscaledenominator: "30"
+          name: postgis-layer-name
+          styles:
+          - abstract: postgis-layer-style-1-abstract
+            name: postgis-layer-style-1-name
+            title: postgis-layer-style-1-title
+            visualization: postgis-layer-style-1.style
+          - name: postgis-layer-style-2-name
+            title: postgis-layer-style-2-title
+            visualization: postgis-layer-style-2.style
+          title: postgis-layer-title
+          visible: true
+        maxscaledenominator: "50"
+        name: group-layer-name
+        styles:
+        - abstract: group-layer-style-1-abstract
+          name: group-layer-style-1-name
+          title: group-layer-style-1-title
+        - name: group-layer-style-2-name
+          title: group-layer-style-2-title
+        - abstract: group-layer-style-3-abstract
+          name: top-layer-style-1-name
+          title: group-layer-style-3-name
+        title: group layer title "1"
+        visible: true
+      - boundingBoxes:
+        - bbox:
+            maxx: "6"
+            maxy: "8"
+            minx: "2"
+            miny: "4"
+          crs: EPSG:28992
+        data:
+          tif:
+            blobKey: ${BLOBS_TIF_BUCKET}/key/file.tif
+            getFeatureInfoIncludesClass: true
+            offsite: '#FF00FF'
+            resample: AVERAGE
+        labelNoClip: true
+        maxscaledenominator: "20"
+        minscaledenominator: "30"
+        name: tif-layer-name
+        styles:
+        - name: tif-layer-style-1-name
+          visualization: tif-layer-style-1.style
+        - name: tif-layer-style-2-name
+          visualization: tif-layer-style-2.style
+        visible: false
+      maxscaledenominator: "50"
+      name: top-layer-name
+      styles:
+      - abstract: top-layer-style-1-abstract
+        name: top-layer-style-1-name
+        title: top-layer-style-1-title
+      - name: top-layer-style-2-name
+        title: top-layer-style-2-title
+      title: Top "Layer" Title
+      visible: true
+    ownerInfoRef: pdok
+    resolution: 20
+    stylingAssets:
+      blobKeys:
+      - ${BLOBS_RESOURCES_BUCKET}/key/tif-symbol.png
+      - ${BLOBS_RESOURCES_BUCKET}/key/gpkg-symbol.png
+      - ${BLOBS_RESOURCES_BUCKET}/key/symbol.svg
+      - ${BLOBS_RESOURCES_BUCKET}/key/font-1.ttf
+      - ${BLOBS_RESOURCES_BUCKET}/key/font-2.ttf
+      configMapRefs:
+      - keys:
+        - gpgk-layer-style-1.style
+        - gpgk-layer-style-2.style
+        - gpkg-layer-symbol.symbol
+        name: gpkg-styling
+      - keys:
+        - tif-layer-style-1.style
+        - tif-layer-style-2.style
+        - tif-layer-symbol.symbol
+        name: tif-styling
+    title: some service title
+    url: http://localhost:32788/datasetOwner/dataset/2016/wms/v1_0

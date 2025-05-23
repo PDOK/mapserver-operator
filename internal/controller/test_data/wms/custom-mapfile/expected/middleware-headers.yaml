@@ -1,0 +1,26 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "false"
+    service-type: wms
+    service-version: v1_0
+  name: custom-mapfile-wms-mapserver-headers
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: custom-mapfile
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  headers:
+    customResponseHeaders:
+      Access-Control-Allow-Headers: Content-Type
+      Access-Control-Allow-Method: GET, POST, OPTIONS
+      Access-Control-Allow-Origin: '*'
+      Cache-Control: public, max-age=3600, no-transform

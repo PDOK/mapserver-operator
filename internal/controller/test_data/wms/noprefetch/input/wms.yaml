@@ -1,0 +1,104 @@
+apiVersion: pdok.nl/v3
+kind: WMS
+metadata:
+  annotations:
+    pdok.nl/wms-service-metadata-uuid: metameta-meta-meta-meta-metametameta
+  labels:
+    dataset: dataset
+    dataset-owner: datasetOwner
+    service-type: wms
+    service-version: v1_0
+  name: noprefetch
+  namespace: default
+spec:
+  options:
+    prefetchData: false
+  podSpecPatch:
+    containers:
+    - name: mapserver
+      resources:
+        limits:
+          ephemeral-storage: 100m
+  service:
+    abstract: service-abstract
+    accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+    dataEPSG: EPSG:28992
+    keywords:
+    - service-keyword
+    layer:
+      abstract: service-abstract
+      keywords:
+      - service-keyword
+      layers:
+      - abstract: layer-abstract
+        authority:
+          name: authority-name
+          spatialDatasetIdentifier: bronbron-bron-bron-bron-bronbronbron
+          url: http://authority-url
+        data:
+          gpkg:
+            blobKey: ${BLOBS_GEOPACKAGES_BUCKET}/key/file.gpkg
+            columns:
+            - name: layer-column
+            geometryType: Point
+            tableName: layer
+        datasetMetadataUrl:
+          csw:
+            metadataIdentifier: datadata-data-data-data-datadatadata
+        keywords:
+        - layer-keyword
+        name: layer-name
+        styles:
+        - name: layer-style-name
+          title: layer-style-title
+          visualization: layer-style.style
+        title: layer-title
+        visible: true
+      - abstract: group
+        authority:
+          name: authority-name
+          spatialDatasetIdentifier: src-md-id
+          url: http://authority-url
+        datasetMetadataUrl:
+          csw:
+            metadataIdentifier: ds-md-id
+        layers:
+        - abstract: group-child
+          authority:
+            name: authority-name
+            spatialDatasetIdentifier: src-md-id
+            url: http://authority-url
+          data:
+            gpkg:
+              blobKey: ${BLOBS_GEOPACKAGES_BUCKET}/key/file.gpkg
+              columns:
+              - name: layer-column
+              geometryType: Point
+              tableName: layer
+          datasetMetadataUrl:
+            csw:
+              metadataIdentifier: ds-md-id
+          keywords:
+            - layer-keyword
+          name: group-child
+          styles:
+          - name: group-child
+            title: group-child
+            visualization: layer-style.style
+          title: group-child
+          visible: true
+        keywords:
+          - layer-keyword
+        name: group
+        title: group
+        visible: true
+      title: service-title
+      visible: true
+    ownerInfoRef: owner
+    stylingAssets:
+      configMapRefs:
+      - keys:
+        - layer-style.style
+        name: styling
+    title: service-title
+    url: http://localhost:32788/datasetOwner/dataset/wms/v1_0

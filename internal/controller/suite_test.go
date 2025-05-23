@@ -29,6 +29,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -175,6 +176,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	pdoknlv3.SetHost("http://localhost:32788")
+	mapserver.SetStorageClassName("test-storage")
 })
 
 var _ = AfterSuite(func() {

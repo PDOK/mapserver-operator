@@ -1,0 +1,29 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "false"
+    service-type: wms
+    service-version: v1_0
+  name: noprefetch-wms-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: noprefetch
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: mapserver
+      dataset: dataset
+      dataset-owner: datasetOwner
+      inspire: "false"
+      service-type: wms
+      service-version: v1_0
