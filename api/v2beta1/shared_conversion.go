@@ -2,6 +2,7 @@ package v2beta1
 
 import (
 	"fmt"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	shared_model "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
