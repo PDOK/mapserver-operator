@@ -97,8 +97,8 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=featuretype-1-name&STARTINDEX=0&COUNT=1''
-                  2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/xml'''
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?test=123''
+                  2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/html'''
             successThreshold: 1
             failureThreshold: 3
             initialDelaySeconds: 20
@@ -116,8 +116,8 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=featuretype-1-name,featuretype-2-name,featuretype-3-name&STARTINDEX=0&COUNT=1''
-                  2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/xml'''
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?test=123''
+                  2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/html'''
             successThreshold: 1
             failureThreshold: 3
             initialDelaySeconds: 20

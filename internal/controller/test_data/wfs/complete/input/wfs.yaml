@@ -10,7 +10,9 @@ metadata:
   name: complete
   namespace: default
 spec:
-  # TODO Add custom healthcheck to this testfile
+  healthCheck:
+    querystring: test=123
+    mimetype: text/html
   horizontalPodAutoscalerPatch:
     maxReplicas: 50
     metrics:

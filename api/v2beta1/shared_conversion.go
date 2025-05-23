@@ -216,7 +216,6 @@ func NewV2KubernetesObject(lifecycle *shared_model.Lifecycle, podSpecPatch *core
 		}
 	}
 
-	// TODO - healthcheck
 	if podSpecPatch != nil {
 		kub.Resources = &podSpecPatch.Containers[0].Resources
 	}
