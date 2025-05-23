@@ -30,6 +30,8 @@ import (
 	"os"
 
 	"github.com/pdok/mapserver-operator/internal/controller/types"
+	"github.com/pdok/smooth-operator/model"
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ginkgo bdd
 	. "github.com/onsi/gomega"    //nolint:revive // ginkgo bdd
@@ -179,6 +181,34 @@ var _ = Describe("Testing WMS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred()) &&
 					Expect(*deployment.Spec.RevisionHistoryLimit).To(BeEquivalentTo(originalRevisionHistoryLimit))
 			}, "10s", "1s").Should(BeTrue())
+		})
+
+		It("Respects the TTL of the WMS", func() {
+			By("Creating a new resource for the Kind WMS")
+
+			ttlName := testWMS.GetName() + "-ttl"
+			ttlWms := testWMS.DeepCopy()
+			ttlWms.Name = ttlName
+			ttlWms.Spec.Lifecycle = &model.Lifecycle{TTLInDays: smoothoperatorutils.Pointer(int32(0))}
+			objectKeyTTLWMS := client.ObjectKeyFromObject(ttlWms)
+
+			err := k8sClient.Get(ctx, objectKeyTTLWMS, ttlWms)
+			Expect(client.IgnoreNotFound(err)).To(Not(HaveOccurred()))
+			if err != nil && apierrors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, ttlWms)).To(Succeed())
+			}
+
+			// Reconcile
+			_, err = getWMSReconciler().Reconcile(ctx, reconcile.Request{NamespacedName: objectKeyTTLWMS})
+			Expect(err).To(Not(HaveOccurred()))
+
+			// Check the WMS cannot be found anymore
+			Eventually(func() bool {
+				err = k8sClient.Get(ctx, objectKeyTTLWMS, ttlWms)
+				return apierrors.IsNotFound(err)
+			}, "10s", "1s").Should(BeTrue())
+
+			// Not checking owned resources because the test env does not do garbage collection
 		})
 
 		It("Should cleanup the cluster", func() {
