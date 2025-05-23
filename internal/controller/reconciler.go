@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/pdok/mapserver-operator/internal/controller/types"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -10,16 +11,6 @@ const (
 	reconciledConditionReasonSuccess = "Success"
 	reconciledConditionReasonError   = "Error"
 )
-
-type Images struct {
-	MapserverImage             string
-	MultitoolImage             string
-	MapfileGeneratorImage      string
-	CapabilitiesGeneratorImage string
-	FeatureinfoGeneratorImage  string
-	OgcWebserviceProxyImage    string
-	ApacheExporterImage        string
-}
 
 type Reconciler interface {
 	*WFSReconciler | *WMSReconciler
@@ -48,7 +39,7 @@ func getReconcilerScheme[R Reconciler](r R) *runtime.Scheme {
 	return nil
 }
 
-func getReconcilerImages[R Reconciler](r R) *Images {
+func getReconcilerImages[R Reconciler](r R) *types.Images {
 	switch any(r).(type) {
 	case *WFSReconciler:
 		return &any(r).(*WFSReconciler).Images

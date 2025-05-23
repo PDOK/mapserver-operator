@@ -6,10 +6,16 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"testing"
+
+	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pdok/mapserver-operator/api/v2beta1"
-	controllertypes "github.com/pdok/mapserver-operator/internal/controller/types"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
@@ -21,28 +27,26 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ginkgo bdd
 	. "github.com/onsi/gomega"    //nolint:revive // ginkgo bdd
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	ownerInfoResourceName = "pdok"
-	namespace             = "default"
-	testImageName1        = "test.test/image:test1"
-	testImageName2        = "test.test/image:test2"
-	testImageName3        = "test.test/image:test3"
-	testImageName4        = "test.test/image:test4"
-	testImageName5        = "test.test/image:test5"
-	testImageName6        = "test.test/image:test6"
-	testImageName7        = "test.test/image:test7"
+	namespace      = "default"
+	testImageName1 = "test.test/image:test1"
+	testImageName2 = "test.test/image:test2"
+	testImageName3 = "test.test/image:test3"
+	testImageName4 = "test.test/image:test4"
+	testImageName5 = "test.test/image:test5"
+	testImageName6 = "test.test/image:test6"
+	testImageName7 = "test.test/image:test7"
 )
 
 func getHashedConfigMapNameFromClient[O pdoknlv3.WMSWFS](ctx context.Context, obj O, volumeName string) (string, error) {
 	deployment := &appsv1.Deployment{}
-	err := k8sClient.Get(ctx, types.NamespacedName{Namespace: obj.GetNamespace(), Name: getBareDeployment(obj).GetName()}, deployment)
+	err := k8sClient.Get(ctx, k8stypes.NamespacedName{Namespace: obj.GetNamespace(), Name: getBareDeployment(obj).GetName()}, deployment)
 	if err != nil {
 		return "", err
 	}
@@ -67,8 +71,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	}
 
 	// Add all ConfigMaps with hashed names
-	cm := getBareConfigMap(obj, MapserverName)
-	hashedName, err := getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapVolumeName)
+	cm := getBareConfigMap(obj, constants.MapserverName)
+	hashedName, err := getHashedConfigMapNameFromClient(ctx, obj, constants.MapserverName)
 	if err != nil {
 		return objects, err
 	}
@@ -76,8 +80,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	objects = append(objects, cm)
 
 	if includeMapfileGeneratorConfigMap {
-		cm = getBareConfigMap(obj, MapfileGeneratorName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapMapfileGeneratorVolumeName)
+		cm = getBareConfigMap(obj, constants.MapfileGeneratorName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapMapfileGeneratorVolumeName)
 		if err != nil {
 			return objects, err
 		}
@@ -85,8 +89,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 		objects = append(objects, cm)
 	}
 
-	cm = getBareConfigMap(obj, CapabilitiesGeneratorName)
-	hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapCapabilitiesGeneratorVolumeName)
+	cm = getBareConfigMap(obj, constants.CapabilitiesGeneratorName)
+	hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapCapabilitiesGeneratorVolumeName)
 	if err != nil {
 		return objects, err
 	}
@@ -94,8 +98,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 	objects = append(objects, cm)
 
 	if includeBlobDownload {
-		cm = getBareConfigMap(obj, InitScriptsName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapBlobDownloadVolumeName)
+		cm = getBareConfigMap(obj, constants.InitScriptsName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.InitScriptsName)
 		if err != nil {
 			return objects, err
 		}
@@ -105,16 +109,16 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
 		wms, _ := any(obj).(*pdoknlv3.WMS)
-		cm = getBareConfigMap(wms, LegendGeneratorName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapLegendGeneratorVolumeName)
+		cm = getBareConfigMap(wms, constants.LegendGeneratorName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapLegendGeneratorVolumeName)
 		if err != nil {
 			return objects, err
 		}
 		cm.Name = hashedName
 		objects = append(objects, cm)
 
-		cm = getBareConfigMap(wms, FeatureInfoGeneratorName)
-		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapFeatureinfoGeneratorVolumeName)
+		cm = getBareConfigMap(wms, constants.FeatureinfoGeneratorName)
+		hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapFeatureinfoGeneratorVolumeName)
 		if err != nil {
 			return objects, err
 		}
@@ -122,8 +126,8 @@ func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBl
 		objects = append(objects, cm)
 
 		if obj.Options().UseWebserviceProxy() {
-			cm = getBareConfigMap(wms, OgcWebserviceProxyName)
-			hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, mapserver.ConfigMapOgcWebserviceProxyVolumeName)
+			cm = getBareConfigMap(wms, constants.OgcWebserviceProxyName)
+			hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapOgcWebserviceProxyVolumeName)
 			if err != nil {
 				return objects, err
 			}
@@ -248,29 +252,29 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 		Expect(validationError).NotTo(HaveOccurred())
 	})
 
-	configMapNames := controllertypes.HashedConfigMapNames{}
+	configMapNames := types.HashedConfigMapNames{}
 
 	It("Should generate a correct Configmap", func() {
-		cm := getBareConfigMap(resource, MapserverName)
+		cm := getBareConfigMap(resource, constants.MapserverName)
 		testMutateConfigMap(cm, outputPath+"configmap-mapserver.yaml", func(cm *corev1.ConfigMap) error {
 			return mutateConfigMap(reconcilerFn(), resource, cm)
 		}, true)
-		configMapNames.ConfigMap = cm.Name
+		configMapNames.Mapserver = cm.Name
 	})
 
 	It("Should generate a correct BlobDownload Configmap", func() {
 		if path, include := shouldIncludeFile("configmap-init-scripts.yaml"); include {
-			cm := getBareConfigMap(resource, InitScriptsName)
+			cm := getBareConfigMap(resource, constants.InitScriptsName)
 			testMutateConfigMap(cm, path, func(cm *corev1.ConfigMap) error {
 				return mutateConfigMapBlobDownload(reconcilerFn(), resource, cm)
 			}, true)
-			configMapNames.BlobDownload = cm.Name
+			configMapNames.InitScripts = cm.Name
 		}
 	})
 
 	It("Should generate a correct MapfileGenerator Configmap", func() {
 		if path, include := shouldIncludeFile("configmap-mapfile-generator.yaml"); include {
-			cm := getBareConfigMap(resource, MapfileGeneratorName)
+			cm := getBareConfigMap(resource, constants.MapfileGeneratorName)
 			testMutateConfigMap(cm, path, func(cm *corev1.ConfigMap) error {
 				return mutateConfigMapMapfileGenerator(reconcilerFn(), resource, cm, &owner)
 			}, true)
@@ -279,7 +283,7 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 	})
 
 	It("Should generate a correct CapabilitiesGenerator Configmap", func() {
-		cm := getBareConfigMap(resource, CapabilitiesGeneratorName)
+		cm := getBareConfigMap(resource, constants.CapabilitiesGeneratorName)
 		testMutateConfigMap(cm, outputPath+"configmap-capabilities-generator.yaml", func(cm *corev1.ConfigMap) error {
 			return mutateConfigMapCapabilitiesGenerator(reconcilerFn(), resource, cm, &owner)
 		}, true)
@@ -289,7 +293,7 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 	if resource.Type() == pdoknlv3.ServiceTypeWMS {
 		wms := any(resource).(*pdoknlv3.WMS)
 		It("Should generate a correct FeatureInfo Configmap", func() {
-			cm := getBareConfigMap(resource, FeatureInfoGeneratorName)
+			cm := getBareConfigMap(resource, constants.FeatureinfoGeneratorName)
 			testMutateConfigMap(cm, outputPath+"configmap-featureinfo-generator.yaml", func(cm *corev1.ConfigMap) error {
 				return mutateConfigMapFeatureinfoGenerator(getWMSReconciler(), wms, cm)
 			}, true)
@@ -297,7 +301,7 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 		})
 
 		It("Should generate a correct LegendGenerator Configmap", func() {
-			cm := getBareConfigMap(resource, LegendGeneratorName)
+			cm := getBareConfigMap(resource, constants.LegendGeneratorName)
 			testMutateConfigMap(cm, outputPath+"configmap-legend-generator.yaml", func(cm *corev1.ConfigMap) error {
 				return mutateConfigMapLegendGenerator(getWMSReconciler(), wms, cm)
 			}, true)
@@ -305,7 +309,7 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 		})
 
 		It("Should generate a correct OGC webservice proxy Configmap", func() {
-			cm := getBareConfigMap(resource, OgcWebserviceProxyName)
+			cm := getBareConfigMap(resource, constants.OgcWebserviceProxyName)
 			testMutateConfigMap(cm, outputPath+"configmap-ogc-webservice-proxy.yaml", func(cm *corev1.ConfigMap) error {
 				return mutateConfigMapOgcWebserviceProxy(getWMSReconciler(), wms, cm)
 			}, true)
@@ -413,4 +417,35 @@ func convertAndWriteIfWMSWFS(data []byte, fileName string) ([]byte, error) {
 	}
 
 	return data, err
+}
+
+func TestGetVolumesForDeployment(t *testing.T) {
+	wfs := &pdoknlv3.WFS{}
+	data, err := os.ReadFile(testPath("wfs", "minimal") + "input/wfs.yaml")
+	assert.NoError(t, err)
+	err = yaml.UnmarshalStrict(data, &wfs)
+	assert.NoError(t, err)
+	assert.Equal(t, wfs.Name, "minimal")
+	pdoknlv3.SetHost("https://service.pdok.nl")
+
+	hashedConfigMapNames := types.HashedConfigMapNames{
+		Mapserver:             "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4",
+		InitScripts:           "2",
+		MapfileGenerator:      "rws-nwbwegen-v1-0-wfs-mapfile-generator-bbbtd999dh",
+		CapabilitiesGenerator: "rws-nwbwegen-v1-0-wfs-capabilities-generator-6m4mfkgb5d",
+		OgcWebserviceProxy:    "3",
+		LegendGenerator:       "4",
+		FeatureInfoGenerator:  "5",
+	}
+	result := getVolumes(wfs, hashedConfigMapNames)
+
+	expected := []corev1.Volume{
+		{Name: constants.BaseVolumeName, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		{Name: constants.DataVolumeName, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		{Name: constants.MapserverName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapserver-bb59c7f4f4"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
+		{Name: constants.ConfigMapCapabilitiesGeneratorVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-capabilities-generator-6m4mfkgb5d"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
+		{Name: constants.ConfigMapMapfileGeneratorVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rws-nwbwegen-v1-0-wfs-mapfile-generator-bbbtd999dh"}, DefaultMode: smoothoperatorutils.Pointer(int32(420))}}},
+	}
+
+	assert.Equal(t, expected, result)
 }

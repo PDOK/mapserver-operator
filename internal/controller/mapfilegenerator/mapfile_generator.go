@@ -5,17 +5,20 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image, postgisConfigName, postgisSecretName, srvDir string) (*corev1.Container, error) {
+func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, postgisConfigName, postgisSecretName string) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            "mapfile-generator",
-		Image:           image,
+		Name:            constants.MapfileGeneratorName,
+		Image:           images.MapfileGeneratorImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command:         []string{"generate-mapfile"},
 		Args: []string{
@@ -25,14 +28,14 @@ func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, image, postgisCo
 			"/srv/data/config/mapfile",
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
-			{Name: mapserver.ConfigMapMapfileGeneratorVolumeName, MountPath: "/input", ReadOnly: true},
+			utils.GetBaseVolumeMount(),
+			utils.GetConfigVolumeMount(constants.ConfigMapMapfileGeneratorVolumeName),
 		},
 	}
 
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		stylingFilesVolAm := corev1.VolumeMount{Name: mapserver.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true}
-		initContainer.VolumeMounts = append(initContainer.VolumeMounts, stylingFilesVolAm)
+		stylingFilesVolMount := corev1.VolumeMount{Name: constants.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true}
+		initContainer.VolumeMounts = append(initContainer.VolumeMounts, stylingFilesVolMount)
 	}
 	// Additional mapfile-generator configuration
 	if obj.HasPostgisData() {

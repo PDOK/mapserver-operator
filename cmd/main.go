@@ -22,7 +22,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
 
 	"github.com/go-logr/zapr"
 	"github.com/pdok/smooth-operator/pkg/integrations/logging"
@@ -145,7 +145,7 @@ func main() {
 	pdoknlv3.SetHost(host)
 	mapfilegenerator.SetDebugLevel(mapserverDebugLevel)
 	controller.SetUptimeOperatorAnnotations(setUptimeOperatorAnnotations)
-	mapserver.SetStorageClassName(storageClassName)
+	controller.SetStorageClassName(storageClassName)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -198,7 +198,7 @@ func main() {
 	if err = (&controller.WMSReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Images: controller.Images{
+		Images: types.Images{
 			MultitoolImage:             multitoolImage,
 			MapfileGeneratorImage:      mapfileGeneratorImage,
 			MapserverImage:             mapserverImage,
@@ -214,7 +214,7 @@ func main() {
 	if err = (&controller.WFSReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Images: controller.Images{
+		Images: types.Images{
 			MultitoolImage:             multitoolImage,
 			MapfileGeneratorImage:      mapfileGeneratorImage,
 			MapserverImage:             mapserverImage,

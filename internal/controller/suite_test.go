@@ -34,8 +34,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
-
 	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
@@ -177,7 +175,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	pdoknlv3.SetHost("http://localhost:32788")
-	mapserver.SetStorageClassName("test-storage")
+	SetStorageClassName("test-storage")
 })
 
 var _ = AfterSuite(func() {

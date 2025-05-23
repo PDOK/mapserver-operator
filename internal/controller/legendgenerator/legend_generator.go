@@ -2,14 +2,17 @@ package legendgenerator
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func GetLegendGeneratorInitContainer(wms *pdoknlv3.WMS, image string, srvDir string) (*corev1.Container, error) {
+func GetLegendGeneratorInitContainer(wms *pdoknlv3.WMS, images types.Images) (*corev1.Container, error) {
 	initContainer := corev1.Container{
-		Name:            "legend-generator",
-		Image:           image,
+		Name:            constants.LegendGeneratorName,
+		Image:           images.MapserverImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env: []corev1.EnvVar{
 			{
@@ -37,38 +40,34 @@ exit $exit_code;
 `,
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: "base", MountPath: srvDir + "/data", ReadOnly: false},
-			getDataVolumeMount(),
-			{Name: "mapserver", MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
+			utils.GetBaseVolumeMount(),
+			utils.GetDataVolumeMount(),
+			{Name: constants.MapserverName, MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
 		},
 	}
 
 	if wms.Spec.Service.Mapfile != nil {
-		volumeMount := corev1.VolumeMount{
-			Name:      "mapfile",
-			MountPath: "/srv/data/config/mapfile",
-		}
-		initContainer.VolumeMounts = append(initContainer.VolumeMounts, volumeMount)
+		initContainer.VolumeMounts = append(initContainer.VolumeMounts, utils.GetMapfileVolumeMount())
 	}
 
 	// Adding config volumemount here to get the same order as in the old ansible operator
-	initContainer.VolumeMounts = append(initContainer.VolumeMounts, getConfigVolumeMount())
+	initContainer.VolumeMounts = append(initContainer.VolumeMounts, utils.GetConfigVolumeMount(constants.ConfigMapLegendGeneratorVolumeName))
 
 	return &initContainer, nil
 }
 
-func GetLegendFixerInitContainer(image string) *corev1.Container {
+func GetLegendFixerInitContainer(images types.Images) *corev1.Container {
 	return &corev1.Container{
-		Name:            "legend-fixer",
-		Image:           image,
+		Name:            constants.LegendFixerName,
+		Image:           images.MultitoolImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command: []string{
 			"/bin/bash",
 			"/input/legend-fixer.sh",
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			getDataVolumeMount(),
-			getConfigVolumeMount(),
+			utils.GetDataVolumeMount(),
+			utils.GetConfigVolumeMount(constants.ConfigMapLegendGeneratorVolumeName),
 		},
 	}
 }
@@ -83,12 +82,4 @@ func GetConfigMapData(wms *pdoknlv3.WMS) map[string]string {
 		addLegendFixerConfig(wms, data)
 	}
 	return data
-}
-
-func getDataVolumeMount() corev1.VolumeMount {
-	return corev1.VolumeMount{Name: "data", MountPath: "/var/www", ReadOnly: false}
-}
-
-func getConfigVolumeMount() corev1.VolumeMount {
-	return corev1.VolumeMount{Name: mapserver.ConfigMapLegendGeneratorVolumeName, MountPath: "/input", ReadOnly: true}
 }

@@ -1,8 +1,9 @@
 package v3
 
 import (
-	"github.com/pdok/smooth-operator/model"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -14,17 +15,17 @@ func ValidateUpdate[W WMSWFS](newW, oldW W, validate func(W, *[]string, *field.E
 	sharedValidation.ValidateLabelsOnUpdate(oldW.GetLabels(), newW.GetLabels(), &allErrs)
 
 	path := field.NewPath("spec").Child("service").Child("url")
-	oldURL, err := model.ParseURL(oldW.URLPath())
+	oldURL, err := smoothoperatormodel.ParseURL(oldW.URLPath())
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(path, err))
 	}
-	newURL, err := model.ParseURL(oldW.URLPath())
+	newURL, err := smoothoperatormodel.ParseURL(oldW.URLPath())
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(path, err))
 	}
 	sharedValidation.CheckUrlImmutability(
-		model.URL{URL: oldURL},
-		model.URL{URL: newURL},
+		smoothoperatormodel.URL{URL: oldURL},
+		smoothoperatormodel.URL{URL: newURL},
 		&allErrs,
 		path,
 	)

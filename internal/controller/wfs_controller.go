@@ -27,6 +27,8 @@ package controller
 import (
 	"context"
 
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,7 +42,7 @@ import (
 type WFSReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Images Images
+	Images types.Images
 }
 
 // +kubebuilder:rbac:groups=pdok.nl,resources=wfs,verbs=get;list;watch;create;update;patch;delete

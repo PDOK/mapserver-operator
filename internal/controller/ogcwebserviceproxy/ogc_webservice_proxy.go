@@ -2,22 +2,24 @@ package ogcwebserviceproxy
 
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+	"github.com/pdok/mapserver-operator/internal/controller/constants"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
-func GetOgcWebserviceProxyContainer(wms *pdoknlv3.WMS, image string) (*corev1.Container, error) {
+func GetOgcWebserviceProxyContainer(wms *pdoknlv3.WMS, images types.Images) (*corev1.Container, error) {
 	container := corev1.Container{
-		Name:            "ogc-webservice-proxy",
-		Image:           image,
+		Name:            constants.OgcWebserviceProxyName,
+		Image:           images.OgcWebserviceProxyImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports:           []corev1.ContainerPort{{ContainerPort: 9111}},
 		Command:         getCommand(wms),
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: mapserver.ConfigMapOgcWebserviceProxyVolumeName, MountPath: "/input", ReadOnly: true},
+			utils.GetConfigVolumeMount(constants.ConfigMapOgcWebserviceProxyVolumeName),
 		},
 		Resources: corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
