@@ -1,0 +1,31 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "true"
+    service-type: wms
+    service-version: v1_0
+    theme: '2016'
+  name: complete-wms-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: mapserver
+      dataset: dataset
+      dataset-owner: datasetOwner
+      inspire: "true"
+      service-type: wms
+      service-version: v1_0
+      theme: '2016'

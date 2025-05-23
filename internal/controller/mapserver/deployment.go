@@ -2,7 +2,6 @@ package mapserver
 
 import (
 	"errors"
-	"os"
 	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -27,6 +26,12 @@ const (
 	mimeTextXML = "text/xml"
 )
 
+var storageClassName string
+
+func SetStorageClassName(name string) {
+	storageClassName = name
+}
+
 // TODO fix linting (funlen)
 //
 //nolint:funlen
@@ -46,8 +51,8 @@ func GetVolumesForDeployment[O pdoknlv3.WMSWFS](obj O, configMapNames types.Hash
 			},
 		}
 
-		if value, set := os.LookupEnv("STORAGE_CLASS_NAME"); set {
-			baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &value
+		if storageClassName != "" {
+			baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &storageClassName
 		}
 	} else {
 		baseVolume.VolumeSource = corev1.VolumeSource{

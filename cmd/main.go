@@ -22,6 +22,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
+
 	"github.com/go-logr/zapr"
 	"github.com/pdok/smooth-operator/pkg/integrations/logging"
 	"github.com/peterbourgon/ff"
@@ -93,6 +95,7 @@ func main() {
 	var slackWebhookURL string
 	var logLevel int
 	var setUptimeOperatorAnnotations bool
+	var storageClassName string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -116,6 +119,7 @@ func main() {
 	flag.StringVar(&slackWebhookURL, "slack-webhook-url", "", "The webhook url for sending slack messages. Disabled if left empty")
 	flag.IntVar(&logLevel, "log-level", 0, "The zapcore loglevel. 0 = info, 1 = warn, 2 = error")
 	flag.BoolVar(&setUptimeOperatorAnnotations, "set-uptime-operator-annotations", true, "When enabled IngressRoutes get annotations that are used by the pdok/uptime-operator.")
+	flag.StringVar(&storageClassName, "storage-class-name", "", "The name of the storage class to use when using an ephemeral volume.")
 
 	opts := zap.Options{
 		Development: true,
@@ -137,9 +141,11 @@ func main() {
 		setupLog.Error(errors.New("baseURL is required"), "A value for baseURL must be specified.")
 		os.Exit(1)
 	}
+
 	pdoknlv3.SetHost(host)
 	mapfilegenerator.SetDebugLevel(mapserverDebugLevel)
 	controller.SetUptimeOperatorAnnotations(setUptimeOperatorAnnotations)
+	mapserver.SetStorageClassName(storageClassName)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will

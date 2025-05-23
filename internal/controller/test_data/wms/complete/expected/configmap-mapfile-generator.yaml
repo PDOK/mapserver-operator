@@ -1,0 +1,179 @@
+apiVersion: v1
+data:
+  input.json: |-
+    {
+        "service_title": "some service title",
+        "service_abstract": "some \"service\" abstract",
+        "service_keywords": "service-keyword-1,service-keyword-2,infoMapAccessService",
+        "service_accessconstraints": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
+        "service_extent": "service-extent",
+        "maxSize": "4000",
+        "service_namespace_prefix": "dataset",
+        "service_namespace_uri": "http://dataset.geonovum.nl",
+        "service_onlineresource": "http://localhost",
+        "service_path": "/datasetOwner/dataset/2016/wms/v1_0",
+        "service_metadata_id": "metameta-meta-meta-meta-metametameta",
+        "dataset_owner": "authority-name",
+        "authority_url": "http://authority-url",
+        "automatic_casing": true,
+        "data_epsg": "EPSG:28992",
+        "epsg_list": [
+            "EPSG:28992",
+            "EPSG:25831",
+            "EPSG:25832",
+            "EPSG:3034",
+            "EPSG:3035",
+            "EPSG:3857",
+            "EPSG:4258",
+            "EPSG:4326",
+            "CRS:84"
+        ],
+        "templates": "/srv/data/config/templates",
+        "fonts": "/srv/data/config/fonts",
+        "top_level_name": "top-layer-name",
+        "resolution": "20",
+        "defresolution": "10",
+        "outputformat_jpg": "jpg",
+        "outputformat_png8": "png",
+        "symbols": [
+            "/styling/gpkg-layer-symbol.symbol",
+            "/styling/tif-layer-symbol.symbol"
+        ],
+        "group_layers": [
+            {
+                "name": "group-layer-name",
+                "title": "group layer title \"1\"",
+                "abstract": "group layer abstract \"1\"",
+                "style_name": "group-layer-style-1-name",
+                "style_title": "group-layer-style-1-title"
+            }
+        ],
+        "layers": [
+            {
+                "name": "gpkg-layer-name",
+                "group_name": "group-layer-name",
+                "gpkg_path": "/srv/data/gpkg/file.gpkg",
+                "tablename": "gpkg-layer",
+                "geometry_type": "Point",
+                "columns": [
+                    {
+                        "name": "fuuid"
+                    },
+                    {
+                        "name": "column-1",
+                        "alias": "ALIAS_column-1"
+                    },
+                    {
+                        "name": "column-2"
+                    }
+                ],
+                "title": "gpkg-layer-title \"2\"",
+                "abstract": "gpkg-layer-abstract \"2\"",
+                "keywords": "gpkg-layer-keyword-1,gpkg-layer-keyword-2",
+                "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+                "dataset_source_id": "bronbron-bron-bron-bron-bronbronbron",
+                "layer_extent": "gpkg-layer-extent",
+                "minscale": "30",
+                "maxscale": "20",
+                "styles": [
+                    {
+                        "title": "gpkg-layer-style-1-title",
+                        "path": "/styling/gpkg-layer-style-1.style"
+                    },
+                    {
+                        "title": "gpkg-layer-style-2-title",
+                        "path": "/styling/gpkg-layer-style-2.style"
+                    },
+                    {
+                        "title": "gpkg-layer-style-3-title",
+                        "path": "/styling/gpkg-layer-style-3.style"
+                    },
+                    {
+                        "title": "gpkg-layer-style-4-title",
+                        "path": "/styling/gpkg-layer-style-4.style"
+                    }
+                ]
+            },
+            {
+                "name": "postgis-layer-name",
+                "group_name": "group-layer-name",
+                "tablename": "postgis-layer",
+                "geometry_type": "Point",
+                "columns": [
+                    {
+                        "name": "fuuid"
+                    },
+                    {
+                        "name": "column-1"
+                    },
+                    {
+                        "name": "column-2"
+                    }
+                ],
+                "postgis": true,
+                "title": "postgis-layer-title",
+                "abstract": "postgis-layer-abstract",
+                "keywords": "postgis-layer-keyword-1,postgis-layer-keyword-2",
+                "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+                "dataset_source_id": "bronbron-bron-bron-bron-bronbronbron",
+                "layer_extent": "postgis-layer-extent",
+                "minscale": "30",
+                "maxscale": "20",
+                "styles": [
+                    {
+                        "title": "postgis-layer-style-1-title",
+                        "path": "/styling/postgis-layer-style-1.style"
+                    },
+                    {
+                        "title": "postgis-layer-style-2-title",
+                        "path": "/styling/postgis-layer-style-2.style"
+                    }
+                ]
+            },
+            {
+                "name": "tif-layer-name",
+                "resample": "AVERAGE",
+                "tif_path": "/srv/data/tif/file.tif",
+                "geometry_type": "Raster",
+                "offsite": "#FF00FF",
+                "get_feature_info_includes_class": true,
+                "title": "",
+                "abstract": "",
+                "keywords": "",
+                "dataset_metadata_id": "",
+                "dataset_source_id": "",
+                "layer_extent": "tif-layer-extent",
+                "minscale": "30",
+                "maxscale": "20",
+                "label_no_clip": true,
+                "styles": [
+                    {
+                        "path": "/styling/tif-layer-style-1.style"
+                    },
+                    {
+                        "path": "/styling/tif-layer-style-2.style"
+                    }
+                ]
+            }
+        ]
+    }
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "true"
+    service-type: wms
+    service-version: v1_0
+    theme: '2016'
+  name: complete-wms-mapfile-generator-7dgmhcgb5b
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
