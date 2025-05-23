@@ -3,6 +3,7 @@ package ogcwebserviceproxy
 import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
+	"github.com/pdok/mapserver-operator/internal/controller/types"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
@@ -10,10 +11,10 @@ import (
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
-func GetOgcWebserviceProxyContainer(wms *pdoknlv3.WMS, image string) (*corev1.Container, error) {
+func GetOgcWebserviceProxyContainer(wms *pdoknlv3.WMS, images types.Images) (*corev1.Container, error) {
 	container := corev1.Container{
 		Name:            constants.OgcWebserviceProxyName,
-		Image:           image,
+		Image:           images.OgcWebserviceProxyImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports:           []corev1.ContainerPort{{ContainerPort: 9111}},
 		Command:         getCommand(wms),

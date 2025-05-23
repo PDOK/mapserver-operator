@@ -37,7 +37,7 @@ func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, blobsS
 		Name:            constants.MapserverName,
 		Image:           images.MapserverImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Ports:           []corev1.ContainerPort{{ContainerPort: MapserverPortNr}},
+		Ports:           []corev1.ContainerPort{{ContainerPort: MapserverPortNr, Protocol: corev1.ProtocolTCP}},
 		Env: []corev1.EnvVar{
 			{
 				Name:  "SERVICE_TYPE",
