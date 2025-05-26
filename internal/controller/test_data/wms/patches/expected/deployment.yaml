@@ -353,7 +353,7 @@ spec:
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: patches-wms-mapfile-generator-fgfg585465
+            name: patches-wms-mapfile-generator-86m5tktkbf
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files

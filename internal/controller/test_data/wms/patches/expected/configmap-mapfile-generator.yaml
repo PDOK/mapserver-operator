@@ -107,7 +107,7 @@ metadata:
     inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: patches-wms-mapfile-generator-fgfg585465
+  name: patches-wms-mapfile-generator-86m5tktkbf
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

@@ -1,86 +1,46 @@
 package ogcwebserviceproxy
 
 import (
+	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"sigs.k8s.io/yaml"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 )
 
-const expectedConfig = `grouplayers:
-    grouplayer-1:
-        - datalayer-1
-        - datalayer-2
-    grouplayer-2:
-        - datalayer-3
-        - datalayer-4
-`
-
 func TestGetConfig(t *testing.T) {
-	type args struct {
-		wms *pdoknlv3.WMS
-	}
-	tests := []struct {
-		name       string
-		args       args
-		wantConfig string
-		wantErr    bool
-	}{
-		{
-			name: "GetConfig for OGC Webservice proxy",
-			args: args{
-				wms: &pdoknlv3.WMS{
-					Spec: pdoknlv3.WMSSpec{
-						Service: pdoknlv3.WMSService{
-							Layer: pdoknlv3.Layer{
-								Name: smoothoperatorutils.Pointer("toplayer"),
-								Layers: []pdoknlv3.Layer{
-									{
-										Name: smoothoperatorutils.Pointer("grouplayer-1"),
-										Layers: []pdoknlv3.Layer{
-											{
-												Name: smoothoperatorutils.Pointer("datalayer-1"),
-												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-1"}},
-											},
-											{
-												Name: smoothoperatorutils.Pointer("datalayer-2"),
-												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-2"}},
-											},
-										},
-									},
-									{
-										Name: smoothoperatorutils.Pointer("grouplayer-2"),
-										Layers: []pdoknlv3.Layer{
-											{
-												Name: smoothoperatorutils.Pointer("datalayer-3"),
-												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-3"}},
-											},
-											{
-												Name: smoothoperatorutils.Pointer("datalayer-4"),
-												Data: &pdoknlv3.Data{Gpkg: &pdoknlv3.Gpkg{BlobKey: "blob-4"}},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			wantConfig: expectedConfig,
-			wantErr:    false,
-		},
-	}
+	tests := []string{"named-toplayer", "unnamed-toplayer"}
+
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotConfig, err := GetConfig(tt.args.wms)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if gotConfig != tt.wantConfig {
-				t.Errorf("GetConfig() gotConfig = %v, want %v", gotConfig, tt.wantConfig)
-			}
-		})
+		input, err := os.ReadFile("test_data/input/" + tt + ".yaml")
+		if err != nil {
+			t.Errorf("os.ReadFile() error = %v", err)
+		}
+		wms := &pdoknlv3.WMS{}
+		if err := yaml.Unmarshal(input, wms); err != nil {
+			t.Errorf("yaml.Unmarshal() error = %v", err)
+		}
+
+		generated, err := MapWMSToOgcWebserviceProxyConfig(wms)
+		if err != nil {
+			t.Errorf("MapWMSToOgcWebserviceProxyConfig() error = %v", err)
+		}
+
+		expectedBytes, err := os.ReadFile("test_data/expected/" + tt + ".yaml")
+		if err != nil {
+			t.Errorf("os.ReadFile() error = %v", err)
+		}
+
+		var expected Config
+		if err := yaml.Unmarshal(expectedBytes, &expected); err != nil {
+			t.Errorf("yaml.Unmarshal() error = %v", err)
+		}
+
+		diff := cmp.Diff(expected, generated)
+		if diff != "" {
+			t.Errorf("GetConfig() mismatch (-want +got):\n%s", diff)
+		}
 	}
 }

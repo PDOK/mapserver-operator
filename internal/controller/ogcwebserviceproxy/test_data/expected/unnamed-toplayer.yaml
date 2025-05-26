@@ -1,0 +1,7 @@
+grouplayers:
+  grouplayer-1:
+    - datalayer-1
+    - datalayer-2
+  grouplayer-2:
+    - datalayer-3
+    - datalayer-4

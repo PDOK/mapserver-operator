@@ -212,6 +212,17 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		MaxSize:           maxSize,
 	}
 
+	if wms.Spec.Service.Layer.IsTopLayer() && wms.Spec.Service.Layer.Name != nil {
+		result.TopLevelName = *wms.Spec.Service.Layer.Name
+	}
+
+	if wms.Spec.Service.Resolution != nil {
+		result.Resolution = strconv.Itoa(int(*wms.Spec.Service.Resolution))
+	}
+	if wms.Spec.Service.DefResolution != nil {
+		result.DefResolution = strconv.Itoa(int(*wms.Spec.Service.DefResolution))
+	}
+
 	annotatedLayers := wms.Spec.Service.GetAnnotatedLayers()
 	for _, annotatedLayer := range annotatedLayers {
 		if annotatedLayer.IsDataLayer {
@@ -224,6 +235,10 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 				Abstract:   smoothoperatorutils.PointerVal(annotatedLayer.Layer.Abstract, ""),
 				StyleName:  "",
 				StyleTitle: "",
+			}
+			if len(annotatedLayer.Layer.Styles) > 0 {
+				groupLayer.StyleName = annotatedLayer.Layer.Styles[0].Name
+				groupLayer.StyleTitle = smoothoperatorutils.PointerVal(annotatedLayer.Layer.Styles[0].Title, "")
 			}
 			result.GroupLayers = append(result.GroupLayers, groupLayer)
 		}

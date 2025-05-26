@@ -40,9 +40,7 @@ func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Ima
 	// Additional mapfile-generator configuration
 	if obj.HasPostgisData() {
 		initContainer.EnvFrom = []corev1.EnvFromSource{
-			// Todo add this ConfigMap
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, postgisConfigName),
-			// Todo add this Secret
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, postgisSecretName),
 		}
 	}
