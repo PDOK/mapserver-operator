@@ -1,7 +1,6 @@
 package mapfilegenerator
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -145,7 +144,7 @@ func getGeopackagePath(data pdoknlv3.Data) *string {
 	return smoothoperatorutils.Pointer(geopackagePath + "/" + blobName)
 }
 
-func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
+func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
 	service := wms.Spec.Service
 
 	datasetOwner := ""
@@ -155,8 +154,6 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 		datasetOwner = wms.ObjectMeta.Labels["dataset-owner"]
 	}
 
-	datasetName := wms.ObjectMeta.Labels["dataset"]
-	protocol := "http"
 	authority := wms.GetAuthority()
 	authorityURL := ""
 	if authority != nil {
@@ -198,8 +195,8 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, _ *smoothoperatorv1.OwnerI
 			Abstract:        service.Abstract,
 			Keywords:        strings.Join(wms.Spec.Service.KeywordsIncludingInspireKeyword(), ","),
 			Extent:          extent,
-			NamespacePrefix: datasetName,
-			NamespaceURI:    fmt.Sprintf("%s://%s.geonovum.nl", protocol, datasetName),
+			NamespacePrefix: wms.Spec.Service.Prefix,
+			NamespaceURI:    mapperutils.GetNamespaceURI(wms.Spec.Service.Prefix, ownerInfo),
 			OnlineResource:  pdoknlv3.GetHost(true),
 			Path:            "/" + pdoknlv3.GetBaseURLPath(wms),
 			MetadataID:      metadataID,

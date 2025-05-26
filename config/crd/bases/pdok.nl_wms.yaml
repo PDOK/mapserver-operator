@@ -2095,6 +2095,9 @@ spec:
                       description: Reference to a CR of Kind OwnerInfo
                       minLength: 1
                       type: string
+                    prefix:
+                      minLength: 1
+                      type: string
                     resolution:
                       description: 'Mapfile setting: Sets the RESOLUTION field in the mapfile, not used when service.mapfile is configured'
                       format: int32
@@ -2137,6 +2140,7 @@ spec:
                     - keywords
                     - layer
                     - ownerInfoRef
+                    - prefix
                     - title
                     - url
                   type: object

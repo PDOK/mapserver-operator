@@ -242,8 +242,9 @@ var _ = Describe("Testing WMS Controller", func() {
 			filepath := "input/wms.yaml"
 			testCases := []string{
 				testPath(pdoknlv3.ServiceTypeWMS, "minimal") + filepath,
-				// testPath(pdoknlv3.ServiceTypeWMS, "complete") + filepath,
-				// testPath(pdoknlv3.ServiceTypeWMS, "noprefetch") + filepath,
+				testPath(pdoknlv3.ServiceTypeWMS, "complete") + filepath,
+				testPath(pdoknlv3.ServiceTypeWMS, "noprefetch") + filepath,
+				testPath(pdoknlv3.ServiceTypeWMS, "custom-mapfile") + filepath,
 			}
 
 			for _, test := range testCases {

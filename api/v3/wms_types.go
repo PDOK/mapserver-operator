@@ -74,6 +74,9 @@ type WMSSpec struct {
 }
 
 type WMSService struct {
+	// +kubebuilder:validation:MinLength:=1
+	Prefix string `json:"prefix"`
+
 	// URL of the service
 	// +kubebuilder:validation:Format:=uri
 	URL string `json:"url"`

@@ -77,6 +77,7 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	dst.Spec.HealthCheck = convertHealthCheckToV3(src.Spec.Kubernetes.HealthCheck)
 
 	service := pdoknlv3.WMSService{
+		Prefix:            src.Spec.General.Dataset,
 		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
