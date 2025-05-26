@@ -409,7 +409,10 @@ func convertAndWriteIfWMSWFS(data []byte, fileName string) ([]byte, error) {
 				return []byte{}, err
 			}
 			v3 := pdoknlv3.WMS{}
-			v2Wms.ToV3(&v3)
+			err = v2Wms.ToV3(&v3)
+			if err != nil {
+				return []byte{}, err
+			}
 			data, err = yaml.Marshal(v3)
 		}
 

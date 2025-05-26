@@ -100,13 +100,12 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 		},
 	}
 
-	if obj.PodSpecPatch() != nil {
-		patchedSpec, err := smoothoperatorutils.StrategicMergePatch(&podTemplateSpec.Spec, obj.PodSpecPatch())
-		if err != nil {
-			return err
-		}
-		podTemplateSpec.Spec = *patchedSpec
+	podPatch := obj.PodSpecPatch()
+	patchedSpec, err := smoothoperatorutils.StrategicMergePatch(&podTemplateSpec.Spec, &podPatch)
+	if err != nil {
+		return err
 	}
+	podTemplateSpec.Spec = *patchedSpec
 
 	if use, _ := mapperutils.UseEphemeralVolume(obj); !use {
 		ephStorage := podTemplateSpec.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]

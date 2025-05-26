@@ -71,9 +71,14 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		}
 	}
 
+	url, err := CreateBaseURL(pdoknlv3.GetHost(true), "wfs", src.Spec.General)
+	if err != nil {
+		return err
+	}
+
 	service := pdoknlv3.WFSService{
 		Prefix:            src.Spec.General.Dataset,
-		URL:               CreateBaseURL("https://service.pdok.nl", "wfs", src.Spec.General),
+		URL:               *url,
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,

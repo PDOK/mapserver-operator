@@ -44,13 +44,11 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*pdoknlv3.WMS)
 	log.Printf("ConvertTo: Converting WMS from Spoke version v2beta1 to Hub version v3;"+
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
-	src.ToV3(dst)
-
-	return nil
+	return src.ToV3(dst)
 }
 
 //nolint:gosec
-func (src *WMS) ToV3(target *pdoknlv3.WMS) {
+func (src *WMS) ToV3(target *pdoknlv3.WMS) error {
 	dst := target
 
 	dst.ObjectMeta = src.ObjectMeta
@@ -76,9 +74,14 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
 	dst.Spec.HealthCheck = convertHealthCheckToV3(src.Spec.Kubernetes.HealthCheck)
 
+	url, err := CreateBaseURL(pdoknlv3.GetHost(true), "wms", src.Spec.General)
+	if err != nil {
+		return err
+	}
+
 	service := pdoknlv3.WMSService{
 		Prefix:            src.Spec.General.Dataset,
-		URL:               CreateBaseURL("https://service.pdok.nl", "wms", src.Spec.General),
+		URL:               *url,
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
@@ -140,6 +143,7 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) {
 	}
 
 	dst.Spec.Service = service
+	return nil
 }
 
 func convertHealthCheckToV3(v2 *HealthCheck) *pdoknlv3.HealthCheckWMS {

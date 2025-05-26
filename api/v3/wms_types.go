@@ -56,8 +56,8 @@ type WMSSpec struct {
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
-	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
-	PodSpecPatch *corev1.PodSpec `json:"podSpecPatch,omitempty"`
+	// Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
+	PodSpecPatch corev1.PodSpec `json:"podSpecPatch"`
 
 	// Optional specification for the HorizontalAutoscaler
 	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
@@ -78,8 +78,7 @@ type WMSService struct {
 	Prefix string `json:"prefix"`
 
 	// URL of the service
-	// +kubebuilder:validation:Format:=uri
-	URL string `json:"url"`
+	URL smoothoperatormodel.URL `json:"url"`
 
 	// Title of the service
 	// +kubebuilder:validation:MinLength:=1
@@ -604,7 +603,7 @@ func (wms *WMS) TypedName() string {
 	return name + "-" + typeSuffix
 }
 
-func (wms *WMS) PodSpecPatch() *corev1.PodSpec {
+func (wms *WMS) PodSpecPatch() corev1.PodSpec {
 	return wms.Spec.PodSpecPatch
 }
 
@@ -620,7 +619,7 @@ func (wms *WMS) Options() Options {
 	return *wms.Spec.Options
 }
 
-func (wms *WMS) URLPath() string {
+func (wms *WMS) URL() smoothoperatormodel.URL {
 	return wms.Spec.Service.URL
 }
 

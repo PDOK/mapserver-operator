@@ -73,7 +73,8 @@ func testWMS(t *testing.T, filenameWithoutExt string) {
 	err = yaml.Unmarshal(input, v2wms)
 	assert.NoError(t, err)
 	var wms pdoknlv3.WMS
-	v2wms.ToV3(&wms)
+	err = v2wms.ToV3(&wms)
+	assert.NoError(t, err)
 
 	inputStruct, err := MapWMSToMapfileGeneratorInput(&wms, ownerInfo)
 	assert.NoError(t, err)

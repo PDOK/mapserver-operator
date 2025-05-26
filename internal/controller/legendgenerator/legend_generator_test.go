@@ -19,7 +19,8 @@ func test(t *testing.T, name string) {
 	err = yaml.Unmarshal(input, &v2wms)
 	assert.NoError(t, err)
 	var wms pdoknlv3.WMS
-	v2wms.ToV3(&wms)
+	err = v2wms.ToV3(&wms)
+	assert.NoError(t, err)
 
 	expected, err := os.ReadFile("test_data/expected/" + name + ".yaml")
 	assert.NoError(t, err)

@@ -54,7 +54,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 
 		annotations["uptime.pdok.nl/id"] = utils.Sha1Hash(obj.TypedName())
 		annotations["uptime.pdok.nl/name"] = getUptimeName(obj)
-		annotations["uptime.pdok.nl/url"] = obj.URLPath() + "?" + queryString
+		annotations["uptime.pdok.nl/url"] = obj.URL().String() + "?" + queryString
 		annotations["uptime.pdok.nl/tags"] = strings.Join(tags, ",")
 	}
 	ingressRoute.SetAnnotations(annotations)
@@ -149,19 +149,19 @@ func getUptimeName[O pdoknlv3.WMSWFS](obj O) string {
 }
 
 func getMatchRule[O pdoknlv3.WMSWFS](obj O) string {
-	host := pdoknlv3.GetHost(false)
+	host := obj.URL().Hostname()
 	if strings.Contains(host, "localhost") {
-		return "Host(`localhost`) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
+		return "Host(`localhost`) && Path(`" + obj.URL().Path + "`)"
 	}
 
-	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`/" + pdoknlv3.GetBaseURLPath(obj) + "`)"
+	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`" + obj.URL().Path + "`)"
 }
 
 func getLegendMatchRule(wms *pdoknlv3.WMS) string {
-	host := pdoknlv3.GetHost(false)
+	host := wms.URL().Hostname()
 	if strings.Contains(host, "localhost") {
-		return "Host(`localhost`) && PathPrefix(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
+		return "Host(`localhost`) && PathPrefix(`" + wms.URL().Path + "/legend`)"
 	}
 
-	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`/" + pdoknlv3.GetBaseURLPath(wms) + "/legend`)"
+	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`" + wms.URL().Path + "/legend`)"
 }

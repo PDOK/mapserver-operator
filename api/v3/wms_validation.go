@@ -53,11 +53,6 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	service := wms.Spec.Service
 	path := field.NewPath("spec").Child("service")
 
-	err := sharedValidation.ValidateBaseURL(service.URL)
-	if err != nil {
-		*allErrs = append(*allErrs, field.Invalid(path.Child("url"), service.URL, err.Error()))
-	}
-
 	if service.Mapfile != nil {
 		if service.Resolution != nil {
 			sharedValidation.AddWarning(
@@ -295,6 +290,9 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 			"at least one layer must be visible",
 		))
 	}
+
+	podSpecPatch := wms.Spec.PodSpecPatch
+	ValidateEphemeralStorage(podSpecPatch, allErrs)
 }
 
 func findEqualChildStyleNames(layer *Layer, equalStyleNames *map[string][]string) {

@@ -1,7 +1,7 @@
 package v2beta1
 
 import (
-	"fmt"
+	"net/url"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
@@ -80,7 +80,7 @@ func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch 
 	}
 }
 
-func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
+func ConvertResources(src corev1.ResourceRequirements) corev1.PodSpec {
 	targetResources := src
 
 	if src.Requests != nil {
@@ -92,7 +92,7 @@ func ConvertResources(src corev1.ResourceRequirements) *corev1.PodSpec {
 		delete(targetResources.Limits, "ephemeralStorage")
 	}
 
-	return &corev1.PodSpec{
+	return corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
 				Name:      constants.MapserverName,
@@ -209,7 +209,7 @@ func ConvertV3DataToV2(v3 pdoknlv3.Data) Data {
 	return v2
 }
 
-func NewV2KubernetesObject(lifecycle *smoothoperatormodel.Lifecycle, podSpecPatch *corev1.PodSpec, scalingSpec *pdoknlv3.HorizontalPodAutoscalerPatch) Kubernetes {
+func NewV2KubernetesObject(lifecycle *smoothoperatormodel.Lifecycle, podSpecPatch corev1.PodSpec, scalingSpec *pdoknlv3.HorizontalPodAutoscalerPatch) Kubernetes {
 	kub := Kubernetes{}
 
 	if lifecycle != nil && lifecycle.TTLInDays != nil {
@@ -218,9 +218,7 @@ func NewV2KubernetesObject(lifecycle *smoothoperatormodel.Lifecycle, podSpecPatc
 		}
 	}
 
-	if podSpecPatch != nil {
-		kub.Resources = &podSpecPatch.Containers[0].Resources
-	}
+	kub.Resources = &podSpecPatch.Containers[0].Resources
 
 	if scalingSpec != nil {
 		kub.Autoscaling = &Autoscaling{
@@ -259,16 +257,20 @@ func LabelsToV2General(labels map[string]string) General {
 	return general
 }
 
-func CreateBaseURL(host string, kind string, general General) string {
-	URI := fmt.Sprintf("%s/%s", general.DatasetOwner, general.Dataset)
-	if general.Theme != nil {
-		URI += "/" + *general.Theme
+func CreateBaseURL(host string, kind string, general General) (*smoothoperatormodel.URL, error) {
+	baseURL, err := url.Parse(host + "/")
+	if err != nil {
+		return nil, err
 	}
-	URI += "/" + kind
+	baseURL = baseURL.JoinPath(general.DatasetOwner, general.Dataset)
+	if general.Theme != nil {
+		baseURL = baseURL.JoinPath(*general.Theme)
+	}
+	baseURL = baseURL.JoinPath(kind)
 
 	if general.ServiceVersion != nil {
-		URI += "/" + *general.ServiceVersion
+		baseURL = baseURL.JoinPath(*general.ServiceVersion)
 	}
 
-	return fmt.Sprintf("%s/%s", host, URI)
+	return &smoothoperatormodel.URL{URL: baseURL}, nil
 }

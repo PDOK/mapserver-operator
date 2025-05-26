@@ -3,6 +3,8 @@ package v3
 import (
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -48,16 +50,33 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	service := wfs.Spec.Service
 	path := field.NewPath("spec").Child("service")
 
-	err := sharedValidation.ValidateBaseURL(service.URL)
-	if err != nil {
-		*allErrs = append(*allErrs, field.Invalid(path.Child("url"), service.URL, err.Error()))
-	}
-
 	if service.Mapfile == nil && service.DefaultCrs != "EPSG:28992" && service.Bbox == nil {
 		*allErrs = append(*allErrs, field.Required(path.Child("bbox").Child("defaultCRS"), "when service.defaultCRS is not 'EPSG:28992'"))
 	}
 
 	if service.Mapfile != nil && service.Bbox != nil {
 		sharedValidation.AddWarning(warnings, *path.Child("bbox"), "is not used when service.mapfile is configured", wfs.GroupVersionKind(), wfs.GetName())
+	}
+
+	podSpecPatch := wfs.Spec.PodSpecPatch
+	ValidateEphemeralStorage(podSpecPatch, allErrs)
+}
+
+func ValidateEphemeralStorage(podSpecPatch corev1.PodSpec, allErrs *field.ErrorList) {
+	path := field.NewPath("spec").
+		Child("podSpecPatch").
+		Child("containers").
+		Key("mapserver").
+		Child("resources").
+		Child("limits").
+		Child(corev1.ResourceEphemeralStorage.String())
+	storageSet := false
+	for _, container := range podSpecPatch.Containers {
+		if container.Name == "mapserver" {
+			_, storageSet = container.Resources.Limits[corev1.ResourceEphemeralStorage]
+		}
+	}
+	if !storageSet {
+		*allErrs = append(*allErrs, field.Required(path, ""))
 	}
 }

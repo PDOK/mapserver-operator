@@ -1118,7 +1118,7 @@ spec:
                 - validateRequests
                 type: object
               podSpecPatch:
-                description: Optional strategic merge patch for the pod in the deployment.
+                description: Strategic merge patch for the pod in the deployment.
                   E.g. to patch the resources or add extra env vars.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
@@ -1539,8 +1539,7 @@ spec:
                     type: string
                   url:
                     description: URL of the service
-                    minLength: 1
-                    pattern: ^https?://.*$
+                    pattern: ^https?://.+/.+
                     type: string
                 required:
                 - abstract
@@ -1553,6 +1552,7 @@ spec:
                 - url
                 type: object
             required:
+            - podSpecPatch
             - service
             type: object
           status:
@@ -1626,6 +1626,8 @@ spec:
                   for this Atom.
                 type: object
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true

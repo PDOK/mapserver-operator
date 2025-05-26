@@ -136,7 +136,7 @@ metadata:
     service-type: wms
     service-version: v1_0
     theme: "2016"
-  name: complete-wms-mapserver-84kmc4cbf6
+  name: complete-wms-mapserver-6k9496ckg7
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

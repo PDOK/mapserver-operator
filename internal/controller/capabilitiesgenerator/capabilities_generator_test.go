@@ -5,6 +5,7 @@ import (
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -27,6 +28,7 @@ func TestGetInputForWFS(t *testing.T) {
 		WFS       *pdoknlv3.WFS
 		ownerInfo *smoothoperatorv1.OwnerInfo
 	}
+	url, _ := smoothoperatormodel.ParseURL("http://localhost/datasetOwner/dataset/theme/wfs/v1_0")
 	pdoknlv3.SetHost("http://localhost")
 	tests := []struct {
 		name      string
@@ -48,7 +50,7 @@ func TestGetInputForWFS(t *testing.T) {
 					},
 					Spec: pdoknlv3.WFSSpec{
 						Service: pdoknlv3.WFSService{
-							URL:               "/datasetOwner/dataset/theme/wfs/v1_0",
+							URL:               smoothoperatormodel.URL{URL: url},
 							Title:             "some Service title",
 							Abstract:          "some \"Service\" abstract",
 							Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
@@ -150,9 +152,10 @@ func TestInputForWMS(t *testing.T) {
 	v2wms := &v2beta1.WMS{}
 	err := yaml.Unmarshal([]byte(v2wmsstring), v2wms)
 	assert.NoError(t, err)
-	var wms pdoknlv3.WMS
-	v2wms.ToV3(&wms)
 	pdoknlv3.SetHost("http://localhost")
+	var wms pdoknlv3.WMS
+	err = v2wms.ToV3(&wms)
+	assert.NoError(t, err)
 
 	contactPersonPrimary := smoothoperatorv1.ContactPersonPrimary{
 		ContactPerson:       smoothoperatorutils.Pointer("KlantContactCenter PDOK"),
