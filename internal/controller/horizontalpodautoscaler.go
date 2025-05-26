@@ -5,6 +5,7 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
+	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,88 +13,74 @@ import (
 )
 
 func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, autoscaler *autoscalingv2.HorizontalPodAutoscaler) error {
-	autoscalerPatch := obj.HorizontalPodAutoscalerPatch()
+	reconcilerClient := getReconcilerClient(r)
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
+	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, autoscaler, labels); err != nil {
+		return err
+	}
+
+	autoscaler.Spec.MaxReplicas = 30
+	autoscaler.Spec.MinReplicas = smoothoperatorutils.Pointer(int32(2))
+	autoscaler.Spec.ScaleTargetRef = autoscalingv2.CrossVersionObjectReference{
+		APIVersion: appsv1.SchemeGroupVersion.String(),
+		Kind:       "Deployment",
+		Name:       getSuffixedName(obj, constants.MapserverName),
+	}
+
+	var averageCPU int32 = 90
+	if cpu := mapperutils.GetContainerResourceRequest(obj, constants.MapserverName, corev1.ResourceCPU); cpu != nil {
+		averageCPU = 80
+	}
+	autoscaler.Spec.Metrics = []autoscalingv2.MetricSpec{{
+		Type: autoscalingv2.ResourceMetricSourceType,
+		Resource: &autoscalingv2.ResourceMetricSource{
+			Name: corev1.ResourceCPU,
+			Target: autoscalingv2.MetricTarget{
+				Type:               autoscalingv2.UtilizationMetricType,
+				AverageUtilization: &averageCPU,
+			},
+		},
+	}}
+
 	var behaviourStabilizationWindowSeconds int32
 	if obj.Type() == pdoknlv3.ServiceTypeWFS {
 		behaviourStabilizationWindowSeconds = 300
 	}
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(getReconcilerClient(r), autoscaler, labels); err != nil {
-		return err
+	autoscaler.Spec.Behavior = &autoscalingv2.HorizontalPodAutoscalerBehavior{
+		ScaleUp: &autoscalingv2.HPAScalingRules{
+			StabilizationWindowSeconds: &behaviourStabilizationWindowSeconds,
+			Policies: []autoscalingv2.HPAScalingPolicy{{
+				Type:          autoscalingv2.PodsScalingPolicy,
+				Value:         20,
+				PeriodSeconds: 60,
+			}},
+			SelectPolicy: smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
+		},
+		ScaleDown: &autoscalingv2.HPAScalingRules{
+			StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(3600)),
+			Policies: []autoscalingv2.HPAScalingPolicy{
+				{
+					Type:          autoscalingv2.PercentScalingPolicy,
+					Value:         10,
+					PeriodSeconds: 600,
+				},
+				{
+					Type:          autoscalingv2.PodsScalingPolicy,
+					Value:         1,
+					PeriodSeconds: 600,
+				},
+			},
+			SelectPolicy: smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
+		},
 	}
-
-	minReplicas := int32(2)
-	if autoscalerPatch != nil && autoscalerPatch.MinReplicas != nil {
-		minReplicas = *autoscalerPatch.MinReplicas
-	}
-
-	maxReplicas := int32(30)
-	if autoscalerPatch != nil && autoscalerPatch.MaxReplicas != 0 {
-		maxReplicas = autoscalerPatch.MaxReplicas
-	}
-
-	var metrics []autoscalingv2.MetricSpec
-	if autoscalerPatch != nil {
-		metrics = autoscalerPatch.Metrics
-	}
-	if len(metrics) == 0 {
-		var avgU int32 = 90
-		if cpu := mapperutils.GetContainerResourceRequest(obj, constants.MapserverName, corev1.ResourceCPU); cpu != nil {
-			avgU = 80
+	if obj.HorizontalPodAutoscalerPatch() != nil {
+		patchedSpec, err := smoothoperatorutils.StrategicMergePatch(&autoscaler.Spec, obj.HorizontalPodAutoscalerPatch())
+		if err != nil {
+			return err
 		}
-		metrics = append(metrics, autoscalingv2.MetricSpec{
-			Type: autoscalingv2.ResourceMetricSourceType,
-			Resource: &autoscalingv2.ResourceMetricSource{
-				Name: corev1.ResourceCPU,
-				Target: autoscalingv2.MetricTarget{
-					Type:               autoscalingv2.UtilizationMetricType,
-					AverageUtilization: smoothoperatorutils.Pointer(avgU),
-				},
-			},
-		})
+		autoscaler.Spec = *patchedSpec
 	}
-
-	autoscaler.Spec = autoscalingv2.HorizontalPodAutoscalerSpec{
-		ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       getSuffixedName(obj, constants.MapserverName),
-		},
-		MinReplicas: &minReplicas,
-		MaxReplicas: maxReplicas,
-		Metrics:     metrics,
-		Behavior: &autoscalingv2.HorizontalPodAutoscalerBehavior{
-			ScaleUp: &autoscalingv2.HPAScalingRules{
-				StabilizationWindowSeconds: &behaviourStabilizationWindowSeconds,
-				SelectPolicy:               smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
-				Policies: []autoscalingv2.HPAScalingPolicy{
-					{
-						Type:          autoscalingv2.PodsScalingPolicy,
-						Value:         20,
-						PeriodSeconds: 60,
-					},
-				},
-			},
-			ScaleDown: &autoscalingv2.HPAScalingRules{
-				StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(3600)),
-				SelectPolicy:               smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
-				Policies: []autoscalingv2.HPAScalingPolicy{
-					{
-						Type:          autoscalingv2.PercentScalingPolicy,
-						Value:         10,
-						PeriodSeconds: 600,
-					},
-					{
-						Type:          autoscalingv2.PodsScalingPolicy,
-						Value:         1,
-						PeriodSeconds: 600,
-					},
-				},
-			},
-		},
-	}
-
 	if err := smoothoperatorutils.EnsureSetGVK(getReconcilerClient(r), autoscaler, autoscaler); err != nil {
 		return err
 	}
