@@ -148,7 +148,7 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 		Title:    src.Title,
 		Abstract: src.Abstract,
 		Keywords: src.Keywords,
-		DatasetMetadataURL: pdoknlv3.MetadataURL{
+		DatasetMetadataURL: &pdoknlv3.MetadataURL{
 			CSW: &pdoknlv3.Metadata{
 				MetadataIdentifier: src.DatasetMetadataIdentifier,
 			},

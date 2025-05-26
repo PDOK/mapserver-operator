@@ -75,7 +75,7 @@ func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch 
 
 	return &pdoknlv3.HorizontalPodAutoscalerPatch{
 		MinReplicas: minReplicas,
-		MaxReplicas: maxReplicas,
+		MaxReplicas: &maxReplicas,
 		Metrics:     metrics,
 	}
 }
@@ -221,8 +221,10 @@ func NewV2KubernetesObject(lifecycle *smoothoperatormodel.Lifecycle, podSpecPatc
 	kub.Resources = &podSpecPatch.Containers[0].Resources
 
 	if scalingSpec != nil {
-		kub.Autoscaling = &Autoscaling{
-			MaxReplicas: smoothoperatorutils.Pointer(int(scalingSpec.MaxReplicas)),
+		kub.Autoscaling = &Autoscaling{}
+
+		if scalingSpec.MaxReplicas != nil {
+			kub.Autoscaling.MaxReplicas = smoothoperatorutils.Pointer(int(*scalingSpec.MaxReplicas))
 		}
 
 		if scalingSpec.MinReplicas != nil {

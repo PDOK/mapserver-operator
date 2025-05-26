@@ -118,6 +118,7 @@ type WFSService struct {
 
 	// Keywords for capabilities
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:MinLength:=1
 	Keywords []string `json:"keywords"`
 
 	// Optional Fees
@@ -164,6 +165,8 @@ func (s WFSService) KeywordsIncludingInspireKeyword() []string {
 // HealthCheck is the struct with all fields to configure custom healthchecks
 type HealthCheckWFS struct {
 	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:XValidation:rule="self.contains('Service=WFS')",message="a valid healthcheck contains 'Service=WFS'"
+	// +kubebuilder:validation:XValidation:rule="self.contains('Request=')",message="a valid healthcheck contains 'Request='"
 	Querystring string `json:"querystring"`
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype string `json:"mimetype"`
@@ -192,11 +195,12 @@ type FeatureType struct {
 
 	// Keywords of the feature
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:MinLength:=1
 	Keywords []string `json:"keywords"`
 
 	// Metadata URL
 	// +kubebuilder:validation:Type=object
-	DatasetMetadataURL MetadataURL `json:"datasetMetadataUrl"`
+	DatasetMetadataURL *MetadataURL `json:"datasetMetadataUrl,omitempty"`
 
 	// Optional feature bbox
 	// +kubebuilder:validation:Optional

@@ -1,92 +1,30 @@
 apiVersion: pdok.nl/v3
 kind: WFS
 metadata:
-  labels:
-    app.kubernetes.io/name: mapserver-operator
-    app.kubernetes.io/managed-by: kustomize
-    dataset: dataset
-    dataset-owner: eigenaar
-    service-type: wfs
-    service-version: 1.0.0
-  name: sample-v3
+  name: sample
 spec:
-  lifecycle:
-    ttlInDays: 21
-  podSpecPatch:
-    containers:
-      - name: mapserver
-        resources:
-          limits:
-            memory: 12M
-            ephemeral-storage: 2G
   horizontalPodAutoscalerPatch:
-    scaleTargetRef:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: wfs-sample-v3
-    maxReplicas: 5
-    minReplicas: 2
-    metrics:
-      - type: "Resource"
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-  options:
-    automaticCasing: true
-    prefetchData: false
-    includeIngress: false
+    maxReplicas: 1
+  podSpecPatch: {}
   service:
-    prefix: ""
-    url: https://service.pdok.nl/eigenaar/dataset/wfs/1.0.0
-    inspire:
-      serviceMetadataUrl:
-        csw:
-          metadataIdentifier: 68a42961-ed55-436b-a412-cc7424fd2a6e
-      spatialDatasetIdentifier: ""
-      language: "dut"
-    ownerInfoRef: pdok
-    title: "Dataset"
-    abstract: "Dataset beschrijving ..."
-    keywords:
-      - keyword1
-      - keyword2
-    fees: ""
-    accessConstraints: ""
+    title: "title"
+    abstract: "abstract"
     defaultCrs: "EPSG:28992"
-    bbox:
-      defaultCRS:
-        minx: "0"
-        maxx: "280000"
-        miny: "300000"
-        maxy: "625000"
-    countDefault: "12"
+    keywords:
+      - "keyword"
+    ownerInfoRef: "owner"
+    prefix: "prefix"
+    url: "http://host/path"
     featureTypes:
-      - name: Feature1
-        title: Feature1
-        abstract: "Feature 1 beschrijving..."
+      - name: "name"
+        title: "title"
+        abstract: "abstract"
         keywords:
-          - keyword1
-          - keyword2
-        datasetMetadataUrl:
-          csw:
-            metadataIdentifier: 07d73b60-dfd6-4c54-9c82-9fac70c6c48e
-        bbox:
-          defaultCRS: # EXTENT/wfs_extent in mapfile
-            minx: "0"
-            maxx: "280000"
-            miny: "300000"
-            maxy: "625000"
+          - "word"
         data:
           gpkg:
-            blobKey: eigenaar/dataset/data.gpkg
-            tableName: table1
-            geometryType: "MultiPolygon"
+            blobKey: "container/prefix/file.gpkg"
             columns:
-              - name: naam
-              - name: gebiedsnum
-                alias: gebiedsnummer
-              - name: besluitnum
-              - name: besluitdat
-                alias: datum
+              - name: "column"
+            geometryType: "Point"
+            tableName: "table"

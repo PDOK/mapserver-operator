@@ -1084,8 +1084,6 @@ spec:
                     minReplicas:
                       format: int32
                       type: integer
-                  required:
-                    - maxReplicas
                   type: object
                 lifecycle:
                   description: Optional lifecycle settings
@@ -1213,6 +1211,7 @@ spec:
                     keywords:
                       description: Keywords of the service
                       items:
+                        minLength: 1
                         type: string
                       minItems: 1
                       type: array
@@ -1280,7 +1279,7 @@ spec:
                                 blobKey:
                                   description: Blobkey identifies the location/bucket of the .gpkg file
                                   minLength: 1
-                                  pattern: \.gpkg$
+                                  pattern: ^.+\/.+\/.+\.gpkg$
                                   type: string
                                 columns:
                                   description: Columns to visualize for this table
@@ -1488,7 +1487,7 @@ spec:
                                       blobKey:
                                         description: Blobkey identifies the location/bucket of the .gpkg file
                                         minLength: 1
-                                        pattern: \.gpkg$
+                                        pattern: ^.+\/.+\/.+\.gpkg$
                                         type: string
                                       columns:
                                         description: Columns to visualize for this table
@@ -1696,7 +1695,7 @@ spec:
                                             blobKey:
                                               description: Blobkey identifies the location/bucket of the .gpkg file
                                               minLength: 1
-                                              pattern: \.gpkg$
+                                              pattern: ^.+\/.+\/.+\.gpkg$
                                               type: string
                                             columns:
                                               description: Columns to visualize for this table

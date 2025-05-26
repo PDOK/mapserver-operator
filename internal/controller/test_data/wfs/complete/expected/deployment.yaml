@@ -97,7 +97,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?test=123''
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?Service=WFS&Request=GetCapabilities''
                   2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/html'''
             successThreshold: 1
             failureThreshold: 3
@@ -116,7 +116,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?test=123''
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?Service=WFS&Request=GetCapabilities''
                   2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/html'''
             successThreshold: 1
             failureThreshold: 3
