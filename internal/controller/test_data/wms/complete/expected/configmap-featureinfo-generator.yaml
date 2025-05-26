@@ -61,7 +61,7 @@ metadata:
     service-type: wms
     service-version: v1_0
     theme: '2016'
-  name: complete-wms-featureinfo-generator-f8fbtkkfft
+  name: complete-wms-featureinfo-generator-257f6m6228
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

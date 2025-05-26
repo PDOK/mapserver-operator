@@ -168,7 +168,7 @@ metadata:
     service-type: wms
     service-version: v1_0
     theme: '2016'
-  name: complete-wms-mapfile-generator-7dgmhcgb5b
+  name: complete-wms-mapfile-generator-m8m7bf46f7
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

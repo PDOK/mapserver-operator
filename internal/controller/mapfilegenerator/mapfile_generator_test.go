@@ -81,7 +81,7 @@ func testWMS(t *testing.T, filenameWithoutExt string) {
 	assert.NoError(t, err)
 
 	diff := cmp.Diff(expected, inputStruct)
-	assert.Equal(t, diff, "", "%s", diff)
+	assert.Equal(t, diff == "", true, "%s", diff)
 }
 
 func readExpectedWMS(filename string) (WMSInput, error) {

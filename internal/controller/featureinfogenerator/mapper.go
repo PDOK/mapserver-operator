@@ -28,7 +28,7 @@ func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, 
 		}
 
 		parentLayer := wms.Spec.Service.GetParentLayer(layer)
-		if parentLayer != nil && parentLayer.IsGroupLayer() {
+		if parentLayer != nil && parentLayer.IsGroupLayer() && parentLayer.Name != wms.Spec.Service.Layer.Name {
 			l.GroupName = smoothoperatorutils.PointerVal(parentLayer.Name, "")
 		}
 

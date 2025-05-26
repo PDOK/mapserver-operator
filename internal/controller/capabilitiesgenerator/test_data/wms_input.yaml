@@ -1,6 +1,6 @@
 global:
-  prefix: ""
-  namespace: http://.geonovum.nl
+  prefix: nwbwegen
+  namespace: http://nwbwegen.geonovum.nl
   onlineResourceUrl: http://localhost
   path: /rws/nwbwegen/wms/v1_0
   version: v1_0

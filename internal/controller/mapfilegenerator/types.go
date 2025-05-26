@@ -46,6 +46,9 @@ type WMSInput struct {
 	OutputFormatJpg   string       `json:"outputformat_jpg"`
 	OutputFormatPng   string       `json:"outputformat_png8"`
 	MaxSize           string       `json:"maxSize"`
+	TopLevelName      string       `json:"top_level_name,omitempty"`
+	Resolution        string       `json:"resolution,omitempty"`
+	DefResolution     string       `json:"defresolution,omitempty"`
 }
 
 //nolint:tagliatelle
@@ -72,12 +75,13 @@ type WFSLayer struct {
 	BaseLayer
 }
 
+//nolint:tagliatelle
 type GroupLayer struct {
 	Name       string `json:"name"`
 	Title      string `json:"title"`
 	Abstract   string `json:"abstract"`
-	StyleName  string `json:"styleName"`
-	StyleTitle string `json:"styleTitle"`
+	StyleName  string `json:"style_name"`
+	StyleTitle string `json:"style_title"`
 }
 
 //nolint:tagliatelle
@@ -86,7 +90,7 @@ type WMSLayer struct {
 	GroupName                   string  `json:"group_name,omitempty"`
 	Styles                      []Style `json:"styles"`
 	Offsite                     string  `json:"offsite,omitempty"`
-	GetFeatureInfoIncludesClass bool    `json:"get_feature_info_includes_class"`
+	GetFeatureInfoIncludesClass bool    `json:"get_feature_info_includes_class,omitempty"`
 }
 
 type Column struct {
