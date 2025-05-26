@@ -1,0 +1,371 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "false"
+    service-type: wms
+    service-version: v1_0
+  name: patches-wms-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: patches
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: mapserver
+      dataset: dataset
+      dataset-owner: datasetOwner
+      inspire: "false"
+      service-type: wms
+      service-version: v1_0
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: 'true'
+        kubectl.kubernetes.io/default-container: mapserver
+        match-regex.version-checker.io/mapserver: ^\d\.\d\.\d.*$
+        prometheus.io/port: "9117"
+        prometheus.io/scrape: "true"
+        priority.version-checker.io/mapserver: "4"
+        priority.version-checker.io/ogc-webservice-proxy: "4"
+      labels:
+        app: mapserver
+        dataset: dataset
+        dataset-owner: datasetOwner
+        inspire: "false"
+        service-type: wms
+        service-version: v1_0
+    spec:
+      restartPolicy: Never
+      dnsPolicy: None
+      containers:
+        - env:
+            - name: SERVICE_TYPE
+              value: NONE
+            - name: MAPSERVER_CONFIG_FILE
+              value: "/srv/patch/config"
+            - name: MS_MAPFILE
+              value: /srv/patch/map.map
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  key: AZURE_STORAGE_CONNECTION_STRING
+                  name: patch-blobs
+            - name: PATCH
+              value: PATCH
+          image: patch.patch/image:patch
+          imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - patch
+                  - "15"
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "patch"
+            successThreshold: 10
+            failureThreshold: 30
+            initialDelaySeconds: 200
+            periodSeconds: 100
+            timeoutSeconds: 100
+          name: mapserver
+          terminationMessagePath: /patch/termination-log
+          terminationMessagePolicy: File
+          ports:
+            - containerPort: 8000
+              protocol: SCTP
+            - name: patch
+              containerPort: 5000
+              protocol: UDP
+              hostIP: patch
+              hostPort: 5050
+            - containerPort: 80
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "patch"
+            successThreshold: 10
+            failureThreshold: 30
+            initialDelaySeconds: 200
+            periodSeconds: 100
+            timeoutSeconds: 100
+            terminationGracePeriodSeconds: 1000
+          resources:
+            limits:
+              ephemeral-storage: 4000M
+              memory: 8000M
+              cpu: "5"
+            requests:
+              cpu: "5"
+              ephemeral-storage: 2000M
+              memory: 2000M
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "patch"
+            successThreshold: 10
+            failureThreshold: 30
+            initialDelaySeconds: 200
+            periodSeconds: 100
+            timeoutSeconds: 100
+          volumeMounts:
+            - mountPath: /srv/data/patch
+              name: base
+              readOnly: true
+            - mountPath: /var/www/patch
+              name: data
+              readOnly: false
+              subPath: /patch
+            - name: patch
+              mountPath: /patch
+            - name: base
+              mountPath: /srv/data
+            - name: data
+              mountPath: /var/www
+            - mountPath: /srv/mapserver/config/include.conf
+              name: mapserver
+              subPath: include.conf
+            - mountPath: /srv/mapserver/config/ogc.lua
+              name: mapserver
+              subPath: ogc.lua
+            - name: mapserver
+              mountPath: /srv/mapserver/config/default_mapserver.conf
+              subPath: default_mapserver.conf
+            - mountPath: /srv/mapserver/config/scraping-error.xml
+              name: mapserver
+              subPath: scraping-error.xml
+        - args:
+            - "patch"
+          image: patch.patch/image:patch
+          imagePullPolicy: IfNotPresent
+          name: apache-exporter
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          ports:
+            - containerPort: 9117
+              protocol: TCP
+          resources:
+            limits:
+              memory: 48M
+            requests:
+              cpu: "0.02"
+        - name: ogc-webservice-proxy
+          image: patch.patch/image:patch
+          imagePullPolicy: IfNotPresent
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          resources:
+            limits:
+              memory: 200M
+            requests:
+              cpu: "0.05"
+          command:
+            - /ogc-webservice-proxy
+            - -h=http://127.0.0.1/
+            - -t=wms
+            - -s=/input/service-config.yaml
+            - -v
+            - -d=15
+          ports:
+            - containerPort: 9111
+          volumeMounts:
+            - name: ogc-webservice-proxy-config
+              mountPath: /input
+              readOnly: true
+      initContainers:
+        - args:
+            - |
+              set -e;
+              mkdir -p /srv/data/config/;
+              rclone config create --non-interactive --obscure blobs azureblob endpoint $BLOBS_ENDPOINT account $BLOBS_ACCOUNT key $BLOBS_KEY use_emulator true;
+              bash /srv/scripts/gpkg_download.sh;
+          command:
+            - /bin/sh
+            - -c
+          env:
+            - name: GEOPACKAGE_TARGET_PATH
+              value: /srv/data/gpkg
+            - name: GEOPACKAGE_DOWNLOAD_LIST
+              value: ${BLOBS_GEOPACKAGES_BUCKET}/key/file.gpkg
+          envFrom:
+            - configMapRef:
+                name: blobs-testtest
+            - secretRef:
+                name: blobs-testtest
+          image: test.test/image:test1
+          imagePullPolicy: IfNotPresent
+          name: blob-download
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          resources:
+            requests:
+              cpu: '3'
+            limits:
+              cpu: '5'
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - name: data
+              mountPath: /var/www
+              readOnly: false
+            - mountPath: /srv/scripts
+              name: init-scripts
+              readOnly: true
+        - env:
+            - name: SERVICECONFIG
+              value: /input/input.yaml
+          image: test.test/image:patch5
+          imagePullPolicy: Always
+          name: capabilities-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - mountPath: /input
+              name: capabilities-generator-config
+              readOnly: true
+        - args:
+            - --not-include
+            - wms
+            - /input/input.json
+            - /srv/data/config/mapfile
+          command:
+            - generate-mapfile
+          image: test.test/image:patch3
+          imagePullPolicy: IfNotPresent
+          name: mapfile-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /input
+              name: mapfile-generator-config
+              readOnly: true
+            - mountPath: /styling
+              name: patch
+              readOnly: true
+        - args:
+            - --input-path
+            - /input/input.json
+            - --dest-folder
+            - /srv/data/config/templates
+            - --file-name
+            - feature-info
+          command:
+            - featureinfo-generator
+          image: test.test/image:patch5
+          imagePullPolicy: Always
+          name: featureinfo-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /input
+              name: featureinfo-generator-config
+              readOnly: true
+          resources:
+            requests:
+              memory: '300M'
+            limits:
+              memory: '500M'
+        - command:
+            - bash
+            - -c
+            - |
+              patch;
+          env:
+            - name: MAPSERVER_CONFIG_FILE
+              value: "/srv/mapserver/config/default_mapserver.conf"
+            - name: MS_MAPFILE
+              value: /srv/data/config/mapfile/service.map
+          image: test.test/image:patch
+          imagePullPolicy: IfNotPresent
+          name: legend-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - mountPath: /srv/mapserver/config/default_mapserver.conf
+              name: mapserver
+              subPath: default_mapserver.conf
+            - mountPath: /input
+              name: legend-generator-config
+              readOnly: true
+      terminationGracePeriodSeconds: 600
+      volumes:
+        - emptyDir: {}
+          name: base
+        - emptyDir: {}
+          name: data
+        - configMap:
+            name: patch
+            defaultMode: 420
+          name: mapserver
+        - name: patch
+          csi:
+            driver: patch
+        - configMap:
+            name: patches-wms-ogc-webservice-proxy-22tb5878f7
+            defaultMode: 420
+          name: ogc-webservice-proxy-config
+        - configMap:
+            defaultMode: 511
+            name: patches-wms-init-scripts-fft29bbtdd
+          name: init-scripts
+        - configMap:
+            name: patches-wms-capabilities-generator-64hghk82m7
+            defaultMode: 420
+          name: capabilities-generator-config
+        - configMap:
+            name: patches-wms-mapfile-generator-fgfg585465
+            defaultMode: 420
+          name: mapfile-generator-config
+        - name: styling-files
+          projected:
+            sources:
+              - configMap:
+                  name: styling
+        - configMap:
+            name: patches-wms-featureinfo-generator-668mmh48cc
+            defaultMode: 420
+          name: featureinfo-generator-config
+        - configMap:
+            name: patches-wms-legend-generator-6cf9f5k5h5
+            defaultMode: 420
+          name: legend-generator-config

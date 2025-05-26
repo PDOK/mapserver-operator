@@ -1,0 +1,52 @@
+apiVersion: v1
+data:
+  input.json: |-
+    {
+        "Projection": "EPSG:28992",
+        "AutomaticCasing": false,
+        "Version": 2,
+        "Layers": [
+            {
+                "Name": "layer-name",
+                "Properties": [
+                    {
+                        "Name": "fuuid"
+                    },
+                    {
+                        "Name": "layer-column"
+                    }
+                ]
+            },
+            {
+                "Name": "group-child",
+                "GroupName": "group",
+                "Properties": [
+                    {
+                        "Name": "fuuid"
+                    },
+                    {
+                        "Name": "layer-column"
+                    }
+                ]
+            }
+        ]
+    }
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    inspire: "false"
+    service-type: wms
+    service-version: v1_0
+  name: patches-wms-featureinfo-generator-668mmh48cc
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: patches
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

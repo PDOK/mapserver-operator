@@ -63,6 +63,10 @@ var _ = Describe("Testing WMS Controller", func() {
 		testMutates(getWMSReconciler, &pdoknlv3.WMS{}, "complete")
 	})
 
+	Context("Testing Mutate functions for WMS with extreme patches", func() {
+		testMutates(getWMSReconciler, &pdoknlv3.WMS{}, "patches")
+	})
+
 	Context("When reconciling a resource", func() {
 
 		ctx := context.Background()
