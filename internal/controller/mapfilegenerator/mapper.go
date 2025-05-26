@@ -147,17 +147,12 @@ func getGeopackagePath(data pdoknlv3.Data) *string {
 func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (WMSInput, error) {
 	service := wms.Spec.Service
 
-	datasetOwner := ""
-	if service.Layer.Authority != nil {
-		datasetOwner = service.Layer.Authority.Name
-	} else {
-		datasetOwner = wms.ObjectMeta.Labels["dataset-owner"]
-	}
-
 	authority := wms.GetAuthority()
 	authorityURL := ""
+	datasetOwner := ""
 	if authority != nil {
 		authorityURL = authority.URL
+		datasetOwner = authority.Name
 	}
 
 	box := service.GetBoundingBox()

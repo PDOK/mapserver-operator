@@ -346,7 +346,7 @@ spec:
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: minimal-wms-mapfile-generator-gbcm54mbtm
+            name: minimal-wms-mapfile-generator-kg99hgf8dg
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files

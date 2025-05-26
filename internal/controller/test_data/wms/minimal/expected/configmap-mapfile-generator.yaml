@@ -107,7 +107,7 @@ metadata:
     inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: minimal-wms-mapfile-generator-gbcm54mbtm
+  name: minimal-wms-mapfile-generator-kg99hgf8dg
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
