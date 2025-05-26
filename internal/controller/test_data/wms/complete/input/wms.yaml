@@ -44,6 +44,7 @@ spec:
           ephemeral-storage: 11G
           memory: 50M
   service:
+    prefix: dataset
     abstract: some "service" abstract
     accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
     dataEPSG: EPSG:28992
