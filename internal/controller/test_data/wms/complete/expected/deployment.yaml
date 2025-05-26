@@ -382,7 +382,7 @@ spec:
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: complete-wms-mapfile-generator-cbb7m492f8
+            name: complete-wms-mapfile-generator-m8m7bf46f7
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files
