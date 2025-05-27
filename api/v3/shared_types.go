@@ -23,12 +23,9 @@ const (
 
 // HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
 // This way we don't have to specify the scaleTargetRef field in the CRD.
-// +kubebuilder:validation:XValidation:rule="self.maxReplicas >= self.minReplicas", message="metadataUrl should have csw or custom, not both"
 type HorizontalPodAutoscalerPatch struct {
-	// +kubebuilder:default:=2
-	MinReplicas int32 `json:"minReplicas,omitempty"`
-	// +kubebuilder:default:=30
-	MaxReplicas int32                                          `json:"maxReplicas,omitempty"`
+	MinReplicas *int32                                         `json:"minReplicas,omitempty"`
+	MaxReplicas *int32                                         `json:"maxReplicas,omitempty"`
 	Metrics     []autoscalingv2.MetricSpec                     `json:"metrics,omitempty"`
 	Behavior    *autoscalingv2.HorizontalPodAutoscalerBehavior `json:"behavior,omitempty"`
 }

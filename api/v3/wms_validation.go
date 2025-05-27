@@ -291,6 +291,10 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 		))
 	}
 
+	if wms.Spec.HorizontalPodAutoscalerPatch != nil {
+		ValidateHorizontalPodAutoscalerPatch(*wms.Spec.HorizontalPodAutoscalerPatch, allErrs)
+	}
+
 	podSpecPatch := wms.Spec.PodSpecPatch
 	ValidateEphemeralStorage(podSpecPatch, allErrs)
 }

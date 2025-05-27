@@ -3,10 +3,9 @@ kind: WFS
 metadata:
   name: sample
 spec:
-  horizontalPodAutoscalerPatch:
-    maxReplicas: 1
   podSpecPatch: {}
   service:
+    accessConstraints: "f"
     title: "title"
     abstract: "abstract"
     defaultCrs: "EPSG:28992"

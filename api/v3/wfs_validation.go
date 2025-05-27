@@ -3,8 +3,6 @@ package v3
 import (
 	"strings"
 
-	corev1 "k8s.io/api/core/v1"
-
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -58,25 +56,10 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 		sharedValidation.AddWarning(warnings, *path.Child("bbox"), "is not used when service.mapfile is configured", wfs.GroupVersionKind(), wfs.GetName())
 	}
 
+	if wfs.Spec.HorizontalPodAutoscalerPatch != nil {
+		ValidateHorizontalPodAutoscalerPatch(*wfs.Spec.HorizontalPodAutoscalerPatch, allErrs)
+	}
+
 	podSpecPatch := wfs.Spec.PodSpecPatch
 	ValidateEphemeralStorage(podSpecPatch, allErrs)
-}
-
-func ValidateEphemeralStorage(podSpecPatch corev1.PodSpec, allErrs *field.ErrorList) {
-	path := field.NewPath("spec").
-		Child("podSpecPatch").
-		Child("containers").
-		Key("mapserver").
-		Child("resources").
-		Child("limits").
-		Child(corev1.ResourceEphemeralStorage.String())
-	storageSet := false
-	for _, container := range podSpecPatch.Containers {
-		if container.Name == "mapserver" {
-			_, storageSet = container.Resources.Limits[corev1.ResourceEphemeralStorage]
-		}
-	}
-	if !storageSet {
-		*allErrs = append(*allErrs, field.Required(path, ""))
-	}
 }

@@ -30,6 +30,7 @@ func TestGetInputForWFS(t *testing.T) {
 	}
 	url, _ := smoothoperatormodel.ParseURL("http://localhost/datasetOwner/dataset/theme/wfs/v1_0")
 	pdoknlv3.SetHost("http://localhost")
+	accessConstraints, _ := smoothoperatormodel.ParseURL("http://creativecommons.org/publicdomain/zero/1.0/deed.nl")
 	tests := []struct {
 		name      string
 		args      args
@@ -54,7 +55,7 @@ func TestGetInputForWFS(t *testing.T) {
 							Title:             "some Service title",
 							Abstract:          "some \"Service\" abstract",
 							Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
-							AccessConstraints: smoothoperatorutils.Pointer("http://creativecommons.org/publicdomain/zero/1.0/deed.nl"),
+							AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
 							Inspire: &pdoknlv3.Inspire{
 								ServiceMetadataURL: pdoknlv3.MetadataURL{
 									CSW: &pdoknlv3.Metadata{
@@ -81,7 +82,7 @@ func TestGetInputForWFS(t *testing.T) {
 									Title:    "featuretype-1-title",
 									Abstract: "feature \"1\" abstract",
 									Keywords: []string{"featuretype-1-keyword-1", "featuretype-1-keyword-2"},
-									DatasetMetadataURL: pdoknlv3.MetadataURL{
+									DatasetMetadataURL: &pdoknlv3.MetadataURL{
 										CSW: &pdoknlv3.Metadata{
 											MetadataIdentifier: "datadata-data-data-data-datadatadata",
 										},
@@ -92,7 +93,7 @@ func TestGetInputForWFS(t *testing.T) {
 									Title:    "featuretype-2-title",
 									Abstract: "feature \"2\" abstract",
 									Keywords: []string{"featuretype-2-keyword-1", "featuretype-2-keyword-2"},
-									DatasetMetadataURL: pdoknlv3.MetadataURL{
+									DatasetMetadataURL: &pdoknlv3.MetadataURL{
 										CSW: &pdoknlv3.Metadata{
 											MetadataIdentifier: "datadata-data-data-data-datadatadata",
 										},

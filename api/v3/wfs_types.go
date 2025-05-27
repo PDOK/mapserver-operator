@@ -129,7 +129,7 @@ type WFSService struct {
 	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	// +kubebuilder:validation:MinLength:=1
-	AccessConstraints *string `json:"accessConstraints,omitempty"`
+	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
 
 	// Default CRS (DataEPSG)
 	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"

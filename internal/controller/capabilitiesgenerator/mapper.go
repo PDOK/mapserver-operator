@@ -54,7 +54,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 					ServiceIdentification: wfs200.ServiceIdentification{
 						Title:             mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
 						Abstract:          mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
-						AccessConstraints: *wfs.Spec.Service.AccessConstraints,
+						AccessConstraints: wfs.Spec.Service.AccessConstraints.String(),
 						Keywords: &wsc110.Keywords{
 							Keyword: wfs.Spec.Service.KeywordsIncludingInspireKeyword(),
 						},

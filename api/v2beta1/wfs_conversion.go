@@ -43,7 +43,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 	return src.ToV3(dst)
 }
 
-//nolint:gosec
+//nolint:gosec,funlen
 func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 	dst.ObjectMeta = src.ObjectMeta
 
@@ -76,6 +76,17 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		return err
 	}
 
+	accessConstraints, err := url.Parse("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
+	if err != nil {
+		return err
+	}
+	if src.Spec.Service.AccessConstraints != nil {
+		accessConstraints, err = url.Parse(*src.Spec.Service.AccessConstraints)
+		if err != nil {
+			return err
+		}
+	}
+
 	service := pdoknlv3.WFSService{
 		Prefix:            src.Spec.General.Dataset,
 		URL:               *url,
@@ -84,7 +95,7 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
 		Fees:              nil,
-		AccessConstraints: src.Spec.Service.AccessConstraints,
+		AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
 		DefaultCrs:        src.Spec.Service.DataEPSG,
 		OtherCrs: []string{
 			"EPSG::25831",
@@ -190,11 +201,13 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 		}
 	}
 
+	accessConstraints := src.Spec.Service.AccessConstraints.String()
+
 	service := WFSService{
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
-		AccessConstraints: src.Spec.Service.AccessConstraints,
+		AccessConstraints: &accessConstraints,
 		DataEPSG:          src.Spec.Service.DefaultCrs,
 		Maxfeatures:       src.Spec.Service.CountDefault,
 		Authority: Authority{
