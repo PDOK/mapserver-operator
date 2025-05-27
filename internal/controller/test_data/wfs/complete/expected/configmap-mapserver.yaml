@@ -130,7 +130,7 @@ metadata:
     service-type: wfs
     service-version: v1_0
     theme: theme
-  name: complete-wfs-mapserver-4dm5625f45
+  name: complete-wfs-mapserver-d84299cgbk
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

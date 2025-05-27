@@ -1137,7 +1137,7 @@ spec:
                     - validateRequests
                   type: object
                 podSpecPatch:
-                  description: Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
+                  description: Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
                 service:
@@ -2132,7 +2132,7 @@ spec:
                       type: string
                     url:
                       description: URL of the service
-                      format: uri
+                      pattern: ^https?://.+/.+
                       type: string
                   required:
                     - abstract
@@ -2145,6 +2145,7 @@ spec:
                     - url
                   type: object
               required:
+                - podSpecPatch
                 - service
               type: object
             status:

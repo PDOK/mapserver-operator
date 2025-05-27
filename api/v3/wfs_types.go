@@ -52,7 +52,7 @@ type WFS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   WFSSpec                            `json:"spec,omitempty"`
+	Spec   WFSSpec                            `json:"spec"`
 	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
 }
 
@@ -77,8 +77,8 @@ type WFSSpec struct {
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
-	// Optional strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
-	PodSpecPatch                 *corev1.PodSpec               `json:"podSpecPatch,omitempty"`
+	// Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
+	PodSpecPatch                 corev1.PodSpec                `json:"podSpecPatch"`
 	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
 	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
 	Options *Options `json:"options,omitempty"`
@@ -96,9 +96,7 @@ type WFSService struct {
 	Prefix string `json:"prefix"`
 
 	// URL of the service
-	// +kubebuilder:validation:Pattern:=`^https?://.*$`
-	// +kubebuilder:validation:MinLength:=1
-	URL string `json:"url"`
+	URL smoothoperatormodel.URL `json:"url"`
 
 	// Config for Inspire services
 	Inspire *Inspire `json:"inspire,omitempty"`
@@ -258,7 +256,7 @@ func (wfs *WFS) TypedName() string {
 	return name + "-" + typeSuffix
 }
 
-func (wfs *WFS) PodSpecPatch() *corev1.PodSpec {
+func (wfs *WFS) PodSpecPatch() corev1.PodSpec {
 	return wfs.Spec.PodSpecPatch
 }
 
@@ -274,7 +272,7 @@ func (wfs *WFS) Options() Options {
 	return *wfs.Spec.Options
 }
 
-func (wfs *WFS) URLPath() string {
+func (wfs *WFS) URL() smoothoperatormodel.URL {
 	return wfs.Spec.Service.URL
 }
 

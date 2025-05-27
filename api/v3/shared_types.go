@@ -1,8 +1,9 @@
 package v3
 
 import (
-	"net/url"
 	"strings"
+
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -38,7 +39,7 @@ type WMSWFS interface {
 	GroupKind() schema.GroupKind
 	Inspire() *Inspire
 	Mapfile() *Mapfile
-	PodSpecPatch() *corev1.PodSpec
+	PodSpecPatch() corev1.PodSpec
 	HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch
 	Type() ServiceType
 	TypedName() string
@@ -46,7 +47,7 @@ type WMSWFS interface {
 	HasPostgisData() bool
 
 	// URLPath returns the configured service URL
-	URLPath() string
+	URL() smoothoperatormodel.URL
 
 	GeoPackages() []*Gpkg
 
@@ -247,12 +248,6 @@ func GetHost(includeProtocol bool) string {
 	}
 
 	return host
-}
-
-func GetBaseURLPath[T WMSWFS](o T) string {
-	serviceURL := o.URLPath()
-	parsed, _ := url.Parse(serviceURL)
-	return strings.TrimPrefix(parsed.Path, "/")
 }
 
 func (d *Data) GetColumns() *[]Column {

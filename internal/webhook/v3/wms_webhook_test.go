@@ -77,18 +77,6 @@ var _ = Describe("WMS Webhook", func() {
 			Expect(len(warnings)).To(BeNumerically(">", 0))
 		})
 
-		It("Should deny creation if the baseUrl is not https", func() {
-			obj.Spec.Service.URL = "http://pdok.nl/wms-test"
-			_, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("Should deny creation if the baseUrl does not have a path", func() {
-			obj.Spec.Service.URL = "https://pdok.nl/"
-			_, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
-		})
-
 		It("Should deny creation if there are no labels", func() {
 			obj.Labels = map[string]string{}
 			_, err := validator.ValidateCreate(ctx, obj)

@@ -41,8 +41,8 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		Global: capabilitiesgenerator.Global{
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
-			Onlineresourceurl: pdoknlv3.GetHost(true),
-			Path:              "/" + pdoknlv3.GetBaseURLPath(wfs),
+			Onlineresourceurl: wfs.URL().Scheme + "://" + wfs.URL().Host,
+			Path:              wfs.URL().Path,
 			Version:           *serviceVersion,
 		},
 		Services: capabilitiesgenerator.Services{
@@ -218,7 +218,7 @@ func mapContactInfo(contactInfo smoothoperatorv1.ContactInfo) (serviceContactInf
 }
 
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
-	canonicalServiceURL := pdoknlv3.GetHost(true) + "/" + pdoknlv3.GetBaseURLPath(wms)
+	canonicalServiceURL := wms.URL()
 
 	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
 
@@ -232,8 +232,8 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 			// Prefix is unused for the WMS, but doesn't hurt to pass it
 			Namespace:         mapperutils.GetNamespaceURI(wms.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wms.Spec.Service.Prefix,
-			Onlineresourceurl: pdoknlv3.GetHost(true),
-			Path:              "/" + pdoknlv3.GetBaseURLPath(wms),
+			Onlineresourceurl: wms.URL().Scheme + "://" + wms.URL().Host,
+			Path:              wms.URL().Path,
 			Version:           *serviceVersion,
 		},
 		Services: capabilitiesgenerator.Services{
@@ -245,7 +245,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Title:              mapperutils.EscapeQuotes(wms.Spec.Service.Title),
 						Abstract:           &abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
-						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(pdoknlv3.GetHost(true))},
+						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(wms.URL().Scheme + "://" + wms.URL().Host)},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               smoothoperatorutils.Pointer("NONE"),
 						AccessConstraints:  &wms.Spec.Service.AccessConstraints,
@@ -259,20 +259,20 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 							Request: wms130.Request{
 								GetCapabilities: wms130.RequestType{
 									Format:  []string{"text/xml"},
-									DCPType: getDcpType(canonicalServiceURL, false),
+									DCPType: getDcpType(canonicalServiceURL.String(), false),
 								},
 								GetMap: wms130.RequestType{
 									Format:  []string{"image/png", "image/jpeg", "image/png; mode=8bit", "image/vnd.jpeg-png", "image/vnd.jpeg-png8"},
-									DCPType: getDcpType(canonicalServiceURL, true),
+									DCPType: getDcpType(canonicalServiceURL.String(), true),
 								},
 								GetFeatureInfo: &wms130.RequestType{
 									Format:  []string{"application/json", "application/json; subtype=geojson", "application/vnd.ogc.gml", "text/html", "text/plain", "text/xml", "text/xml; subtype=gml/3.1.1"},
-									DCPType: getDcpType(canonicalServiceURL, true),
+									DCPType: getDcpType(canonicalServiceURL.String(), true),
 								},
 							},
 							Exception:            wms130.ExceptionType{Format: []string{"XML", "BLANK"}},
 							ExtendedCapabilities: nil,
-							Layer:                getLayers(wms, canonicalServiceURL),
+							Layer:                getLayers(wms, canonicalServiceURL.String()),
 						},
 						OptionalConstraints: nil,
 					},
