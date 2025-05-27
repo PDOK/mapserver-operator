@@ -713,7 +713,7 @@ func (in *WFSService) DeepCopyInto(out *WFSService) {
 	}
 	if in.CountDefault != nil {
 		in, out := &in.CountDefault, &out.CountDefault
-		*out = new(string)
+		*out = new(int)
 		**out = **in
 	}
 	if in.FeatureTypes != nil {

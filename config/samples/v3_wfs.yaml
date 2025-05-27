@@ -2,10 +2,17 @@ apiVersion: pdok.nl/v3
 kind: WFS
 metadata:
   name: sample
+  labels:
+    sample: sample
 spec:
-  podSpecPatch: {}
+  podSpecPatch:
+    containers:
+      - name: mapserver
+        resources:
+          limits:
+            ephemeral-storage: 2G
   service:
-    accessConstraints: "f"
+    accessConstraints: "http://bla/bla"
     title: "title"
     abstract: "abstract"
     defaultCrs: "EPSG:28992"
@@ -14,6 +21,12 @@ spec:
     ownerInfoRef: "owner"
     prefix: "prefix"
     url: "http://host/path"
+    inspire:
+      language: dut
+      serviceMetadataUrl:
+        csw:
+          metadataIdentifier: testtest-test-test-test-testtesttest
+      spatialDatasetIdentifier: testtest-test-test-test-testtesttest
     featureTypes:
       - name: "name"
         title: "title"

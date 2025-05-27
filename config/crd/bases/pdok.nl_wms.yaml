@@ -1085,9 +1085,6 @@ spec:
                       format: int32
                       type: integer
                   type: object
-                  x-kubernetes-validations:
-                    - message: 'maxReplicas (default: 30) cannot be less than minReplicas (default: 2)'
-                      rule: (!has(self.maxReplicas) && !has(self.minReplicas)) || (has(self.maxReplicas) && has(self.minReplicas) && self.maxReplicas >= self.minReplicas) || (has(self.maxReplicas) && !has(self.minReplicas) && self.maxReplicas >= 2) || (!has(self.maxReplicas) && has(self.minReplicas) && 30 >= self.minReplicas)
                 lifecycle:
                   description: Optional lifecycle settings
                   properties:

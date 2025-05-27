@@ -126,9 +126,7 @@ type WFSService struct {
 	Fees *string `json:"fees,omitempty"`
 
 	// AccessConstraints URL
-	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	// +kubebuilder:validation:MinLength:=1
 	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
 
 	// Default CRS (DataEPSG)
@@ -144,8 +142,8 @@ type WFSService struct {
 	Bbox *Bbox `json:"bbox,omitempty"`
 
 	// CountDefault -> wfs_maxfeatures in mapfile
-	// +kubebuilder:validation:MinLength:=1
-	CountDefault *string `json:"countDefault,omitempty"`
+	// +kubebuilder:validation:Minimum:=1
+	CountDefault *int `json:"countDefault,omitempty"`
 
 	// FeatureTypes configurations
 	// +kubebuilder:validation:MinItems:=1

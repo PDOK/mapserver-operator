@@ -48,7 +48,7 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 		metadataID = wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
 	}
 
-	var extent string
+	extent := defaultExtent
 	if wfs.Spec.Service.Bbox != nil {
 		extent = wfs.Spec.Service.Bbox.DefaultCRS.ToExtent()
 	}
@@ -70,7 +70,7 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			EPSGList:   defaultEpsgList, // wfs.Spec.Service.OtherCrs,
 			DebugLevel: mapserverDebugLevel,
 		},
-		MaxFeatures: smoothoperatorutils.PointerVal(wfs.Spec.Service.CountDefault, strconv.Itoa(defaultMaxFeatures)),
+		MaxFeatures: strconv.Itoa(smoothoperatorutils.PointerVal(wfs.Spec.Service.CountDefault, defaultMaxFeatures)),
 		Layers:      getWFSLayers(wfs.Spec.Service),
 	}
 
