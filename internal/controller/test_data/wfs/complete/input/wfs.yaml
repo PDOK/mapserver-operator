@@ -11,7 +11,7 @@ metadata:
   namespace: default
 spec:
   healthCheck:
-    querystring: test=123
+    querystring: Service=WFS&Request=GetCapabilities
     mimetype: text/html
   horizontalPodAutoscalerPatch:
     maxReplicas: 50

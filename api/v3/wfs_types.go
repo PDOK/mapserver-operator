@@ -118,6 +118,7 @@ type WFSService struct {
 
 	// Keywords for capabilities
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:MinLength:=1
 	Keywords []string `json:"keywords"`
 
 	// Optional Fees
@@ -125,10 +126,8 @@ type WFSService struct {
 	Fees *string `json:"fees,omitempty"`
 
 	// AccessConstraints URL
-	// +kubebuilder:validation:Pattern:="https?://"
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	// +kubebuilder:validation:MinLength:=1
-	AccessConstraints *string `json:"accessConstraints,omitempty"`
+	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
 
 	// Default CRS (DataEPSG)
 	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"
@@ -143,8 +142,8 @@ type WFSService struct {
 	Bbox *Bbox `json:"bbox,omitempty"`
 
 	// CountDefault -> wfs_maxfeatures in mapfile
-	// +kubebuilder:validation:MinLength:=1
-	CountDefault *string `json:"countDefault,omitempty"`
+	// +kubebuilder:validation:Minimum:=1
+	CountDefault *int `json:"countDefault,omitempty"`
 
 	// FeatureTypes configurations
 	// +kubebuilder:validation:MinItems:=1
@@ -164,6 +163,8 @@ func (s WFSService) KeywordsIncludingInspireKeyword() []string {
 // HealthCheck is the struct with all fields to configure custom healthchecks
 type HealthCheckWFS struct {
 	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:XValidation:rule="self.contains('Service=WFS')",message="a valid healthcheck contains 'Service=WFS'"
+	// +kubebuilder:validation:XValidation:rule="self.contains('Request=')",message="a valid healthcheck contains 'Request='"
 	Querystring string `json:"querystring"`
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype string `json:"mimetype"`
@@ -192,11 +193,12 @@ type FeatureType struct {
 
 	// Keywords of the feature
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:MinLength:=1
 	Keywords []string `json:"keywords"`
 
 	// Metadata URL
 	// +kubebuilder:validation:Type=object
-	DatasetMetadataURL MetadataURL `json:"datasetMetadataUrl"`
+	DatasetMetadataURL *MetadataURL `json:"datasetMetadataUrl,omitempty"`
 
 	// Optional feature bbox
 	// +kubebuilder:validation:Optional

@@ -200,7 +200,11 @@ func (in *FeatureType) DeepCopyInto(out *FeatureType) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	in.DatasetMetadataURL.DeepCopyInto(&out.DatasetMetadataURL)
+	if in.DatasetMetadataURL != nil {
+		in, out := &in.DatasetMetadataURL, &out.DatasetMetadataURL
+		*out = new(MetadataURL)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Bbox != nil {
 		in, out := &in.Bbox, &out.Bbox
 		*out = new(FeatureBbox)
@@ -291,6 +295,11 @@ func (in *HorizontalPodAutoscalerPatch) DeepCopyInto(out *HorizontalPodAutoscale
 	*out = *in
 	if in.MinReplicas != nil {
 		in, out := &in.MinReplicas, &out.MinReplicas
+		*out = new(int32)
+		**out = **in
+	}
+	if in.MaxReplicas != nil {
+		in, out := &in.MaxReplicas, &out.MaxReplicas
 		*out = new(int32)
 		**out = **in
 	}
@@ -691,11 +700,7 @@ func (in *WFSService) DeepCopyInto(out *WFSService) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.AccessConstraints != nil {
-		in, out := &in.AccessConstraints, &out.AccessConstraints
-		*out = new(string)
-		**out = **in
-	}
+	in.AccessConstraints.DeepCopyInto(&out.AccessConstraints)
 	if in.OtherCrs != nil {
 		in, out := &in.OtherCrs, &out.OtherCrs
 		*out = make([]string, len(*in))
@@ -708,7 +713,7 @@ func (in *WFSService) DeepCopyInto(out *WFSService) {
 	}
 	if in.CountDefault != nil {
 		in, out := &in.CountDefault, &out.CountDefault
-		*out = new(string)
+		*out = new(int)
 		**out = **in
 	}
 	if in.FeatureTypes != nil {

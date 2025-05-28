@@ -466,6 +466,11 @@ spec:
                   querystring:
                     minLength: 1
                     type: string
+                    x-kubernetes-validations:
+                    - message: a valid healthcheck contains 'Service=WFS'
+                      rule: self.contains('Service=WFS')
+                    - message: a valid healthcheck contains 'Request='
+                      rule: self.contains('Request=')
                 required:
                 - mimetype
                 - querystring
@@ -1058,8 +1063,6 @@ spec:
                   minReplicas:
                     format: int32
                     type: integer
-                required:
-                - maxReplicas
                 type: object
               lifecycle:
                 description: Optional lifecycle settings
@@ -1132,8 +1135,7 @@ spec:
                   accessConstraints:
                     default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
                     description: AccessConstraints URL
-                    minLength: 1
-                    pattern: https?://
+                    pattern: ^https?://.+/.+
                     type: string
                   bbox:
                     description: Service bounding box
@@ -1168,8 +1170,8 @@ spec:
                     type: object
                   countDefault:
                     description: CountDefault -> wfs_maxfeatures in mapfile
-                    minLength: 1
-                    type: string
+                    minimum: 1
+                    type: integer
                   defaultCrs:
                     description: Default CRS (DataEPSG)
                     minLength: 1
@@ -1252,7 +1254,7 @@ spec:
                                   description: Blobkey identifies the location/bucket
                                     of the .gpkg file
                                   minLength: 1
-                                  pattern: \.gpkg$
+                                  pattern: ^.+\/.+\/.+\.gpkg$
                                   type: string
                                 columns:
                                   description: Columns to visualize for this table
@@ -1405,6 +1407,7 @@ spec:
                         keywords:
                           description: Keywords of the feature
                           items:
+                            minLength: 1
                             type: string
                           minItems: 1
                           type: array
@@ -1419,7 +1422,6 @@ spec:
                       required:
                       - abstract
                       - data
-                      - datasetMetadataUrl
                       - keywords
                       - name
                       - title
@@ -1487,6 +1489,7 @@ spec:
                   keywords:
                     description: Keywords for capabilities
                     items:
+                      minLength: 1
                       type: string
                     minItems: 1
                     type: array

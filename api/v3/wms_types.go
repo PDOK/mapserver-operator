@@ -90,6 +90,7 @@ type WMSService struct {
 
 	// Keywords of the service
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:MinLength:=1
 	Keywords []string `json:"keywords"`
 
 	// Reference to a CR of Kind OwnerInfo

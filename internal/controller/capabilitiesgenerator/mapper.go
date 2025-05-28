@@ -54,7 +54,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 					ServiceIdentification: wfs200.ServiceIdentification{
 						Title:             mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
 						Abstract:          mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
-						AccessConstraints: *wfs.Spec.Service.AccessConstraints,
+						AccessConstraints: wfs.Spec.Service.AccessConstraints.String(),
 						Keywords: &wsc110.Keywords{
 							Keyword: wfs.Spec.Service.KeywordsIncludingInspireKeyword(),
 						},
@@ -90,6 +90,17 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 				},
 			},
 		}
+	}
+	if wfs.Spec.Service.CountDefault != nil {
+		operationsMetadata := config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata
+		if operationsMetadata == nil {
+			operationsMetadata = &wfs200.OperationsMetadata{}
+		}
+		operationsMetadata.Constraint = append(operationsMetadata.Constraint, wfs200.Constraint{
+			Name:         "CountDefault",
+			DefaultValue: smoothoperatorutils.Pointer(strconv.Itoa(*wfs.Spec.Service.CountDefault)),
+		})
+		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = operationsMetadata
 	}
 
 	return &config, nil

@@ -26,6 +26,7 @@ package v2beta1
 
 import (
 	"log"
+	"strconv"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
@@ -43,7 +44,7 @@ func (src *WFS) ConvertTo(dstRaw conversion.Hub) error {
 	return src.ToV3(dst)
 }
 
-//nolint:gosec
+//nolint:gosec,funlen,cyclop
 func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 	dst.ObjectMeta = src.ObjectMeta
 
@@ -76,6 +77,20 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		return err
 	}
 
+	accessConstraints, err := url.Parse("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
+	if err != nil {
+		return err
+	}
+	if src.Spec.Service.AccessConstraints != nil {
+		accessConstraints, err = url.Parse(*src.Spec.Service.AccessConstraints)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err != nil {
+		return err
+	}
 	service := pdoknlv3.WFSService{
 		Prefix:            src.Spec.General.Dataset,
 		URL:               *url,
@@ -84,7 +99,7 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
 		Fees:              nil,
-		AccessConstraints: src.Spec.Service.AccessConstraints,
+		AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
 		DefaultCrs:        src.Spec.Service.DataEPSG,
 		OtherCrs: []string{
 			"EPSG::25831",
@@ -95,8 +110,15 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 			"EPSG::4258",
 			"EPSG::4326",
 		},
-		CountDefault: src.Spec.Service.Maxfeatures,
 		FeatureTypes: make([]pdoknlv3.FeatureType, 0),
+	}
+
+	if src.Spec.Service.Maxfeatures != nil {
+		maxFeatures, err := strconv.Atoi(*src.Spec.Service.Maxfeatures)
+		if err != nil {
+			return err
+		}
+		service.CountDefault = &maxFeatures
 	}
 
 	if src.Spec.Service.Mapfile != nil {
@@ -148,7 +170,7 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 		Title:    src.Title,
 		Abstract: src.Abstract,
 		Keywords: src.Keywords,
-		DatasetMetadataURL: pdoknlv3.MetadataURL{
+		DatasetMetadataURL: &pdoknlv3.MetadataURL{
 			CSW: &pdoknlv3.Metadata{
 				MetadataIdentifier: src.DatasetMetadataIdentifier,
 			},
@@ -190,17 +212,22 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 		}
 	}
 
+	accessConstraints := src.Spec.Service.AccessConstraints.String()
+
 	service := WFSService{
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
-		AccessConstraints: src.Spec.Service.AccessConstraints,
+		AccessConstraints: &accessConstraints,
 		DataEPSG:          src.Spec.Service.DefaultCrs,
-		Maxfeatures:       src.Spec.Service.CountDefault,
 		Authority: Authority{
 			Name: "",
 			URL:  "",
 		},
+	}
+
+	if src.Spec.Service.CountDefault != nil {
+		service.Maxfeatures = smoothoperatorutils.Pointer(strconv.Itoa(*src.Spec.Service.CountDefault))
 	}
 
 	if src.Spec.Service.Bbox != nil {
