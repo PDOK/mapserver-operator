@@ -46,9 +46,12 @@ type WMSWFS interface {
 	Options() Options
 	HasPostgisData() bool
 
-	// URLPath returns the configured service URL
+	// URL returns the configured service URL
 	URL() smoothoperatormodel.URL
 	IngressRouteURLs() smoothoperatormodel.IngressRouteURLs
+
+	// DatasetMetadataIds returns list of all configured metadata identifiers configured on Layers or Featuretypes
+	DatasetMetadataIDs() []string
 
 	GeoPackages() []*Gpkg
 
@@ -115,18 +118,18 @@ type Inspire struct {
 	ServiceMetadataURL MetadataURL `json:"serviceMetadataUrl"`
 
 	// SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
-	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:Pattern:=`^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$`
 	SpatialDatasetIdentifier string `json:"spatialDatasetIdentifier"`
 
 	// Language of the INSPIRE metadata record
-	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:Pattern:=`bul|cze|dan|dut|eng|est|fin|fre|ger|gre|hun|gle|ita|lav|lit|mlt|pol|por|rum|slo|slv|spa|swe`
 	Language string `json:"language"`
 }
 
-// +kubebuilder:validation:XValidation:rule="(has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))", message="metadataUrl should have csw or custom, not both"
+// +kubebuilder:validation:XValidation:rule="(has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))", message="metadataUrl should have exactly 1 of csw or custom"
 type MetadataURL struct {
 	// CSW describes a metadata record via a metadataIdentifier (UUID) as defined in the OwnerInfo.
-	CSW *Metadata `json:"csw"`
+	CSW *Metadata `json:"csw,omitempty"`
 
 	// Custom allows arbitrary href
 	Custom *Custom `json:"custom,omitempty"`
@@ -135,16 +138,15 @@ type MetadataURL struct {
 // Metadata holds the UUID of a CSW metadata record
 type Metadata struct {
 	// MetadataIdentifier is the record's UUID
-	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:Pattern:=`^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$`
 	MetadataIdentifier string `json:"metadataIdentifier"`
 }
 
 // Custom represents a non-CSW metadata link with a href and MIME type.
 // +kubebuilder:validation:Type=object
 type Custom struct {
-	// +kubebuilder:validation:Pattern=`^https?://.*$`
-	// +kubebuilder:validation:MinLength=1
-	Href string `json:"href"`
+	// Href of the custom metadata url
+	Href smoothoperatormodel.URL `json:"href"`
 
 	// MIME type of the custom link
 	// +kubebuilder:validation:MinLength=1

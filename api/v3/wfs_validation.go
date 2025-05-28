@@ -61,6 +61,8 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 		sharedValidation.AddWarning(warnings, *path.Child("bbox"), "is not used when service.mapfile is configured", wfs.GroupVersionKind(), wfs.GetName())
 	}
 
+	ValidateInspire(wfs, allErrs)
+
 	if wfs.Spec.HorizontalPodAutoscalerPatch != nil {
 		ValidateHorizontalPodAutoscalerPatch(*wfs.Spec.HorizontalPodAutoscalerPatch, allErrs)
 	}

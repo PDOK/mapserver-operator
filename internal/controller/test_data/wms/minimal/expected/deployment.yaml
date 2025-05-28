@@ -342,11 +342,11 @@ spec:
             name: minimal-wms-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: minimal-wms-capabilities-generator-ht6dhbm85g
+            name: minimal-wms-capabilities-generator-bmtt8d9582
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: minimal-wms-mapfile-generator-4c6ch6k54h
+            name: minimal-wms-mapfile-generator-kfkkm2kf78
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files

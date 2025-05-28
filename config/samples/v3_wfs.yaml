@@ -12,7 +12,12 @@ spec:
           limits:
             ephemeral-storage: 2G
   service:
-    accessConstraints: "http://bla/bla"
+    inspire:
+      language: dut
+      serviceMetadataUrl:
+        csw:
+          metadataIdentifier: 655549bd-8c05-4c69-950b-ad1e346dcac9
+      spatialDatasetIdentifier: 90af202c-de3a-4fbf-901c-82ae703904e3
     title: "title"
     abstract: "abstract"
     defaultCrs: "EPSG:28992"
@@ -21,12 +26,6 @@ spec:
     ownerInfoRef: "owner"
     prefix: "prefix"
     url: "http://host/path"
-    inspire:
-      language: dut
-      serviceMetadataUrl:
-        csw:
-          metadataIdentifier: testtest-test-test-test-testtesttest
-      spatialDatasetIdentifier: testtest-test-test-test-testtesttest
     featureTypes:
       - name: "name"
         title: "title"

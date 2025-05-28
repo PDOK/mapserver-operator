@@ -77,7 +77,7 @@ data:
                           metadataurl:
                             - format: text/plain
                               onlineresource:
-                                href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=ds-md-id
+                                href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
                                 type: simple
                                 xlink: http://www.w3.org/1999/xlink
                               type: TC211
@@ -98,7 +98,7 @@ data:
                       metadataurl:
                         - format: text/plain
                           onlineresource:
-                            href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=ds-md-id
+                            href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
                             type: simple
                             xlink: http://www.w3.org/1999/xlink
                           type: TC211
@@ -139,7 +139,7 @@ metadata:
     inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: patches-wms-capabilities-generator-64hghk82m7
+  name: patches-wms-capabilities-generator-2765hcfg8h
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
