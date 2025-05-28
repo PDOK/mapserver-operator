@@ -14,6 +14,13 @@ func ValidateUpdate[W WMSWFS](newW, oldW W, validate func(W, *[]string, *field.E
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
+	// Check that the ingressRouteUrls contain the base url and no urls have been removed
+	err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(), newW.URL(), nil)
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+	sharedValidation.ValidateIngressRouteURLsNotRemoved(oldW.IngressRouteURLs(), newW.IngressRouteURLs(), &allErrs, nil)
+
 	sharedValidation.ValidateLabelsOnUpdate(oldW.GetLabels(), newW.GetLabels(), &allErrs)
 
 	path := field.NewPath("spec").Child("service").Child("url")

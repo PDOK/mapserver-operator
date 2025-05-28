@@ -70,6 +70,7 @@ func init() {
 }
 
 // WFSSpec vertegenwoordigt de hoofdstruct voor de YAML-configuratie
+// +kubebuilder:validation:XValidation:rule="!has(self.ingressRouteUrls) || self.ingressRouteUrls.exists_one(x, x.url == self.service.url)",messageExpression="'ingressRouteUrls should include service.url '+self.service.url"
 type WFSSpec struct {
 	// Optional lifecycle settings
 	Lifecycle *smoothoperatormodel.Lifecycle `json:"lifecycle,omitempty"`
@@ -85,6 +86,10 @@ type WFSSpec struct {
 
 	// Custom healthcheck options
 	HealthCheck *HealthCheckWFS `json:"healthCheck,omitempty"`
+
+	// Optional list of URLs where the service can be reached
+	// By default only the spec.service.url is used
+	IngressRouteURLs smoothoperatormodel.IngressRouteURLs `json:"ingressRouteUrls,omitempty"`
 
 	// service configuration
 	Service WFSService `json:"service"`
@@ -300,4 +305,12 @@ func (wfs *WFS) ReadinessQueryString() (string, string, error) {
 	}
 
 	return "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + wfs.Spec.Service.FeatureTypes[0].Name + "&STARTINDEX=0&COUNT=1", "text/xml", nil
+}
+
+func (wfs *WFS) IngressRouteURLs() smoothoperatormodel.IngressRouteURLs {
+	if len(wfs.Spec.IngressRouteURLs) == 0 {
+		return smoothoperatormodel.IngressRouteURLs{{URL: wfs.Spec.Service.URL}}
+	}
+
+	return wfs.Spec.IngressRouteURLs
 }

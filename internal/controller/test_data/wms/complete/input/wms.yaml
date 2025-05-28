@@ -11,6 +11,9 @@ metadata:
   name: complete
   namespace: default
 spec:
+  ingressRouteUrls:
+    - url: http://localhost:32788/datasetOwner/dataset/2016/wms/v1_0
+    - url: http://localhost:32788/other/path
   healthCheck:
     boundingbox:
       maxx: "33"
@@ -229,7 +232,7 @@ spec:
         title: top-layer-style-2-title
       title: Top "Layer" Title
       visible: true
-    ownerInfoRef: pdok
+    ownerInfoRef: owner
     resolution: 20
     stylingAssets:
       blobKeys:

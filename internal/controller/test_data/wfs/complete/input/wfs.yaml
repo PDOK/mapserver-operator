@@ -10,6 +10,9 @@ metadata:
   name: complete
   namespace: default
 spec:
+  ingressRouteUrls:
+    - url: http://localhost:32788/datasetOwner/dataset/theme/wfs/v1_0
+    - url: http://localhost:32788/other/path
   healthCheck:
     querystring: Service=WFS&Request=GetCapabilities
     mimetype: text/html

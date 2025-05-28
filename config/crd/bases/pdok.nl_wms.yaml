@@ -1085,6 +1085,21 @@ spec:
                       format: int32
                       type: integer
                   type: object
+                ingressRouteUrls:
+                  description: |-
+                    Optional list of URLs where the service can be reached
+                    By default only the spec.service.url is used
+                  items:
+                    properties:
+                      url:
+                        pattern: ^https?://.+/.+
+                        type: string
+                    required:
+                      - url
+                    type: object
+                  maxItems: 30
+                  minItems: 1
+                  type: array
                 lifecycle:
                   description: Optional lifecycle settings
                   properties:
@@ -2147,6 +2162,9 @@ spec:
                 - podSpecPatch
                 - service
               type: object
+              x-kubernetes-validations:
+                - messageExpression: '''ingressRouteUrls should include service.url ''+self.service.url'
+                  rule: '!has(self.ingressRouteUrls) || self.ingressRouteUrls.exists_one(x, x.url == self.service.url)'
             status:
               description: OperatorStatus defines the observed state of an Atom/WFS/WMS/....
               properties:

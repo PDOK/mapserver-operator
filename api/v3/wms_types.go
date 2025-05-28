@@ -49,6 +49,7 @@ const (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // WMSSpec defines the desired state of WMS.
+// +kubebuilder:validation:XValidation:rule="!has(self.ingressRouteUrls) || self.ingressRouteUrls.exists_one(x, x.url == self.service.url)",messageExpression="'ingressRouteUrls should include service.url '+self.service.url"
 type WMSSpec struct {
 	// Optional lifecycle settings
 	Lifecycle *smoothoperatormodel.Lifecycle `json:"lifecycle,omitempty"`
@@ -68,6 +69,10 @@ type WMSSpec struct {
 
 	// Custom healthcheck options
 	HealthCheck *HealthCheckWMS `json:"healthCheck,omitempty"`
+
+	// Optional list of URLs where the service can be reached
+	// By default only the spec.service.url is used
+	IngressRouteURLs smoothoperatormodel.IngressRouteURLs `json:"ingressRouteUrls,omitempty"`
 
 	// Service specification
 	Service WMSService `json:"service"`
@@ -669,4 +674,12 @@ func (wms *WMS) ReadinessQueryString() (string, string, error) {
 	}
 
 	return fmt.Sprintf("SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=%s&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=%s&STYLES=&FORMAT=image/png", wms.HealthCheckBBox(), firstDataLayerName), "image/png", nil
+}
+
+func (wms *WMS) IngressRouteURLs() smoothoperatormodel.IngressRouteURLs {
+	if len(wms.Spec.IngressRouteURLs) == 0 {
+		return smoothoperatormodel.IngressRouteURLs{{URL: wms.Spec.Service.URL}}
+	}
+
+	return wms.Spec.IngressRouteURLs
 }

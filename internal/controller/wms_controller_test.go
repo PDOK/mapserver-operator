@@ -71,7 +71,7 @@ var _ = Describe("Testing WMS Controller", func() {
 
 		ctx := context.Background()
 
-		inputPath := testPath(pdoknlv3.ServiceTypeWMS, "minimal") + "input/"
+		inputPath := testPath(pdoknlv3.ServiceTypeWMS, "complete") + "input/"
 
 		testWMS := pdoknlv3.WMS{}
 		clusterWMS := &pdoknlv3.WMS{}
@@ -95,7 +95,7 @@ var _ = Describe("Testing WMS Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			err = yaml.UnmarshalStrict(data, &testWMS)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(testWMS.Name).Should(Equal("minimal"))
+			Expect(testWMS.Name).Should(Equal("complete"))
 
 			objectKeyWMS = k8stypes.NamespacedName{
 				Namespace: testWMS.GetNamespace(),
@@ -142,6 +142,7 @@ var _ = Describe("Testing WMS Controller", func() {
 		It("Should create all expected resources", func() {
 			expectedResources, err := getExpectedObjects(ctx, clusterWMS, true, true)
 			Expect(err).NotTo(HaveOccurred())
+
 			for _, expectedResource := range expectedResources {
 				Eventually(func() bool {
 					err := k8sClient.Get(ctx, k8stypes.NamespacedName{Namespace: expectedResource.GetNamespace(), Name: expectedResource.GetName()}, expectedResource)
