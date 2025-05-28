@@ -48,6 +48,7 @@ type WMSWFS interface {
 
 	// URLPath returns the configured service URL
 	URL() smoothoperatormodel.URL
+	IngressRouteURLs() smoothoperatormodel.IngressRouteURLs
 
 	GeoPackages() []*Gpkg
 

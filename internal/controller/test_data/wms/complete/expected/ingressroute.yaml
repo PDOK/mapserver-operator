@@ -43,3 +43,20 @@ spec:
         - kind: Service
           name: complete-wms-mapserver
           port: 9111
+    - kind: Rule
+      match: Host(`localhost`) &&
+        PathPrefix(`/other/path/legend`)
+      middlewares:
+        - name: complete-wms-mapserver-headers
+      services:
+        - kind: Service
+          name: complete-wms-mapserver
+          port: 80
+    - kind: Rule
+      match: Host(`localhost`) && Path(`/other/path`)
+      middlewares:
+        - name: complete-wms-mapserver-headers
+      services:
+        - kind: Service
+          name: complete-wms-mapserver
+          port: 9111

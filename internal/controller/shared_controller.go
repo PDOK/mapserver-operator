@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pdok/smooth-operator/model"
@@ -16,7 +15,6 @@ import (
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -53,23 +51,8 @@ func ensureLabel[O pdoknlv3.WMSWFS](obj O, key, value string) {
 	obj.SetLabels(labels)
 }
 
-func getSharedBareObjects[O pdoknlv3.WMSWFS](obj O) []client.Object {
-	return []client.Object{
-		getBareDeployment(obj),
-		getBareIngressRoute(obj),
-		getBareHorizontalPodAutoScaler(obj),
-		getBareConfigMap(obj, constants.InitScriptsName),
-		getBareConfigMap(obj, constants.MapserverName),
-		getBareService(obj),
-		getBareCorsHeadersMiddleware(obj),
-		getBarePodDisruptionBudget(obj),
-		getBareConfigMap(obj, constants.MapfileGeneratorName),
-		getBareConfigMap(obj, constants.CapabilitiesGeneratorName),
-	}
-}
-
 func getSuffixedName[O pdoknlv3.WMSWFS](obj O, suffix string) string {
-	return obj.GetName() + "-" + strings.ToLower(string(obj.Type())) + "-" + suffix
+	return obj.TypedName() + "-" + suffix
 }
 
 func addCommonLabels[O pdoknlv3.WMSWFS](obj O, labels map[string]string) map[string]string {

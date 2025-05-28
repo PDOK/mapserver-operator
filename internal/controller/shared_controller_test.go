@@ -60,14 +60,13 @@ func getHashedConfigMapNameFromClient[O pdoknlv3.WMSWFS](ctx context.Context, ob
 }
 
 func getExpectedObjects[O pdoknlv3.WMSWFS](ctx context.Context, obj O, includeBlobDownload bool, includeMapfileGeneratorConfigMap bool) ([]client.Object, error) {
-	bareObjects := getSharedBareObjects(obj)
-	var objects []client.Object
-
-	// Remove ConfigMaps as they have hashed names
-	for _, object := range bareObjects {
-		if _, ok := object.(*corev1.ConfigMap); !ok {
-			objects = append(objects, object)
-		}
+	objects := []client.Object{
+		getBareDeployment(obj),
+		getBareHorizontalPodAutoScaler(obj),
+		getBareService(obj),
+		getBareIngressRoute(obj),
+		getBareCorsHeadersMiddleware(obj),
+		getBarePodDisruptionBudget(obj),
 	}
 
 	// Add all ConfigMaps with hashed names

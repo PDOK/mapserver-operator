@@ -33,3 +33,11 @@ spec:
         - kind: Service
           name: complete-wfs-mapserver
           port: 80
+    - kind: Rule
+      match: Host(`localhost`) && Path(`/other/path`)
+      middlewares:
+        - name: complete-wfs-mapserver-headers
+      services:
+        - kind: Service
+          name: complete-wfs-mapserver
+          port: 80

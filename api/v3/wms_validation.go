@@ -21,6 +21,11 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 		allErrs = append(allErrs, err)
 	}
 
+	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wms.Spec.IngressRouteURLs, wms.URL(), nil)
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	ValidateWMS(wms, &warnings, &allErrs)
 
 	if len(allErrs) == 0 {

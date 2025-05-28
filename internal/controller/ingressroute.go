@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strings"
 
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
+
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
@@ -70,53 +72,45 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 		},
 	}
 
+	webServiceProxyService := traefikiov1alpha1.Service{
+		LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
+			Name: getBareService(obj).GetName(),
+			Kind: "Service",
+			Port: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: int32(mapserverWebserviceProxyPortNr),
+			},
+		},
+	}
+
 	middlewareRef := traefikiov1alpha1.MiddlewareRef{
 		Name: getBareCorsHeadersMiddleware(obj).GetName(),
 	}
 
-	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		wms, _ := any(obj).(*pdoknlv3.WMS)
-		ingressRoute.Spec.Routes = []traefikiov1alpha1.Route{{
+	makeRoute := func(match string, service traefikiov1alpha1.Service, middlewareRef traefikiov1alpha1.MiddlewareRef) traefikiov1alpha1.Route {
+		return traefikiov1alpha1.Route{
 			Kind:        "Rule",
-			Match:       getLegendMatchRule(wms),
-			Services:    []traefikiov1alpha1.Service{mapserverService},
+			Match:       match,
+			Services:    []traefikiov1alpha1.Service{service},
 			Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
-		}}
+		}
+	}
 
-		if obj.Options().UseWebserviceProxy() {
-			webServiceProxyService := traefikiov1alpha1.Service{
-				LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
-					Name: getBareService(obj).GetName(),
-					Kind: "Service",
-					Port: intstr.IntOrString{
-						Type: intstr.Int,
+	ingressRoute.Spec.Routes = []traefikiov1alpha1.Route{}
+	if obj.Type() == pdoknlv3.ServiceTypeWMS {
+		for _, ingressRouteURL := range obj.IngressRouteURLs() {
+			ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getLegendMatchRule(ingressRouteURL.URL), mapserverService, middlewareRef))
 
-						IntVal: int32(mapserverWebserviceProxyPortNr),
-					},
-				},
+			if obj.Options().UseWebserviceProxy() {
+				ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getMatchRule(ingressRouteURL.URL), webServiceProxyService, middlewareRef))
+			} else {
+				ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getMatchRule(ingressRouteURL.URL), mapserverService, middlewareRef))
 			}
-
-			ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, traefikiov1alpha1.Route{
-				Kind:        "Rule",
-				Match:       getMatchRule(obj),
-				Services:    []traefikiov1alpha1.Service{webServiceProxyService},
-				Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
-			})
-		} else {
-			ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, traefikiov1alpha1.Route{
-				Kind:        "Rule",
-				Match:       getMatchRule(obj),
-				Services:    []traefikiov1alpha1.Service{mapserverService},
-				Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
-			})
 		}
 	} else { // WFS
-		ingressRoute.Spec.Routes = []traefikiov1alpha1.Route{{
-			Kind:        "Rule",
-			Match:       getMatchRule(obj),
-			Services:    []traefikiov1alpha1.Service{mapserverService},
-			Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
-		}}
+		for _, ingressRouteURL := range obj.IngressRouteURLs() {
+			ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getMatchRule(ingressRouteURL.URL), mapserverService, middlewareRef))
+		}
 	}
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, ingressRoute, ingressRoute); err != nil {
@@ -148,20 +142,20 @@ func getUptimeName[O pdoknlv3.WMSWFS](obj O) string {
 	return strings.Join(append(nameParts, string(obj.Type())), " ")
 }
 
-func getMatchRule[O pdoknlv3.WMSWFS](obj O) string {
-	host := obj.URL().Hostname()
+func getMatchRule(url smoothoperatormodel.URL) string {
+	host := url.Hostname()
 	if strings.Contains(host, "localhost") {
-		return "Host(`localhost`) && Path(`" + obj.URL().Path + "`)"
+		return "Host(`localhost`) && Path(`" + url.Path + "`)"
 	}
 
-	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`" + obj.URL().Path + "`)"
+	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`" + url.Path + "`)"
 }
 
-func getLegendMatchRule(wms *pdoknlv3.WMS) string {
-	host := wms.URL().Hostname()
+func getLegendMatchRule(url smoothoperatormodel.URL) string {
+	host := url.Hostname()
 	if strings.Contains(host, "localhost") {
-		return "Host(`localhost`) && PathPrefix(`" + wms.URL().Path + "/legend`)"
+		return "Host(`localhost`) && PathPrefix(`" + url.Path + "/legend`)"
 	}
 
-	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`" + wms.URL().Path + "/legend`)"
+	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`" + url.Path + "/legend`)"
 }

@@ -754,6 +754,13 @@ func (in *WFSSpec) DeepCopyInto(out *WFSSpec) {
 		*out = new(HealthCheckWFS)
 		**out = **in
 	}
+	if in.IngressRouteURLs != nil {
+		in, out := &in.IngressRouteURLs, &out.IngressRouteURLs
+		*out = make(model.IngressRouteURLs, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	in.Service.DeepCopyInto(&out.Service)
 }
 
@@ -917,6 +924,13 @@ func (in *WMSSpec) DeepCopyInto(out *WMSSpec) {
 		in, out := &in.HealthCheck, &out.HealthCheck
 		*out = new(HealthCheckWMS)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.IngressRouteURLs != nil {
+		in, out := &in.IngressRouteURLs, &out.IngressRouteURLs
+		*out = make(model.IngressRouteURLs, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	in.Service.DeepCopyInto(&out.Service)
 }

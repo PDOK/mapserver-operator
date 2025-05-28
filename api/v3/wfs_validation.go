@@ -21,6 +21,11 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 		allErrs = append(allErrs, err)
 	}
 
+	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wfs.Spec.IngressRouteURLs, wfs.URL(), nil)
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	ValidateWFS(wfs, &warnings, &allErrs)
 
 	if len(allErrs) == 0 {
