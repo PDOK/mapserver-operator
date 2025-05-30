@@ -332,3 +332,7 @@ func (wfs *WFS) IngressRouteURLs(includeServiceURLWhenEmpty bool) smoothoperator
 
 	return wfs.Spec.IngressRouteURLs
 }
+
+func (wfs *WFS) OwnerInfoRef() string {
+	return wfs.Spec.Service.OwnerInfoRef
+}

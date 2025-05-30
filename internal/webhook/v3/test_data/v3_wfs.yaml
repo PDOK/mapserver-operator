@@ -2,6 +2,7 @@ apiVersion: pdok.nl/v3
 kind: WFS
 metadata:
   name: sample
+  namespace: default
   labels:
     sample: sample
 spec:

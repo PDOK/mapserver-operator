@@ -1,0 +1,33 @@
+apiVersion: pdok.nl/v1
+kind: OwnerInfo
+metadata:
+  name: owner
+  namespace: default
+spec:
+  metadataUrls:
+    csw:
+      hrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}"
+      type: alternate
+  namespaceTemplate: "http://{{prefix}}.geonovum.nl"
+  wfs:
+    serviceprovider:
+      providername: PDOK
+      providersite:
+        type: simple
+        href: https://pdok.nl
+  wms:
+    contactinformation:
+      contactpersonprimary:
+        contactperson: KlantContactCenter PDOK
+        contactorganization: PDOK
+      contactposition: pointOfContact
+      contactaddress:
+        addresstype:
+        address:
+        city: Apeldoorn
+        stateorprovince:
+        postcode:
+        country: Netherlands
+      contactvoicetelephone:
+      contactfacsimiletelephone:
+      contactelectronicmailAddress: BeheerPDOK@kadaster.nl

@@ -5,6 +5,8 @@ import (
 	"maps"
 	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -12,7 +14,7 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
-func (wms *WMS) ValidateCreate() ([]string, error) {
+func (wms *WMS) ValidateCreate(c client.Client) ([]string, error) {
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
@@ -26,7 +28,7 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 		allErrs = append(allErrs, err)
 	}
 
-	ValidateWMS(wms, &warnings, &allErrs)
+	ValidateWMS(c, wms, &warnings, &allErrs)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
@@ -37,14 +39,14 @@ func (wms *WMS) ValidateCreate() ([]string, error) {
 		wms.Name, allErrs)
 }
 
-func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
-	return ValidateUpdate(wms, wmsOld, ValidateWMS)
+func (wms *WMS) ValidateUpdate(c client.Client, wmsOld *WMS) ([]string, error) {
+	return ValidateUpdate(c, wms, wmsOld, ValidateWMS)
 }
 
 // TODO fix linting (cyclop,funlen)
 //
 //nolint:cyclop,funlen
-func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
+func ValidateWMS(c client.Client, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wms.GetName(), "wms") {
 		sharedValidation.AddWarning(
 			warnings,
@@ -304,6 +306,8 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 
 	podSpecPatch := wms.Spec.PodSpecPatch
 	ValidateEphemeralStorage(podSpecPatch, allErrs)
+
+	ValidateOwnerInfo(c, wms, allErrs)
 }
 
 func findEqualChildStyleNames(layer *Layer, equalStyleNames *map[string][]string) {

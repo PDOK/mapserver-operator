@@ -239,16 +239,19 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 		Expect(err).NotTo(HaveOccurred())
 		Expect(owner.Name).Should(Equal("owner"))
 
+		Expect(k8sClient.Create(ctx, &owner)).To(Succeed())
+
 		var validationError error
 		switch any(resource).(type) {
 		case *pdoknlv3.WMS:
 			wms := any(resource).(*pdoknlv3.WMS)
-			_, validationError = wms.ValidateCreate()
+			_, validationError = wms.ValidateCreate(k8sClient)
 		case *pdoknlv3.WFS:
 			wfs := any(resource).(*pdoknlv3.WFS)
-			_, validationError = wfs.ValidateCreate()
+			_, validationError = wfs.ValidateCreate(k8sClient)
 		}
 		Expect(validationError).NotTo(HaveOccurred())
+		Expect(k8sClient.Delete(ctx, &owner)).To(Succeed())
 	})
 
 	configMapNames := types.HashedConfigMapNames{}

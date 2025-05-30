@@ -28,12 +28,18 @@ package v3
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
+
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	"golang.org/x/tools/go/packages"
 
 	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -89,14 +95,19 @@ var _ = BeforeSuite(func() {
 	err = admissionv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = smoothoperatorv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	// +kubebuilder:scaffold:scheme
 
 	By("bootstrapping test environment")
+	ownerInfoCRDPath := must(getOwnerInfoCRDPath())
 	testEnv = &envtest.Environment{
 		Scheme: scheme,
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wfs.yaml"),
 			filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wms.yaml"),
+			ownerInfoCRDPath,
 		},
 		ErrorIfCRDPathMissing: false,
 		CRDInstallOptions: envtest.CRDInstallOptions{
@@ -189,4 +200,32 @@ func getFirstFoundEnvTestBinaryDir() string {
 		}
 	}
 	return ""
+}
+
+func getOwnerInfoCRDPath() (string, error) {
+	smoothOperatorModule, err := getModule("github.com/pdok/smooth-operator")
+	if err != nil {
+		return "", err
+	}
+	if smoothOperatorModule.Dir == "" {
+		return "", errors.New("cannot find path for smooth-operator module")
+	}
+	return filepath.Join(smoothOperatorModule.Dir, "config", "crd", "bases", "pdok.nl_ownerinfo.yaml"), nil
+}
+
+func getModule(name string) (module *packages.Module, err error) {
+	out, err := exec.Command("go", "list", "-json", "-m", name).Output()
+	if err != nil {
+		return
+	}
+	module = &packages.Module{}
+	err = json.Unmarshal(out, module)
+	return
+}
+
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

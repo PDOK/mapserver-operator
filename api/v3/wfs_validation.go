@@ -4,6 +4,8 @@ import (
 	"slices"
 	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -11,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func (wfs *WFS) ValidateCreate() ([]string, error) {
+func (wfs *WFS) ValidateCreate(c client.Client) ([]string, error) {
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
@@ -25,7 +27,7 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 		allErrs = append(allErrs, err)
 	}
 
-	ValidateWFS(wfs, &warnings, &allErrs)
+	ValidateWFS(c, wfs, &warnings, &allErrs)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
@@ -36,11 +38,11 @@ func (wfs *WFS) ValidateCreate() ([]string, error) {
 		wfs.Name, allErrs)
 }
 
-func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
-	return ValidateUpdate(wfs, wfsOld, ValidateWFS)
+func (wfs *WFS) ValidateUpdate(c client.Client, wfsOld *WFS) ([]string, error) {
+	return ValidateUpdate(c, wfs, wfsOld, ValidateWFS)
 }
 
-func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
+func ValidateWFS(c client.Client, wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wfs.GetName(), "wfs") {
 		sharedValidation.AddWarning(
 			warnings,
@@ -72,6 +74,8 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	ValidateEphemeralStorage(podSpecPatch, allErrs)
 
 	ValidateFeatureTypes(wfs, warnings, allErrs)
+
+	ValidateOwnerInfo(c, wfs, allErrs)
 }
 
 func ValidateFeatureTypes(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {

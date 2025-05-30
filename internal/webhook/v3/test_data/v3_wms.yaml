@@ -9,6 +9,7 @@ metadata:
     service-type: wms
     service-version: 1.0.0
   name: sample-v3
+  namespace: default
 spec:
   lifecycle:
     ttlInDays: 21
@@ -46,7 +47,7 @@ spec:
     keywords:
       - keyword1
       - keyword2
-    ownerInfoRef:
+    ownerInfoRef: owner
     fees: ""
     accessConstraints: "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
     maxSize:
