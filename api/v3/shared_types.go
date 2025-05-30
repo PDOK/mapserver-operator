@@ -171,7 +171,6 @@ type Data struct {
 type Gpkg struct {
 	// Blobkey identifies the location/bucket of the .gpkg file
 	// +kubebuilder:validation:Pattern:=^.+\/.+\/.+\.gpkg$
-	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 
 	// TableName is the table within the geopackage
@@ -180,7 +179,6 @@ type Gpkg struct {
 
 	// GeometryType of the table, must match an OGC type
 	// +kubebuilder:validation:Pattern:=`^(Multi)?(Point|LineString|Polygon)$`
-	// +kubebuilder:validation:MinLength:=1
 	GeometryType string `json:"geometryType"`
 
 	// Columns to visualize for this table
@@ -209,18 +207,15 @@ type Postgis struct {
 // +kubebuilder:validation:Type=object
 type TIF struct {
 	// BlobKey to the TIFF file
-	// +kubebuilder:validation:Pattern=`\.(tif?f|vrt)$`
-	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:Pattern:=`^.+\/.+\/.+\.(tif?f|vrt)$`
 	BlobKey string `json:"blobKey"`
 
 	// This option can be used to control the resampling kernel used sampling raster images, optional
-	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:Pattern=`(NEAREST|AVERAGE|BILINEAR)`
 	// +kubebuilder:default=NEAREST
-	Resample *string `json:"resample,omitempty"`
+	Resample string `json:"resample,omitempty"`
 
 	// Sets the color index to treat as transparent for raster layers, optional, hex or rgb
-	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:Pattern=`(#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})`
 	Offsite *string `json:"offsite,omitempty"`
 

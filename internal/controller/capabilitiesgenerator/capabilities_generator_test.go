@@ -4,6 +4,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	capabilitiesgenerator "github.com/pdok/ogc-capabilities-generator/pkg/config"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	"github.com/stretchr/testify/assert"
@@ -87,6 +88,14 @@ func TestGetInputForWFS(t *testing.T) {
 											MetadataIdentifier: "datadata-data-data-data-datadatadata",
 										},
 									},
+									Bbox: &pdoknlv3.FeatureBbox{
+										WGS84: &smoothoperatormodel.BBox{
+											MinX: "-180",
+											MaxX: "180",
+											MinY: "-90",
+											MaxY: "90",
+										},
+									},
 								},
 								{
 									Name:     "featuretype-2-name",
@@ -132,8 +141,8 @@ func TestGetInputForWFS(t *testing.T) {
 				return
 			}
 
-			wantMap := make(map[string]interface{})
-			gotMap := make(map[string]interface{})
+			wantMap := capabilitiesgenerator.Config{}
+			gotMap := capabilitiesgenerator.Config{}
 			err = yaml.Unmarshal([]byte(WFSInput), &wantMap)
 			assert.NoError(t, err)
 			err = yaml.Unmarshal([]byte(gotInput), &gotMap)

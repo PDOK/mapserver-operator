@@ -133,6 +133,31 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 			otherCRS = append(otherCRS, CRS)
 		}
 
+		var wgs84BoundingBox *wsc110.WGS84BoundingBox
+		if fType.Bbox != nil && fType.Bbox.WGS84 != nil {
+			minX, err := strconv.ParseFloat(fType.Bbox.WGS84.MinX, 64)
+			if err != nil {
+				return nil, err
+			}
+			maxX, err := strconv.ParseFloat(fType.Bbox.WGS84.MaxX, 64)
+			if err != nil {
+				return nil, err
+			}
+			minY, err := strconv.ParseFloat(fType.Bbox.WGS84.MinY, 64)
+			if err != nil {
+				return nil, err
+			}
+			maxY, err := strconv.ParseFloat(fType.Bbox.WGS84.MaxY, 64)
+			if err != nil {
+				return nil, err
+			}
+
+			wgs84BoundingBox = &wsc110.WGS84BoundingBox{
+				LowerCorner: wsc110.Position{minX, minY},
+				UpperCorner: wsc110.Position{maxX, maxY},
+			}
+		}
+
 		metadataURL, err := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
 		if err != nil {
 			return nil, err
@@ -150,8 +175,9 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 			MetadataURL: wfs200.MetadataHref{
 				Href: metadataURL,
 			},
-			DefaultCRS: defaultCRS,
-			OtherCRS:   otherCRS,
+			DefaultCRS:       defaultCRS,
+			OtherCRS:         otherCRS,
+			WGS84BoundingBox: wgs84BoundingBox,
 		}
 
 		typeList.FeatureType = append(typeList.FeatureType, featureType)

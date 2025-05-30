@@ -244,7 +244,7 @@ spec:
             name: minimal-wfs-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: minimal-wfs-capabilities-generator-446d5ddh62
+            name: minimal-wfs-capabilities-generator-tk7t48fd89
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
