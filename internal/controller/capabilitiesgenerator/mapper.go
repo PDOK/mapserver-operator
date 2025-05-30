@@ -69,15 +69,24 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 
 	if wfs.Spec.Service.Inspire != nil {
 		config.Global.AdditionalSchemaLocations = inspireSchemaLocationsWFS
-		metadataURL, _ := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
+		var metadataURL wfs200.MetadataURL
+		if wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW != nil {
+			metadataURL.URL, err = replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, wfs.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier)
+			if err != nil {
+				return nil, err
+			}
+			metadataURL.MediaType = metadataMediaType
+		}
+
+		if wfs.Spec.Service.Inspire.ServiceMetadataURL.Custom != nil {
+			metadataURL.URL = wfs.Spec.Service.Inspire.ServiceMetadataURL.Custom.Href.String()
+			metadataURL.MediaType = wfs.Spec.Service.Inspire.ServiceMetadataURL.Custom.Type
+		}
 
 		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = &wfs200.OperationsMetadata{
 			ExtendedCapabilities: &wfs200.ExtendedCapabilities{
 				ExtendedCapabilities: wfs200.NestedExtendedCapabilities{
-					MetadataURL: wfs200.MetadataURL{
-						URL:       metadataURL,
-						MediaType: metadataMediaType,
-					},
+					MetadataURL: metadataURL,
 					SupportedLanguages: wfs200.SupportedLanguages{
 						DefaultLanguage: wfs200.Language{
 							Language: wfs.Spec.Service.Inspire.Language,

@@ -296,6 +296,8 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 		))
 	}
 
+	ValidateInspire(wms, allErrs)
+
 	if wms.Spec.HorizontalPodAutoscalerPatch != nil {
 		ValidateHorizontalPodAutoscalerPatch(*wms.Spec.HorizontalPodAutoscalerPatch, allErrs)
 	}

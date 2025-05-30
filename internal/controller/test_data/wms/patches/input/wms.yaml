@@ -207,7 +207,7 @@ spec:
           url: http://authority-url
         datasetMetadataUrl:
           csw:
-            metadataIdentifier: ds-md-id
+            metadataIdentifier: datadata-data-data-data-datadatadata
         layers:
         - abstract: group-child
           authority:
@@ -223,7 +223,7 @@ spec:
               tableName: layer
           datasetMetadataUrl:
             csw:
-              metadataIdentifier: ds-md-id
+              metadataIdentifier: datadata-data-data-data-datadatadata
           keywords:
             - layer-keyword
           name: group-child

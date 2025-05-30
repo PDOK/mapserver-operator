@@ -46,13 +46,13 @@ spec:
     keywords:
     - service-keyword
     otherCrs:
-    - EPSG::25831
-    - EPSG::25832
-    - EPSG::3034
-    - EPSG::3035
-    - EPSG::3857
-    - EPSG::4258
-    - EPSG::4326
+    - EPSG:25831
+    - EPSG:25832
+    - EPSG:3034
+    - EPSG:3035
+    - EPSG:3857
+    - EPSG:4258
+    - EPSG:4326
     ownerInfoRef: owner
     prefix: dataset
     title: service-title

@@ -1178,7 +1178,7 @@ spec:
                       properties:
                         language:
                           description: Language of the INSPIRE metadata record
-                          minLength: 1
+                          pattern: bul|cze|dan|dut|eng|est|fin|fre|ger|gre|hun|gle|ita|lav|lit|mlt|pol|por|rum|slo|slv|spa|swe
                           type: string
                         serviceMetadataUrl:
                           description: ServiceMetadataURL references the CSW or custom metadata record.
@@ -1188,7 +1188,7 @@ spec:
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
-                                  minLength: 1
+                                  pattern: ^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$
                                   type: string
                               required:
                                 - metadataIdentifier
@@ -1197,8 +1197,8 @@ spec:
                               description: Custom allows arbitrary href
                               properties:
                                 href:
-                                  minLength: 1
-                                  pattern: ^https?://.*$
+                                  description: Href of the custom metadata url
+                                  pattern: ^https?://.+/.+
                                   type: string
                                 type:
                                   description: MIME type of the custom link
@@ -1208,15 +1208,13 @@ spec:
                                 - href
                                 - type
                               type: object
-                          required:
-                            - csw
                           type: object
                           x-kubernetes-validations:
-                            - message: metadataUrl should have csw or custom, not both
+                            - message: metadataUrl should have exactly 1 of csw or custom
                               rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                         spatialDatasetIdentifier:
                           description: SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
-                          minLength: 1
+                          pattern: ^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$
                           type: string
                       required:
                         - language
@@ -1402,7 +1400,7 @@ spec:
                               properties:
                                 metadataIdentifier:
                                   description: MetadataIdentifier is the record's UUID
-                                  minLength: 1
+                                  pattern: ^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$
                                   type: string
                               required:
                                 - metadataIdentifier
@@ -1411,8 +1409,8 @@ spec:
                               description: Custom allows arbitrary href
                               properties:
                                 href:
-                                  minLength: 1
-                                  pattern: ^https?://.*$
+                                  description: Href of the custom metadata url
+                                  pattern: ^https?://.+/.+
                                   type: string
                                 type:
                                   description: MIME type of the custom link
@@ -1422,11 +1420,9 @@ spec:
                                 - href
                                 - type
                               type: object
-                          required:
-                            - csw
                           type: object
                           x-kubernetes-validations:
-                            - message: metadataUrl should have csw or custom, not both
+                            - message: metadataUrl should have exactly 1 of csw or custom
                               rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                         keywords:
                           description: Keywords of the layer, required if the layer is visible
@@ -1610,7 +1606,7 @@ spec:
                                     properties:
                                       metadataIdentifier:
                                         description: MetadataIdentifier is the record's UUID
-                                        minLength: 1
+                                        pattern: ^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$
                                         type: string
                                     required:
                                       - metadataIdentifier
@@ -1619,8 +1615,8 @@ spec:
                                     description: Custom allows arbitrary href
                                     properties:
                                       href:
-                                        minLength: 1
-                                        pattern: ^https?://.*$
+                                        description: Href of the custom metadata url
+                                        pattern: ^https?://.+/.+
                                         type: string
                                       type:
                                         description: MIME type of the custom link
@@ -1630,11 +1626,9 @@ spec:
                                       - href
                                       - type
                                     type: object
-                                required:
-                                  - csw
                                 type: object
                                 x-kubernetes-validations:
-                                  - message: metadataUrl should have csw or custom, not both
+                                  - message: metadataUrl should have exactly 1 of csw or custom
                                     rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                               keywords:
                                 description: Keywords of the layer, required if the layer is visible
@@ -1818,7 +1812,7 @@ spec:
                                           properties:
                                             metadataIdentifier:
                                               description: MetadataIdentifier is the record's UUID
-                                              minLength: 1
+                                              pattern: ^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$
                                               type: string
                                           required:
                                             - metadataIdentifier
@@ -1827,8 +1821,8 @@ spec:
                                           description: Custom allows arbitrary href
                                           properties:
                                             href:
-                                              minLength: 1
-                                              pattern: ^https?://.*$
+                                              description: Href of the custom metadata url
+                                              pattern: ^https?://.+/.+
                                               type: string
                                             type:
                                               description: MIME type of the custom link
@@ -1838,11 +1832,9 @@ spec:
                                             - href
                                             - type
                                           type: object
-                                      required:
-                                        - csw
                                       type: object
                                       x-kubernetes-validations:
-                                        - message: metadataUrl should have csw or custom, not both
+                                        - message: metadataUrl should have exactly 1 of csw or custom
                                           rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                                     keywords:
                                       description: Keywords of the layer, required if the layer is visible
@@ -2083,19 +2075,14 @@ spec:
                               description: The key to select.
                               type: string
                             name:
-                              default: ""
-                              description: |-
-                                Name of the referent.
-                                This field is effectively required, but due to backwards compatibility is
-                                allowed to be empty. Instances of this type with an empty value here are
-                                almost certainly wrong.
-                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              description: Name of the referent.
                               type: string
                             optional:
                               description: Specify whether the ConfigMap or its key must be defined
                               type: boolean
                           required:
                             - key
+                            - name
                           type: object
                           x-kubernetes-map-type: atomic
                       required:

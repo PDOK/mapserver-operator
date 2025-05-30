@@ -2,6 +2,7 @@ package v3
 
 import (
 	"fmt"
+	"slices"
 
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 	v1 "k8s.io/api/core/v1"
@@ -81,4 +82,40 @@ func ValidateEphemeralStorage(podSpecPatch v1.PodSpec, allErrs *field.ErrorList)
 	if !storageSet {
 		*allErrs = append(*allErrs, field.Required(path, ""))
 	}
+}
+
+func ValidateInspire[O WMSWFS](obj O, allErrs *field.ErrorList) {
+	if obj.Inspire() == nil {
+		return
+	}
+
+	datasetIDs := obj.DatasetMetadataIDs()
+	spatialID := obj.Inspire().SpatialDatasetIdentifier
+
+	if slices.Contains(datasetIDs, spatialID) {
+		*allErrs = append(*allErrs, field.Invalid(
+			field.NewPath("spec").Child("service").Child("inspire").Child("spatialDatasetIdentifier"),
+			spatialID,
+			"spatialDatasetIdentifier cannot also be used as an datasetMetadataUrl.csw.metadataIdentifier",
+		))
+	}
+
+	if serviceID := obj.Inspire().ServiceMetadataURL.CSW; serviceID != nil {
+		if slices.Contains(datasetIDs, serviceID.MetadataIdentifier) {
+			*allErrs = append(*allErrs, field.Invalid(
+				field.NewPath("spec").Child("service").Child("inspire").Child("csw").Child("metadataIdentifier"),
+				serviceID.MetadataIdentifier,
+				"serviceMetadataUrl.csw.metadataIdentifier cannot also be used as an datasetMetadataUrl.csw.metadataIdentifier",
+			))
+		}
+
+		if spatialID == serviceID.MetadataIdentifier {
+			*allErrs = append(*allErrs, field.Invalid(
+				field.NewPath("spec").Child("service").Child("inspire").Child("csw").Child("metadataIdentifier"),
+				serviceID.MetadataIdentifier,
+				"serviceMetadataUrl.csw.metadataIdentifier cannot also be used as the spatialDatasetIdentifier",
+			))
+		}
+	}
+
 }

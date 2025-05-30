@@ -85,7 +85,7 @@ data:
                 "title": "group-child",
                 "abstract": "group-child",
                 "keywords": "",
-                "dataset_metadata_id": "ds-md-id",
+                "dataset_metadata_id": "datadata-data-data-data-datadatadata",
                 "dataset_source_id": "src-md-id",
                 "layer_extent": "-25000 250000 280000 860000",
                 "styles": [
@@ -107,7 +107,7 @@ metadata:
     inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: noprefetch-wms-mapfile-generator-c7hdc8g2f6
+  name: noprefetch-wms-mapfile-generator-d47d4264kh
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
