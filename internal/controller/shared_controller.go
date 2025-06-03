@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/pdok/smooth-operator/model"
 
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
@@ -105,12 +107,9 @@ func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Con
 
 	// region PodDisruptionBudget
 	{
-		podDisruptionBudget := getBarePodDisruptionBudget(obj)
-		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, podDisruptionBudget, func() error {
-			return mutatePodDisruptionBudget(r, obj, podDisruptionBudget)
-		})
+		err = createOrUpdateOrDeletePodDisruptionBudget(ctx, r, obj, operationResults)
 		if err != nil {
-			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget), err)
+			return operationResults, err
 		}
 	}
 	// end region PodDisruptionBudget
@@ -226,4 +225,27 @@ func createOrUpdateConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Contex
 		return cm, &or, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, cm), err)
 	}
 	return cm, &or, nil
+}
+
+func createOrUpdateOrDeletePodDisruptionBudget[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, reconciler R, obj O, operationResults map[string]controllerutil.OperationResult) (err error) {
+	reconcilerClient := getReconcilerClient(reconciler)
+	podDisruptionBudget := getBarePodDisruptionBudget(obj)
+	if obj.HorizontalPodAutoscalerPatch().MinReplicas != nil && obj.HorizontalPodAutoscalerPatch().MaxReplicas != nil &&
+		*obj.HorizontalPodAutoscalerPatch().MinReplicas == 1 && *obj.HorizontalPodAutoscalerPatch().MaxReplicas == 1 {
+		err = reconcilerClient.Delete(ctx, podDisruptionBudget)
+		if err == nil {
+			operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget)] = "deleted"
+		}
+		if client.IgnoreNotFound(err) != nil {
+			return fmt.Errorf("unable to delete resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget), err)
+		}
+	} else {
+		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, podDisruptionBudget, func() error {
+			return mutatePodDisruptionBudget(reconciler, obj, podDisruptionBudget)
+		})
+		if err != nil {
+			return fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget), err)
+		}
+	}
+	return nil
 }
