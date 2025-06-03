@@ -33,6 +33,8 @@ import (
 	"github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	k8stypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ginkgo bdd
 	. "github.com/onsi/gomega"    //nolint:revive // ginkgo bdd
@@ -177,6 +179,58 @@ var _ = Describe("Testing WFS Controller", func() {
 				return Expect(err).NotTo(HaveOccurred()) &&
 					Expect(*deployment.Spec.RevisionHistoryLimit).To(BeEquivalentTo(originalRevisionHistoryLimit))
 			}, "10s", "1s").Should(BeTrue())
+		})
+
+		It("Should delete PodDisruptionBudget if Min and Max replicas == 1 ", func() {
+			controllerReconciler := getWFSReconciler()
+
+			By("Setting Min and Max replicas to 1")
+
+			Expect(k8sClient.Get(ctx, objectKeyWfs, clusterWfs)).To(Succeed())
+
+			resource := clusterWfs.DeepCopy()
+
+			resource.Spec.HorizontalPodAutoscalerPatch.MinReplicas = ptr.To(int32(1))
+			resource.Spec.HorizontalPodAutoscalerPatch.MaxReplicas = ptr.To(int32(1))
+
+			Expect(k8sClient.Update(ctx, resource)).To(Succeed())
+
+			podDisruptionBudget := getBarePodDisruptionBudget(resource)
+
+			By("Reconciling the WFS")
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: objectKeyWfs})
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Getting the PodDisruptionBudget")
+			err = k8sClient.Get(ctx, client.ObjectKeyFromObject(podDisruptionBudget), podDisruptionBudget)
+			Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+			Expect(k8sClient.Get(ctx, objectKeyWfs, clusterWfs)).To(Succeed())
+			Expect(clusterWfs.Status.OperationResults[smoothoperatorutils.GetObjectFullName(k8sClient, podDisruptionBudget)]).To(Equal(controllerutil.OperationResult("deleted")))
+		})
+
+		It("Should not Create PodDisruptionBudget if Min and Max replicas == 1 ", func() {
+			controllerReconciler := getWFSReconciler()
+
+			By("Getting Cluster WFS Min and Max replicas to 1")
+			Expect(k8sClient.Get(ctx, objectKeyWfs, clusterWfs)).To(Succeed())
+
+			Expect(clusterWfs.HorizontalPodAutoscalerPatch().MaxReplicas).To(Equal(ptr.To(int32(1))))
+			Expect(clusterWfs.HorizontalPodAutoscalerPatch().MinReplicas).To(Equal(ptr.To(int32(1))))
+
+			podDisruptionBudget := getBarePodDisruptionBudget(clusterWfs)
+
+			By("Reconciling the WFS")
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: objectKeyWfs})
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Getting the PodDisruptionBudget")
+			err = k8sClient.Get(ctx, client.ObjectKeyFromObject(podDisruptionBudget), podDisruptionBudget)
+			Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+			Expect(k8sClient.Get(ctx, objectKeyWfs, clusterWfs)).To(Succeed())
+			_, ok := clusterWfs.Status.OperationResults[smoothoperatorutils.GetObjectFullName(k8sClient, podDisruptionBudget)]
+			Expect(ok).To(BeFalse())
 		})
 
 		It("Respects the TTL of the WFS", func() {
