@@ -323,9 +323,13 @@ func (wfs *WFS) ReadinessQueryString() (string, string, error) {
 	return "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=" + wfs.Spec.Service.FeatureTypes[0].Name + "&STARTINDEX=0&COUNT=1", "text/xml", nil
 }
 
-func (wfs *WFS) IngressRouteURLs() smoothoperatormodel.IngressRouteURLs {
+func (wfs *WFS) IngressRouteURLs(includeServiceURLWhenEmpty bool) smoothoperatormodel.IngressRouteURLs {
 	if len(wfs.Spec.IngressRouteURLs) == 0 {
-		return smoothoperatormodel.IngressRouteURLs{{URL: wfs.Spec.Service.URL}}
+		if includeServiceURLWhenEmpty {
+			return smoothoperatormodel.IngressRouteURLs{{URL: wfs.Spec.Service.URL}}
+		}
+
+		return smoothoperatormodel.IngressRouteURLs{}
 	}
 
 	return wfs.Spec.IngressRouteURLs

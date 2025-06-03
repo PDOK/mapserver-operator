@@ -15,22 +15,32 @@ func ValidateUpdate[W WMSWFS](newW, oldW W, validate func(W, *[]string, *field.E
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
-	// Check that the ingressRouteUrls contain the base url and no urls have been removed
-	err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(), newW.URL(), nil)
-	if err != nil {
-		allErrs = append(allErrs, err)
+	// Make sure no ingressRouteURLs have been removed
+	sharedValidation.ValidateIngressRouteURLsNotRemoved(oldW.IngressRouteURLs(true), newW.IngressRouteURLs(true), &allErrs, nil)
+
+	if len(newW.IngressRouteURLs(false)) == 0 {
+		// There are no ingressRouteURLs given, spec.service.url is immutable is that case.
+		path := field.NewPath("spec").Child("service").Child("url")
+		sharedValidation.CheckURLImmutability(
+			oldW.URL(),
+			newW.URL(),
+			&allErrs,
+			path,
+		)
+	} else if oldW.URL().String() != newW.URL().String() {
+		// Make sure both the old spec.service.url and the new one are included in the ingressRouteURLs list.
+		err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(true), oldW.URL(), nil)
+		if err != nil {
+			allErrs = append(allErrs, err)
+		}
+
+		err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(true), newW.URL(), nil)
+		if err != nil {
+			allErrs = append(allErrs, err)
+		}
 	}
-	sharedValidation.ValidateIngressRouteURLsNotRemoved(oldW.IngressRouteURLs(), newW.IngressRouteURLs(), &allErrs, nil)
 
 	sharedValidation.ValidateLabelsOnUpdate(oldW.GetLabels(), newW.GetLabels(), &allErrs)
-
-	path := field.NewPath("spec").Child("service").Child("url")
-	sharedValidation.CheckUrlImmutability(
-		oldW.URL(),
-		newW.URL(),
-		&allErrs,
-		path,
-	)
 
 	if (newW.Inspire() == nil && oldW.Inspire() != nil) || (newW.Inspire() != nil && oldW.Inspire() == nil) {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))

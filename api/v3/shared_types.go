@@ -48,7 +48,7 @@ type WMSWFS interface {
 
 	// URL returns the configured service URL
 	URL() smoothoperatormodel.URL
-	IngressRouteURLs() smoothoperatormodel.IngressRouteURLs
+	IngressRouteURLs(includeServiceURLWhenEmpty bool) smoothoperatormodel.IngressRouteURLs
 
 	// DatasetMetadataIds returns list of all configured metadata identifiers configured on Layers or Featuretypes
 	DatasetMetadataIDs() []string
