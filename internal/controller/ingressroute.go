@@ -98,7 +98,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 
 	ingressRoute.Spec.Routes = []traefikiov1alpha1.Route{}
 	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		for _, ingressRouteURL := range obj.IngressRouteURLs() {
+		for _, ingressRouteURL := range obj.IngressRouteURLs(true) {
 			ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getLegendMatchRule(ingressRouteURL.URL), mapserverService, middlewareRef))
 
 			if obj.Options().UseWebserviceProxy() {
@@ -108,7 +108,7 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 			}
 		}
 	} else { // WFS
-		for _, ingressRouteURL := range obj.IngressRouteURLs() {
+		for _, ingressRouteURL := range obj.IngressRouteURLs(true) {
 			ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getMatchRule(ingressRouteURL.URL), mapserverService, middlewareRef))
 		}
 	}

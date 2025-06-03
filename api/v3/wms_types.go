@@ -690,9 +690,13 @@ func (wms *WMS) ReadinessQueryString() (string, string, error) {
 	return fmt.Sprintf("SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=%s&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=%s&STYLES=&FORMAT=image/png", wms.HealthCheckBBox(), firstDataLayerName), "image/png", nil
 }
 
-func (wms *WMS) IngressRouteURLs() smoothoperatormodel.IngressRouteURLs {
+func (wms *WMS) IngressRouteURLs(includeServiceURLWhenEmpty bool) smoothoperatormodel.IngressRouteURLs {
 	if len(wms.Spec.IngressRouteURLs) == 0 {
-		return smoothoperatormodel.IngressRouteURLs{{URL: wms.Spec.Service.URL}}
+		if includeServiceURLWhenEmpty {
+			return smoothoperatormodel.IngressRouteURLs{{URL: wms.Spec.Service.URL}}
+		}
+
+		return smoothoperatormodel.IngressRouteURLs{}
 	}
 
 	return wms.Spec.IngressRouteURLs
