@@ -15,10 +15,11 @@ import (
 func main() {
 	crdDir := os.Args[1]
 
-	updateWMSV3Layers(crdDir)
+	updateWMSV3(crdDir)
+	updateWFSV3(crdDir)
 }
 
-func updateWMSV3Layers(crdDir string) {
+func updateWMSV3(crdDir string) {
 	path := filepath.Join(crdDir, "pdok.nl_wms.yaml")
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -35,6 +36,7 @@ func updateWMSV3Layers(crdDir string) {
 	versions := make([]v1.CustomResourceDefinitionVersion, 0)
 	for _, version := range crd.Spec.Versions {
 		if version.Name == "v3" {
+			updateMapfileV3(&version)
 			updateLayersV3(&version)
 
 			versions = append(versions, version)
@@ -95,6 +97,70 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 	}
 
 	service.Properties["layer"] = layer
+	spec.Properties["service"] = service
+	schema.Properties["spec"] = spec
+	version.Schema = &v1.CustomResourceValidation{
+		OpenAPIV3Schema: schema,
+	}
+}
+
+func updateWFSV3(crdDir string) {
+	path := filepath.Join(crdDir, "pdok.nl_wfs.yaml")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		panic(errors.Wrap(err, "WFS v3 manifest not found"))
+	}
+
+	content, _ := os.ReadFile(path)
+	crd := &v1.CustomResourceDefinition{}
+	err := kyaml.Unmarshal(content, &crd)
+	if err != nil {
+		panic(err)
+	}
+
+	versions := make([]v1.CustomResourceDefinitionVersion, 0)
+	for _, version := range crd.Spec.Versions {
+		if version.Name == "v3" {
+			updateMapfileV3(&version)
+
+			versions = append(versions, version)
+		} else {
+			versions = append(versions, version)
+		}
+	}
+
+	crd.Spec.Versions = versions
+	updatedContent, _ := kyaml.Marshal(crd)
+
+	// Remove the 'status' field from the yaml
+	var rawData map[string]interface{}
+	_ = goyaml.Unmarshal(updatedContent, &rawData)
+	delete(rawData, "status")
+
+	f, _ := os.OpenFile(path, os.O_TRUNC|os.O_WRONLY, 0644)
+	defer f.Close()
+
+	enc := goyaml.NewEncoder(f)
+	defer enc.Close()
+
+	enc.SetIndent(2)
+	_ = enc.Encode(rawData)
+}
+
+func updateMapfileV3(version *v1.CustomResourceDefinitionVersion) {
+	schema := version.Schema.OpenAPIV3Schema
+	spec := schema.Properties["spec"]
+	service := spec.Properties["service"]
+	mapfile := service.Properties["mapfile"]
+	configMapKeyRef := mapfile.Properties["configMapKeyRef"]
+	configMapKeyRef.Required = append(configMapKeyRef.Required, "name")
+	name := configMapKeyRef.Properties["name"]
+	name.Default = nil
+	name.Description = "Name of the referent."
+
+	configMapKeyRef.Properties["name"] = name
+	mapfile.Properties["configMapKeyRef"] = configMapKeyRef
+	service.Properties["mapfile"] = mapfile
 	spec.Properties["service"] = service
 	schema.Properties["spec"] = spec
 	version.Schema = &v1.CustomResourceValidation{

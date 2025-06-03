@@ -629,6 +629,20 @@ func (wms *WMS) URL() smoothoperatormodel.URL {
 	return wms.Spec.Service.URL
 }
 
+func (wms *WMS) DatasetMetadataIDs() []string {
+	ids := []string{}
+
+	for _, layer := range wms.Spec.Service.GetAllLayers() {
+		if layer.DatasetMetadataURL != nil && layer.DatasetMetadataURL.CSW != nil {
+			if id := layer.DatasetMetadataURL.CSW.MetadataIdentifier; !slices.Contains(ids, id) {
+				ids = append(ids, id)
+			}
+		}
+	}
+
+	return ids
+}
+
 func (wms *WMS) GeoPackages() []*Gpkg {
 	gpkgs := make([]*Gpkg, 0)
 

@@ -95,6 +95,7 @@ type WFSSpec struct {
 	Service WFSService `json:"service"`
 }
 
+// +kubebuilder:validation:XValidation:message="otherCrs can't contain the defaultCrs",rule="!has(self.otherCrs) || (has(self.otherCrs) && !(self.defaultCrs in self.otherCrs))",fieldPath=".otherCrs"
 type WFSService struct {
 	// Geonovum subdomein
 	// +kubebuilder:validation:MinLength:=1
@@ -141,6 +142,7 @@ type WFSService struct {
 
 	// Other supported CRS
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"
 	OtherCrs []string `json:"otherCrs,omitempty"`
 
 	// Service bounding box
@@ -281,6 +283,20 @@ func (wfs *WFS) Options() Options {
 
 func (wfs *WFS) URL() smoothoperatormodel.URL {
 	return wfs.Spec.Service.URL
+}
+
+func (wfs *WFS) DatasetMetadataIDs() []string {
+	ids := []string{}
+
+	for _, featureType := range wfs.Spec.Service.FeatureTypes {
+		if featureType.DatasetMetadataURL != nil && featureType.DatasetMetadataURL.CSW != nil {
+			if id := featureType.DatasetMetadataURL.CSW.MetadataIdentifier; !slices.Contains(ids, id) {
+				ids = append(ids, id)
+			}
+		}
+	}
+
+	return ids
 }
 
 func (wfs *WFS) GeoPackages() []*Gpkg {
