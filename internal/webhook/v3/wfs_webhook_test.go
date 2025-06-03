@@ -220,6 +220,23 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
+		It("Should deny update url was changed but not added to ingressRouteURLs", func() {
+			url, err := smoothoperatormodel.ParseURL("http://old/changed")
+			Expect(err).ToNot(HaveOccurred())
+			oldObj.Spec.IngressRouteURLs = nil
+			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: oldObj.Spec.Service.URL}}
+			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+
+			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: smoothoperatormodel.URL{URL: url}}}
+			warnings, err = validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+
+		})
+
 		It("Should deny update if a label was removed", func() {
 			for label := range obj.Labels {
 				delete(obj.Labels, label)
