@@ -8,35 +8,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/strings/slices"
 )
 
 func (wms *WMS) ValidateCreate(c client.Client) ([]string, error) {
-	warnings := []string{}
-	allErrs := field.ErrorList{}
-
-	err := sharedValidation.ValidateLabelsOnCreate(wms.Labels)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wms.Spec.IngressRouteURLs, wms.URL(), nil)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	ValidateWMS(c, wms, &warnings, &allErrs)
-
-	if len(allErrs) == 0 {
-		return warnings, nil
-	}
-
-	return warnings, apierrors.NewInvalid(
-		schema.GroupKind{Group: "pdok.nl", Kind: "WMS"},
-		wms.Name, allErrs)
+	return ValidateCreate(c, wms, ValidateWMS)
 }
 
 func (wms *WMS) ValidateUpdate(c client.Client, wmsOld *WMS) ([]string, error) {
@@ -46,7 +23,7 @@ func (wms *WMS) ValidateUpdate(c client.Client, wmsOld *WMS) ([]string, error) {
 // TODO fix linting (cyclop,funlen)
 //
 //nolint:cyclop,funlen
-func ValidateWMS(c client.Client, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
+func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wms.GetName(), "wms") {
 		sharedValidation.AddWarning(
 			warnings,
@@ -306,8 +283,6 @@ func ValidateWMS(c client.Client, wms *WMS, warnings *[]string, allErrs *field.E
 
 	podSpecPatch := wms.Spec.PodSpecPatch
 	ValidateEphemeralStorage(podSpecPatch, allErrs)
-
-	ValidateOwnerInfo(c, wms, allErrs)
 }
 
 func findEqualChildStyleNames(layer *Layer, equalStyleNames *map[string][]string) {

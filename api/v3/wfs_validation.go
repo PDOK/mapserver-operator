@@ -8,41 +8,18 @@ import (
 
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func (wfs *WFS) ValidateCreate(c client.Client) ([]string, error) {
-	warnings := []string{}
-	allErrs := field.ErrorList{}
-
-	err := sharedValidation.ValidateLabelsOnCreate(wfs.Labels)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wfs.Spec.IngressRouteURLs, wfs.URL(), nil)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	ValidateWFS(c, wfs, &warnings, &allErrs)
-
-	if len(allErrs) == 0 {
-		return warnings, nil
-	}
-
-	return warnings, apierrors.NewInvalid(
-		schema.GroupKind{Group: "pdok.nl", Kind: "WFS"},
-		wfs.Name, allErrs)
+	return ValidateCreate(c, wfs, ValidateWFS)
 }
 
 func (wfs *WFS) ValidateUpdate(c client.Client, wfsOld *WFS) ([]string, error) {
 	return ValidateUpdate(c, wfs, wfsOld, ValidateWFS)
 }
 
-func ValidateWFS(c client.Client, wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
+func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wfs.GetName(), "wfs") {
 		sharedValidation.AddWarning(
 			warnings,
@@ -74,8 +51,6 @@ func ValidateWFS(c client.Client, wfs *WFS, warnings *[]string, allErrs *field.E
 	ValidateEphemeralStorage(podSpecPatch, allErrs)
 
 	ValidateFeatureTypes(wfs, warnings, allErrs)
-
-	ValidateOwnerInfo(c, wfs, allErrs)
 }
 
 func ValidateFeatureTypes(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {

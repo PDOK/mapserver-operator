@@ -15,7 +15,33 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func ValidateUpdate[W WMSWFS](c client.Client, newW, oldW W, validate func(client.Client, W, *[]string, *field.ErrorList)) ([]string, error) {
+func ValidateCreate[W WMSWFS](c client.Client, obj W, validate func(W, *[]string, *field.ErrorList)) ([]string, error) {
+	warnings := []string{}
+	allErrs := field.ErrorList{}
+
+	err := sharedValidation.ValidateLabelsOnCreate(obj.GetLabels())
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(obj.IngressRouteURLs(false), obj.URL(), nil)
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	validate(obj, &warnings, &allErrs)
+	ValidateOwnerInfo(c, obj, &allErrs)
+
+	if len(allErrs) == 0 {
+		return warnings, nil
+	}
+
+	return warnings, apierrors.NewInvalid(
+		obj.GroupKind(),
+		obj.GetName(), allErrs)
+}
+
+func ValidateUpdate[W WMSWFS](c client.Client, newW, oldW W, validate func(W, *[]string, *field.ErrorList)) ([]string, error) {
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
@@ -50,7 +76,8 @@ func ValidateUpdate[W WMSWFS](c client.Client, newW, oldW W, validate func(clien
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))
 	}
 
-	validate(c, newW, &warnings, &allErrs)
+	validate(newW, &warnings, &allErrs)
+	ValidateOwnerInfo(c, newW, &allErrs)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
