@@ -83,9 +83,7 @@ func ValidateFeatureTypes(wfs *WFS, warnings *[]string, allErrs *field.ErrorList
 				path.Index(index).Child("name"),
 				featureType.Name,
 			))
-		}
-
-		if !slices.Contains(names, featureType.Name) {
+		} else {
 			names = append(names, featureType.Name)
 		}
 
