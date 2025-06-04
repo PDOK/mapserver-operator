@@ -196,7 +196,6 @@ type Postgis struct {
 
 	// GeometryType of the table
 	// +kubebuilder:validation:Pattern=`^(Multi)?(Point|LineString|Polygon)$`
-	// +kubebuilder:validation:MinLength:=1
 	GeometryType string `json:"geometryType"`
 
 	// Columns to expose from table

@@ -450,6 +450,7 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 		Title:       mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Title, "")),
 		Abstract:    smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Abstract, ""))),
 		KeywordList: &wms130.Keywords{Keyword: layer.Keywords},
+		// TODO
 		//CRS:                     defaultCrs,
 		//EXGeographicBoundingBox: &defaultBoundingBox,
 		//BoundingBox:             allDefaultBoundingBoxes,
