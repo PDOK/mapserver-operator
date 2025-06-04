@@ -133,7 +133,7 @@ func main() {
 
 	//nolint:gosec
 	levelEnabler := zapcore.Level(logLevel)
-	zapLogger, _ := logging.SetupLogger("atom-operator", slackWebhookURL, levelEnabler)
+	zapLogger, _ := logging.SetupLogger("mapserver-operator", slackWebhookURL, levelEnabler)
 	logrLogger := zapr.NewLogger(zapLogger)
 	ctrl.SetLogger(logrLogger)
 
