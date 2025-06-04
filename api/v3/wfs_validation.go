@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"slices"
 	"strings"
 
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
@@ -69,4 +70,64 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 
 	podSpecPatch := wfs.Spec.PodSpecPatch
 	ValidateEphemeralStorage(podSpecPatch, allErrs)
+
+	ValidateFeatureTypes(wfs, warnings, allErrs)
+}
+
+func ValidateFeatureTypes(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
+	names := []string{}
+	path := field.NewPath("spec").Child("service").Child("featureTypes")
+	for index, featureType := range wfs.Spec.Service.FeatureTypes {
+		if slices.Contains(names, featureType.Name) {
+			*allErrs = append(*allErrs, field.Duplicate(
+				path.Index(index).Child("name"),
+				featureType.Name,
+			))
+		} else {
+			names = append(names, featureType.Name)
+		}
+
+		if wfs.Spec.Service.Mapfile != nil && featureType.Bbox != nil && featureType.Bbox.DefaultCRS != nil {
+			sharedValidation.AddWarning(
+				warnings,
+				*path.Index(index).Child("bbox").Child("defaultCrs"),
+				"is not used when service.mapfile is configured",
+				wfs.GroupVersionKind(),
+				wfs.GetName(),
+			)
+		}
+
+		if tif := featureType.Data.TIF; tif != nil {
+			if tif.Resample != "NEAREST" {
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Index(index).Child("data").Child("tif").Child("resample"),
+					"is not used when service.mapfile is configured",
+					wfs.GroupVersionKind(),
+					wfs.GetName(),
+				)
+			}
+
+			if tif.Offsite != nil {
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Index(index).Child("data").Child("tif").Child("offsite"),
+					"is not used when service.mapfile is configured",
+					wfs.GroupVersionKind(),
+					wfs.GetName(),
+				)
+			}
+
+			if tif.GetFeatureInfoIncludesClass {
+				sharedValidation.AddWarning(
+					warnings,
+					*path.Index(index).Child("data").Child("tif").Child("getFeatureInfoIncludesClass"),
+					"is not used when service.mapfile is configured",
+					wfs.GroupVersionKind(),
+					wfs.GetName(),
+				)
+			}
+		}
+
+	}
 }

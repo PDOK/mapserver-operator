@@ -104,7 +104,7 @@ func getWFSLayers(service pdoknlv3.WFSService) (layers []WFSLayer) {
 }
 
 func getWFSExtent(featureType pdoknlv3.FeatureType, service pdoknlv3.WFSService) string {
-	if featureType.Bbox != nil {
+	if featureType.Bbox != nil && featureType.Bbox.DefaultCRS != nil {
 		return featureType.Bbox.DefaultCRS.ToExtent()
 	}
 	if service.Bbox != nil {

@@ -123,7 +123,7 @@ func SetDataFields[O pdoknlv3.WMSWFS](obj O, wmsLayer *WMSLayer, data pdoknlv3.D
 			reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
 			wmsLayer.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join("/vsiaz", reReplace.ReplaceAllString(tif.BlobKey, "")))
 		}
-		wmsLayer.BaseLayer.Resample = tif.Resample
+		wmsLayer.BaseLayer.Resample = &tif.Resample
 		wmsLayer.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
 	case data.Postgis != nil:
 		postgis := data.Postgis

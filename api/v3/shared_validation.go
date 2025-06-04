@@ -128,4 +128,12 @@ func ValidateInspire[O WMSWFS](obj O, allErrs *field.ErrorList) {
 		}
 	}
 
+	if obj.Type() == ServiceTypeWFS && len(datasetIDs) > 1 {
+		*allErrs = append(*allErrs, field.Invalid(
+			field.NewPath("spec").Child("service").Child("featureTypes[*]").Child("datasetMetadataUrl").Child("csw").Child("metadataIdentifier"),
+			datasetIDs,
+			"when Inspire, all featureTypes need use the same datasetMetadataUrl.csw.metadataIdentifier",
+		))
+	}
+
 }

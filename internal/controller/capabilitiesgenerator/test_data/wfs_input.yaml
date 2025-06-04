@@ -53,6 +53,9 @@ services:
                 - urn:ogc:def:crs:EPSG::3857
                 - urn:ogc:def:crs:EPSG::4258
                 - urn:ogc:def:crs:EPSG::4326
+              wgs84BoundingBox:
+                lowerCorner: "-180 -90"
+                upperCorner: "180 90"
               metadataUrl:
                 href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
             - name: prefix:featuretype-2-name

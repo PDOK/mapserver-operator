@@ -180,7 +180,7 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 
 	if src.Extent != nil {
 		featureTypeV3.Bbox = &pdoknlv3.FeatureBbox{
-			DefaultCRS: smoothoperatormodel.ExtentToBBox(*src.Extent),
+			DefaultCRS: smoothoperatorutils.Pointer(smoothoperatormodel.ExtentToBBox(*src.Extent)),
 		}
 	}
 

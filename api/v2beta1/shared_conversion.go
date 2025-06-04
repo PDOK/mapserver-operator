@@ -164,7 +164,7 @@ func ConvertV2DataToV3(v2 Data) pdoknlv3.Data {
 	if v2.Tif != nil {
 		v3.TIF = &pdoknlv3.TIF{
 			BlobKey:                     v2.Tif.BlobKey,
-			Resample:                    v2.Tif.Resample,
+			Resample:                    *v2.Tif.Resample,
 			Offsite:                     v2.Tif.Offsite,
 			GetFeatureInfoIncludesClass: smoothoperatorutils.PointerVal(v2.Tif.GetFeatureInfoIncludesClass, false),
 		}
@@ -201,7 +201,7 @@ func ConvertV3DataToV2(v3 pdoknlv3.Data) Data {
 		v2.Tif = &Tif{
 			BlobKey:                     v3.TIF.BlobKey,
 			Offsite:                     v3.TIF.Offsite,
-			Resample:                    v3.TIF.Resample,
+			Resample:                    &v3.TIF.Resample,
 			GetFeatureInfoIncludesClass: &v3.TIF.GetFeatureInfoIncludesClass,
 		}
 	}

@@ -236,7 +236,7 @@ spec:
             defaultMode: 420
           name: mapserver
         - configMap:
-            name: noprefetch-wfs-capabilities-generator-446d5ddh62
+            name: noprefetch-wfs-capabilities-generator-tk7t48fd89
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:

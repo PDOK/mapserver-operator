@@ -137,7 +137,6 @@ type WFSService struct {
 
 	// Default CRS (DataEPSG)
 	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"
-	// +kubebuilder:validation:MinLength:=1
 	DefaultCrs string `json:"defaultCrs"`
 
 	// Other supported CRS
@@ -169,7 +168,6 @@ func (s WFSService) KeywordsIncludingInspireKeyword() []string {
 
 // HealthCheck is the struct with all fields to configure custom healthchecks
 type HealthCheckWFS struct {
-	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:XValidation:rule="self.contains('Service=WFS')",message="a valid healthcheck contains 'Service=WFS'"
 	// +kubebuilder:validation:XValidation:rule="self.contains('Request=')",message="a valid healthcheck contains 'Request='"
 	Querystring string `json:"querystring"`
@@ -187,7 +185,7 @@ type Bbox struct {
 // FeatureType defines a WFS feature
 type FeatureType struct {
 	// Name of the feature
-	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:Pattern:=`^\S+$`
 	Name string `json:"name"`
 
 	// Title of the feature
@@ -217,14 +215,14 @@ type FeatureType struct {
 	Data Data `json:"data"`
 }
 
-// FeatureType bounding box, if provided it overrides the default extent
+// FeatureBbox is the optional featureType bounding box, if provided it overrides the default extent
 type FeatureBbox struct {
-	// DefaultCRS defines the feature’s bounding box in the service’s own CRS
+	// DefaultCRS defines the EXTENT/wfs_extent for the featureType for use in the mapfile
 	//nolint:tagliatelle
 	// +kubebuilder:validation:Type=object
-	DefaultCRS smoothoperatormodel.BBox `json:"defaultCRS"`
+	DefaultCRS *smoothoperatormodel.BBox `json:"defaultCRS,omitempty"`
 
-	// WGS84, if provided, gives the same bounding box reprojected into EPSG:4326.
+	// WGS84, if provided, gives the same bounding box reprojected into EPSG:4326 for use in the capabilities.
 	// +kubebuilder:validation:Type=object
 	WGS84 *smoothoperatormodel.BBox `json:"wgs84,omitempty"`
 }

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	samplesPath = "../../../config/samples/"
+	samplesPath = "test_data/"
 )
 
 func getSampleFilename[W pdoknlv3.WMSWFS](webservice W) (string, error) {

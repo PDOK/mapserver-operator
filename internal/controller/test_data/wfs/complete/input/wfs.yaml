@@ -104,6 +104,11 @@ spec:
           maxy: "0"
           minx: "1"
           miny: "2"
+        wgs84:
+          maxx: "180"
+          maxy: "90"
+          minx: "-180"
+          miny: "-90"
       data:
         postgis:
           columns:
