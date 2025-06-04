@@ -218,7 +218,7 @@ type Layer struct {
 	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)?$`
 	MaxScaleDenominator *string `json:"maxscaledenominator,omitempty"`
 
-	// List of styles used by the layers
+	// List of styles used by the layer
 	// +kubebuilder:validations:MinItems:=1
 	Styles []Style `json:"styles,omitempty"`
 

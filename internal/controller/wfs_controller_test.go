@@ -49,6 +49,12 @@ import (
 
 var _ = Describe("Testing WFS Controller", func() {
 
+	Context("test", func() {
+		It("fails", func() {
+			Fail("failure")
+		})
+	})
+
 	Context("Testing Mutate functions for Minimal WFS", func() {
 		testMutates(getWFSReconciler, &pdoknlv3.WFS{}, "minimal")
 	})
