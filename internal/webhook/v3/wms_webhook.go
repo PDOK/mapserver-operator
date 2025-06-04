@@ -22,12 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-//nolint:dupl
 package v3
 
 import (
 	"context"
 	"fmt"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,7 +60,7 @@ func SetupWMSWebhookWithManager(mgr ctrl.Manager) error {
 // NOTE: The +kubebuilder:object:generate=false marker prevents controller-gen from generating DeepCopy methods,
 // as this struct is used only for temporary operations and does not need to be deeply copied.
 type WMSCustomValidator struct {
-	// TODO(user): Add more fields as needed for validation
+	Client client.Client
 }
 
 var _ webhook.CustomValidator = &WMSCustomValidator{}
@@ -72,7 +73,7 @@ func (v *WMSCustomValidator) ValidateCreate(_ context.Context, obj runtime.Objec
 	}
 	wmsLog.Info("Validation for WMS upon creation", "name", wms.GetName())
 
-	return wms.ValidateCreate()
+	return wms.ValidateCreate(v.Client)
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type WMS.
@@ -87,7 +88,7 @@ func (v *WMSCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj ru
 	}
 	wmsLog.Info("Validation for WMS upon update", "name", wms.GetName())
 
-	return wms.ValidateUpdate(wmsOld)
+	return wms.ValidateUpdate(v.Client, wmsOld)
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type WMS.

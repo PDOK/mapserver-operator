@@ -22,12 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-//nolint:dupl
 package v3
 
 import (
 	"context"
 	"fmt"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -44,7 +45,7 @@ var wfsLog = logf.Log.WithName("wfs-resource")
 // SetupWFSWebhookWithManager registers the webhook for WFS in the manager.
 func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).For(&pdoknlv3.WFS{}).
-		WithValidator(&WFSCustomValidator{}).
+		WithValidator(&WFSCustomValidator{mgr.GetClient()}).
 		Complete()
 }
 
@@ -59,7 +60,7 @@ func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 // NOTE: The +kubebuilder:object:generate=false marker prevents controller-gen from generating DeepCopy methods,
 // as this struct is used only for temporary operations and does not need to be deeply copied.
 type WFSCustomValidator struct {
-	// TODO(user): Add more fields as needed for validation
+	Client client.Client
 }
 
 var _ webhook.CustomValidator = &WFSCustomValidator{}
@@ -72,7 +73,7 @@ func (v *WFSCustomValidator) ValidateCreate(_ context.Context, obj runtime.Objec
 	}
 	wfsLog.Info("Validation for WFS upon creation", "name", wfs.GetName())
 
-	return wfs.ValidateCreate()
+	return wfs.ValidateCreate(v.Client)
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
@@ -87,7 +88,7 @@ func (v *WFSCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj ru
 	}
 	wfsLog.Info("Validation for WFS upon update", "name", wfs.GetName())
 
-	return wfs.ValidateUpdate(wfsOld)
+	return wfs.ValidateUpdate(v.Client, wfsOld)
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type WFS.

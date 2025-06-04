@@ -31,6 +31,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -40,15 +41,15 @@ var _ = Describe("WMS Webhook", func() {
 		obj       *pdoknlv3.WMS
 		oldObj    *pdoknlv3.WMS
 		validator WMSCustomValidator
+		ownerInfo *smoothoperatorv1.OwnerInfo
 	)
 
 	BeforeEach(func() {
-		validator = WMSCustomValidator{}
+		validator = WMSCustomValidator{k8sClient}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 
 		sample := &pdoknlv3.WMS{}
-		err := readSample(sample)
-		Expect(err).To(BeNil(), "Reading and parsing the WMS V3 sample failed")
+		Expect(readSample(sample)).To(Succeed(), "Reading and parsing the WMS V3 sample failed")
 
 		obj = sample.DeepCopy()
 		oldObj = sample.DeepCopy()
@@ -56,10 +57,16 @@ var _ = Describe("WMS Webhook", func() {
 		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")
 		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
 
+		ownerInfoSample := &smoothoperatorv1.OwnerInfo{}
+		Expect(readOwnerInfo(ownerInfoSample)).To(Succeed(), "Reading and parsing the Ownerinfo sample failed")
+		ownerInfo = ownerInfoSample.DeepCopy()
+		Expect(ownerInfo).NotTo(BeNil())
+		Expect(createOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
+
 	})
 
 	AfterEach(func() {
-
+		Expect(k8sClient.Delete(ctx, ownerInfo)).To(Succeed())
 	})
 
 	Context("When creating or updating WMS under Conversion Webhook", func() {

@@ -5,40 +5,19 @@ import (
 	"maps"
 	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/strings/slices"
 )
 
-func (wms *WMS) ValidateCreate() ([]string, error) {
-	warnings := []string{}
-	allErrs := field.ErrorList{}
-
-	err := sharedValidation.ValidateLabelsOnCreate(wms.Labels)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wms.Spec.IngressRouteURLs, wms.URL(), nil)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	ValidateWMS(wms, &warnings, &allErrs)
-
-	if len(allErrs) == 0 {
-		return warnings, nil
-	}
-
-	return warnings, apierrors.NewInvalid(
-		schema.GroupKind{Group: "pdok.nl", Kind: "WMS"},
-		wms.Name, allErrs)
+func (wms *WMS) ValidateCreate(c client.Client) ([]string, error) {
+	return ValidateCreate(c, wms, ValidateWMS)
 }
 
-func (wms *WMS) ValidateUpdate(wmsOld *WMS) ([]string, error) {
-	return ValidateUpdate(wms, wmsOld, ValidateWMS)
+func (wms *WMS) ValidateUpdate(c client.Client, wmsOld *WMS) ([]string, error) {
+	return ValidateUpdate(c, wms, wmsOld, ValidateWMS)
 }
 
 // TODO fix linting (cyclop,funlen)

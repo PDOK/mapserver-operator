@@ -1,8 +1,12 @@
 package v3
 
 import (
+	"context"
 	"fmt"
 	"slices"
+
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 	v1 "k8s.io/api/core/v1"
@@ -11,7 +15,33 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func ValidateUpdate[W WMSWFS](newW, oldW W, validate func(W, *[]string, *field.ErrorList)) ([]string, error) {
+func ValidateCreate[W WMSWFS](c client.Client, obj W, validate func(W, *[]string, *field.ErrorList)) ([]string, error) {
+	warnings := []string{}
+	allErrs := field.ErrorList{}
+
+	err := sharedValidation.ValidateLabelsOnCreate(obj.GetLabels())
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(obj.IngressRouteURLs(false), obj.URL(), nil)
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	validate(obj, &warnings, &allErrs)
+	ValidateOwnerInfo(c, obj, &allErrs)
+
+	if len(allErrs) == 0 {
+		return warnings, nil
+	}
+
+	return warnings, apierrors.NewInvalid(
+		obj.GroupKind(),
+		obj.GetName(), allErrs)
+}
+
+func ValidateUpdate[W WMSWFS](c client.Client, newW, oldW W, validate func(W, *[]string, *field.ErrorList)) ([]string, error) {
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
@@ -47,6 +77,7 @@ func ValidateUpdate[W WMSWFS](newW, oldW W, validate func(W, *[]string, *field.E
 	}
 
 	validate(newW, &warnings, &allErrs)
+	ValidateOwnerInfo(c, newW, &allErrs)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
@@ -134,6 +165,46 @@ func ValidateInspire[O WMSWFS](obj O, allErrs *field.ErrorList) {
 			datasetIDs,
 			"when Inspire, all featureTypes need use the same datasetMetadataUrl.csw.metadataIdentifier",
 		))
+	}
+
+}
+
+func ValidateOwnerInfo[O WMSWFS](c client.Client, obj O, allErrs *field.ErrorList) {
+	ownerInfoRef := obj.OwnerInfoRef()
+	ownerInfo := &smoothoperatorv1.OwnerInfo{}
+	objectKey := client.ObjectKey{
+		Namespace: obj.GetNamespace(),
+		Name:      ownerInfoRef,
+	}
+	ctx := context.Background()
+	err := c.Get(ctx, objectKey, ownerInfo)
+	fieldPath := field.NewPath("spec").Child("service").Child("ownerInfoRef")
+	if err != nil {
+		*allErrs = append(*allErrs, field.NotFound(fieldPath, ownerInfoRef))
+		return
+	}
+
+	if ownerInfo.Spec.NamespaceTemplate == nil {
+		*allErrs = append(*allErrs, field.Required(fieldPath, "spec.namespaceTemplate missing in "+ownerInfo.Name))
+		return
+	}
+
+	if ((obj.Inspire() != nil && obj.Inspire().ServiceMetadataURL.CSW != nil) ||
+		len(obj.DatasetMetadataIDs()) > 0) &&
+		(ownerInfo.Spec.MetadataUrls == nil || ownerInfo.Spec.MetadataUrls.CSW == nil) {
+		*allErrs = append(*allErrs, field.Required(fieldPath, "spec.metadataUrls.csw missing in "+ownerInfo.Name))
+		return
+	}
+
+	switch obj.Type() {
+	case ServiceTypeWFS:
+		if ownerInfo.Spec.WFS == nil {
+			*allErrs = append(*allErrs, field.Required(fieldPath, "spec.WFS missing in "+ownerInfo.Name))
+		}
+	case ServiceTypeWMS:
+		if ownerInfo.Spec.WMS == nil {
+			*allErrs = append(*allErrs, field.Required(fieldPath, "spec.WMS missing in "+ownerInfo.Name))
+		}
 	}
 
 }

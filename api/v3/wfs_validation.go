@@ -4,40 +4,19 @@ import (
 	"slices"
 	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func (wfs *WFS) ValidateCreate() ([]string, error) {
-	warnings := []string{}
-	allErrs := field.ErrorList{}
-
-	err := sharedValidation.ValidateLabelsOnCreate(wfs.Labels)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wfs.Spec.IngressRouteURLs, wfs.URL(), nil)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	ValidateWFS(wfs, &warnings, &allErrs)
-
-	if len(allErrs) == 0 {
-		return warnings, nil
-	}
-
-	return warnings, apierrors.NewInvalid(
-		schema.GroupKind{Group: "pdok.nl", Kind: "WFS"},
-		wfs.Name, allErrs)
+func (wfs *WFS) ValidateCreate(c client.Client) ([]string, error) {
+	return ValidateCreate(c, wfs, ValidateWFS)
 }
 
-func (wfs *WFS) ValidateUpdate(wfsOld *WFS) ([]string, error) {
-	return ValidateUpdate(wfs, wfsOld, ValidateWFS)
+func (wfs *WFS) ValidateUpdate(c client.Client, wfsOld *WFS) ([]string, error) {
+	return ValidateUpdate(c, wfs, wfsOld, ValidateWFS)
 }
 
 func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {

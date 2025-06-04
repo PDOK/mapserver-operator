@@ -45,6 +45,7 @@ type WMSWFS interface {
 	TypedName() string
 	Options() Options
 	HasPostgisData() bool
+	OwnerInfoRef() string
 
 	// URL returns the configured service URL
 	URL() smoothoperatormodel.URL

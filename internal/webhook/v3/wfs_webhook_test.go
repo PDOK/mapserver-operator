@@ -30,11 +30,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
-
-	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
 
 var _ = Describe("WFS Webhook", func() {
@@ -42,10 +42,11 @@ var _ = Describe("WFS Webhook", func() {
 		obj       *pdoknlv3.WFS
 		oldObj    *pdoknlv3.WFS
 		validator WFSCustomValidator
+		ownerInfo *smoothoperatorv1.OwnerInfo
 	)
 
 	BeforeEach(func() {
-		validator = WFSCustomValidator{}
+		validator = WFSCustomValidator{k8sClient}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 
 		sample := &pdoknlv3.WFS{}
@@ -57,10 +58,17 @@ var _ = Describe("WFS Webhook", func() {
 
 		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")
 		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
+
+		ownerInfoSample := &smoothoperatorv1.OwnerInfo{}
+		Expect(readOwnerInfo(ownerInfoSample)).To(Succeed(), "Reading and parsing the Ownerinfo sample failed")
+		ownerInfo = ownerInfoSample.DeepCopy()
+		Expect(ownerInfo).NotTo(BeNil())
+		Expect(createOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
+
 	})
 
 	AfterEach(func() {
-
+		Expect(k8sClient.Delete(ctx, ownerInfo)).To(Succeed())
 	})
 
 	Context("When creating or updating WFS under Validating Webhook", func() {
@@ -276,6 +284,44 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(oldObj.Spec.Service.Inspire).NotTo(BeNil())
 			obj.Spec.Service.Inspire = nil
 			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny create if the OwnerInfoRef doesn't exist", func() {
+			obj.Spec.Service.OwnerInfoRef = "changed"
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny create if the OwnerInfoRef misses namespaceTemplate", func() {
+			ownerInfo.Spec.NamespaceTemplate = nil
+			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny create if the OwnerInfoRef misses csw metadataTemplate", func() {
+			Expect(obj.Inspire().ServiceMetadataURL.CSW).ToNot(BeNil())
+			ownerInfo.Spec.MetadataUrls.CSW = nil
+			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+
+			ownerInfo.Spec.MetadataUrls = nil
+			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
+			warnings, err = validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny create if the OwnerInfoRef misses Wfs", func() {
+			ownerInfo.Spec.WFS = nil
+			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
+			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 			Expect(warnings).To(BeEmpty())
 		})

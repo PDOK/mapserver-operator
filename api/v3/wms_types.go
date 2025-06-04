@@ -701,3 +701,7 @@ func (wms *WMS) IngressRouteURLs(includeServiceURLWhenEmpty bool) smoothoperator
 
 	return wms.Spec.IngressRouteURLs
 }
+
+func (wms *WMS) OwnerInfoRef() string {
+	return wms.Spec.Service.OwnerInfoRef
+}
