@@ -82,7 +82,8 @@ type WFSSpec struct {
 	PodSpecPatch                 corev1.PodSpec                `json:"podSpecPatch"`
 	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
 	// TODO omitting the options field or setting an empty value results in incorrect defaulting of the options
-	Options *Options `json:"options,omitempty"`
+	// Options configures optional behaviors of the operator, like ingress, casing, and data prefetching.
+	Options *BaseOptions `json:"options,omitempty"`
 
 	// Custom healthcheck options
 	HealthCheck *HealthCheckWFS `json:"healthCheck,omitempty"`
@@ -97,43 +98,10 @@ type WFSSpec struct {
 
 // +kubebuilder:validation:XValidation:message="otherCrs can't contain the defaultCrs",rule="!has(self.otherCrs) || (has(self.otherCrs) && !(self.defaultCrs in self.otherCrs))",fieldPath=".otherCrs"
 type WFSService struct {
-	// Geonovum subdomein
-	// +kubebuilder:validation:MinLength:=1
-	Prefix string `json:"prefix"`
+	BaseService `json:",inline"`
 
-	// URL of the service
-	URL smoothoperatormodel.URL `json:"url"`
-
-	// Config for Inspire services
-	Inspire *Inspire `json:"inspire,omitempty"`
-
-	// External Mapfile reference
-	Mapfile *Mapfile `json:"mapfile,omitempty"`
-
-	// Reference to OwnerInfo CR
-	// +kubebuilder:validation:MinLength:=1
-	OwnerInfoRef string `json:"ownerInfoRef"`
-
-	// Service title
-	// +kubebuilder:validation:MinLength:=1
-	Title string `json:"title"`
-
-	// Service abstract
-	// +kubebuilder:validation:MinLength:=1
-	Abstract string `json:"abstract"`
-
-	// Keywords for capabilities
-	// +kubebuilder:validation:MinItems:=1
-	// +kubebuilder:validation:items:MinLength:=1
-	Keywords []string `json:"keywords"`
-
-	// Optional Fees
-	// +kubebuilder:validation:MinLength:=1
-	Fees *string `json:"fees,omitempty"`
-
-	// AccessConstraints URL
-	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
+	// Inspire holds INSPIRE-specific metadata for the service.
+	Inspire *WFSInspire `json:"inspire,omitempty"`
 
 	// Default CRS (DataEPSG)
 	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)$"
@@ -173,6 +141,13 @@ type HealthCheckWFS struct {
 	Querystring string `json:"querystring"`
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype string `json:"mimetype"`
+}
+
+type WFSInspire struct {
+	Inspire `json:",inline"`
+	// SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
+	// +kubebuilder:validation:Pattern:=`^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$`
+	SpatialDatasetIdentifier string `json:"spatialDatasetIdentifier"`
 }
 
 type Bbox struct {
@@ -240,7 +215,7 @@ func (wfs *WFS) GroupKind() schema.GroupKind {
 	return schema.GroupKind{Group: GroupVersion.Group, Kind: wfs.Kind}
 }
 
-func (wfs *WFS) Inspire() *Inspire {
+func (wfs *WFS) Inspire() *WFSInspire {
 	return wfs.Spec.Service.Inspire
 }
 
@@ -276,7 +251,7 @@ func (wfs *WFS) Options() Options {
 		return *GetDefaultOptions()
 	}
 
-	return *wfs.Spec.Options
+	return Options{BaseOptions: *wfs.Spec.Options}
 }
 
 func (wfs *WFS) URL() smoothoperatormodel.URL {

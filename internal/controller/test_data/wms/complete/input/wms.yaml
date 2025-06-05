@@ -57,7 +57,6 @@ spec:
       serviceMetadataUrl:
         csw:
           metadataIdentifier: metameta-meta-meta-meta-metametameta
-      spatialDatasetIdentifier: bronbron-bron-bron-bron-bronbronbron
     keywords:
     - service-keyword-1
     - service-keyword-2
@@ -206,6 +205,10 @@ spec:
             minx: "2"
             miny: "4"
           crs: EPSG:28992
+        keywords:
+          - keyword
+        title: title
+        abstract: abstract
         data:
           tif:
             blobKey: ${BLOBS_TIF_BUCKET}/key/file.tif

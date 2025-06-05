@@ -4,9 +4,6 @@ metadata:
   name: sample
 spec:
   podSpecPatch: {}
-  healthCheck:
-    querystring: "f"
-    mimetype: "image/png"
   service:
     prefix: "prefix"
     url: "https://test.test/path"

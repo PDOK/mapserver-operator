@@ -328,7 +328,7 @@ spec:
             name: custom-mapfile-wms-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: custom-mapfile-wms-capabilities-generator-bmtt8d9582
+            name: custom-mapfile-wms-capabilities-generator-f244chh92c
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:

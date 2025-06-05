@@ -109,35 +109,9 @@ type WMSSpec struct {
 }
 
 type WMSService struct {
-	// +kubebuilder:validation:MinLength:=1
-	Prefix string `json:"prefix"`
+	BaseService `json:",inline"`
 
-	// URL of the service
-	URL smoothoperatormodel.URL `json:"url"`
-
-	// Title of the service
-	// +kubebuilder:validation:MinLength:=1
-	Title string `json:"title"`
-
-	// Abstract (short description) of the service
-	// +kubebuilder:validation:MinLength:=1
-	Abstract string `json:"abstract"`
-
-	// Keywords of the service
-	// +kubebuilder:validation:MinItems:=1
-	// +kubebuilder:validation:items:MinLength:=1
-	Keywords []string `json:"keywords"`
-
-	// Reference to a CR of Kind OwnerInfo
-	// +kubebuilder:validation:MinLength:=1
-	OwnerInfoRef string `json:"ownerInfoRef"`
-
-	// AccessConstraints (licence) that are applicable to the service
-	// +kubebuilder:validation:Pattern:=`https?://.*`
-	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string `json:"accessConstraints,omitempty"`
-
-	// Optional specification Inspire themes and ids
+	// Config for Inspire services
 	Inspire *Inspire `json:"inspire,omitempty"`
 
 	// CRS of the data
@@ -146,6 +120,7 @@ type WMSService struct {
 	DataEPSG string `json:"dataEPSG"`
 
 	// Mapfile setting: Sets the maximum size (in pixels) for both dimensions of the image from a getMap request.
+	// +kubebuilder:validation:Minimum:=1
 	MaxSize *int32 `json:"maxSize,omitempty"`
 
 	// Mapfile setting: Sets the RESOLUTION field in the mapfile, not used when service.mapfile is configured
@@ -187,9 +162,12 @@ type HealthCheckWMS struct {
 	Boundingbox *smoothoperatormodel.BBox `json:"boundingbox,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:message="Either blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
+// StylingAssets contains the files references needed for styling
+// +kubebuilder:validation:XValidation:message="At least one of blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
 type StylingAssets struct {
+	// BlobKeys contains symbol image (.png/.svg) or font (.ttf) keys on blob storage, format: container/key/file.(png|ttf)
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:Pattern:=^.+\/.+\/.+\.(png|ttf|svg)$
 	BlobKeys []string `json:"blobKeys,omitempty"`
 
 	// +kubebuilder:validation:MinItems:=1
@@ -197,10 +175,13 @@ type StylingAssets struct {
 }
 
 type ConfigMapRef struct {
+	// Name is the name of the ConfigMap
 	// +kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 
+	// Keys contains styling assets that contain mapfile code (.style|.symbol), required if you use symbols in your styles
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:Pattern:=^\S*.\.(style|symbol)
 	Keys []string `json:"keys,omitempty"`
 }
 
@@ -319,6 +300,27 @@ type Legend struct {
 	// Location of the legend on the blobstore
 	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
+}
+
+// WMSOptions are the Options exclusively used by the WMS
+// +kubebuilder:validation:Type=object
+type WMSOptions struct {
+
+	// ValidateRequests enables request validation against the service schema.
+	// +kubebuilder:default:=true
+	ValidateRequests bool `json:"validateRequests"`
+
+	// RewriteGroupToDataLayers merges group layers into individual data layers.
+	// +kubebuilder:default:=false
+	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers"`
+
+	// DisableWebserviceProxy disables the built-in proxy for external web services.
+	// +kubebuilder:default:=false
+	DisableWebserviceProxy bool `json:"disableWebserviceProxy"`
+
+	// ValidateChildStyleNameEqual ensures child style names match the parent style.
+	// +kubebuilder:default=false
+	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual"`
 }
 
 func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
@@ -588,8 +590,11 @@ func (wms *WMS) GroupKind() schema.GroupKind {
 	return schema.GroupKind{Group: GroupVersion.Group, Kind: wms.Kind}
 }
 
-func (wms *WMS) Inspire() *Inspire {
-	return wms.Spec.Service.Inspire
+func (wms *WMS) Inspire() *WFSInspire {
+	if wms.Spec.Service.Inspire != nil {
+		return &WFSInspire{Inspire: *wms.Spec.Service.Inspire}
+	}
+	return nil
 }
 
 func (wms *WMS) Mapfile() *Mapfile {

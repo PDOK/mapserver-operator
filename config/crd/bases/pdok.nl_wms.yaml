@@ -1203,13 +1203,13 @@ spec:
                   description: Service specification
                   properties:
                     abstract:
-                      description: Abstract (short description) of the service
+                      description: Service abstract
                       minLength: 1
                       type: string
                     accessConstraints:
                       default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
-                      description: AccessConstraints (licence) that are applicable to the service
-                      pattern: https?://.*
+                      description: AccessConstraints URL
+                      pattern: ^https?://.+/.+
                       type: string
                     dataEPSG:
                       description: CRS of the data
@@ -1219,8 +1219,12 @@ spec:
                       description: 'Mapfile setting: Sets the DEFRESOLUTION field in the mapfile, not used when service.mapfile is configured'
                       format: int32
                       type: integer
+                    fees:
+                      description: Optional Fees
+                      minLength: 1
+                      type: string
                     inspire:
-                      description: Optional specification Inspire themes and ids
+                      description: Config for Inspire services
                       properties:
                         language:
                           description: Language of the INSPIRE metadata record
@@ -1258,17 +1262,12 @@ spec:
                           x-kubernetes-validations:
                             - message: metadataUrl should have exactly 1 of csw or custom
                               rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
-                        spatialDatasetIdentifier:
-                          description: SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
-                          pattern: ^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$
-                          type: string
                       required:
                         - language
                         - serviceMetadataUrl
-                        - spatialDatasetIdentifier
                       type: object
                     keywords:
-                      description: Keywords of the service
+                      description: Keywords for capabilities
                       items:
                         minLength: 1
                         type: string
@@ -2005,7 +2004,7 @@ spec:
                           message: TopLayer must be visible
                           rule: self.visible
                     mapfile:
-                      description: Custom mapfile
+                      description: External Mapfile reference
                       properties:
                         configMapKeyRef:
                           description: Selects a key from a ConfigMap.
@@ -2030,12 +2029,14 @@ spec:
                     maxSize:
                       description: 'Mapfile setting: Sets the maximum size (in pixels) for both dimensions of the image from a getMap request.'
                       format: int32
+                      minimum: 1
                       type: integer
                     ownerInfoRef:
-                      description: Reference to a CR of Kind OwnerInfo
+                      description: Reference to OwnerInfo CR
                       minLength: 1
                       type: string
                     prefix:
+                      description: Geonovum subdomein
                       minLength: 1
                       type: string
                     resolution:
@@ -2046,7 +2047,9 @@ spec:
                       description: Optional. Required files for the styling of the service
                       properties:
                         blobKeys:
+                          description: 'BlobKeys contains symbol image (.png/.svg) or font (.ttf) keys on blob storage, format: container/key/file.(png|ttf)'
                           items:
+                            pattern: ^.+\/.+\/.+\.(png|ttf|svg)$
                             type: string
                           minItems: 1
                           type: array
@@ -2054,11 +2057,14 @@ spec:
                           items:
                             properties:
                               keys:
+                                description: Keys contains styling assets that contain mapfile code (.style|.symbol), required if you use symbols in your styles
                                 items:
+                                  pattern: ^\S*.\.(style|symbol)
                                   type: string
                                 minItems: 1
                                 type: array
                               name:
+                                description: Name is the name of the ConfigMap
                                 minLength: 1
                                 type: string
                             required:
@@ -2068,10 +2074,10 @@ spec:
                           type: array
                       type: object
                       x-kubernetes-validations:
-                        - message: Either blobKeys or configMapRefs is required
+                        - message: At least one of blobKeys or configMapRefs is required
                           rule: has(self.blobKeys) || has(self.configMapRefs)
                     title:
-                      description: Title of the service
+                      description: Service title
                       minLength: 1
                       type: string
                     url:

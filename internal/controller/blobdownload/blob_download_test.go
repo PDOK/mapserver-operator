@@ -81,10 +81,10 @@ func TestGetArgsForWFS(t *testing.T) {
 			args: args{
 				WFS: &pdoknlv3.WFS{
 					Spec: pdoknlv3.WFSSpec{
-						Service: pdoknlv3.WFSService{
+						Service: pdoknlv3.WFSService{BaseService: pdoknlv3.BaseService{
 							Title: "wfs-prefetch-service-title",
-						},
-						Options: &pdoknlv3.Options{
+						}},
+						Options: &pdoknlv3.BaseOptions{
 							PrefetchData: true,
 						},
 					},
@@ -98,10 +98,10 @@ func TestGetArgsForWFS(t *testing.T) {
 			args: args{
 				WFS: &pdoknlv3.WFS{
 					Spec: pdoknlv3.WFSSpec{
-						Service: pdoknlv3.WFSService{
+						Service: pdoknlv3.WFSService{BaseService: pdoknlv3.BaseService{
 							Title: "wfs-noprefetch-service-title",
-						},
-						Options: &pdoknlv3.Options{
+						}},
+						Options: &pdoknlv3.BaseOptions{
 							PrefetchData: false,
 						},
 					},
@@ -144,8 +144,8 @@ func TestGetArgsForWMS(t *testing.T) {
 			args: args{
 				WMS: pdoknlv3.WMS{
 					Spec: pdoknlv3.WMSSpec{
-						Service: pdoknlv3.WMSService{
-							Title: "wms-gpkg-service-title",
+						Service: pdoknlv3.WMSService{BaseService: pdoknlv3.BaseService{
+							Title: "wms-gpkg-service-title"},
 							Layer: pdoknlv3.Layer{
 								Name:  smoothoperatorutils.Pointer("wms-gpkg-layer-name"),
 								Title: smoothoperatorutils.Pointer("wms-gpkg-layer-title"),
@@ -207,9 +207,9 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: &pdoknlv3.Options{
+						Options: &pdoknlv3.Options{BaseOptions: pdoknlv3.BaseOptions{
 							PrefetchData: true,
-						},
+						}},
 					},
 				},
 			},
@@ -221,8 +221,8 @@ func TestGetArgsForWMS(t *testing.T) {
 			args: args{
 				WMS: pdoknlv3.WMS{
 					Spec: pdoknlv3.WMSSpec{
-						Service: pdoknlv3.WMSService{
-							Title: "wms-tif-service-title",
+						Service: pdoknlv3.WMSService{BaseService: pdoknlv3.BaseService{
+							Title: "wms-tif-service-title"},
 							Layer: pdoknlv3.Layer{
 								Name:  smoothoperatorutils.Pointer("wms-tif-layer-name"),
 								Title: smoothoperatorutils.Pointer("wms-tif-layer-title"),
@@ -274,9 +274,9 @@ func TestGetArgsForWMS(t *testing.T) {
 								},
 							},
 						},
-						Options: &pdoknlv3.Options{
+						Options: &pdoknlv3.Options{BaseOptions: pdoknlv3.BaseOptions{
 							PrefetchData: true,
-						},
+						}},
 					},
 				},
 			},

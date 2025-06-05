@@ -30,6 +30,8 @@ import (
 	"strconv"
 	"strings"
 
+	"k8s.io/utils/ptr"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -47,7 +49,7 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 	return src.ToV3(dst)
 }
 
-//nolint:gosec
+//nolint:gosec,cyclop,funlen
 func (src *WMS) ToV3(target *pdoknlv3.WMS) error {
 	dst := target
 
@@ -79,20 +81,32 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) error {
 		return err
 	}
 
-	service := pdoknlv3.WMSService{
+	accessConstraints, err := url.Parse("https://creativecommons.org/publicdomain/zero/1.0/deed.nl")
+	if err != nil {
+		return err
+	}
+	if src.Spec.Service.AccessConstraints != nil {
+		accessConstraints, err = url.Parse(*src.Spec.Service.AccessConstraints)
+		if err != nil {
+			return err
+		}
+	}
+
+	service := pdoknlv3.WMSService{BaseService: pdoknlv3.BaseService{
 		Prefix:            src.Spec.General.Dataset,
 		URL:               *url,
 		OwnerInfoRef:      "pdok",
 		Title:             src.Spec.Service.Title,
 		Abstract:          src.Spec.Service.Abstract,
 		Keywords:          src.Spec.Service.Keywords,
-		AccessConstraints: smoothoperatorutils.PointerVal(src.Spec.Service.AccessConstraints, "https://creativecommons.org/publicdomain/zero/1.0/deed.nl"),
-		MaxSize:           nil,
-		Resolution:        nil,
-		DefResolution:     nil,
-		Inspire:           nil,
-		DataEPSG:          src.Spec.Service.DataEPSG,
-		Layer:             src.Spec.Service.MapLayersToV3(),
+		AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
+	},
+		Inspire:       nil,
+		MaxSize:       nil,
+		Resolution:    nil,
+		DefResolution: nil,
+		DataEPSG:      src.Spec.Service.DataEPSG,
+		Layer:         src.Spec.Service.MapLayersToV3(),
 	}
 
 	if src.Spec.Service.Maxsize != nil {
@@ -120,8 +134,7 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) error {
 					MetadataIdentifier: src.Spec.Service.MetadataIdentifier,
 				},
 			},
-			SpatialDatasetIdentifier: *src.Spec.Service.Layers[0].SourceMetadataIdentifier,
-			Language:                 "dut",
+			Language: "dut",
 		}
 	} else {
 		// Annotation to be able to convert back to v2
@@ -185,7 +198,7 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 		Title:              src.Spec.Service.Title,
 		Abstract:           src.Spec.Service.Abstract,
 		Keywords:           src.Spec.Service.Keywords,
-		AccessConstraints:  &src.Spec.Service.AccessConstraints,
+		AccessConstraints:  ptr.To(src.Spec.Service.AccessConstraints.String()),
 		Extent:             nil,
 		DataEPSG:           src.Spec.Service.DataEPSG,
 		Layers:             []WMSLayer{},

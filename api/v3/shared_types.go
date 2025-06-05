@@ -37,7 +37,7 @@ type WMSWFS interface {
 	metav1.Object
 
 	GroupKind() schema.GroupKind
-	Inspire() *Inspire
+	Inspire() *WFSInspire
 	Mapfile() *Mapfile
 	PodSpecPatch() corev1.PodSpec
 	HorizontalPodAutoscalerPatch() *HorizontalPodAutoscalerPatch
@@ -66,9 +66,8 @@ type Mapfile struct {
 	ConfigMapKeyRef corev1.ConfigMapKeySelector `json:"configMapKeyRef"`
 }
 
-// Options configures optional behaviors of the operator, like ingress, casing, and data prefetching.
-// +kubebuilder:validation:Type=object
-type Options struct {
+// BaseOptions for all apis
+type BaseOptions struct {
 	// IncludeIngress dictates whether to deploy an Ingress or ensure none exists.
 	// +kubebuilder:default:=true
 	IncludeIngress bool `json:"includeIngress"`
@@ -77,38 +76,71 @@ type Options struct {
 	// +kubebuilder:default:=true
 	AutomaticCasing bool `json:"automaticCasing"`
 
-	// ValidateRequests enables request validation against the service schema.
-	// +kubebuilder:default:=true
-	ValidateRequests bool `json:"validateRequests"`
-
-	// RewriteGroupToDataLayers merges group layers into individual data layers.
-	// +kubebuilder:default:=false
-	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers"`
-
-	// DisableWebserviceProxy disables the built-in proxy for external web services.
-	// +kubebuilder:default:=false
-	DisableWebserviceProxy bool `json:"disableWebserviceProxy"`
-
 	// Whether to prefetch data from blob storage, and store it on the local filesystem.
 	// If `false`, the data will be served directly out of blob storage
 	// +kubebuilder:default:=true
 	PrefetchData bool `json:"prefetchData"`
+}
 
-	// ValidateChildStyleNameEqual ensures child style names match the parent style.
-	// +kubebuilder:default=false
-	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual"`
+// Options configures optional behaviors of the operator, like ingress, casing, and data prefetching.
+// +kubebuilder:validation:Type=object
+type Options struct {
+	BaseOptions `json:",inline"`
+	WMSOptions  `json:",inline"`
 }
 
 func GetDefaultOptions() *Options {
 	return &Options{
-		IncludeIngress:              true,
-		AutomaticCasing:             true,
-		ValidateRequests:            true,
-		RewriteGroupToDataLayers:    false,
-		DisableWebserviceProxy:      false,
-		PrefetchData:                true,
-		ValidateChildStyleNameEqual: false,
+		BaseOptions: BaseOptions{
+			IncludeIngress:  true,
+			AutomaticCasing: true,
+			PrefetchData:    true,
+		},
+		WMSOptions: WMSOptions{
+			ValidateRequests:            true,
+			RewriteGroupToDataLayers:    false,
+			DisableWebserviceProxy:      false,
+			ValidateChildStyleNameEqual: false,
+		},
 	}
+}
+
+// BaseService holds all shared Services field for all apis
+type BaseService struct {
+	// Geonovum subdomein
+	// +kubebuilder:validation:MinLength:=1
+	Prefix string `json:"prefix"`
+
+	// URL of the service
+	URL smoothoperatormodel.URL `json:"url"`
+
+	// External Mapfile reference
+	Mapfile *Mapfile `json:"mapfile,omitempty"`
+
+	// Reference to OwnerInfo CR
+	// +kubebuilder:validation:MinLength:=1
+	OwnerInfoRef string `json:"ownerInfoRef"`
+
+	// Service title
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+
+	// Service abstract
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+
+	// Keywords for capabilities
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:MinLength:=1
+	Keywords []string `json:"keywords"`
+
+	// Optional Fees
+	// +kubebuilder:validation:MinLength:=1
+	Fees *string `json:"fees,omitempty"`
+
+	// AccessConstraints URL
+	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
 }
 
 // Inspire holds INSPIRE-specific metadata for the service.
@@ -117,10 +149,6 @@ type Inspire struct {
 	// ServiceMetadataURL references the CSW or custom metadata record.
 	// +kubebuilder:validation:Type=object
 	ServiceMetadataURL MetadataURL `json:"serviceMetadataUrl"`
-
-	// SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
-	// +kubebuilder:validation:Pattern:=`^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$`
-	SpatialDatasetIdentifier string `json:"spatialDatasetIdentifier"`
 
 	// Language of the INSPIRE metadata record
 	// +kubebuilder:validation:Pattern:=`bul|cze|dan|dut|eng|est|fin|fre|ger|gre|hun|gle|ita|lav|lit|mlt|pol|por|rum|slo|slv|spa|swe`

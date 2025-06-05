@@ -48,7 +48,6 @@ services:
           contactVoiceTelephone: null
           contactFacsimileTelephone: null
           contactElectronicMailAddress: BeheerPDOK@kadaster.nl
-        fees: NONE
         accessConstraints: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
         optionalConstraints:
           maxWidth: 4000

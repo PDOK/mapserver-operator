@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+	yamlv3 "sigs.k8s.io/yaml/goyaml.v3"
 
 	"testing"
 
@@ -51,19 +52,20 @@ func TestGetInputForWFS(t *testing.T) {
 						},
 					},
 					Spec: pdoknlv3.WFSSpec{
-						Service: pdoknlv3.WFSService{
+						Service: pdoknlv3.WFSService{BaseService: pdoknlv3.BaseService{
 							URL:               smoothoperatormodel.URL{URL: url},
+							Prefix:            "prefix",
 							Title:             "some Service title",
 							Abstract:          "some \"Service\" abstract",
 							Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
-							AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
-							Inspire: &pdoknlv3.Inspire{
+							AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints}},
+							Inspire: &pdoknlv3.WFSInspire{Inspire: pdoknlv3.Inspire{
 								ServiceMetadataURL: pdoknlv3.MetadataURL{
 									CSW: &pdoknlv3.Metadata{
 										MetadataIdentifier: "metameta-meta-meta-meta-metametameta",
 									},
 								},
-								Language:                 "dut",
+								Language: "dut"},
 								SpatialDatasetIdentifier: "datadata-data-data-data-datadatadata",
 							},
 							DefaultCrs: "EPSG:28992",
@@ -109,7 +111,6 @@ func TestGetInputForWFS(t *testing.T) {
 									},
 								},
 							},
-							Prefix: "prefix",
 						},
 					},
 				},
@@ -143,9 +144,9 @@ func TestGetInputForWFS(t *testing.T) {
 
 			wantMap := capabilitiesgenerator.Config{}
 			gotMap := capabilitiesgenerator.Config{}
-			err = yaml.Unmarshal([]byte(WFSInput), &wantMap)
+			err = yamlv3.Unmarshal([]byte(WFSInput), &wantMap)
 			assert.NoError(t, err)
-			err = yaml.Unmarshal([]byte(gotInput), &gotMap)
+			err = yamlv3.Unmarshal([]byte(gotInput), &gotMap)
 			assert.NoError(t, err)
 
 			diff := cmp.Diff(wantMap, gotMap)
@@ -203,11 +204,11 @@ func TestInputForWMS(t *testing.T) {
 	input, err := GetInput(&wms, &ownerInfo)
 	assert.NoError(t, err)
 
-	wantMap := make(map[string]interface{})
-	gotMap := make(map[string]interface{})
-	err = yaml.Unmarshal([]byte(WMSInput), &wantMap)
+	wantMap := capabilitiesgenerator.Config{}
+	gotMap := capabilitiesgenerator.Config{}
+	err = yamlv3.Unmarshal([]byte(WMSInput), &wantMap)
 	assert.NoError(t, err)
-	err = yaml.Unmarshal([]byte(input), &gotMap)
+	err = yamlv3.Unmarshal([]byte(input), &gotMap)
 	assert.NoError(t, err)
 
 	diff := cmp.Diff(wantMap, gotMap)

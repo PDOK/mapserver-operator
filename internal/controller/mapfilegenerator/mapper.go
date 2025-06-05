@@ -201,7 +201,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 			DataEPSG:        service.DataEPSG,
 			EPSGList:        epsgs,
 		},
-		AccessConstraints: service.AccessConstraints,
+		AccessConstraints: service.AccessConstraints.String(),
 		Layers:            []WMSLayer{},
 		GroupLayers:       []GroupLayer{},
 		Symbols:           getSymbols(wms),

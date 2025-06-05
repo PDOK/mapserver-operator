@@ -139,7 +139,7 @@ metadata:
     inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: patches-wms-capabilities-generator-2765hcfg8h
+  name: patches-wms-capabilities-generator-4t652g2fm9
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
