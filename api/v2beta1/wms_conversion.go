@@ -340,12 +340,17 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 
 	// if a topLayer is defined in the v2 it be the only layer without a group
 	// and there are other layers that have the topLayer as their group
-	// so if there is exactly 1 layer without a group
-	// and the name of that layer exist as a key in the map of Groups: layer in that group
-	// then that layer must be the topLayer
+	// and at least one of those layers is itself a group layer
 	var topLayer *pdoknlv3.Layer
-	if len(notGroupedLayers) == 1 {
-		_, ok := groupedLayers[*notGroupedLayers[0].Name]
+	if _, ok := groupedLayers[*notGroupedLayers[0].Name]; ok && len(notGroupedLayers) == 1 {
+		subLayers := groupedLayers[*notGroupedLayers[0].Name]
+		ok := false
+		for _, layer := range subLayers {
+			if _, ok = groupedLayers[*layer.Name]; ok {
+				break
+			}
+		}
+
 		if ok {
 			topLayer = &notGroupedLayers[0]
 		}
@@ -413,7 +418,7 @@ func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
 		Keywords:            v2Layer.Keywords,
 		LabelNoClip:         v2Layer.LabelNoClip,
 		Styles:              []pdoknlv3.Style{},
-		Layers:              []pdoknlv3.Layer{},
+		Layers:              nil,
 		BoundingBoxes:       []pdoknlv3.WMSBoundingBox{},
 		MinScaleDenominator: nil,
 		MaxScaleDenominator: nil,
