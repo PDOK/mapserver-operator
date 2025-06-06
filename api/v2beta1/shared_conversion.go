@@ -20,13 +20,17 @@ func ConvertOptionsV2ToV3(src *WMSWFSOptions) *pdoknlv3.Options {
 	}
 
 	return &pdoknlv3.Options{
-		AutomaticCasing:             src.AutomaticCasing,
-		IncludeIngress:              src.IncludeIngress,
-		PrefetchData:                smoothoperatorutils.PointerVal(src.PrefetchData, defaults.PrefetchData),
-		ValidateRequests:            smoothoperatorutils.PointerVal(src.ValidateRequests, defaults.ValidateRequests),
-		RewriteGroupToDataLayers:    smoothoperatorutils.PointerVal(src.RewriteGroupToDataLayers, defaults.RewriteGroupToDataLayers),
-		DisableWebserviceProxy:      smoothoperatorutils.PointerVal(src.DisableWebserviceProxy, defaults.DisableWebserviceProxy),
-		ValidateChildStyleNameEqual: smoothoperatorutils.PointerVal(src.ValidateChildStyleNameEqual, defaults.ValidateChildStyleNameEqual),
+		BaseOptions: pdoknlv3.BaseOptions{
+			AutomaticCasing: src.AutomaticCasing,
+			IncludeIngress:  src.IncludeIngress,
+			PrefetchData:    smoothoperatorutils.PointerVal(src.PrefetchData, defaults.PrefetchData),
+		},
+		WMSOptions: pdoknlv3.WMSOptions{
+			ValidateRequests:            smoothoperatorutils.PointerVal(src.ValidateRequests, defaults.ValidateRequests),
+			RewriteGroupToDataLayers:    smoothoperatorutils.PointerVal(src.RewriteGroupToDataLayers, defaults.RewriteGroupToDataLayers),
+			DisableWebserviceProxy:      smoothoperatorutils.PointerVal(src.DisableWebserviceProxy, defaults.DisableWebserviceProxy),
+			ValidateChildStyleNameEqual: smoothoperatorutils.PointerVal(src.ValidateChildStyleNameEqual, defaults.ValidateChildStyleNameEqual),
+		},
 	}
 }
 

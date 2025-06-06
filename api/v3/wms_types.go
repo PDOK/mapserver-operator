@@ -48,6 +48,36 @@ const (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// +kubebuilder:object:root=true
+// +kubebuilder:storageversion
+// +kubebuilder:conversion:hub
+// +kubebuilder:subresource:status
+// versionName=v3
+// +kubebuilder:resource:categories=pdok
+// +kubebuilder:resource:path=wms
+
+// WMS is the Schema for the wms API.
+type WMS struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   WMSSpec                            `json:"spec"`
+	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// WMSList contains a list of WMS.
+type WMSList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []WMS `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&WMS{}, &WMSList{})
+}
+
 // WMSSpec defines the desired state of WMS.
 // +kubebuilder:validation:XValidation:rule="!has(self.ingressRouteUrls) || self.ingressRouteUrls.exists_one(x, x.url == self.service.url)",messageExpression="'ingressRouteUrls should include service.url '+self.service.url"
 type WMSSpec struct {
@@ -79,35 +109,9 @@ type WMSSpec struct {
 }
 
 type WMSService struct {
-	// +kubebuilder:validation:MinLength:=1
-	Prefix string `json:"prefix"`
+	BaseService `json:",inline"`
 
-	// URL of the service
-	URL smoothoperatormodel.URL `json:"url"`
-
-	// Title of the service
-	// +kubebuilder:validation:MinLength:=1
-	Title string `json:"title"`
-
-	// Abstract (short description) of the service
-	// +kubebuilder:validation:MinLength:=1
-	Abstract string `json:"abstract"`
-
-	// Keywords of the service
-	// +kubebuilder:validation:MinItems:=1
-	// +kubebuilder:validation:items:MinLength:=1
-	Keywords []string `json:"keywords"`
-
-	// Reference to a CR of Kind OwnerInfo
-	// +kubebuilder:validation:MinLength:=1
-	OwnerInfoRef string `json:"ownerInfoRef"`
-
-	// AccessConstraints (licence) that are applicable to the service
-	// +kubebuilder:validation:Pattern:=`https?://.*`
-	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints string `json:"accessConstraints,omitempty"`
-
-	// Optional specification Inspire themes and ids
+	// Config for Inspire services
 	Inspire *Inspire `json:"inspire,omitempty"`
 
 	// CRS of the data
@@ -116,6 +120,7 @@ type WMSService struct {
 	DataEPSG string `json:"dataEPSG"`
 
 	// Mapfile setting: Sets the maximum size (in pixels) for both dimensions of the image from a getMap request.
+	// +kubebuilder:validation:Minimum:=1
 	MaxSize *int32 `json:"maxSize,omitempty"`
 
 	// Mapfile setting: Sets the RESOLUTION field in the mapfile, not used when service.mapfile is configured
@@ -145,9 +150,11 @@ func (wmsService WMSService) KeywordsIncludingInspireKeyword() []string {
 
 // HealthCheck is the struct with all fields to configure custom healthchecks
 // +kubebuilder:validation:XValidation:rule="!has(self.querystring) || has(self.mimetype)",message="mimetype is required when a querystring is used"
-// +kubebuilder:validation:XValidation:rule="(has(self.boundingbox) || has(self.querystring)) && !(has(self.querystring) && has(self.boundingbox))", message="healthcheck should have querystring + mimetype or boundingbox, not both"
+// +kubebuilder:validation:XValidation:rule="(has(self.boundingbox) || has(self.querystring)) && !(has(self.querystring) && has(self.boundingbox))", message="healthcheck should have exactly 1 of querystring + mimetype or boundingbox"
+// +kubebuilder:validation:XValidation:rule="(has(self.boundingbox) || has(self.mimetype)) && !(has(self.mimetype) && has(self.boundingbox))", message="healthcheck should have exactly 1 of querystring + mimetype or boundingbox"
 type HealthCheckWMS struct {
-	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:XValidation:rule="self.contains('Service=WMS')",message="a valid healthcheck contains 'Service=WMS'"
+	// +kubebuilder:validation:XValidation:rule="self.contains('Request=')",message="a valid healthcheck contains 'Request='"
 	Querystring *string `json:"querystring,omitempty"`
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype *string `json:"mimetype,omitempty"`
@@ -155,54 +162,59 @@ type HealthCheckWMS struct {
 	Boundingbox *smoothoperatormodel.BBox `json:"boundingbox,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:message="Either blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
+// StylingAssets contains the files references needed for styling
+// +kubebuilder:validation:XValidation:message="At least one of blobKeys or configMapRefs is required",rule="has(self.blobKeys) || has(self.configMapRefs)"
 type StylingAssets struct {
-	// +kubebuilder:validations:MinItems:=1
+	// BlobKeys contains symbol image (.png/.svg) or font (.ttf) keys on blob storage, format: container/key/file.(png|ttf)
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:Pattern:=^.+\/.+\/.+\.(png|ttf|svg)$
 	BlobKeys []string `json:"blobKeys,omitempty"`
 
-	// +kubebuilder:validations:MinItems:=1
+	// +kubebuilder:validation:MinItems:=1
 	ConfigMapRefs []ConfigMapRef `json:"configMapRefs,omitempty"`
 }
 
 type ConfigMapRef struct {
-	// +kubebuilder:validations:MinLength:=1
+	// Name is the name of the ConfigMap
+	// +kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 
-	// +kubebuilder:validations:MinItems:=1
+	// Keys contains styling assets that contain mapfile code (.style|.symbol), required if you use symbols in your styles
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:Pattern:=^\S*.\.(style|symbol)
 	Keys []string `json:"keys,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:message="A layer should have sublayers or data, not both", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
+// +kubebuilder:validation:XValidation:message="A layer should have exactly one of sublayers or data", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
 // +kubebuilder:validation:XValidation:message="A layer with data attribute should have styling", rule="!has(self.data) || has(self.styles)"
 // +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 // +kubebuilder:validation:XValidation:message="A layer should have a title when visible", rule="!self.visible || has(self.title)"
 // +kubebuilder:validation:XValidation:message="A layer should have an abstract when visible", rule="!self.visible || has(self.abstract)"
-// +kubebuilder:validation:XValidation:message="A layer should have an authority when visible and has a name", rule="!(self.visible && has(self.name)) || has(self.authority)"
-// +kubebuilder:validation:XValidation:message="A layer should have a datasetMetadataUrl when visible and has a name", rule="!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
-	// +kubebuilder:validations:MinLength:=1
+	// +kubebuilder:validation:MinLength:=1
 	Name *string `json:"name,omitempty"`
 
 	// Title of the layer
-	// +kubebuilder:validations:MinLength:=1
+	// +kubebuilder:validation:MinLength:=1
 	Title *string `json:"title,omitempty"`
 
 	// Abstract of the layer
-	// +kubebuilder:validations:MinLength:=1
+	// +kubebuilder:validation:MinLength:=1
 	Abstract *string `json:"abstract,omitempty"`
 
 	// Keywords of the layer, required if the layer is visible
-	// +kubebuilder:validations:MinItems:=1
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:items:MinLength:=1
 	Keywords []string `json:"keywords,omitempty"`
 
 	// BoundingBoxes of the layer. If omitted the boundingboxes of the parent layer of the service is used.
-	// +kubebuilder:validations:MinItems:=1
+	// +kubebuilder:validation:MinItems:=1
 	BoundingBoxes []WMSBoundingBox `json:"boundingBoxes,omitempty"`
 
 	// Whether or not the layer is visible. At least one of the layers must be visible.
 	// +kubebuilder:default:=true
-	Visible bool `json:"visible"`
+	Visible bool `json:"visible,omitempty"`
 
 	// TODO ??
 	Authority *Authority `json:"authority,omitempty"`
@@ -219,7 +231,7 @@ type Layer struct {
 	MaxScaleDenominator *string `json:"maxscaledenominator,omitempty"`
 
 	// List of styles used by the layer
-	// +kubebuilder:validations:MinItems:=1
+	// +kubebuilder:validation:MinItems:=1
 	Styles []Style `json:"styles,omitempty"`
 
 	// Mapfile setting, sets "LABEL_NO_CLIP=ON"
@@ -229,7 +241,8 @@ type Layer struct {
 	Data *Data `json:"data,omitempty"`
 
 	// Sublayers of the layer
-	// +kubebuilder:validations:MinItems:=1
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:Type=array
 	Layers []Layer `json:"layers,omitempty"`
 }
 
@@ -256,16 +269,16 @@ type Authority struct {
 }
 
 type Style struct {
-	// +kubebuilder:validations:MinLength:=1
+	// +kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 
-	// +kubebuilder:validations:MinLength:=1
+	// +kubebuilder:validation:MinLength:=1
 	Title *string `json:"title,omitempty"`
 
-	// +kubebuilder:validations:MinLength:=1
+	// +kubebuilder:validation:MinLength:=1
 	Abstract *string `json:"abstract,omitempty"`
 
-	// +kubebuilder:validations:MinLength:=1
+	// +kubebuilder:validation:MinLength:=1
 	Visualization *string `json:"visualization,omitempty"`
 
 	Legend *Legend `json:"legend,omitempty"`
@@ -289,34 +302,25 @@ type Legend struct {
 	BlobKey string `json:"blobKey"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:storageversion
-// +kubebuilder:conversion:hub
-// +kubebuilder:subresource:status
-// versionName=v3
-// +kubebuilder:resource:categories=pdok
-// +kubebuilder:resource:path=wms
+// WMSOptions are the Options exclusively used by the WMS
+// +kubebuilder:validation:Type=object
+type WMSOptions struct {
 
-// WMS is the Schema for the wms API.
-type WMS struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	// ValidateRequests enables request validation against the service schema.
+	// +kubebuilder:default:=true
+	ValidateRequests bool `json:"validateRequests"`
 
-	Spec   WMSSpec                            `json:"spec,omitempty"`
-	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
-}
+	// RewriteGroupToDataLayers merges group layers into individual data layers.
+	// +kubebuilder:default:=false
+	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers"`
 
-// +kubebuilder:object:root=true
+	// DisableWebserviceProxy disables the built-in proxy for external web services.
+	// +kubebuilder:default:=false
+	DisableWebserviceProxy bool `json:"disableWebserviceProxy"`
 
-// WMSList contains a list of WMS.
-type WMSList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []WMS `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&WMS{}, &WMSList{})
+	// ValidateChildStyleNameEqual ensures child style names match the parent style.
+	// +kubebuilder:default=false
+	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual"`
 }
 
 func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
@@ -586,8 +590,11 @@ func (wms *WMS) GroupKind() schema.GroupKind {
 	return schema.GroupKind{Group: GroupVersion.Group, Kind: wms.Kind}
 }
 
-func (wms *WMS) Inspire() *Inspire {
-	return wms.Spec.Service.Inspire
+func (wms *WMS) Inspire() *WFSInspire {
+	if wms.Spec.Service.Inspire != nil {
+		return &WFSInspire{Inspire: *wms.Spec.Service.Inspire}
+	}
+	return nil
 }
 
 func (wms *WMS) Mapfile() *Mapfile {

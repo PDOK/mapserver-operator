@@ -526,14 +526,20 @@ spec:
                       pattern: (image/png|text/xml|text/html)
                       type: string
                     querystring:
-                      minLength: 1
                       type: string
+                      x-kubernetes-validations:
+                        - message: a valid healthcheck contains 'Service=WMS'
+                          rule: self.contains('Service=WMS')
+                        - message: a valid healthcheck contains 'Request='
+                          rule: self.contains('Request=')
                   type: object
                   x-kubernetes-validations:
                     - message: mimetype is required when a querystring is used
                       rule: '!has(self.querystring) || has(self.mimetype)'
-                    - message: healthcheck should have querystring + mimetype or boundingbox, not both
+                    - message: healthcheck should have exactly 1 of querystring + mimetype or boundingbox
                       rule: (has(self.boundingbox) || has(self.querystring)) && !(has(self.querystring) && has(self.boundingbox))
+                    - message: healthcheck should have exactly 1 of querystring + mimetype or boundingbox
+                      rule: (has(self.boundingbox) || has(self.mimetype)) && !(has(self.mimetype) && has(self.boundingbox))
                 horizontalPodAutoscalerPatch:
                   description: Optional specification for the HorizontalAutoscaler
                   properties:
@@ -1197,13 +1203,13 @@ spec:
                   description: Service specification
                   properties:
                     abstract:
-                      description: Abstract (short description) of the service
+                      description: Service abstract
                       minLength: 1
                       type: string
                     accessConstraints:
                       default: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
-                      description: AccessConstraints (licence) that are applicable to the service
-                      pattern: https?://.*
+                      description: AccessConstraints URL
+                      pattern: ^https?://.+/.+
                       type: string
                     dataEPSG:
                       description: CRS of the data
@@ -1213,8 +1219,12 @@ spec:
                       description: 'Mapfile setting: Sets the DEFRESOLUTION field in the mapfile, not used when service.mapfile is configured'
                       format: int32
                       type: integer
+                    fees:
+                      description: Optional Fees
+                      minLength: 1
+                      type: string
                     inspire:
-                      description: Optional specification Inspire themes and ids
+                      description: Config for Inspire services
                       properties:
                         language:
                           description: Language of the INSPIRE metadata record
@@ -1252,17 +1262,12 @@ spec:
                           x-kubernetes-validations:
                             - message: metadataUrl should have exactly 1 of csw or custom
                               rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
-                        spatialDatasetIdentifier:
-                          description: SpatialDatasetIdentifier is the ID uniquely identifying the dataset.
-                          pattern: ^[0-9a-zA-Z]{8}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{4}\-[0-9a-zA-Z]{12}$
-                          type: string
                       required:
                         - language
                         - serviceMetadataUrl
-                        - spatialDatasetIdentifier
                       type: object
                     keywords:
-                      description: Keywords of the service
+                      description: Keywords for capabilities
                       items:
                         minLength: 1
                         type: string
@@ -1273,6 +1278,7 @@ spec:
                       properties:
                         abstract:
                           description: Abstract of the layer
+                          minLength: 1
                           type: string
                         authority:
                           properties:
@@ -1322,111 +1328,8 @@ spec:
                               - bbox
                               - crs
                             type: object
+                          minItems: 1
                           type: array
-                        data:
-                          description: Data (gpkg/postgis/tif) used by the layer
-                          properties:
-                            gpkg:
-                              description: Gpkg configures a GeoPackage file source
-                              properties:
-                                blobKey:
-                                  description: Blobkey identifies the location/bucket of the .gpkg file
-                                  pattern: ^.+\/.+\/.+\.gpkg$
-                                  type: string
-                                columns:
-                                  description: Columns to visualize for this table
-                                  items:
-                                    description: Column maps a source column name to an optional alias for output.
-                                    properties:
-                                      alias:
-                                        description: Alias for the column in the service output.
-                                        minLength: 1
-                                        type: string
-                                      name:
-                                        description: Name of the column in the data source.
-                                        minLength: 1
-                                        type: string
-                                    required:
-                                      - name
-                                    type: object
-                                  minItems: 1
-                                  type: array
-                                geometryType:
-                                  description: GeometryType of the table, must match an OGC type
-                                  pattern: ^(Multi)?(Point|LineString|Polygon)$
-                                  type: string
-                                tableName:
-                                  description: TableName is the table within the geopackage
-                                  minLength: 1
-                                  type: string
-                              required:
-                                - blobKey
-                                - columns
-                                - geometryType
-                                - tableName
-                              type: object
-                            postgis:
-                              description: Postgis configures a Postgis table source
-                              properties:
-                                columns:
-                                  description: Columns to expose from table
-                                  items:
-                                    description: Column maps a source column name to an optional alias for output.
-                                    properties:
-                                      alias:
-                                        description: Alias for the column in the service output.
-                                        minLength: 1
-                                        type: string
-                                      name:
-                                        description: Name of the column in the data source.
-                                        minLength: 1
-                                        type: string
-                                    required:
-                                      - name
-                                    type: object
-                                  minItems: 1
-                                  type: array
-                                geometryType:
-                                  description: GeometryType of the table
-                                  minLength: 1
-                                  pattern: ^(Multi)?(Point|LineString|Polygon)$
-                                  type: string
-                                tableName:
-                                  description: TableName in postGIS
-                                  minLength: 1
-                                  type: string
-                              required:
-                                - columns
-                                - geometryType
-                                - tableName
-                              type: object
-                            tif:
-                              description: TIF configures a GeoTIF raster source
-                              properties:
-                                blobKey:
-                                  description: BlobKey to the TIFF file
-                                  pattern: ^.+\/.+\/.+\.(tif?f|vrt)$
-                                  type: string
-                                getFeatureInfoIncludesClass:
-                                  default: false
-                                  description: '"When a band represents nominal or ordinal data the class name (from styling) can be included in the getFeatureInfo"'
-                                  type: boolean
-                                offsite:
-                                  description: Sets the color index to treat as transparent for raster layers, optional, hex or rgb
-                                  pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
-                                  type: string
-                                resample:
-                                  default: NEAREST
-                                  description: This option can be used to control the resampling kernel used sampling raster images, optional
-                                  pattern: (NEAREST|AVERAGE|BILINEAR)
-                                  type: string
-                              required:
-                                - blobKey
-                              type: object
-                          type: object
-                          x-kubernetes-validations:
-                            - message: Atleast one of the datasource should be provided (postgis, gpkg, tif)
-                              rule: has(self.gpkg) || has(self.tif) || has(self.postgis)
                         datasetMetadataUrl:
                           description: Links to metadata
                           properties:
@@ -1462,11 +1365,10 @@ spec:
                         keywords:
                           description: Keywords of the layer, required if the layer is visible
                           items:
+                            minLength: 1
                             type: string
+                          minItems: 1
                           type: array
-                        labelNoClip:
-                          description: Mapfile setting, sets "LABEL_NO_CLIP=ON"
-                          type: boolean
                         layers:
                           description: '[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]'
                           items:
@@ -1474,6 +1376,7 @@ spec:
                             properties:
                               abstract:
                                 description: Abstract of the layer
+                                minLength: 1
                                 type: string
                               authority:
                                 properties:
@@ -1523,6 +1426,7 @@ spec:
                                     - bbox
                                     - crs
                                   type: object
+                                minItems: 1
                                 type: array
                               data:
                                 description: Data (gpkg/postgis/tif) used by the layer
@@ -1589,7 +1493,6 @@ spec:
                                         type: array
                                       geometryType:
                                         description: GeometryType of the table
-                                        minLength: 1
                                         pattern: ^(Multi)?(Point|LineString|Polygon)$
                                         type: string
                                       tableName:
@@ -1663,7 +1566,9 @@ spec:
                               keywords:
                                 description: Keywords of the layer, required if the layer is visible
                                 items:
+                                  minLength: 1
                                   type: string
+                                minItems: 1
                                 type: array
                               labelNoClip:
                                 description: Mapfile setting, sets "LABEL_NO_CLIP=ON"
@@ -1675,6 +1580,7 @@ spec:
                                   properties:
                                     abstract:
                                       description: Abstract of the layer
+                                      minLength: 1
                                       type: string
                                     authority:
                                       properties:
@@ -1724,6 +1630,7 @@ spec:
                                           - bbox
                                           - crs
                                         type: object
+                                      minItems: 1
                                       type: array
                                     data:
                                       description: Data (gpkg/postgis/tif) used by the layer
@@ -1790,7 +1697,6 @@ spec:
                                               type: array
                                             geometryType:
                                               description: GeometryType of the table
-                                              minLength: 1
                                               pattern: ^(Multi)?(Point|LineString|Polygon)$
                                               type: string
                                             tableName:
@@ -1864,7 +1770,9 @@ spec:
                                     keywords:
                                       description: Keywords of the layer, required if the layer is visible
                                       items:
+                                        minLength: 1
                                         type: string
+                                      minItems: 1
                                       type: array
                                     labelNoClip:
                                       description: Mapfile setting, sets "LABEL_NO_CLIP=ON"
@@ -1879,12 +1787,14 @@ spec:
                                       type: string
                                     name:
                                       description: Name of the layer, required for layers on the 2nd or 3rd level
+                                      minLength: 1
                                       type: string
                                     styles:
                                       description: List of styles used by the layer
                                       items:
                                         properties:
                                           abstract:
+                                            minLength: 1
                                             type: string
                                           legend:
                                             properties:
@@ -1908,24 +1818,28 @@ spec:
                                               - blobKey
                                             type: object
                                           name:
+                                            minLength: 1
                                             type: string
                                           title:
+                                            minLength: 1
                                             type: string
                                           visualization:
+                                            minLength: 1
                                             type: string
                                         required:
                                           - name
                                         type: object
+                                      minItems: 1
                                       type: array
                                     title:
                                       description: Title of the layer
+                                      minLength: 1
                                       type: string
                                     visible:
                                       default: true
                                       description: Whether or not the layer is visible. At least one of the layers must be visible.
                                       type: boolean
                                   required:
-                                    - visible
                                     - name
                                   type: object
                                   x-kubernetes-validations:
@@ -1937,10 +1851,7 @@ spec:
                                       rule: '!self.visible || has(self.title)'
                                     - message: A layer should have an abstract when visible
                                       rule: '!self.visible || has(self.abstract)'
-                                    - message: A layer should have an authority when visible and has a name
-                                      rule: '!(self.visible && has(self.name)) || has(self.authority)'
-                                    - message: A layer should have a datasetMetadataUrl when visible and has a name
-                                      rule: '!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)'
+                                minItems: 1
                                 type: array
                               maxscaledenominator:
                                 description: The maximum scale at which this layer functions
@@ -1952,12 +1863,14 @@ spec:
                                 type: string
                               name:
                                 description: Name of the layer, required for layers on the 2nd or 3rd level
+                                minLength: 1
                                 type: string
                               styles:
                                 description: List of styles used by the layer
                                 items:
                                   properties:
                                     abstract:
+                                      minLength: 1
                                       type: string
                                     legend:
                                       properties:
@@ -1981,28 +1894,32 @@ spec:
                                         - blobKey
                                       type: object
                                     name:
+                                      minLength: 1
                                       type: string
                                     title:
+                                      minLength: 1
                                       type: string
                                     visualization:
+                                      minLength: 1
                                       type: string
                                   required:
                                     - name
                                   type: object
+                                minItems: 1
                                 type: array
                               title:
                                 description: Title of the layer
+                                minLength: 1
                                 type: string
                               visible:
                                 default: true
                                 description: Whether or not the layer is visible. At least one of the layers must be visible.
                                 type: boolean
                             required:
-                              - visible
                               - name
                             type: object
                             x-kubernetes-validations:
-                              - message: A layer should have sublayers or data, not both
+                              - message: A layer should have exactly one of sublayers or data
                                 rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                               - message: A layer with data attribute should have styling
                                 rule: '!has(self.data) || has(self.styles)'
@@ -2012,10 +1929,7 @@ spec:
                                 rule: '!self.visible || has(self.title)'
                               - message: A layer should have an abstract when visible
                                 rule: '!self.visible || has(self.abstract)'
-                              - message: A layer should have an authority when visible and has a name
-                                rule: '!(self.visible && has(self.name)) || has(self.authority)'
-                              - message: A layer should have a datasetMetadataUrl when visible and has a name
-                                rule: '!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)'
+                          minItems: 1
                           type: array
                         maxscaledenominator:
                           description: The maximum scale at which this layer functions
@@ -2027,12 +1941,14 @@ spec:
                           type: string
                         name:
                           description: Name of the layer, required for layers on the 2nd or 3rd level
+                          minLength: 1
                           type: string
                         styles:
                           description: List of styles used by the layer
                           items:
                             properties:
                               abstract:
+                                minLength: 1
                                 type: string
                               legend:
                                 properties:
@@ -2056,42 +1972,39 @@ spec:
                                   - blobKey
                                 type: object
                               name:
+                                minLength: 1
                                 type: string
                               title:
+                                minLength: 1
                                 type: string
                               visualization:
+                                minLength: 1
                                 type: string
                             required:
                               - name
                             type: object
+                          minItems: 1
                           type: array
                         title:
                           description: Title of the layer
+                          minLength: 1
                           type: string
                         visible:
                           default: true
                           description: Whether or not the layer is visible. At least one of the layers must be visible.
                           type: boolean
                       required:
-                        - visible
+                        - title
+                        - abstract
+                        - keywords
+                        - layers
                       type: object
                       x-kubernetes-validations:
-                        - message: A layer should have sublayers or data, not both
-                          rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
-                        - message: A layer with data attribute should have styling
-                          rule: '!has(self.data) || has(self.styles)'
-                        - message: A layer should have keywords when visible
-                          rule: '!self.visible || has(self.keywords)'
-                        - message: A layer should have a title when visible
-                          rule: '!self.visible || has(self.title)'
-                        - message: A layer should have an abstract when visible
-                          rule: '!self.visible || has(self.abstract)'
-                        - message: A layer should have an authority when visible and has a name
-                          rule: '!(self.visible && has(self.name)) || has(self.authority)'
-                        - message: A layer should have a datasetMetadataUrl when visible and has a name
-                          rule: '!(self.visible && has(self.name)) || has(self.datasetMetadataUrl)'
+                        - fieldPath: .visible
+                          message: TopLayer must be visible
+                          rule: self.visible
                     mapfile:
-                      description: Custom mapfile
+                      description: External Mapfile reference
                       properties:
                         configMapKeyRef:
                           description: Selects a key from a ConfigMap.
@@ -2116,12 +2029,14 @@ spec:
                     maxSize:
                       description: 'Mapfile setting: Sets the maximum size (in pixels) for both dimensions of the image from a getMap request.'
                       format: int32
+                      minimum: 1
                       type: integer
                     ownerInfoRef:
-                      description: Reference to a CR of Kind OwnerInfo
+                      description: Reference to OwnerInfo CR
                       minLength: 1
                       type: string
                     prefix:
+                      description: Geonovum subdomein
                       minLength: 1
                       type: string
                     resolution:
@@ -2132,28 +2047,37 @@ spec:
                       description: Optional. Required files for the styling of the service
                       properties:
                         blobKeys:
+                          description: 'BlobKeys contains symbol image (.png/.svg) or font (.ttf) keys on blob storage, format: container/key/file.(png|ttf)'
                           items:
+                            pattern: ^.+\/.+\/.+\.(png|ttf|svg)$
                             type: string
+                          minItems: 1
                           type: array
                         configMapRefs:
                           items:
                             properties:
                               keys:
+                                description: Keys contains styling assets that contain mapfile code (.style|.symbol), required if you use symbols in your styles
                                 items:
+                                  pattern: ^\S*.\.(style|symbol)
                                   type: string
+                                minItems: 1
                                 type: array
                               name:
+                                description: Name is the name of the ConfigMap
+                                minLength: 1
                                 type: string
                             required:
                               - name
                             type: object
+                          minItems: 1
                           type: array
                       type: object
                       x-kubernetes-validations:
-                        - message: Either blobKeys or configMapRefs is required
+                        - message: At least one of blobKeys or configMapRefs is required
                           rule: has(self.blobKeys) || has(self.configMapRefs)
                     title:
-                      description: Title of the service
+                      description: Service title
                       minLength: 1
                       type: string
                     url:
@@ -2245,6 +2169,8 @@ spec:
                   description: The result of creating or updating of each derived resource for this Atom.
                   type: object
               type: object
+          required:
+            - spec
           type: object
       served: true
       storage: true

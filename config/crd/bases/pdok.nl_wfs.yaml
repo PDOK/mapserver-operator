@@ -1077,10 +1077,6 @@ spec:
                       default: true
                       description: AutomaticCasing enables automatic conversion from snake_case to camelCase.
                       type: boolean
-                    disableWebserviceProxy:
-                      default: false
-                      description: DisableWebserviceProxy disables the built-in proxy for external web services.
-                      type: boolean
                     includeIngress:
                       default: true
                       description: IncludeIngress dictates whether to deploy an Ingress or ensure none exists.
@@ -1091,26 +1087,10 @@ spec:
                         Whether to prefetch data from blob storage, and store it on the local filesystem.
                         If `false`, the data will be served directly out of blob storage
                       type: boolean
-                    rewriteGroupToDataLayers:
-                      default: false
-                      description: RewriteGroupToDataLayers merges group layers into individual data layers.
-                      type: boolean
-                    validateChildStyleNameEqual:
-                      default: false
-                      description: ValidateChildStyleNameEqual ensures child style names match the parent style.
-                      type: boolean
-                    validateRequests:
-                      default: true
-                      description: ValidateRequests enables request validation against the service schema.
-                      type: boolean
                   required:
                     - automaticCasing
-                    - disableWebserviceProxy
                     - includeIngress
                     - prefetchData
-                    - rewriteGroupToDataLayers
-                    - validateChildStyleNameEqual
-                    - validateRequests
                   type: object
                 podSpecPatch:
                   description: Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
@@ -1295,7 +1275,6 @@ spec:
                                     type: array
                                   geometryType:
                                     description: GeometryType of the table
-                                    minLength: 1
                                     pattern: ^(Multi)?(Point|LineString|Polygon)$
                                     type: string
                                   tableName:
@@ -1395,7 +1374,7 @@ spec:
                       minLength: 1
                       type: string
                     inspire:
-                      description: Config for Inspire services
+                      description: Inspire holds INSPIRE-specific metadata for the service.
                       properties:
                         language:
                           description: Language of the INSPIRE metadata record

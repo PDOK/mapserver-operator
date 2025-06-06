@@ -63,7 +63,7 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		dst.Spec.PodSpecPatch = ConvertResources(*src.Spec.Kubernetes.Resources)
 	}
 
-	dst.Spec.Options = ConvertOptionsV2ToV3(src.Spec.Options)
+	dst.Spec.Options = &ConvertOptionsV2ToV3(src.Spec.Options).BaseOptions
 
 	if src.Spec.Kubernetes.HealthCheck != nil {
 		dst.Spec.HealthCheck = &pdoknlv3.HealthCheckWFS{
@@ -92,15 +92,17 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		return err
 	}
 	service := pdoknlv3.WFSService{
-		Prefix:            src.Spec.General.Dataset,
-		URL:               *url,
-		OwnerInfoRef:      "pdok",
-		Title:             src.Spec.Service.Title,
-		Abstract:          src.Spec.Service.Abstract,
-		Keywords:          src.Spec.Service.Keywords,
-		Fees:              nil,
-		AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
-		DefaultCrs:        src.Spec.Service.DataEPSG,
+		BaseService: pdoknlv3.BaseService{
+			Prefix:            src.Spec.General.Dataset,
+			URL:               *url,
+			OwnerInfoRef:      "pdok",
+			Title:             src.Spec.Service.Title,
+			Abstract:          src.Spec.Service.Abstract,
+			Keywords:          src.Spec.Service.Keywords,
+			Fees:              nil,
+			AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
+		},
+		DefaultCrs: src.Spec.Service.DataEPSG,
 		OtherCrs: []string{
 			"EPSG:25831",
 			"EPSG:25832",
@@ -144,14 +146,14 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 
 	// TODO - where to place the MetadataIdentifier and FeatureTypes[0].SourceMetadataIdentifier if the service is not inspire?
 	if src.Spec.Service.Inspire {
-		service.Inspire = &pdoknlv3.Inspire{
+		service.Inspire = &pdoknlv3.WFSInspire{Inspire: pdoknlv3.Inspire{
 			ServiceMetadataURL: pdoknlv3.MetadataURL{
 				CSW: &pdoknlv3.Metadata{
 					MetadataIdentifier: src.Spec.Service.MetadataIdentifier,
 				},
 			},
+			Language: "dut"},
 			SpatialDatasetIdentifier: src.Spec.Service.FeatureTypes[0].SourceMetadataIdentifier,
-			Language:                 "dut",
 		}
 	}
 
@@ -203,7 +205,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 
-	dst.Spec.Options = ConvertOptionsV3ToV2(src.Spec.Options)
+	dst.Spec.Options = ConvertOptionsV3ToV2(&pdoknlv3.Options{BaseOptions: *src.Spec.Options})
 
 	if src.Spec.HealthCheck != nil {
 		dst.Spec.Kubernetes.HealthCheck = &HealthCheck{

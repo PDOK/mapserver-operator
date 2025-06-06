@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"k8s.io/utils/ptr"
+
 	"github.com/pdok/ogc-specifications/pkg/wms130"
 
 	"github.com/cbroglie/mustache"
@@ -58,6 +60,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 						Keywords: &wsc110.Keywords{
 							Keyword: wfs.Spec.Service.KeywordsIncludingInspireKeyword(),
 						},
+						Fees: wfs.Spec.Service.Fees,
 					},
 					Capabilities: wfs200.Capabilities{
 						FeatureTypeList: *featureTypeList,
@@ -293,8 +296,8 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
 						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(wms.URL().Scheme + "://" + wms.URL().Host)},
 						ContactInformation: getContactInformation(ownerInfo),
-						Fees:               smoothoperatorutils.Pointer("NONE"),
-						AccessConstraints:  &wms.Spec.Service.AccessConstraints,
+						Fees:               wms.Spec.Service.Fees,
+						AccessConstraints:  ptr.To(wms.Spec.Service.AccessConstraints.String()),
 						OptionalConstraints: &wms130.OptionalConstraints{
 							MaxWidth:  int(smoothoperatorutils.PointerVal(wms.Spec.Service.MaxSize, 4000)),
 							MaxHeight: int(smoothoperatorutils.PointerVal(wms.Spec.Service.MaxSize, 4000)),
@@ -450,6 +453,7 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 		Title:       mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Title, "")),
 		Abstract:    smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Abstract, ""))),
 		KeywordList: &wms130.Keywords{Keyword: layer.Keywords},
+		// TODO
 		//CRS:                     defaultCrs,
 		//EXGeographicBoundingBox: &defaultBoundingBox,
 		//BoundingBox:             allDefaultBoundingBoxes,

@@ -84,19 +84,27 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 	// Level 2
 	layerSpecLevel2 := layer.DeepCopy()
 	layerSpecLevel2.Required = append(layerSpecLevel2.Required, "name")
-	layerSpecLevel2.Properties["layers"] = v1.JSONSchemaProps{
-		Type:        "array",
-		Description: "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]",
-		Items:       &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel3},
-	}
+	bottomLayers := layerSpecLevel2.Properties["layers"]
+	bottomLayers.Description = "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]"
+	bottomLayers.Items = &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel3}
+	layerSpecLevel2.Properties["layers"] = bottomLayers
 
-	layer.Properties["layers"] = v1.JSONSchemaProps{
-		Type:        "array",
-		Description: "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]",
-		Items:       &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel2},
+	// Level 1
+	layerSpecLevel1 := layer.DeepCopy()
+	layerSpecLevel1.Required = append(layerSpecLevel1.Required, "title", "abstract", "keywords", "layers")
+	layerSpecLevel1.XValidations = []v1.ValidationRule{
+		{Rule: "self.visible", Message: "TopLayer must be visible", FieldPath: ".visible"},
 	}
+	delete(layerSpecLevel1.Properties, "data")
+	delete(layerSpecLevel1.Properties, "labelNoClip")
 
-	service.Properties["layer"] = layer
+	midLayers := layerSpecLevel1.Properties["layers"]
+	midLayers.Description = "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]"
+	midLayers.Items = &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel2}
+
+	layerSpecLevel1.Properties["layers"] = midLayers
+
+	service.Properties["layer"] = *layerSpecLevel1
 	spec.Properties["service"] = service
 	schema.Properties["spec"] = spec
 	version.Schema = &v1.CustomResourceValidation{
