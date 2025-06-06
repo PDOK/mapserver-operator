@@ -3,6 +3,9 @@ package v2beta1
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"k8s.io/utils/ptr"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
@@ -20,4 +23,210 @@ func TestV2ToV3(t *testing.T) {
 	assert.Equal(t, "NWB - Wegen WMS", target.Spec.Service.Title)
 	a := 0
 	_ = a
+}
+
+func TestWMSService_MapLayersToV3(t *testing.T) {
+	tests := []struct {
+		name      string
+		v2Service WMSService
+		want      pdoknlv3.Layer
+	}{
+		{
+			name: "no toplayer, middle: 1 data layer",
+			v2Service: WMSService{Layers: []WMSLayer{
+				{Name: "layer"},
+			}},
+			want: pdoknlv3.Layer{
+				Title:         ptr.To(""),
+				Abstract:      ptr.To(""),
+				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				Visible:       true,
+				Layers: []pdoknlv3.Layer{{
+					Name:          ptr.To("layer"),
+					BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+					Visible:       true,
+					Styles:        []pdoknlv3.Style{},
+				}},
+			},
+		},
+		{
+			name: "no toplayer, middle: 1 group layer",
+			v2Service: WMSService{Layers: []WMSLayer{
+				{Name: "group-layer"},
+				{Name: "sub-layer", Group: ptr.To("group-layer")},
+			}},
+			want: pdoknlv3.Layer{
+				Title:         ptr.To(""),
+				Abstract:      ptr.To(""),
+				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				Visible:       true,
+				Layers: []pdoknlv3.Layer{{
+					Name:          ptr.To("group-layer"),
+					BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+					Visible:       true,
+					Styles:        []pdoknlv3.Style{},
+					Layers: []pdoknlv3.Layer{
+						{
+							Name:          ptr.To("sub-layer"),
+							BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+							Visible:       true,
+							Styles:        []pdoknlv3.Style{},
+						},
+					},
+				}},
+			},
+		},
+		{
+			name: "no toplayer, middle: 2 group layers",
+			v2Service: WMSService{Layers: []WMSLayer{
+				{Name: "group-layer-1"},
+				{Name: "sub-layer-1", Group: ptr.To("group-layer-1")},
+				{Name: "group-layer-2"},
+				{Name: "sub-layer-2", Group: ptr.To("group-layer-2")},
+			}},
+			want: pdoknlv3.Layer{
+				Title:         ptr.To(""),
+				Abstract:      ptr.To(""),
+				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				Visible:       true,
+				Layers: []pdoknlv3.Layer{
+					{
+						Name:          ptr.To("group-layer-1"),
+						BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+						Visible:       true,
+						Styles:        []pdoknlv3.Style{},
+						Layers: []pdoknlv3.Layer{
+							{
+								Name:          ptr.To("sub-layer-1"),
+								BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+								Visible:       true,
+								Styles:        []pdoknlv3.Style{},
+							},
+						},
+					},
+					{
+						Name:          ptr.To("group-layer-2"),
+						BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+						Visible:       true,
+						Styles:        []pdoknlv3.Style{},
+						Layers: []pdoknlv3.Layer{
+							{
+								Name:          ptr.To("sub-layer-2"),
+								BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+								Visible:       true,
+								Styles:        []pdoknlv3.Style{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no toplayer, middle: 1 group layer, 1 data layer",
+			v2Service: WMSService{Layers: []WMSLayer{
+				{Name: "group-layer"},
+				{Name: "sub-layer", Group: ptr.To("group-layer")},
+				{Name: "data-layer"},
+			}},
+			want: pdoknlv3.Layer{
+				Title:         ptr.To(""),
+				Abstract:      ptr.To(""),
+				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				Visible:       true,
+				Layers: []pdoknlv3.Layer{
+					{
+						Name:          ptr.To("group-layer"),
+						BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+						Visible:       true,
+						Styles:        []pdoknlv3.Style{},
+						Layers: []pdoknlv3.Layer{
+							{
+								Name:          ptr.To("sub-layer"),
+								BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+								Visible:       true,
+								Styles:        []pdoknlv3.Style{},
+							},
+						},
+					},
+					{
+						Name:          ptr.To("data-layer"),
+						BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+						Visible:       true,
+						Styles:        []pdoknlv3.Style{},
+					},
+				},
+			},
+		},
+		{
+			name: "toplayer, middle: 1 group layer",
+			v2Service: WMSService{Layers: []WMSLayer{
+				{Name: "group-layer", Group: ptr.To("top-layer")},
+				{Name: "sub-layer", Group: ptr.To("group-layer")},
+				{Name: "top-layer"},
+			}},
+			want: pdoknlv3.Layer{
+				Name:          ptr.To("top-layer"),
+				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				Visible:       true,
+				Styles:        []pdoknlv3.Style{},
+				Layers: []pdoknlv3.Layer{{
+					Name:          ptr.To("group-layer"),
+					BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+					Visible:       true,
+					Styles:        []pdoknlv3.Style{},
+					Layers: []pdoknlv3.Layer{
+						{
+							Name:          ptr.To("sub-layer"),
+							BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+							Visible:       true,
+							Styles:        []pdoknlv3.Style{},
+						},
+					},
+				}},
+			},
+		},
+		{
+			name: "toplayer, middle: 1 group layer, 1 data layer",
+			v2Service: WMSService{Layers: []WMSLayer{
+				{Name: "group-layer", Group: ptr.To("top-layer")},
+				{Name: "sub-layer", Group: ptr.To("group-layer")},
+				{Name: "top-layer"},
+				{Name: "data-layer", Group: ptr.To("top-layer")},
+			}},
+			want: pdoknlv3.Layer{
+				Name:          ptr.To("top-layer"),
+				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				Visible:       true,
+				Styles:        []pdoknlv3.Style{},
+				Layers: []pdoknlv3.Layer{
+					{
+						Name:          ptr.To("group-layer"),
+						BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+						Visible:       true,
+						Styles:        []pdoknlv3.Style{},
+						Layers: []pdoknlv3.Layer{
+							{
+								Name:          ptr.To("sub-layer"),
+								BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+								Visible:       true,
+								Styles:        []pdoknlv3.Style{},
+							},
+						},
+					},
+					{
+						Name:          ptr.To("data-layer"),
+						BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+						Visible:       true,
+						Styles:        []pdoknlv3.Style{},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diff := cmp.Diff(tt.want, tt.v2Service.MapLayersToV3())
+			assert.Equal(t, diff == "", true, "%s", diff)
+		})
+	}
 }
