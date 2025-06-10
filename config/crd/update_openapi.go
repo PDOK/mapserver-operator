@@ -72,6 +72,7 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 	// Level 3
 	layerSpecLevel3 := layer.DeepCopy()
 	layerSpecLevel3.Required = append(layerSpecLevel3.Required, "name")
+	layerSpecLevel3.Required = append(layerSpecLevel3.Required, "styles")
 	delete(layerSpecLevel3.Properties, "layers")
 	xvals := v1.ValidationRules{}
 	for _, xval := range layerSpecLevel3.XValidations {
@@ -84,6 +85,7 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 	// Level 2
 	layerSpecLevel2 := layer.DeepCopy()
 	layerSpecLevel2.Required = append(layerSpecLevel2.Required, "name")
+	layerSpecLevel2.Required = append(layerSpecLevel2.Required, "styles")
 	bottomLayers := layerSpecLevel2.Properties["layers"]
 	bottomLayers.Description = "[OpenAPI spec injected by mapserver-operator/cmd/update_openapi.go]"
 	bottomLayers.Items = &v1.JSONSchemaPropsOrArray{Schema: layerSpecLevel3}
@@ -94,6 +96,7 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 	layerSpecLevel1.Required = append(layerSpecLevel1.Required, "title", "abstract", "keywords", "layers")
 	layerSpecLevel1.XValidations = []v1.ValidationRule{
 		{Rule: "self.visible", Message: "TopLayer must be visible", FieldPath: ".visible"},
+		{Rule: "!has(self.name) || has(self.styles)", Message: "If TopLayer has a name, it must have styles", FieldPath: ".styles"},
 	}
 	delete(layerSpecLevel1.Properties, "data")
 	delete(layerSpecLevel1.Properties, "labelNoClip")

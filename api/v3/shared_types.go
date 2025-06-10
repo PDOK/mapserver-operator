@@ -182,14 +182,19 @@ type Custom struct {
 	Type string `json:"type"`
 }
 
-// Data holds the data source configuration
-// +kubebuilder:validation:XValidation:rule="has(self.gpkg) || has(self.tif) || has(self.postgis)", message="Atleast one of the datasource should be provided (postgis, gpkg, tif)"
-type Data struct {
+// BaseData holds the data source configuration for gpkg and postgis
+type BaseData struct {
 	// Gpkg configures a GeoPackage file source
 	Gpkg *Gpkg `json:"gpkg,omitempty"`
 
 	// Postgis configures a Postgis table source
 	Postgis *Postgis `json:"postgis,omitempty"`
+}
+
+// Data holds the data source configuration
+// +kubebuilder:validation:XValidation:rule="has(self.gpkg) || has(self.tif) || has(self.postgis)", message="Atleast one of the datasource should be provided (postgis, gpkg, tif)"
+type Data struct {
+	BaseData `json:",inline"`
 
 	// TIF configures a GeoTIF raster source
 	TIF *TIF `json:"tif,omitempty"`
@@ -276,7 +281,7 @@ func GetHost(includeProtocol bool) string {
 	return host
 }
 
-func (d *Data) GetColumns() *[]Column {
+func (d *BaseData) GetColumns() *[]Column {
 	switch {
 	case d.Gpkg != nil:
 		return &d.Gpkg.Columns
@@ -287,7 +292,7 @@ func (d *Data) GetColumns() *[]Column {
 	}
 }
 
-func (d *Data) GetTableName() *string {
+func (d *BaseData) GetTableName() *string {
 	switch {
 	case d.Gpkg != nil:
 		return &d.Gpkg.TableName
@@ -298,7 +303,7 @@ func (d *Data) GetTableName() *string {
 	}
 }
 
-func (d *Data) GetGeometryType() *string {
+func (d *BaseData) GetGeometryType() *string {
 	switch {
 	case d.Gpkg != nil:
 		return &d.Gpkg.GeometryType

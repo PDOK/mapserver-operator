@@ -177,7 +177,7 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 				MetadataIdentifier: src.DatasetMetadataIdentifier,
 			},
 		},
-		Data: pdoknlv3.Data{},
+		Data: pdoknlv3.BaseData{},
 	}
 
 	if src.Extent != nil {
@@ -186,7 +186,7 @@ func convertV2FeatureTypeToV3(src FeatureType) pdoknlv3.FeatureType {
 		}
 	}
 
-	featureTypeV3.Data = ConvertV2DataToV3(src.Data)
+	featureTypeV3.Data = ConvertV2DataToV3(src.Data).BaseData
 
 	return featureTypeV3
 }
@@ -260,7 +260,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 			Keywords:                  featureType.Keywords,
 			DatasetMetadataIdentifier: featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
 			SourceMetadataIdentifier:  "",
-			Data:                      ConvertV3DataToV2(featureType.Data),
+			Data:                      ConvertV3DataToV2(pdoknlv3.Data{BaseData: featureType.Data}),
 		}
 
 		if src.Spec.Service.Inspire != nil {

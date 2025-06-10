@@ -175,7 +175,7 @@ func getStartupProbeForWMS(wms *pdoknlv3.WMS) (*corev1.Probe, error) {
 	}
 
 	var layerNames []string
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
 		if layer.Name != nil {
 			layerNames = append(layerNames, *layer.Name)
 		}

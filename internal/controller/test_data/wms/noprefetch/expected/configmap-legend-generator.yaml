@@ -15,7 +15,7 @@ metadata:
     inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: noprefetch-wms-legend-generator-6cf9f5k5h5
+  name: noprefetch-wms-legend-generator-82hh8mg962
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

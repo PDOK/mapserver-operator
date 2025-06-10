@@ -191,20 +191,6 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Warns if the mapfile and featuretype.tif extra settings are both set", func() {
-			Expect(len(obj.Spec.Service.FeatureTypes)).To(BeNumerically(">", 1))
-			Expect(obj.Spec.Service.FeatureTypes[1].Data.TIF).NotTo(BeNil())
-			obj.Spec.Service.FeatureTypes[1].Data.TIF = &pdoknlv3.TIF{
-				BlobKey:                     obj.Spec.Service.FeatureTypes[1].Data.TIF.BlobKey,
-				Resample:                    "AVERAGE",
-				Offsite:                     smoothoperatorutils.Pointer("#555555"),
-				GetFeatureInfoIncludesClass: true,
-			}
-			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
-			Expect(len(warnings)).To(Equal(3))
-		})
-
 		It("Should deny update if a url was changed and ingressRouteUrls = nil", func() {
 			url, err := smoothoperatormodel.ParseURL("http://old/path")
 			Expect(err).To(BeNil())

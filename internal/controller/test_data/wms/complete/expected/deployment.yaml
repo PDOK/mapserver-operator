@@ -378,11 +378,11 @@ spec:
             name: complete-wms-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: complete-wms-capabilities-generator-657b9fg7m8
+            name: complete-wms-capabilities-generator-h2tmmd2f44
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: complete-wms-mapfile-generator-gd8tbt5k2b
+            name: complete-wms-mapfile-generator-26fdbg5546
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files
@@ -392,11 +392,13 @@ spec:
                   name: gpkg-styling
               - configMap:
                   name: tif-styling
+              - configMap:
+                  name: postgis-styling
         - configMap:
             name: complete-wms-featureinfo-generator-257f6m6228
             defaultMode: 420
           name: featureinfo-generator-config
         - configMap:
-            name: complete-wms-legend-generator-k47kg87hb4
+            name: complete-wms-legend-generator-bmg7f9t24k
             defaultMode: 420
           name: legend-generator-config

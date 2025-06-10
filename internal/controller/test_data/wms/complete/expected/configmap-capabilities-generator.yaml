@@ -233,7 +233,7 @@ metadata:
     service-type: wms
     service-version: v1_0
     theme: '2016'
-  name: complete-wms-capabilities-generator-657b9fg7m8
+  name: complete-wms-capabilities-generator-h2tmmd2f44
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

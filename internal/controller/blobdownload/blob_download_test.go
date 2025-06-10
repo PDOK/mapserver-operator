@@ -172,10 +172,10 @@ func TestGetArgsForWMS(t *testing.T) {
 												},
 											},
 										},
-										Data: &pdoknlv3.Data{
+										Data: &pdoknlv3.Data{BaseData: pdoknlv3.BaseData{
 											Gpkg: &pdoknlv3.Gpkg{
 												BlobKey: "geopackages-bucket/key/gpkg-layer-1-data.gpkg",
-											},
+											}},
 										},
 									},
 									{
@@ -190,10 +190,10 @@ func TestGetArgsForWMS(t *testing.T) {
 												},
 											},
 										},
-										Data: &pdoknlv3.Data{
+										Data: &pdoknlv3.Data{BaseData: pdoknlv3.BaseData{
 											Gpkg: &pdoknlv3.Gpkg{
 												BlobKey: "geopackages-bucket/key/gpkg-layer-2-data.gpkg",
-											},
+											}},
 										},
 									},
 								},

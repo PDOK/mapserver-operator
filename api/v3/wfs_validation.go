@@ -76,37 +76,5 @@ func ValidateFeatureTypes(wfs *WFS, warnings *[]string, allErrs *field.ErrorList
 			)
 		}
 
-		if tif := featureType.Data.TIF; tif != nil {
-			if tif.Resample != "NEAREST" {
-				sharedValidation.AddWarning(
-					warnings,
-					*path.Index(index).Child("data").Child("tif").Child("resample"),
-					"is not used when service.mapfile is configured",
-					wfs.GroupVersionKind(),
-					wfs.GetName(),
-				)
-			}
-
-			if tif.Offsite != nil {
-				sharedValidation.AddWarning(
-					warnings,
-					*path.Index(index).Child("data").Child("tif").Child("offsite"),
-					"is not used when service.mapfile is configured",
-					wfs.GroupVersionKind(),
-					wfs.GetName(),
-				)
-			}
-
-			if tif.GetFeatureInfoIncludesClass {
-				sharedValidation.AddWarning(
-					warnings,
-					*path.Index(index).Child("data").Child("tif").Child("getFeatureInfoIncludesClass"),
-					"is not used when service.mapfile is configured",
-					wfs.GroupVersionKind(),
-					wfs.GetName(),
-				)
-			}
-		}
-
 	}
 }

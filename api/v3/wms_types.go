@@ -108,6 +108,8 @@ type WMSSpec struct {
 	Service WMSService `json:"service"`
 }
 
+// +kubebuilder:validation:XValidation:message="service requires styling, either through service.mapfile, or stylingAssets.configMapRefs",rule=has(self.mapfile) || (has(self.stylingAssets) && has(self.stylingAssets.configMapRefs))
+// +kubebuilder:validation:XValidation:message="when using service.mapfile, don't include stylingAssets.configMapRefs",rule=!has(self.mapfile) || (!has(self.stylingAssets) || !has(self.stylingAssets.configMapRefs))
 type WMSService struct {
 	BaseService `json:",inline"`
 
@@ -187,9 +189,9 @@ type ConfigMapRef struct {
 
 // +kubebuilder:validation:XValidation:message="A layer should have exactly one of sublayers or data", rule="(has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))"
 // +kubebuilder:validation:XValidation:message="A layer with data attribute should have styling", rule="!has(self.data) || has(self.styles)"
-// +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 // +kubebuilder:validation:XValidation:message="A layer should have a title when visible", rule="!self.visible || has(self.title)"
 // +kubebuilder:validation:XValidation:message="A layer should have an abstract when visible", rule="!self.visible || has(self.abstract)"
+// +kubebuilder:validation:XValidation:message="A layer should have keywords when visible", rule="!self.visible || has(self.keywords)"
 type Layer struct {
 	// Name of the layer, required for layers on the 2nd or 3rd level
 	// +kubebuilder:validation:MinLength:=1
@@ -326,7 +328,7 @@ type WMSOptions struct {
 func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 	var boundingBox *WMSBoundingBox
 
-	allLayers := wmsService.GetAllLayers()
+	allLayers := wmsService.GetAnnotatedLayers()
 	for _, layer := range allLayers {
 		if len(layer.BoundingBoxes) > 0 {
 			for _, bbox := range wmsService.Layer.BoundingBoxes {
@@ -354,6 +356,16 @@ func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 	}
 }
 
+func (stylingAssets *StylingAssets) GetAllConfigMapRefKeys() []string {
+	keys := []string{}
+	if stylingAssets != nil {
+		for _, cmRef := range stylingAssets.ConfigMapRefs {
+			keys = append(keys, cmRef.Keys...)
+		}
+	}
+	return keys
+}
+
 type AnnotatedLayer struct {
 	// The name of the group that this layer belongs to, nil if it is not a member of a group. Groups can be a member of the toplayer as a group
 	GroupName *string
@@ -363,60 +375,41 @@ type AnnotatedLayer struct {
 	IsGroupLayer bool
 	// Contains actual data
 	IsDataLayer bool
-	Layer       Layer
+	Layer
 }
 
 func (wmsService *WMSService) GetAnnotatedLayers() []AnnotatedLayer {
 	result := make([]AnnotatedLayer, 0)
 
-	if wmsService.Layer.Name != nil && len(*wmsService.Layer.Name) > 0 {
-		firstLayer := AnnotatedLayer{
-			GroupName:    nil,
-			IsTopLayer:   wmsService.Layer.IsTopLayer(),
-			IsGroupLayer: wmsService.Layer.IsGroupLayer(),
-			IsDataLayer:  wmsService.Layer.IsDataLayer(),
-			Layer:        wmsService.Layer,
-		}
-		result = append(result, firstLayer)
-	}
+	result = append(result, AnnotatedLayer{
+		GroupName:    nil,
+		IsTopLayer:   true,
+		IsGroupLayer: true,
+		IsDataLayer:  false,
+		Layer:        wmsService.Layer,
+	})
 
-	for _, subLayer := range wmsService.Layer.Layers {
-		groupName := wmsService.Layer.Name
-		isGroupLayer := subLayer.IsGroupLayer()
-		isDataLayer := !isGroupLayer
+	for _, middleLayer := range wmsService.Layer.Layers {
 		result = append(result, AnnotatedLayer{
-			GroupName:    groupName,
+			GroupName:    wmsService.Layer.Name,
 			IsTopLayer:   false,
-			IsGroupLayer: isGroupLayer,
-			IsDataLayer:  isDataLayer,
-			Layer:        subLayer,
+			IsGroupLayer: middleLayer.IsGroupLayer(),
+			IsDataLayer:  middleLayer.IsDataLayer(),
+			Layer:        middleLayer,
 		})
 
-		for _, subSubLayer := range subLayer.Layers {
+		for _, bottomLayer := range middleLayer.Layers {
 			result = append(result, AnnotatedLayer{
-				GroupName:    subLayer.Name,
+				GroupName:    middleLayer.Name,
 				IsTopLayer:   false,
 				IsGroupLayer: false,
 				IsDataLayer:  true,
-				Layer:        subSubLayer,
+				Layer:        bottomLayer,
 			})
 		}
 	}
 
 	return result
-}
-
-func (wmsService *WMSService) GetAllLayers() (layers []Layer) {
-	return wmsService.Layer.FlattenLayers()
-}
-
-// FlattenLayers - flattens the layer and its sublayers into one array
-func (layer *Layer) FlattenLayers() []Layer {
-	layers := []Layer{*layer}
-	for _, childLayer := range layer.Layers {
-		layers = append(layers, childLayer.FlattenLayers()...)
-	}
-	return layers
 }
 
 // GetAllSublayers - get all sublayers of a layer, the result does not include the layer itself
@@ -469,17 +462,6 @@ func (layer *Layer) hasTIFData() bool {
 	return layer.Data.TIF != nil && layer.Data.TIF.BlobKey != ""
 }
 
-func (layer *Layer) GetLayerType(service *WMSService) (layerType string) {
-	switch {
-	case layer.IsDataLayer():
-		return DataLayer
-	case layer.Name == service.Layer.Name:
-		return TopLayer
-	default:
-		return GroupLayer
-	}
-}
-
 func (layer *Layer) IsDataLayer() bool {
 	return layer.hasData() && len(layer.Layers) == 0
 }
@@ -530,8 +512,8 @@ func (layer *Layer) setInheritedBoundingBoxes() {
 	layer.Layers = updatedLayers
 }
 
-func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
+func (wms *WMS) GetAllLayersWithLegend() (layers []AnnotatedLayer) {
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
 		if !layer.hasData() || len(layer.Styles) == 0 {
 			continue
 		}
@@ -547,7 +529,7 @@ func (wms *WMS) GetAllLayersWithLegend() (layers []Layer) {
 
 func (wms *WMS) GetUniqueTiffBlobKeys() []string {
 	blobKeys := map[string]bool{}
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
 		if layer.hasTIFData() {
 			blobKeys[layer.Data.TIF.BlobKey] = true
 		}
@@ -578,7 +560,7 @@ func (wms *WMS) GetAuthority() *Authority {
 }
 
 func (wms *WMS) HasPostgisData() bool {
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
 		if layer.Data != nil && layer.Data.Postgis != nil {
 			return true
 		}
@@ -639,7 +621,7 @@ func (wms *WMS) URL() smoothoperatormodel.URL {
 func (wms *WMS) DatasetMetadataIDs() []string {
 	ids := []string{}
 
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
 		if layer.DatasetMetadataURL != nil && layer.DatasetMetadataURL.CSW != nil {
 			if id := layer.DatasetMetadataURL.CSW.MetadataIdentifier; !slices.Contains(ids, id) {
 				ids = append(ids, id)
@@ -684,8 +666,8 @@ func (wms *WMS) ReadinessQueryString() (string, string, error) {
 	}
 
 	firstDataLayerName := ""
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
-		if layer.IsDataLayer() {
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
+		if layer.IsDataLayer {
 			firstDataLayerName = *layer.Name
 			break
 		}
