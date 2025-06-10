@@ -86,24 +86,24 @@ func TestGetInput(t *testing.T) {
 										Layers: []pdoknlv3.Layer{
 											{
 												Name: smoothoperatorutils.Pointer("gpkg-layer-name"),
-												Data: &pdoknlv3.Data{
+												Data: &pdoknlv3.Data{BaseData: pdoknlv3.BaseData{
 													Gpkg: &pdoknlv3.Gpkg{
 														Columns: []pdoknlv3.Column{
 															{Name: "column-1", Alias: smoothoperatorutils.Pointer("ALIAS_column-1")},
 															{Name: "column-2"},
 														},
-													},
+													}},
 												},
 											},
 											{
 												Name: smoothoperatorutils.Pointer("postgis-layer-name"),
-												Data: &pdoknlv3.Data{
+												Data: &pdoknlv3.Data{BaseData: pdoknlv3.BaseData{
 													Postgis: &pdoknlv3.Postgis{
 														Columns: []pdoknlv3.Column{
 															{Name: "column-1"},
 															{Name: "column-2"},
 														},
-													},
+													}},
 												},
 											},
 											{

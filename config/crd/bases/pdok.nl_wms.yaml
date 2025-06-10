@@ -1841,16 +1841,17 @@ spec:
                                       type: boolean
                                   required:
                                     - name
+                                    - styles
                                   type: object
                                   x-kubernetes-validations:
                                     - message: A layer with data attribute should have styling
                                       rule: '!has(self.data) || has(self.styles)'
-                                    - message: A layer should have keywords when visible
-                                      rule: '!self.visible || has(self.keywords)'
                                     - message: A layer should have a title when visible
                                       rule: '!self.visible || has(self.title)'
                                     - message: A layer should have an abstract when visible
                                       rule: '!self.visible || has(self.abstract)'
+                                    - message: A layer should have keywords when visible
+                                      rule: '!self.visible || has(self.keywords)'
                                 minItems: 1
                                 type: array
                               maxscaledenominator:
@@ -1917,18 +1918,19 @@ spec:
                                 type: boolean
                             required:
                               - name
+                              - styles
                             type: object
                             x-kubernetes-validations:
                               - message: A layer should have exactly one of sublayers or data
                                 rule: (has(self.data) || has(self.layers)) && !(has(self.data) && has(self.layers))
                               - message: A layer with data attribute should have styling
                                 rule: '!has(self.data) || has(self.styles)'
-                              - message: A layer should have keywords when visible
-                                rule: '!self.visible || has(self.keywords)'
                               - message: A layer should have a title when visible
                                 rule: '!self.visible || has(self.title)'
                               - message: A layer should have an abstract when visible
                                 rule: '!self.visible || has(self.abstract)'
+                              - message: A layer should have keywords when visible
+                                rule: '!self.visible || has(self.keywords)'
                           minItems: 1
                           type: array
                         maxscaledenominator:
@@ -2003,6 +2005,9 @@ spec:
                         - fieldPath: .visible
                           message: TopLayer must be visible
                           rule: self.visible
+                        - fieldPath: .styles
+                          message: If TopLayer has a name, it must have styles
+                          rule: '!has(self.name) || has(self.styles)'
                     mapfile:
                       description: External Mapfile reference
                       properties:
@@ -2094,6 +2099,11 @@ spec:
                     - title
                     - url
                   type: object
+                  x-kubernetes-validations:
+                    - message: service requires styling, either through service.mapfile, or stylingAssets.configMapRefs
+                      rule: has(self.mapfile) || (has(self.stylingAssets) && has(self.stylingAssets.configMapRefs))
+                    - message: when using service.mapfile, don't include stylingAssets.configMapRefs
+                      rule: '!has(self.mapfile) || (!has(self.stylingAssets) || !has(self.stylingAssets.configMapRefs))'
               required:
                 - podSpecPatch
                 - service

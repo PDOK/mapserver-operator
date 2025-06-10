@@ -85,6 +85,9 @@ spec:
           - name: group-child
             title: group-child
             visualization: layer-style.style
+          - name: style
+            title: style
+            visualization: style.style
           title: group-child
           visible: true
         keywords:
@@ -92,6 +95,9 @@ spec:
         name: group
         title: group
         visible: true
+        styles:
+          - name: style
+            title: style
       title: service-title
       visible: true
     ownerInfoRef: owner
@@ -99,6 +105,7 @@ spec:
       configMapRefs:
       - keys:
         - layer-style.style
+        - style.style
         name: styling
     title: service-title
     url: http://localhost:32788/datasetOwner/dataset/wms/v1_0

@@ -13,6 +13,11 @@ spec:
       - "keyword"
     ownerInfoRef: "owner"
     dataEPSG: "EPSG:28992"
+    stylingAssets:
+      configMapRefs:
+        - name: configmap
+          keys:
+            - file.symbol
     layer:
       title: "title"
       abstract: "abstract"
@@ -35,6 +40,7 @@ spec:
               tableName: "table"
           styles:
             - name: "name"
+              title: "title"
         - name: "not visible"
           visible: false
           data:

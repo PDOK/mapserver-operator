@@ -5,7 +5,6 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	"github.com/pdok/mapserver-operator/internal/controller/utils"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
@@ -78,17 +77,13 @@ func MapWMSToOgcWebserviceProxyConfig(wms *pdoknlv3.WMS) (config Config, err err
 	}
 
 	config.GroupLayers = make(map[string][]string)
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
-		if layer.IsGroupLayer() && wms.Spec.Service.GetParentLayer(layer) != nil {
-			if dataLayers := dataLayersForGroupLayer(layer); len(dataLayers) > 0 {
-				config.GroupLayers[smoothoperatorutils.PointerVal(layer.Name, "")] = dataLayers
-			}
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
+		if !layer.IsTopLayer && layer.IsGroupLayer && layer.Name != nil {
+			config.GroupLayers[*layer.Name] = dataLayersForGroupLayer(layer.Layer)
 		}
 	}
 	if wms.Spec.Service.Layer.Name != nil {
-		if dataLayers := dataLayersForGroupLayer(wms.Spec.Service.Layer); len(dataLayers) > 0 {
-			config.GroupLayers[smoothoperatorutils.PointerVal(wms.Spec.Service.Layer.Name, "")] = dataLayers
-		}
+		config.GroupLayers[*wms.Spec.Service.Layer.Name] = dataLayersForGroupLayer(wms.Spec.Service.Layer)
 	}
 	return
 }

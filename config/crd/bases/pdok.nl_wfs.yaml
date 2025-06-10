@@ -1286,33 +1286,10 @@ spec:
                                   - geometryType
                                   - tableName
                                 type: object
-                              tif:
-                                description: TIF configures a GeoTIF raster source
-                                properties:
-                                  blobKey:
-                                    description: BlobKey to the TIFF file
-                                    pattern: ^.+\/.+\/.+\.(tif?f|vrt)$
-                                    type: string
-                                  getFeatureInfoIncludesClass:
-                                    default: false
-                                    description: '"When a band represents nominal or ordinal data the class name (from styling) can be included in the getFeatureInfo"'
-                                    type: boolean
-                                  offsite:
-                                    description: Sets the color index to treat as transparent for raster layers, optional, hex or rgb
-                                    pattern: (#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})
-                                    type: string
-                                  resample:
-                                    default: NEAREST
-                                    description: This option can be used to control the resampling kernel used sampling raster images, optional
-                                    pattern: (NEAREST|AVERAGE|BILINEAR)
-                                    type: string
-                                required:
-                                  - blobKey
-                                type: object
                             type: object
                             x-kubernetes-validations:
-                              - message: Atleast one of the datasource should be provided (postgis, gpkg, tif)
-                                rule: has(self.gpkg) || has(self.tif) || has(self.postgis)
+                              - message: At least one of the datasource should be provided (postgis, gpkg)
+                                rule: has(self.gpkg) || has(self.postgis)
                           datasetMetadataUrl:
                             description: Metadata URL
                             properties:

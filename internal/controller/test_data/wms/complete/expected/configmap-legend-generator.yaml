@@ -75,7 +75,7 @@ metadata:
     service-type: wms
     service-version: v1_0
     theme: '2016'
-  name: complete-wms-legend-generator-k47kg87hb4
+  name: complete-wms-legend-generator-bmg7f9t24k
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

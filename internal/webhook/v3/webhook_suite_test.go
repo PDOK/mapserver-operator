@@ -38,6 +38,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pdok/smooth-operator/pkg/validation"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"golang.org/x/tools/go/packages"
 
@@ -228,4 +234,17 @@ func must[T any](t T, err error) T {
 		panic(err)
 	}
 	return t
+}
+
+func getValidationError[O pdoknlv3.WMSWFS](obj O, errorList *field.Error) error {
+	return apierrors.NewInvalid(obj.GroupKind(), obj.GetName(), field.ErrorList{errorList})
+}
+
+func getValidationWarnings[O pdoknlv3.WMSWFS](obj O, path field.Path, warning string, warnings []string) admission.Warnings {
+	validation.AddWarning(&warnings, path, warning, schema.GroupVersionKind{
+		Group:   obj.GroupKind().Group,
+		Version: "v3",
+		Kind:    obj.GroupKind().Kind,
+	}, obj.GetName())
+	return warnings
 }

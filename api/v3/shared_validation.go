@@ -46,7 +46,7 @@ func ValidateUpdate[W WMSWFS](c client.Client, newW, oldW W, validate func(W, *[
 	allErrs := field.ErrorList{}
 
 	// Make sure no ingressRouteURLs have been removed
-	sharedValidation.ValidateIngressRouteURLsNotRemoved(oldW.IngressRouteURLs(true), newW.IngressRouteURLs(true), &allErrs, nil)
+	sharedValidation.ValidateIngressRouteURLsNotRemoved(oldW.IngressRouteURLs(false), newW.IngressRouteURLs(true), &allErrs, nil)
 
 	if len(newW.IngressRouteURLs(false)) == 0 {
 		// There are no ingressRouteURLs given, spec.service.url is immutable is that case.

@@ -18,18 +18,17 @@ func MapWMSToFeatureinfoGeneratorInput(wms *pdoknlv3.WMS) (*featureinfo.Scheme, 
 		Layers:          []featureinfo.Layer{},
 	}
 
-	for _, layer := range wms.Spec.Service.GetAllLayers() {
-		if !layer.IsDataLayer() {
+	for _, layer := range wms.Spec.Service.GetAnnotatedLayers() {
+		if !layer.IsDataLayer {
 			continue
 		}
 		l := featureinfo.Layer{
 			Name:       *layer.Name,
-			Properties: getProperties(&layer),
+			Properties: getProperties(&layer.Layer),
 		}
 
-		parentLayer := wms.Spec.Service.GetParentLayer(layer)
-		if parentLayer != nil && parentLayer.IsGroupLayer() && parentLayer.Name != wms.Spec.Service.Layer.Name {
-			l.GroupName = smoothoperatorutils.PointerVal(parentLayer.Name, "")
+		if layer.GroupName != nil && layer.GroupName != wms.Spec.Service.Layer.Name {
+			l.GroupName = smoothoperatorutils.PointerVal(layer.GroupName, "")
 		}
 
 		input.Layers = append(input.Layers, l)

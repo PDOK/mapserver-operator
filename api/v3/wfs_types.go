@@ -187,7 +187,8 @@ type FeatureType struct {
 
 	// FeatureType data connection
 	// +kubebuilder:validation:Type=object
-	Data Data `json:"data"`
+	// +kubebuilder:validation:XValidation:rule="has(self.gpkg) || has(self.postgis)", message="At least one of the datasource should be provided (postgis, gpkg)"
+	Data BaseData `json:"data"`
 }
 
 // FeatureBbox is the optional featureType bounding box, if provided it overrides the default extent

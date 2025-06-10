@@ -90,7 +90,7 @@ func getWFSLayers(service pdoknlv3.WFSService) (layers []WFSLayer) {
 				Columns:        getColumns(featureType.Data),
 				TableName:      featureType.Data.GetTableName(),
 				GeometryType:   featureType.Data.GetGeometryType(),
-				GeopackagePath: getGeopackagePath(featureType.Data),
+				GeopackagePath: getGeopackagePath(featureType.Data.Gpkg),
 			},
 		}
 		if featureType.Data.Postgis != nil {
@@ -123,7 +123,7 @@ func getWMSExtent(serviceLayer pdoknlv3.Layer, serviceExtent string) string {
 	return defaultExtent
 }
 
-func getColumns(data pdoknlv3.Data) []Column {
+func getColumns(data pdoknlv3.BaseData) []Column {
 	columns := []Column{{Name: "fuuid"}}
 	if data.GetColumns() != nil {
 		for _, column := range *data.GetColumns() {
@@ -135,12 +135,12 @@ func getColumns(data pdoknlv3.Data) []Column {
 	return columns
 }
 
-func getGeopackagePath(data pdoknlv3.Data) *string {
-	if data.Gpkg == nil {
+func getGeopackagePath(gpkg *pdoknlv3.Gpkg) *string {
+	if gpkg == nil {
 		return nil
 	}
-	index := strings.LastIndex(data.Gpkg.BlobKey, "/") + 1
-	blobName := data.Gpkg.BlobKey[index:]
+	index := strings.LastIndex(gpkg.BlobKey, "/") + 1
+	blobName := gpkg.BlobKey[index:]
 	return smoothoperatorutils.Pointer(geopackagePath + "/" + blobName)
 }
 
@@ -212,7 +212,7 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		MaxSize:           maxSize,
 	}
 
-	if wms.Spec.Service.Layer.IsTopLayer() && wms.Spec.Service.Layer.Name != nil {
+	if wms.Spec.Service.Layer.Name != nil {
 		result.TopLevelName = *wms.Spec.Service.Layer.Name
 	}
 
@@ -257,7 +257,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 
 	var columns []Column
 	if serviceLayer.Data != nil {
-		columns = getColumns(*serviceLayer.Data)
+		columns = getColumns(serviceLayer.Data.BaseData)
 	}
 
 	var tableName *string
