@@ -12,6 +12,8 @@ spec:
         resources:
           limits:
             ephemeral-storage: 1G
+  ingressRouteUrls:
+    - url: "https://test.test/path"
   service:
     prefix: "prefix"
     url: "https://test.test/path"
@@ -50,14 +52,20 @@ spec:
             - name: "name"
               title: "title"
               visualization: "file.style"
-        - name: "not visible"
-          visible: false
-          data:
-            postgis:
-              columns:
-                - name: "column"
-              geometryType: "Point"
-              tableName: "table"
+        - name: "visible Group Layer"
+          visible: true
           styles:
-            - name: "name"
-              visualization: "file.style"
+            - name: style
+              title: style
+          layers:
+            - name: "not visible"
+              visible: false
+              data:
+                postgis:
+                  columns:
+                    - name: "column"
+                  geometryType: "Point"
+                  tableName: "table"
+              styles:
+                - name: "style"
+                  visualization: "file.style"

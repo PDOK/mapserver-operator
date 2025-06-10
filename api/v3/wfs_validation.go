@@ -34,11 +34,20 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	path := field.NewPath("spec").Child("service")
 
 	if service.Mapfile == nil && service.DefaultCrs != "EPSG:28992" && service.Bbox == nil {
-		*allErrs = append(*allErrs, field.Required(path.Child("bbox").Child("defaultCRS"), "when service.defaultCRS is not 'EPSG:28992'"))
+		*allErrs = append(*allErrs, field.Required(
+			path.Child("bbox").Child("defaultCRS"),
+			"when service.defaultCRS is not 'EPSG:28992'",
+		))
 	}
 
 	if service.Mapfile != nil && service.Bbox != nil {
-		sharedValidation.AddWarning(warnings, *path.Child("bbox"), "is not used when service.mapfile is configured", wfs.GroupVersionKind(), wfs.GetName())
+		sharedValidation.AddWarning(
+			warnings,
+			*path.Child("bbox"),
+			"is not used when service.mapfile is configured",
+			wfs.GroupVersionKind(),
+			wfs.GetName(),
+		)
 	}
 
 	ValidateInspire(wfs, allErrs)

@@ -27,13 +27,16 @@ package v3
 //nolint:revive // Complains about the dot imports
 import (
 	"context"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
-	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -83,17 +86,27 @@ var _ = Describe("WFS Webhook", func() {
 		It("Should deny creation if there are no labels", func() {
 			obj.Labels = nil
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Required(
+				field.NewPath("metadata").Child("labels"),
+				"can't be empty",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Should deny creation if Url not in IngressRouteUrls", func() {
-			Expect(obj.Spec.IngressRouteURLs).NotTo(BeNil())
-			url, err := smoothoperatormodel.ParseURL("https://new/new")
-			Expect(err).To(Not(HaveOccurred()))
+		It("Should deny Create when URL not in IngressRouteURLs", func() {
+			url, err := smoothoperatormodel.ParseURL("http://changed/changed")
+			Expect(err).To(BeNil())
+			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: smoothoperatormodel.URL{URL: url}}}
+			url, err = smoothoperatormodel.ParseURL("http://sample/sample")
+			Expect(err).To(BeNil())
 			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
+
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("ingressRouteUrls"),
+				fmt.Sprint(obj.Spec.IngressRouteURLs),
+				fmt.Sprintf("must contain baseURL: %s", url),
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -101,14 +114,22 @@ var _ = Describe("WFS Webhook", func() {
 			obj.Name += "-wfs"
 			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(BeNil())
-			Expect(len(warnings)).To(Equal(1))
+			Expect(warnings).To(Equal(getValidationWarnings(
+				obj,
+				*field.NewPath("metadata").Child("name"),
+				"name should not contain wfs",
+				[]string{},
+			)))
 		})
 
 		It("Should deny creation if there is no bounding box and the defaultCRS is not EPSG:28992", func() {
 			obj.Spec.Service.DefaultCrs = "EPSG:1234"
 			obj.Spec.Service.Bbox = nil
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Required(
+				field.NewPath("spec").Child("service").Child("bbox").Child("defaultCRS"),
+				"when service.defaultCRS is not 'EPSG:28992'",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -119,7 +140,16 @@ var _ = Describe("WFS Webhook", func() {
 			obj.Spec.Service.Mapfile = &pdoknlv3.Mapfile{}
 			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(BeNil())
-			Expect(len(warnings)).To(Equal(2))
+			Expect(warnings).To(Equal(getValidationWarnings(
+				obj,
+				*field.NewPath("spec").Child("service").Child("featureTypes").Index(0).Child("bbox").Child("defaultCrs"),
+				"is not used when service.mapfile is configured",
+				getValidationWarnings(
+					obj,
+					*field.NewPath("spec").Child("service").Child("bbox"),
+					"is not used when service.mapfile is configured",
+					[]string{},
+				))))
 		})
 
 		It("Should deny creation if SpatialID is also used as a featureType datasetMetadataID", func() {
@@ -128,7 +158,11 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW).NotTo(BeNil())
 			obj.Spec.Service.Inspire.SpatialDatasetIdentifier = obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW.MetadataIdentifier
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("service").Child("inspire").Child("spatialDatasetIdentifier"),
+				obj.Spec.Service.Inspire.SpatialDatasetIdentifier,
+				"spatialDatasetIdentifier cannot also be used as an datasetMetadataUrl.csw.metadataIdentifier",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -139,7 +173,11 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW).NotTo(BeNil())
 			obj.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier = obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW.MetadataIdentifier
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("service").Child("inspire").Child("csw").Child("metadataIdentifier"),
+				obj.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
+				"serviceMetadataUrl.csw.metadataIdentifier cannot also be used as an datasetMetadataUrl.csw.metadataIdentifier",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -148,7 +186,11 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(obj.Inspire().ServiceMetadataURL.CSW).NotTo(BeNil())
 			obj.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier = obj.Spec.Service.Inspire.SpatialDatasetIdentifier
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("service").Child("inspire").Child("csw").Child("metadataIdentifier"),
+				obj.Spec.Service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier,
+				"serviceMetadataUrl.csw.metadataIdentifier cannot also be used as the spatialDatasetIdentifier",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -162,24 +204,40 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(obj.Spec.Service.FeatureTypes[1].DatasetMetadataURL.CSW).NotTo(BeNil())
 			obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW.MetadataIdentifier = ""
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("service").Child("featureTypes[*]").Child("datasetMetadataUrl").Child("csw").Child("metadataIdentifier"),
+				obj.DatasetMetadataIDs(),
+				"when Inspire, all featureTypes need use the same datasetMetadataUrl.csw.metadataIdentifier",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Should deny creation if maxReplicas < minReplicas in HPAPatch", func() {
+		It("Should deny Create when minReplicas are larger than maxReplicas", func() {
 			obj.Spec.HorizontalPodAutoscalerPatch = &pdoknlv3.HorizontalPodAutoscalerPatch{
-				MinReplicas: smoothoperatorutils.Pointer(int32(5)),
-				MaxReplicas: smoothoperatorutils.Pointer(int32(1)),
+				MinReplicas: ptr.To(int32(10)),
+				MaxReplicas: ptr.To(int32(5)),
 			}
+
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("horizontalPodAutoscaler"),
+				fmt.Sprintf("minReplicas: %d, maxReplicas: %d", 10, 5),
+				"maxReplicas cannot be less than minReplicas",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Should deny creation if no ephemeralStorage is set on the mapserver container", func() {
-			obj.Spec.PodSpecPatch.Containers = []corev1.Container{}
+		It("Should deny Create when mapserver container doesn't have ephemeral storage", func() {
+			obj.Spec.PodSpecPatch = corev1.PodSpec{}
+
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Required(field.NewPath("spec").
+				Child("podSpecPatch").
+				Child("containers").
+				Key("mapserver").
+				Child("resources").
+				Child("limits").
+				Child(corev1.ResourceEphemeralStorage.String()), ""))))
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -187,128 +245,207 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(len(obj.Spec.Service.FeatureTypes)).To(BeNumerically(">", 1))
 			obj.Spec.Service.FeatureTypes[1].Name = obj.Spec.Service.FeatureTypes[0].Name
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-		})
-
-		It("Should deny update if a url was changed and ingressRouteUrls = nil", func() {
-			url, err := smoothoperatormodel.ParseURL("http://old/path")
-			Expect(err).To(BeNil())
-			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(BeNil())
-			Expect(warnings).To(BeEmpty())
-
-			oldObj.Spec.IngressRouteURLs = nil
-			obj.Spec.IngressRouteURLs = nil
-			warnings, err = validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-		})
-
-		It("Should deny update if a ingressRouteURL was removed", func() {
-			Expect(len(oldObj.Spec.IngressRouteURLs)).To(Equal(2))
-			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: obj.URL()}}
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-		})
-
-		It("Should deny update url was changed but not added to ingressRouteURLs", func() {
-			url, err := smoothoperatormodel.ParseURL("http://old/changed")
-			Expect(err).ToNot(HaveOccurred())
-			oldObj.Spec.IngressRouteURLs = nil
-			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: oldObj.Spec.Service.URL}}
-			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-
-			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: smoothoperatormodel.URL{URL: url}}}
-			warnings, err = validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-
-		})
-
-		It("Should deny update if a label was removed", func() {
-			for label := range obj.Labels {
-				delete(obj.Labels, label)
-				break
-			}
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-		})
-
-		It("Should deny update if a label changed", func() {
-			for label, val := range obj.Labels {
-				obj.Labels[label] = val + "-newval"
-				break
-			}
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-		})
-
-		It("Should deny update if a label was added", func() {
-			obj.Labels["new-label"] = "test"
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-		})
-
-		It("Should deny update if an inspire block was added", func() {
-			Expect(obj.Spec.Service.Inspire).NotTo(BeNil())
-			oldObj.Spec.Service.Inspire = nil
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
-			Expect(warnings).To(BeEmpty())
-		})
-
-		It("Should deny update if an inspire block was removed", func() {
-			Expect(oldObj.Spec.Service.Inspire).NotTo(BeNil())
-			obj.Spec.Service.Inspire = nil
-			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Duplicate(
+				field.NewPath("spec").Child("service").Child("featureTypes").Index(1).Child("name"),
+				obj.Spec.Service.FeatureTypes[1].Name,
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should deny create if the OwnerInfoRef doesn't exist", func() {
 			obj.Spec.Service.OwnerInfoRef = "changed"
+
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.NotFound(
+				field.NewPath("spec").Child("service").Child("ownerInfoRef"),
+				obj.Spec.Service.OwnerInfoRef,
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should deny create if the OwnerInfoRef misses namespaceTemplate", func() {
 			ownerInfo.Spec.NamespaceTemplate = nil
+
 			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Required(
+				field.NewPath("spec").Child("service").Child("ownerInfoRef"),
+				"spec.namespaceTemplate missing in "+ownerInfo.Name,
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should deny create if the OwnerInfoRef misses csw metadataTemplate", func() {
-			Expect(obj.Inspire().ServiceMetadataURL.CSW).ToNot(BeNil())
+			obj.Spec.Service.Inspire = &pdoknlv3.WFSInspire{Inspire: pdoknlv3.Inspire{ServiceMetadataURL: pdoknlv3.MetadataURL{CSW: &pdoknlv3.Metadata{MetadataIdentifier: "metadata"}}}}
 			ownerInfo.Spec.MetadataUrls.CSW = nil
+
 			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Required(
+				field.NewPath("spec").Child("service").Child("ownerInfoRef"),
+				"spec.metadataUrls.csw missing in "+ownerInfo.Name,
+			))))
 			Expect(warnings).To(BeEmpty())
 
 			ownerInfo.Spec.MetadataUrls = nil
 			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
 			warnings, err = validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Required(
+				field.NewPath("spec").Child("service").Child("ownerInfoRef"),
+				"spec.metadataUrls.csw missing in "+ownerInfo.Name,
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Should deny create if the OwnerInfoRef misses Wfs", func() {
+		It("Should deny create if the OwnerInfoRef misses WMS", func() {
 			ownerInfo.Spec.WFS = nil
 			Expect(updateOwnerInfo(ctx, k8sClient, ownerInfo)).To(Succeed())
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(getValidationError(obj, field.Required(
+				field.NewPath("spec").Child("service").Child("ownerInfoRef"),
+				"spec.WFS missing in "+ownerInfo.Name,
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny update if a ingressRouteURL was removed", func() {
+			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
+			Expect(err).To(BeNil())
+			oldObj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{
+				{URL: obj.URL()},
+				{URL: smoothoperatormodel.URL{URL: url}},
+			}
+			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: obj.URL()}}
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("ingressRouteUrls"),
+				fmt.Sprint(obj.Spec.IngressRouteURLs),
+				fmt.Sprintf("urls cannot be removed, missing: %s", smoothoperatormodel.IngressRouteURL{URL: smoothoperatormodel.URL{URL: url}}),
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should accept update if a url was changed when it's in ingressRouteUrls", func() {
+			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
+			Expect(err).To(BeNil())
+			oldObj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{
+				{URL: obj.URL()},
+				{URL: smoothoperatormodel.URL{URL: url}},
+			}
+			obj.Spec.IngressRouteURLs = oldObj.Spec.IngressRouteURLs
+			oldObj.Spec.Service.URL = obj.URL()
+			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
+
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(BeNil())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny update if a url was changed and ingressRouteUrls = nil", func() {
+			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
+			Expect(err).To(BeNil())
+			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
+			obj.Spec.IngressRouteURLs = nil
+			oldObj.Spec.IngressRouteURLs = nil
+
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Forbidden(
+				field.NewPath("spec").Child("service").Child("url"),
+				"is immutable",
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny update url was changed but not added to ingressRouteURLs", func() {
+			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
+			Expect(err).ToNot(HaveOccurred())
+			oldObj.Spec.IngressRouteURLs = nil
+			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: oldObj.Spec.Service.URL}}
+			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("ingressRouteUrls"),
+				fmt.Sprint(obj.Spec.IngressRouteURLs),
+				fmt.Sprintf("must contain baseURL: %s", obj.URL()),
+			))))
+			Expect(warnings).To(BeEmpty())
+
+			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: smoothoperatormodel.URL{URL: url}}}
+			warnings, err = validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("ingressRouteUrls"),
+				fmt.Sprint(obj.Spec.IngressRouteURLs),
+				fmt.Sprintf("must contain baseURL: %s", oldObj.URL()),
+			))))
+			Expect(warnings).To(BeEmpty())
+
+		})
+
+		It("Should deny update if a label was removed", func() {
+			oldKey := ""
+			for label := range obj.Labels {
+				oldKey = label
+				delete(obj.Labels, label)
+				break
+			}
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Required(
+				field.NewPath("metadata").Child("labels").Child(oldKey),
+				"labels cannot be removed",
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny update if a label changed", func() {
+			oldKey := ""
+			oldValue := ""
+			newValue := ""
+			for label, val := range obj.Labels {
+				oldKey = label
+				oldValue = val
+				newValue = val + "-newval"
+				obj.Labels[label] = newValue
+				break
+			}
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("metadata").Child("labels").Child(oldKey),
+				newValue,
+				"immutable: should be: "+oldValue,
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny update if a label was added", func() {
+			newKey := "new-label"
+			obj.Labels[newKey] = "test"
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Forbidden(
+				field.NewPath("metadata").Child("labels").Child(newKey),
+				"new labels cannot be added",
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny update if an inspire block was added", func() {
+			obj.Spec.Service.Inspire = &pdoknlv3.WFSInspire{}
+			oldObj.Spec.Service.Inspire = nil
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Forbidden(
+				field.NewPath("spec").Child("service").Child("inspire"),
+				"cannot change from inspire to not inspire or the other way around",
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny update if an inspire block was removed", func() {
+			oldObj.Spec.Service.Inspire = &pdoknlv3.WFSInspire{}
+			obj.Spec.Service.Inspire = nil
+			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Forbidden(
+				field.NewPath("spec").Child("service").Child("inspire"),
+				"cannot change from inspire to not inspire or the other way around",
+			))))
 			Expect(warnings).To(BeEmpty())
 		})
 	})

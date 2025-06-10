@@ -51,20 +51,6 @@ func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 				wms.GetName(),
 			)
 		}
-	} else {
-		styleFile := false
-		for _, key := range wms.Spec.Service.StylingAssets.GetAllConfigMapRefKeys() {
-			if strings.HasSuffix(key, ".style") {
-				styleFile = true
-				break
-			}
-		}
-		if !styleFile {
-			*allErrs = append(*allErrs, field.Required(
-				field.NewPath("spec").Child("service").Child("stylingAssets[*]").Child("configMapRefs[*]").Child("keys"),
-				"at least one .style file is required",
-			))
-		}
 	}
 
 	ValidateInspire(wms, allErrs)
@@ -129,7 +115,9 @@ func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string,
 	validateLayerWithMapfile(layer, path, wms, warnings, allErrs)
 
 	if layer.Visible {
-		*hasVisibleLayer = true
+		if !layer.IsTopLayer {
+			*hasVisibleLayer = true
+		}
 	} else {
 		validateNotVisibleLayer(layer, path, wms, warnings, allErrs)
 	}
@@ -149,9 +137,6 @@ func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string,
 					fmt.Sprintf("dataLayer must implement style: %s, defined by a parent layer", groupStyle),
 				))
 			}
-		}
-		if tif := layer.Data.TIF; tif != nil {
-			tifWarnings(tif, path, wms, warnings)
 		}
 	}
 
@@ -180,12 +165,19 @@ func validateLayerWithMapfile(layer AnnotatedLayer, path *field.Path, wms *WMS, 
 			wms.GetName(),
 		)
 	}
-	if !hasCustomMapfile && service.DataEPSG != "EPSG:28992" && !layer.hasBoundingBoxForCRS(service.DataEPSG) {
+	if !hasCustomMapfile && service.DataEPSG != "EPSG:28992" && !layer.hasBoundingBoxForCRS(service.DataEPSG) && layer.Name != nil {
 		*allErrs = append(*allErrs, field.Required(
 			path.Child("boundingBoxes").Child("crs"),
 			fmt.Sprintf("must contain a boundingBox for CRS %s when service.dataEPSG is not 'EPSG:28992'", service.DataEPSG),
 		))
 	}
+
+	if layer.IsDataLayer && hasCustomMapfile {
+		if tif := layer.Data.TIF; tif != nil {
+			tifWarnings(tif, path, wms, warnings)
+		}
+	}
+
 }
 
 func tifWarnings(tif *TIF, path *field.Path, wms *WMS, warnings *[]string) {
@@ -241,7 +233,7 @@ func validateStyle(style Style, path *field.Path, styleNames *[]string, groupSty
 	if layer.IsGroupLayer {
 		if slices.Contains(*groupStyles, style.Name) {
 			*allErrs = append(*allErrs, field.Invalid(
-				path,
+				path.Child("name"),
 				style.Name,
 				"A GroupLayer can't redefine the same style as a parent layer",
 			))
