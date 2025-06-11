@@ -3,10 +3,10 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: "false"
+    pdok.nl/inspire: "false"
     service-type: wfs
     service-version: v1_0
   name: minimal-wfs-mapserver

@@ -3,10 +3,10 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: "true"
+    pdok.nl/inspire: "true"
     service-type: wms
     service-version: v1_0
     theme: "2016"
@@ -35,10 +35,10 @@ spec:
       targetPort: 9117
       protocol: TCP
   selector:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: "true"
+    pdok.nl/inspire: "true"
     service-type: wms
     service-version: v1_0
     theme: "2016"

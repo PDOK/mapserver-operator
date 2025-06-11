@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/pdok/smooth-operator/model"
@@ -21,7 +23,8 @@ import (
 )
 
 const (
-	AppLabelKey = "app"
+	AppLabelKey     = "pdok.nl/app"
+	InspireLabelKey = "pdok.nl/inspire"
 )
 
 func ttlExpired[O pdoknlv3.WMSWFS](obj O) bool {
@@ -68,7 +71,7 @@ func addCommonLabels[O pdoknlv3.WMSWFS](obj O, labels map[string]string) map[str
 		inspire = any(obj).(*pdoknlv3.WMS).Spec.Service.Inspire != nil
 	}
 
-	labels["inspire"] = strconv.FormatBool(inspire)
+	labels[InspireLabelKey] = strconv.FormatBool(inspire)
 
 	return labels
 }
@@ -248,4 +251,21 @@ func createOrUpdateOrDeletePodDisruptionBudget[O pdoknlv3.WMSWFS, R Reconciler](
 		}
 	}
 	return nil
+}
+
+func recoveredPanicToError(rec any) (err error) {
+	switch x := rec.(type) {
+	case string:
+		err = errors.New(x)
+	case error:
+		err = x
+	default:
+		err = errors.New("unknown panic")
+	}
+
+	// Add stack
+	// TODO - this doesn't seem to work, see if there is a better method to add the stack
+	err = errors.WithStack(err)
+
+	return
 }

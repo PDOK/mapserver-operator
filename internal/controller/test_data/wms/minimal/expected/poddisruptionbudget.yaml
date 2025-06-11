@@ -2,10 +2,10 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: "false"
+    pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
   name: minimal-wms-mapserver
@@ -21,9 +21,9 @@ spec:
   maxUnavailable: 1
   selector:
     matchLabels:
-      app: mapserver
+      pdok.nl/app: mapserver
       dataset: dataset
       dataset-owner: datasetOwner
-      inspire: "false"
+      pdok.nl/inspire: "false"
       service-type: wms
       service-version: v1_0

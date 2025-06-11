@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: 'false'
+    pdok.nl/inspire: 'false'
     service-type: wfs
     service-version: v1_0
   name: noprefetch-wfs-mapserver
@@ -21,10 +21,10 @@ spec:
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: mapserver
+      pdok.nl/app: mapserver
       dataset: dataset
       dataset-owner: datasetOwner
-      inspire: 'false'
+      pdok.nl/inspire: 'false'
       service-type: wfs
       service-version: v1_0
   strategy:
@@ -43,10 +43,10 @@ spec:
         priority.version-checker.io/mapserver: "4"
         priority.version-checker.io/ogc-webservice-proxy: "4"
       labels:
-        app: mapserver
+        pdok.nl/app: mapserver
         dataset: dataset
         dataset-owner: datasetOwner
-        inspire: 'false'
+        pdok.nl/inspire: 'false'
         service-type: wfs
         service-version: v1_0
     spec:

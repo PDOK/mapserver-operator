@@ -35,10 +35,10 @@ immutable: true
 kind: ConfigMap
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: "false"
+    pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
   name: custom-mapfile-wms-featureinfo-generator-668mmh48cc
