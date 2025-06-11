@@ -362,10 +362,10 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 	// it needs to be created with defaults from the service
 	// and in this case the middleLayers are all layers without a group
 	if topLayer == nil {
-		boundingBoxes := make([]pdoknlv3.WMSBoundingBox, 0)
+		var bbox *pdoknlv3.WMSBoundingBox
 		if v2Service.Extent != nil {
 			bboxStringList := strings.Split(*v2Service.Extent, " ")
-			bbox := pdoknlv3.WMSBoundingBox{
+			bbox = &pdoknlv3.WMSBoundingBox{
 				CRS: v2Service.DataEPSG,
 				BBox: smoothoperatormodel.BBox{
 					MinX: bboxStringList[0],
@@ -374,7 +374,6 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 					MaxY: bboxStringList[3],
 				},
 			}
-			boundingBoxes = append(boundingBoxes, bbox)
 		}
 
 		topLayer = &pdoknlv3.Layer{
@@ -382,7 +381,7 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 			Abstract:      &v2Service.Abstract,
 			Keywords:      v2Service.Keywords,
 			Layers:        []pdoknlv3.Layer{},
-			BoundingBoxes: boundingBoxes,
+			BoundingBoxes: getDefaultWMSLayerBoundingBoxes(bbox),
 			Visible:       true,
 		}
 
@@ -408,6 +407,102 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 	topLayer.Layers = middleLayers
 
 	return *topLayer
+}
+
+func getDefaultWMSLayerBoundingBoxes(defaultBbox *pdoknlv3.WMSBoundingBox) []pdoknlv3.WMSBoundingBox {
+	defaultBboxes := []pdoknlv3.WMSBoundingBox{
+		{
+			CRS: "EPSG:28992",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "-25000",
+				MinY: "250000",
+				MaxX: "280000",
+				MaxY: "860000",
+			},
+		},
+		{
+			CRS: "EPSG:25831",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "-470271",
+				MinY: "5.56231e+06",
+				MaxX: "795163",
+				MaxY: "6.18197e+06",
+			},
+		},
+		{
+			CRS: "EPSG:25832",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "62461.6",
+				MinY: "5.56555e+06",
+				MaxX: "397827",
+				MaxY: "6.19042e+06",
+			},
+		},
+		{
+			CRS: "EPSG:3034",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "2.61336e+06",
+				MinY: "3.509e+06",
+				MaxX: "3.22007e+06",
+				MaxY: "3.84003e+06",
+			},
+		},
+		{
+			CRS: "EPSG:3035",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "3.01676e+06",
+				MinY: "3.81264e+06",
+				MaxX: "3.64485e+06",
+				MaxY: "4.15586e+06",
+			},
+		},
+		{
+			CRS: "EPSG:3857",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "281318",
+				MinY: "6.48322e+06",
+				MaxX: "820873",
+				MaxY: "7.50311e+06",
+			},
+		},
+		{
+			CRS: "EPSG:4258",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "50.2129",
+				MinY: "2.52713",
+				MaxX: "55.7212",
+				MaxY: "7.37403",
+			},
+		},
+		{
+			CRS: "EPSG:4326",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "50.2129",
+				MinY: "2.52713",
+				MaxX: "55.7212",
+				MaxY: "7.37403",
+			},
+		},
+		{
+			CRS: "CRS:84",
+			BBox: smoothoperatormodel.BBox{
+				MinX: "2.52713",
+				MinY: "50.2129",
+				MaxX: "7.37403",
+				MaxY: "55.7212",
+			},
+		},
+	}
+	bboxes := []pdoknlv3.WMSBoundingBox{}
+	if defaultBbox != nil {
+		bboxes = []pdoknlv3.WMSBoundingBox{*defaultBbox}
+	}
+	for _, bbox := range defaultBboxes {
+		if defaultBbox == nil || bbox.CRS != defaultBbox.CRS {
+			bboxes = append(bboxes, bbox)
+		}
+	}
+	return bboxes
 }
 
 func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {

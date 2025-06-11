@@ -93,7 +93,7 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 
 	// Level 1
 	layerSpecLevel1 := layer.DeepCopy()
-	layerSpecLevel1.Required = append(layerSpecLevel1.Required, "title", "abstract", "keywords", "layers")
+	layerSpecLevel1.Required = append(layerSpecLevel1.Required, "title", "abstract", "keywords", "boundingBoxes", "layers")
 	layerSpecLevel1.XValidations = []v1.ValidationRule{
 		{Rule: "self.visible", Message: "TopLayer must be visible", FieldPath: ".visible"},
 		{Rule: "!has(self.name) || has(self.styles)", Message: "If TopLayer has a name, it must have styles", FieldPath: ".styles"},

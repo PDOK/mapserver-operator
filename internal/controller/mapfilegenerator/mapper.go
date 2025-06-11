@@ -1,6 +1,7 @@
 package mapfilegenerator
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -22,17 +23,6 @@ const (
 )
 
 var mapserverDebugLevel = 0
-
-var defaultEpsgList = []string{
-	"EPSG:28992",
-	"EPSG:25831",
-	"EPSG:25832",
-	"EPSG:3034",
-	"EPSG:3035",
-	"EPSG:3857",
-	"EPSG:4258",
-	"EPSG:4326",
-}
 
 func SetDebugLevel(level int) {
 	if level < 0 || level > 5 {
@@ -66,9 +56,8 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 			NamespaceURI:    mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			AutomaticCasing: wfs.Options().AutomaticCasing,
 			DataEPSG:        wfs.Spec.Service.DefaultCrs,
-			// TODO Should this be a constant like in v2, or OtherCRS + default
-			EPSGList:   defaultEpsgList, // wfs.Spec.Service.OtherCrs,
-			DebugLevel: mapserverDebugLevel,
+			EPSGList:        append([]string{wfs.Spec.Service.DefaultCrs}, wfs.Spec.Service.OtherCrs...),
+			DebugLevel:      mapserverDebugLevel,
 		},
 		MaxFeatures: strconv.Itoa(smoothoperatorutils.PointerVal(wfs.Spec.Service.CountDefault, defaultMaxFeatures)),
 		Layers:      getWFSLayers(wfs.Spec.Service),
@@ -158,8 +147,6 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 	box := service.GetBoundingBox()
 	extent := box.ToExtent()
 
-	epsgs := []string{"EPSG:28992", "EPSG:25831", "EPSG:25832", "EPSG:3034", "EPSG:3035", "EPSG:3857", "EPSG:4258", "EPSG:4326", "CRS:84"}
-
 	maxSize := "4000"
 	if service.MaxSize != nil {
 		maxSize = strconv.Itoa(int(*service.MaxSize))
@@ -199,7 +186,6 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 			AuthorityURL:    &authorityURL,
 			AutomaticCasing: wms.Options().AutomaticCasing,
 			DataEPSG:        service.DataEPSG,
-			EPSGList:        epsgs,
 		},
 		AccessConstraints: service.AccessConstraints.String(),
 		Layers:            []WMSLayer{},
@@ -223,8 +209,23 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		result.DefResolution = strconv.Itoa(int(*wms.Spec.Service.DefResolution))
 	}
 
+	mapLayers(wms, extent, &result)
+
+	return result, nil
+}
+
+func mapLayers(wms *pdoknlv3.WMS, extent string, result *WMSInput) {
+	epsgs := []string{}
+
 	annotatedLayers := wms.Spec.Service.GetAnnotatedLayers()
 	for _, annotatedLayer := range annotatedLayers {
+
+		for _, bbox := range annotatedLayer.BoundingBoxes {
+			if !slices.Contains(epsgs, bbox.CRS) {
+				epsgs = append(epsgs, bbox.CRS)
+			}
+		}
+
 		if annotatedLayer.IsDataLayer {
 			layer := getWMSLayer(annotatedLayer.Layer, extent, wms)
 			result.Layers = append(result.Layers, layer)
@@ -244,7 +245,11 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		}
 	}
 
-	return result, nil
+	if !slices.Contains(epsgs, "CRS:84") {
+		epsgs = append(epsgs, "CRS:84")
+	}
+
+	result.EPSGList = epsgs
 }
 
 func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {

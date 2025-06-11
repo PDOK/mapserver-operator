@@ -8,6 +8,14 @@ import (
 
 	"github.com/pkg/errors"
 
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	policyv1 "k8s.io/api/policy/v1"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/pdok/smooth-operator/model"
@@ -26,6 +34,17 @@ const (
 	AppLabelKey     = "pdok.nl/app"
 	InspireLabelKey = "pdok.nl/inspire"
 )
+
+func setWatches(mgr *builder.TypedBuilder[reconcile.Request]) *builder.TypedBuilder[reconcile.Request] {
+	return mgr.Owns(&corev1.ConfigMap{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&appsv1.Deployment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&corev1.Service{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&traefikiov1alpha1.Middleware{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&traefikiov1alpha1.IngressRoute{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&autoscalingv2.HorizontalPodAutoscaler{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&policyv1.PodDisruptionBudget{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&smoothoperatorv1.OwnerInfo{}, builder.WithPredicates(predicate.GenerationChangedPredicate{}))
+}
 
 func ttlExpired[O pdoknlv3.WMSWFS](obj O) bool {
 	var lifecycle *model.Lifecycle
