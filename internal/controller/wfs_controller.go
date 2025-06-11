@@ -99,6 +99,14 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, err
 	}
 
+	// Recover from a panic so we can add the error to the status of the Atom
+	defer func() {
+		if rec := recover(); rec != nil {
+			err = recoveredPanicToError(rec)
+			logAndUpdateStatusError(ctx, r, wfs, err)
+		}
+	}()
+
 	// Check TTL, delete if expired
 	if ttlExpired(wfs) {
 		err = r.Client.Delete(ctx, wfs)

@@ -110,6 +110,14 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		return result, client.IgnoreNotFound(err)
 	}
 
+	// Recover from a panic so we can add the error to the status of the Atom
+	defer func() {
+		if rec := recover(); rec != nil {
+			err = recoveredPanicToError(rec)
+			logAndUpdateStatusError(ctx, r, wms, err)
+		}
+	}()
+
 	// Check TTL, delete if expired
 	if ttlExpired(wms) {
 		err = r.Client.Delete(ctx, wms)
