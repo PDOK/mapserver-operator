@@ -233,8 +233,9 @@ func createOrUpdateConfigMap[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Contex
 func createOrUpdateOrDeletePodDisruptionBudget[O pdoknlv3.WMSWFS, R Reconciler](ctx context.Context, reconciler R, obj O, operationResults map[string]controllerutil.OperationResult) (err error) {
 	reconcilerClient := getReconcilerClient(reconciler)
 	podDisruptionBudget := getBarePodDisruptionBudget(obj)
-	if obj.HorizontalPodAutoscalerPatch().MinReplicas != nil && obj.HorizontalPodAutoscalerPatch().MaxReplicas != nil &&
-		*obj.HorizontalPodAutoscalerPatch().MinReplicas == 1 && *obj.HorizontalPodAutoscalerPatch().MaxReplicas == 1 {
+	autoscalerPatch := obj.HorizontalPodAutoscalerPatch()
+	if autoscalerPatch != nil && autoscalerPatch.MinReplicas != nil && autoscalerPatch.MaxReplicas != nil &&
+		*autoscalerPatch.MinReplicas == 1 && *autoscalerPatch.MaxReplicas == 1 {
 		err = reconcilerClient.Delete(ctx, podDisruptionBudget)
 		if err == nil {
 			operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget)] = "deleted"
