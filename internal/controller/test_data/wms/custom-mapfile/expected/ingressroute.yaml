@@ -2,10 +2,10 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: "false"
+    pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
   name: custom-mapfile-wms-mapserver

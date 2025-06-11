@@ -129,10 +129,10 @@ immutable: true
 kind: ConfigMap
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: "true"
+    pdok.nl/inspire: "true"
     service-type: wms
     service-version: v1_0
     theme: "2016"

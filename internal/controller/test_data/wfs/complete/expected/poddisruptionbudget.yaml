@@ -2,10 +2,10 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   labels:
-    app: mapserver
+    pdok.nl/app: mapserver
     dataset: dataset
     dataset-owner: datasetOwner
-    inspire: true
+    pdok.nl/inspire: true
     service-type: wfs
     service-version: v1_0
     theme: theme
@@ -22,10 +22,10 @@ spec:
   maxUnavailable: 1
   selector:
     matchLabels:
-      app: mapserver
+      pdok.nl/app: mapserver
       dataset: dataset
       dataset-owner: datasetOwner
-      inspire: true
+      pdok.nl/inspire: true
       service-type: wfs
       service-version: v1_0
       theme: theme
