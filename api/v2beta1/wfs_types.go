@@ -32,7 +32,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+// +kubebuilder:skipversion
 
 // WFS is the Schema for the wfs API.
 type WFS struct {
