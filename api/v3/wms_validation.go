@@ -122,6 +122,18 @@ func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string,
 		validateNotVisibleLayer(layer, path, wms, warnings, allErrs)
 	}
 
+	crsses := []string{}
+	for i, bbox := range layer.BoundingBoxes {
+		if slices.Contains(crsses, bbox.CRS) {
+			*allErrs = append(*allErrs, field.Duplicate(
+				path.Child("boundingBoxes").Index(i).Child("crs"),
+				bbox.CRS,
+			))
+		} else {
+			crsses = append(crsses, bbox.CRS)
+		}
+	}
+
 	styleNames := []string{}
 	for i, style := range layer.Styles {
 		stylePath := path.Child("styles").Index(i)

@@ -50,6 +50,18 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 		)
 	}
 
+	crsses := []string{}
+	for i, crs := range service.OtherCrs {
+		if slices.Contains(crsses, crs) {
+			*allErrs = append(*allErrs, field.Duplicate(
+				path.Child("otherCrs").Index(i),
+				crs,
+			))
+		} else {
+			crsses = append(crsses, crs)
+		}
+	}
+
 	ValidateInspire(wfs, allErrs)
 
 	if wfs.Spec.HorizontalPodAutoscalerPatch != nil {
