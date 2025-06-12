@@ -349,11 +349,11 @@ spec:
             name: patches-wms-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: patches-wms-capabilities-generator-4t652g2fm9
+            name: patches-wms-capabilities-generator-hbgd5m652m
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: patches-wms-mapfile-generator-kmmkm75dgk
+            name: patches-wms-mapfile-generator-d88d8t5bb4
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files

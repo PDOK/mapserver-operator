@@ -273,6 +273,9 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should deny Create when there is a Group Layer that is not visible", func() {
 			obj.Spec.Service.Layer.Layers[1].Visible = false
+			obj.Spec.Service.Layer.Layers[1].Title = nil
+			obj.Spec.Service.Layer.Layers[1].Abstract = nil
+			obj.Spec.Service.Layer.Layers[1].Keywords = nil
 			obj.Spec.Service.Layer.Layers[1].Styles[0].Title = nil
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -325,6 +328,26 @@ var _ = Describe("WMS Webhook", func() {
 										"is not used when layer.visible=false",
 										[]string{},
 									)))))))))
+		})
+
+		It("Should deny Create when a Layer has multiple boundingBoxes with  the same CRS", func() {
+			bbox := pdoknlv3.WMSBoundingBox{
+				CRS: "EPSG:28992",
+				BBox: smoothoperatormodel.BBox{
+					MinX: "-25000",
+					MinY: "250000",
+					MaxX: "280000",
+					MaxY: "860000",
+				},
+			}
+			obj.Spec.Service.Layer.BoundingBoxes = []pdoknlv3.WMSBoundingBox{bbox, bbox}
+
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Duplicate(
+				field.NewPath("spec").Child("service").Child("layer").Child("boundingBoxes").Index(1).Child("crs"),
+				bbox.CRS,
+			))))
+			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should deny Create when a Layer uses the same style name multiple times", func() {

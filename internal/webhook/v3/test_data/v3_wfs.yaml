@@ -67,6 +67,8 @@ spec:
           csw:
             metadataIdentifier: 8ec62a28-695f-4f46-a9d5-0aeb8363a0e3
         data:
-          tif:
-            blobKey: "container/prefix/file.vrt"
-            resample: "NEAREST"
+          postgis:
+            tableName: table
+            geometryType: Point
+            columns:
+              - name: column

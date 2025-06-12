@@ -139,7 +139,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: noprefetch-wms-capabilities-generator-745hbmh8kd
+  name: noprefetch-wms-capabilities-generator-fbhc96kd2b
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

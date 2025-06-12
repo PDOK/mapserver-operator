@@ -35,17 +35,12 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		return nil, err
 	}
 
-	serviceVersion := mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "service-version")
-	if serviceVersion == nil {
-		serviceVersion = mapperutils.GetLabelValueByKey(wfs.ObjectMeta.Labels, "pdok.nl/service-version")
-	}
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
 			Namespace:         mapperutils.GetNamespaceURI(wfs.Spec.Service.Prefix, ownerInfo),
 			Prefix:            wfs.Spec.Service.Prefix,
 			Onlineresourceurl: wfs.URL().Scheme + "://" + wfs.URL().Host,
 			Path:              wfs.URL().Path,
-			Version:           *serviceVersion,
 		},
 		Services: capabilitiesgenerator.Services{
 			WFS200Config: &capabilitiesgenerator.WFS200Config{
@@ -269,12 +264,12 @@ func mapContactInfo(contactInfo smoothoperatorv1.ContactInfo) (serviceContactInf
 func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv1.OwnerInfo) (*capabilitiesgenerator.Config, error) {
 	canonicalServiceURL := wms.URL()
 
-	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
-
-	serviceVersion := mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "service-version")
-	if serviceVersion == nil {
-		serviceVersion = mapperutils.GetLabelValueByKey(wms.ObjectMeta.Labels, "pdok.nl/service-version")
+	layer, err := getLayers(wms, canonicalServiceURL.String())
+	if err != nil {
+		return nil, err
 	}
+
+	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
 
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
@@ -283,7 +278,6 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 			Prefix:            wms.Spec.Service.Prefix,
 			Onlineresourceurl: wms.URL().Scheme + "://" + wms.URL().Host,
 			Path:              wms.URL().Path,
-			Version:           *serviceVersion,
 		},
 		Services: capabilitiesgenerator.Services{
 			WMS130Config: &capabilitiesgenerator.WMS130Config{
@@ -321,7 +315,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 							},
 							Exception:            wms130.ExceptionType{Format: []string{"XML", "BLANK"}},
 							ExtendedCapabilities: nil,
-							Layer:                getLayers(wms, canonicalServiceURL.String()),
+							Layer:                layer,
 						},
 						OptionalConstraints: nil,
 					},
@@ -424,13 +418,15 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 	return &result
 }
 
-func getLayers(wms *pdoknlv3.WMS, canonicalURL string) []wms130.Layer {
-	return []wms130.Layer{
-		mapLayer(wms.Spec.Service.Layer, canonicalURL, nil, nil, nil),
+func getLayers(wms *pdoknlv3.WMS, canonicalURL string) ([]wms130.Layer, error) {
+	layer, err := mapLayer(wms.Spec.Service.Layer, canonicalURL, nil, nil, nil, nil)
+	if err != nil {
+		return nil, err
 	}
+	return []wms130.Layer{*layer}, nil
 }
 
-func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.AuthorityURL, identifier *wms130.Identifier, parentStyleNames []string) wms130.Layer {
+func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.AuthorityURL, identifier *wms130.Identifier, parentStyleNames []string, parentBBoxes []*wms130.LayerBoundingBox) (*wms130.Layer, error) {
 	if layer.Authority != nil {
 		authorityURL = &wms130.AuthorityURL{
 			Name: layer.Authority.Name,
@@ -446,39 +442,46 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 		}
 	}
 
+	crsses, exBbox, bboxes, err := mapBBoxes(layer.BoundingBoxes, parentBBoxes)
+	if err != nil {
+		return nil, err
+	}
+
 	l := wms130.Layer{
-		Queryable:   smoothoperatorutils.Pointer(1),
-		Opaque:      nil,
-		Name:        layer.Name,
-		Title:       mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Title, "")),
-		Abstract:    smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Abstract, ""))),
-		KeywordList: &wms130.Keywords{Keyword: layer.Keywords},
-		// TODO
-		//CRS:                     defaultCrs,
-		//EXGeographicBoundingBox: &defaultBoundingBox,
-		//BoundingBox:             allDefaultBoundingBoxes,
-		Dimension:      nil,
-		Attribution:    nil,
-		AuthorityURL:   authorityURL,
-		Identifier:     identifier,
-		DataURL:        nil,
-		FeatureListURL: nil,
-		Style:          getLayerStyles(layer, canonicalURL, parentStyleNames),
-		Layer:          []*wms130.Layer{},
+		Queryable:               smoothoperatorutils.Pointer(1),
+		Opaque:                  nil,
+		Name:                    layer.Name,
+		Title:                   mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Title, "")),
+		Abstract:                smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Abstract, ""))),
+		KeywordList:             &wms130.Keywords{Keyword: layer.Keywords},
+		CRS:                     crsses,
+		EXGeographicBoundingBox: exBbox,
+		BoundingBox:             bboxes,
+		Dimension:               nil,
+		Attribution:             nil,
+		AuthorityURL:            authorityURL,
+		Identifier:              identifier,
+		DataURL:                 nil,
+		FeatureListURL:          nil,
+		Style:                   getLayerStyles(layer, canonicalURL, parentStyleNames),
+		Layer:                   []*wms130.Layer{},
 	}
 
 	if layer.MinScaleDenominator != nil {
 		float, err := strconv.ParseFloat(*layer.MinScaleDenominator, 64)
-		if err == nil {
-			l.MinScaleDenominator = &float
+		if err != nil {
+			return nil, err
 		}
+		l.MinScaleDenominator = &float
+
 	}
 
 	if layer.MaxScaleDenominator != nil {
 		float, err := strconv.ParseFloat(*layer.MaxScaleDenominator, 64)
-		if err == nil {
-			l.MaxScaleDenominator = &float
+		if err != nil {
+			return nil, err
 		}
+		l.MaxScaleDenominator = &float
 	}
 
 	if layer.DatasetMetadataURL != nil {
@@ -500,11 +503,81 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 
 	// Map sublayers
 	for _, sublayer := range layer.Layers {
-		mapped := mapLayer(sublayer, canonicalURL, authorityURL, identifier, append(parentStyleNames, layerStyleNames...))
-		l.Layer = append(l.Layer, &mapped)
+		mapped, err := mapLayer(sublayer, canonicalURL, authorityURL, identifier, append(parentStyleNames, layerStyleNames...), bboxes)
+		if err != nil {
+			return nil, err
+		}
+		l.Layer = append(l.Layer, mapped)
 	}
 
-	return l
+	return &l, nil
+}
+
+func mapBBoxes(layerBBoxes []pdoknlv3.WMSBoundingBox, parentBBoxes []*wms130.LayerBoundingBox) ([]wms130.CRS, *wms130.EXGeographicBoundingBox, []*wms130.LayerBoundingBox, error) {
+	bboxMap := make(map[string]*wms130.LayerBoundingBox)
+	crsstrings := []string{}
+	for _, bbox := range parentBBoxes {
+		crsstrings = append(crsstrings, bbox.CRS)
+		bboxMap[bbox.CRS] = bbox
+	}
+	for _, bbox := range layerBBoxes {
+		minX, err := strconv.ParseFloat(bbox.BBox.MinX, 64)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		minY, err := strconv.ParseFloat(bbox.BBox.MinY, 64)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		maxX, err := strconv.ParseFloat(bbox.BBox.MaxX, 64)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		maxY, err := strconv.ParseFloat(bbox.BBox.MaxY, 64)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		if !slices.Contains(crsstrings, bbox.CRS) {
+			crsstrings = append(crsstrings, bbox.CRS)
+		}
+		bboxMap[bbox.CRS] = &wms130.LayerBoundingBox{
+			CRS:  bbox.CRS,
+			Minx: minX,
+			Miny: minY,
+			Maxx: maxX,
+			Maxy: maxY,
+		}
+	}
+
+	var exBbox *wms130.EXGeographicBoundingBox
+	bboxes := []*wms130.LayerBoundingBox{}
+	crsses := []wms130.CRS{}
+
+	for _, crs := range crsstrings {
+		crsSplit := strings.Split(crs, ":")
+		code, err := strconv.Atoi(crsSplit[1])
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		crsses = append(crsses, wms130.CRS{
+			Namespace: crsSplit[0],
+			Code:      code,
+		})
+
+		bbox := bboxMap[crs]
+		bboxes = append(bboxes, bbox)
+
+		if crs == "CRS:84" {
+			exBbox = &wms130.EXGeographicBoundingBox{
+				WestBoundLongitude: bbox.Minx,
+				EastBoundLongitude: bbox.Maxx,
+				SouthBoundLatitude: bbox.Miny,
+				NorthBoundLatitude: bbox.Maxy,
+			}
+		}
+
+	}
+	return crsses, exBbox, bboxes, nil
 }
 
 func getLayerStyles(layer pdoknlv3.Layer, canonicalURL string, parentStyleNames []string) (styles []*wms130.Style) {

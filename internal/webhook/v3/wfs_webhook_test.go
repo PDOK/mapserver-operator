@@ -152,6 +152,18 @@ var _ = Describe("WFS Webhook", func() {
 				))))
 		})
 
+		It("Should deny Create when a otherCrs has the same crs multiple times", func() {
+			crs := "EPSG:3035"
+			obj.Spec.Service.OtherCrs = []string{crs, crs}
+
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(Equal(getValidationError(obj, field.Duplicate(
+				field.NewPath("spec").Child("service").Child("otherCrs").Index(1),
+				crs,
+			))))
+			Expect(warnings).To(BeEmpty())
+		})
+
 		It("Should deny creation if SpatialID is also used as a featureType datasetMetadataID", func() {
 			Expect(obj.Inspire()).NotTo(BeNil())
 			Expect(obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL).NotTo(BeNil())

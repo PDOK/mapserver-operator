@@ -1323,6 +1323,7 @@ spec:
                                   - miny
                                 type: object
                               crs:
+                                pattern: ^(EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|CRS:84)$
                                 type: string
                             required:
                               - bbox
@@ -1421,6 +1422,7 @@ spec:
                                         - miny
                                       type: object
                                     crs:
+                                      pattern: ^(EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|CRS:84)$
                                       type: string
                                   required:
                                     - bbox
@@ -1625,6 +1627,7 @@ spec:
                                               - miny
                                             type: object
                                           crs:
+                                            pattern: ^(EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|CRS:84)$
                                             type: string
                                         required:
                                           - bbox
@@ -1999,6 +2002,7 @@ spec:
                         - title
                         - abstract
                         - keywords
+                        - boundingBoxes
                         - layers
                       type: object
                       x-kubernetes-validations:

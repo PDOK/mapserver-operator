@@ -54,6 +54,10 @@ spec:
               visualization: "file.style"
         - name: "visible Group Layer"
           visible: true
+          title: title
+          abstract: abstract
+          keywords:
+              - keyword
           styles:
             - name: style
               title: style

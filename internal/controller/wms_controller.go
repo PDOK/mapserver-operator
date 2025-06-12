@@ -212,8 +212,5 @@ func mutateConfigMapOgcWebserviceProxy(r *WMSReconciler, wms *pdoknlv3.WMS, conf
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *WMSReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&pdoknlv3.WMS{}).
-		Named("wms").
-		Complete(r)
+	return setWatches(ctrl.NewControllerManagedBy(mgr).For(&pdoknlv3.WMS{}).Named("wms")).Complete(r)
 }

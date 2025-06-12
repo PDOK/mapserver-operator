@@ -249,6 +249,7 @@ type Layer struct {
 }
 
 type WMSBoundingBox struct {
+	// +kubebuilder:validation:Pattern:="^(EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|CRS:84)$"
 	CRS  string                   `json:"crs"`
 	BBox smoothoperatormodel.BBox `json:"bbox"`
 }

@@ -131,8 +131,5 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *WFSReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&pdoknlv3.WFS{}).
-		Named("wfs").
-		Complete(r)
+	return setWatches(ctrl.NewControllerManagedBy(mgr).For(&pdoknlv3.WFS{}).Named("wfs")).Complete(r)
 }

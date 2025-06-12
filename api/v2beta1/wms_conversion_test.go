@@ -39,7 +39,7 @@ func TestWMSService_MapLayersToV3(t *testing.T) {
 			want: pdoknlv3.Layer{
 				Title:         ptr.To(""),
 				Abstract:      ptr.To(""),
-				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				BoundingBoxes: getDefaultWMSLayerBoundingBoxes(nil),
 				Visible:       true,
 				Layers: []pdoknlv3.Layer{{
 					Name:          ptr.To("layer"),
@@ -58,7 +58,7 @@ func TestWMSService_MapLayersToV3(t *testing.T) {
 			want: pdoknlv3.Layer{
 				Title:         ptr.To(""),
 				Abstract:      ptr.To(""),
-				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				BoundingBoxes: getDefaultWMSLayerBoundingBoxes(nil),
 				Visible:       true,
 				Layers: []pdoknlv3.Layer{{
 					Name:          ptr.To("group-layer"),
@@ -87,7 +87,7 @@ func TestWMSService_MapLayersToV3(t *testing.T) {
 			want: pdoknlv3.Layer{
 				Title:         ptr.To(""),
 				Abstract:      ptr.To(""),
-				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				BoundingBoxes: getDefaultWMSLayerBoundingBoxes(nil),
 				Visible:       true,
 				Layers: []pdoknlv3.Layer{
 					{
@@ -131,7 +131,7 @@ func TestWMSService_MapLayersToV3(t *testing.T) {
 			want: pdoknlv3.Layer{
 				Title:         ptr.To(""),
 				Abstract:      ptr.To(""),
-				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				BoundingBoxes: getDefaultWMSLayerBoundingBoxes(nil),
 				Visible:       true,
 				Layers: []pdoknlv3.Layer{
 					{
@@ -166,7 +166,7 @@ func TestWMSService_MapLayersToV3(t *testing.T) {
 			}},
 			want: pdoknlv3.Layer{
 				Name:          ptr.To("top-layer"),
-				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				BoundingBoxes: getDefaultWMSLayerBoundingBoxes(nil),
 				Visible:       true,
 				Styles:        []pdoknlv3.Style{},
 				Layers: []pdoknlv3.Layer{{
@@ -195,7 +195,7 @@ func TestWMSService_MapLayersToV3(t *testing.T) {
 			}},
 			want: pdoknlv3.Layer{
 				Name:          ptr.To("top-layer"),
-				BoundingBoxes: []pdoknlv3.WMSBoundingBox{},
+				BoundingBoxes: getDefaultWMSLayerBoundingBoxes(nil),
 				Visible:       true,
 				Styles:        []pdoknlv3.Style{},
 				Layers: []pdoknlv3.Layer{

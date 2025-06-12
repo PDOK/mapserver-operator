@@ -30,6 +30,13 @@ spec:
       abstract: service-abstract
       keywords:
       - service-keyword
+      boundingBoxes:
+        - bbox:
+            maxx: "280000"
+            maxy: "860000"
+            minx: "-25000"
+            miny: "250000"
+          crs: EPSG:28992
       layers:
       - abstract: layer-abstract
         authority:

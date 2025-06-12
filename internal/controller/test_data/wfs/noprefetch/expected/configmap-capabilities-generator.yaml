@@ -11,7 +11,7 @@ metadata:
     pdok.nl/inspire: 'false'
     service-type: wfs
     service-version: v1_0
-  name: noprefetch-wfs-capabilities-generator-tk7t48fd89
+  name: noprefetch-wfs-capabilities-generator-md7fhtmd4f
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
