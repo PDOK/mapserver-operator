@@ -284,7 +284,7 @@
     "service_accessconstraints": "https://creativecommons.org/publicdomain/zero/1.0/deed.nl",
     "service_extent": "-25000 250000 280000 860000",
     "service_keywords": "bzk,luchtfotolabels",
-    "service_metadata_id": "70562932-e7dc-4ba2-ba4f-05863d02587c",
+    "service_metadata_id": "",
     "service_namespace_prefix": "luchtfotolabels",
     "service_namespace_uri": "http://luchtfotolabels.geonovum.nl",
     "service_onlineresource": "https://service.pdok.nl",

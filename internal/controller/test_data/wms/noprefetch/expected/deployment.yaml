@@ -338,7 +338,7 @@ spec:
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: noprefetch-wms-mapfile-generator-ffgb4c292k
+            name: noprefetch-wms-mapfile-generator-bcd2255b7k
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files
