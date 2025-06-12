@@ -261,7 +261,7 @@ spec:
             name: complete-wfs-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: complete-wfs-capabilities-generator-cgh9g4d467
+            name: complete-wfs-capabilities-generator-g57dmd6b78
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:

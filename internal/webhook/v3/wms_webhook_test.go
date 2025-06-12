@@ -273,6 +273,9 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should deny Create when there is a Group Layer that is not visible", func() {
 			obj.Spec.Service.Layer.Layers[1].Visible = false
+			obj.Spec.Service.Layer.Layers[1].Title = nil
+			obj.Spec.Service.Layer.Layers[1].Abstract = nil
+			obj.Spec.Service.Layer.Layers[1].Keywords = nil
 			obj.Spec.Service.Layer.Layers[1].Styles[0].Title = nil
 
 			warnings, err := validator.ValidateCreate(ctx, obj)

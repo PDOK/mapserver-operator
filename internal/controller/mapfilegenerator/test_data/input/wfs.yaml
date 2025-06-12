@@ -81,7 +81,6 @@ spec:
     - service-keyword-2
     - infoFeatureAccessService
     otherCrs:
-    - EPSG:28992
     - EPSG:25831
     - EPSG:25832
     - EPSG:3034

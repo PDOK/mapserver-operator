@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/pdok/mapserver-operator/api/v2beta1"
@@ -29,6 +31,9 @@ func TestGetConfigForWFS(t *testing.T) {
 	inputWfs := pdoknlv3.WFS{}
 	err = yaml.Unmarshal(input, &inputWfs)
 	assert.NoError(t, err)
+	warnings := []string{}
+	allErrs := field.ErrorList{}
+	pdoknlv3.ValidateWFS(&inputWfs, &warnings, &allErrs)
 
 	inputStruct, err := MapWFSToMapfileGeneratorInput(&inputWfs, ownerInfo)
 	assert.NoError(t, err)

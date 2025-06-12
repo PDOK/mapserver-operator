@@ -1999,6 +1999,7 @@ spec:
                         - title
                         - abstract
                         - keywords
+                        - boundingBoxes
                         - layers
                       type: object
                       x-kubernetes-validations:

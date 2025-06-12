@@ -107,7 +107,7 @@ metadata:
     service-type: wfs
     service-version: v1_0
     theme: theme
-  name: complete-wfs-capabilities-generator-cgh9g4d467
+  name: complete-wfs-capabilities-generator-g57dmd6b78
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

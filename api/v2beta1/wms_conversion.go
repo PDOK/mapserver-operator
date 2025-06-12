@@ -353,6 +353,11 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 
 		if ok {
 			topLayer = &notGroupedLayers[0]
+			var bbox *pdoknlv3.WMSBoundingBox
+			if len(topLayer.BoundingBoxes) > 0 {
+				bbox = &topLayer.BoundingBoxes[0]
+			}
+			topLayer.BoundingBoxes = getDefaultWMSLayerBoundingBoxes(bbox)
 		}
 	}
 
