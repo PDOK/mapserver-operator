@@ -45,7 +45,7 @@ var wmsLog = logf.Log.WithName("wms-resource")
 // SetupWMSWebhookWithManager registers the webhook for WMS in the manager.
 func SetupWMSWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).For(&pdoknlv3.WMS{}).
-		WithValidator(&WMSCustomValidator{}).
+		WithValidator(&WMSCustomValidator{mgr.GetClient()}).
 		Complete()
 }
 
