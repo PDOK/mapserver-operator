@@ -38,6 +38,6 @@ func TestGetConfigMapDataNoLegendFix(t *testing.T) {
 }
 
 // TODO Fix test
-//func TestGetConfigMapDataLegendFix(t *testing.T) {
+// func TestGetConfigMapDataLegendFix(t *testing.T) {
 //	test(t, "legend-fix")
-//}
+// }
