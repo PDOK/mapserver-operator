@@ -107,7 +107,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: minimal-wms-mapfile-generator-22g4hf87h2
+  name: minimal-wms-mapfile-generator-2t677hd4f7
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

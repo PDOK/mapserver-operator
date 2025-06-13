@@ -604,7 +604,7 @@
     "service_accessconstraints": "https://creativecommons.org/publicdomain/zero/1.0/deed.nl",
     "service_extent": "-25000 250000 280000 860000",
     "service_keywords": "Kadaster,Kadastrale percelen,Kadastrale grens,Kadastrale kaart,Bebouwing,Nummeraanduidingreeks,Openbare ruimte naam,Perceel,Grens,Kwaliteit,Kwaliteitslabels,HVD,Geospatiale data",
-    "service_metadata_id": "97cf6a64-9cfc-4ce6-9741-2db44fd27fca",
+    "service_metadata_id": "",
     "service_namespace_prefix": "kadastralekaart",
     "service_namespace_uri": "http://kadastralekaart.geonovum.nl",
     "service_onlineresource": "https://service.pdok.nl",

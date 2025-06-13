@@ -46,7 +46,6 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller"
 	webhookpdoknlv3 "github.com/pdok/mapserver-operator/internal/webhook/v3"
@@ -76,7 +75,6 @@ func init() {
 	utilruntime.Must(traefikiov1alpha1.AddToScheme(scheme))
 	utilruntime.Must(smoothoperatorv1.AddToScheme(scheme))
 	utilruntime.Must(pdoknlv3.AddToScheme(scheme))
-	utilruntime.Must(pdoknlv2beta1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

@@ -80,7 +80,7 @@
     "service_accessconstraints": "https://creativecommons.org/publicdomain/zero/1.0/deed.nl",
     "service_extent": "-7000 289000 300000 629000",
     "service_keywords": "Basisregistratie Topografie,BRT,terugmeldingen,TOP10NL,TOP25,TOP50,TOP100,TOP250,in onderzoek register,verbeter de kaart,verbeterdekaart",
-    "service_metadata_id": "fa069f74-9837-4d63-b2ac-b337b5de86b1",
+    "service_metadata_id": "",
     "service_namespace_prefix": "terugmeldingen",
     "service_namespace_uri": "http://terugmeldingen.geonovum.nl",
     "service_onlineresource": "https://service.pdok.nl",

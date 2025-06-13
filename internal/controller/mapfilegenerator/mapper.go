@@ -7,8 +7,6 @@ import (
 
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
-	"github.com/pdok/mapserver-operator/api/v2beta1"
-
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
@@ -152,11 +150,9 @@ func MapWMSToMapfileGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoperatorv
 		maxSize = strconv.Itoa(int(*service.MaxSize))
 	}
 
-	var metadataID string
+	metadataID := ""
 	if service.Inspire != nil {
 		metadataID = service.Inspire.ServiceMetadataURL.CSW.MetadataIdentifier
-	} else {
-		metadataID = wms.ObjectMeta.Annotations[v2beta1.ServiceMetatdataIdentifierAnnotation]
 	}
 
 	var fonts *string

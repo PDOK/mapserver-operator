@@ -33,7 +33,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+// +kubebuilder:skipversion
 
 // WMS is the Schema for the wms API.
 type WMS struct {
