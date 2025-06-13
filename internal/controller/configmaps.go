@@ -120,7 +120,7 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 	for _, name := range staticFileName {
 		content := contents[name]
 		if name == "include.conf" {
-			content = []byte(strings.ReplaceAll(string(content), "{{ service_path }}", obj.URL().Path))
+			content = []byte(strings.ReplaceAll(string(content), "/{{ service_path }}", obj.URL().Path))
 		}
 		configMap.Data[name] = string(content)
 	}
