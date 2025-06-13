@@ -158,8 +158,8 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) error {
 		if len(src.Spec.Service.StylingAssets.ConfigMapRefs) == 1 {
 			for _, layer := range src.Spec.Service.Layers {
 				for _, style := range layer.Styles {
-					if style.Visualization != nil && !slices.Contains(src.Spec.Service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization) {
-						src.Spec.Service.StylingAssets.ConfigMapRefs[0].Keys = append(src.Spec.Service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization)
+					if style.Visualization != nil && !slices.Contains(service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization) {
+						service.StylingAssets.ConfigMapRefs[0].Keys = append(service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization)
 					}
 				}
 			}
@@ -440,45 +440,45 @@ func getDefaultWMSLayerBoundingBoxes(defaultBbox *pdoknlv3.WMSBoundingBox) []pdo
 			CRS: "EPSG:25831",
 			BBox: smoothoperatormodel.BBox{
 				MinX: "-470271",
-				MinY: "5.56231e+06",
+				MinY: "5562310",
 				MaxX: "795163",
-				MaxY: "6.18197e+06",
+				MaxY: "6181970",
 			},
 		},
 		{
 			CRS: "EPSG:25832",
 			BBox: smoothoperatormodel.BBox{
 				MinX: "62461.6",
-				MinY: "5.56555e+06",
+				MinY: "5565550",
 				MaxX: "397827",
-				MaxY: "6.19042e+06",
+				MaxY: "6190420",
 			},
 		},
 		{
 			CRS: "EPSG:3034",
 			BBox: smoothoperatormodel.BBox{
-				MinX: "2.61336e+06",
-				MinY: "3.509e+06",
-				MaxX: "3.22007e+06",
-				MaxY: "3.84003e+06",
+				MinX: "2613360",
+				MinY: "3509000",
+				MaxX: "3220070",
+				MaxY: "3840030",
 			},
 		},
 		{
 			CRS: "EPSG:3035",
 			BBox: smoothoperatormodel.BBox{
-				MinX: "3.01676e+06",
-				MinY: "3.81264e+06",
-				MaxX: "3.64485e+06",
-				MaxY: "4.15586e+06",
+				MinX: "3016760",
+				MinY: "3812640",
+				MaxX: "3644850",
+				MaxY: "4155860",
 			},
 		},
 		{
 			CRS: "EPSG:3857",
 			BBox: smoothoperatormodel.BBox{
 				MinX: "281318",
-				MinY: "6.48322e+06",
+				MinY: "6483220",
 				MaxX: "820873",
-				MaxY: "7.50311e+06",
+				MaxY: "7503110",
 			},
 		},
 		{

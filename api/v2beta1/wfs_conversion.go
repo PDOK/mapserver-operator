@@ -88,9 +88,23 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 		}
 	}
 
-	if err != nil {
-		return err
+	allOtherCrs := []string{
+		"EPSG:25831",
+		"EPSG:25832",
+		"EPSG:28992",
+		"EPSG:3034",
+		"EPSG:3035",
+		"EPSG:3857",
+		"EPSG:4258",
+		"EPSG:4326",
 	}
+	otherCrs := []string{}
+	for _, cr := range allOtherCrs {
+		if cr != src.Spec.Service.DataEPSG {
+			otherCrs = append(otherCrs, cr)
+		}
+	}
+
 	service := pdoknlv3.WFSService{
 		BaseService: pdoknlv3.BaseService{
 			Prefix:            src.Spec.General.Dataset,
@@ -102,16 +116,8 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 			Fees:              nil,
 			AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
 		},
-		DefaultCrs: src.Spec.Service.DataEPSG,
-		OtherCrs: []string{
-			"EPSG:25831",
-			"EPSG:25832",
-			"EPSG:3034",
-			"EPSG:3035",
-			"EPSG:3857",
-			"EPSG:4258",
-			"EPSG:4326",
-		},
+		DefaultCrs:   src.Spec.Service.DataEPSG,
+		OtherCrs:     otherCrs,
 		FeatureTypes: make([]pdoknlv3.FeatureType, 0),
 	}
 

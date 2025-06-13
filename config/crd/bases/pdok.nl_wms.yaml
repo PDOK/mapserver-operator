@@ -73,10 +73,10 @@ spec:
                     querystring:
                       type: string
                       x-kubernetes-validations:
-                        - message: a valid healthcheck contains 'Service=WMS'
-                          rule: self.contains('Service=WMS')
-                        - message: a valid healthcheck contains 'Request='
-                          rule: self.contains('Request=')
+                        - message: a valid healthcheck contains 'SERVICE=WMS'
+                          rule: self.lowerAscii().contains('service=wms')
+                        - message: a valid healthcheck contains 'REQUEST='
+                          rule: self.lowerAscii().contains('request=')
                   type: object
                   x-kubernetes-validations:
                     - message: mimetype is required when a querystring is used
