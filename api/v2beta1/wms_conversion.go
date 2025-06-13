@@ -158,8 +158,8 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) error {
 		if len(src.Spec.Service.StylingAssets.ConfigMapRefs) == 1 {
 			for _, layer := range src.Spec.Service.Layers {
 				for _, style := range layer.Styles {
-					if style.Visualization != nil && !slices.Contains(src.Spec.Service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization) {
-						src.Spec.Service.StylingAssets.ConfigMapRefs[0].Keys = append(src.Spec.Service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization)
+					if style.Visualization != nil && !slices.Contains(service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization) {
+						service.StylingAssets.ConfigMapRefs[0].Keys = append(service.StylingAssets.ConfigMapRefs[0].Keys, *style.Visualization)
 					}
 				}
 			}

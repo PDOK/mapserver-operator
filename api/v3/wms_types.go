@@ -155,8 +155,8 @@ func (wmsService WMSService) KeywordsIncludingInspireKeyword() []string {
 // +kubebuilder:validation:XValidation:rule="(has(self.boundingbox) || has(self.querystring)) && !(has(self.querystring) && has(self.boundingbox))", message="healthcheck should have exactly 1 of querystring + mimetype or boundingbox"
 // +kubebuilder:validation:XValidation:rule="(has(self.boundingbox) || has(self.mimetype)) && !(has(self.mimetype) && has(self.boundingbox))", message="healthcheck should have exactly 1 of querystring + mimetype or boundingbox"
 type HealthCheckWMS struct {
-	// +kubebuilder:validation:XValidation:rule="self.contains('Service=WMS')",message="a valid healthcheck contains 'Service=WMS'"
-	// +kubebuilder:validation:XValidation:rule="self.contains('Request=')",message="a valid healthcheck contains 'Request='"
+	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('service=wms')",message="a valid healthcheck contains 'SERVICE=WMS'"
+	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('request=')",message="a valid healthcheck contains 'REQUEST='"
 	Querystring *string `json:"querystring,omitempty"`
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype *string `json:"mimetype,omitempty"`
@@ -216,7 +216,8 @@ type Layer struct {
 
 	// Whether or not the layer is visible. At least one of the layers must be visible.
 	// +kubebuilder:default:=true
-	Visible bool `json:"visible,omitempty"`
+	// +kubebuilder:validation:Optional
+	Visible bool `json:"visible"`
 
 	// TODO ??
 	Authority *Authority `json:"authority,omitempty"`

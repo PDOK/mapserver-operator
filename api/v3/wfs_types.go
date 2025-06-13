@@ -136,8 +136,8 @@ func (s WFSService) KeywordsIncludingInspireKeyword() []string {
 
 // HealthCheck is the struct with all fields to configure custom healthchecks
 type HealthCheckWFS struct {
-	// +kubebuilder:validation:XValidation:rule="self.contains('Service=WFS')",message="a valid healthcheck contains 'Service=WFS'"
-	// +kubebuilder:validation:XValidation:rule="self.contains('Request=')",message="a valid healthcheck contains 'Request='"
+	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('service=wfs')",message="a valid healthcheck contains 'Service=WFS'"
+	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('request=')",message="a valid healthcheck contains 'Request='"
 	Querystring string `json:"querystring"`
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype string `json:"mimetype"`

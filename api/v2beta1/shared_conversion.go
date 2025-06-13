@@ -52,15 +52,16 @@ func ConvertOptionsV3ToV2(src *pdoknlv3.Options) *WMSWFSOptions {
 
 //nolint:gosec
 func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch {
-	var minReplicas *int32
+	hpa := &pdoknlv3.HorizontalPodAutoscalerPatch{}
+
 	if src.MinReplicas != nil {
 		//nolint:gosec
-		minReplicas = smoothoperatorutils.Pointer(int32(*src.MinReplicas))
+		hpa.MinReplicas = smoothoperatorutils.Pointer(int32(*src.MinReplicas))
 	}
 
-	var maxReplicas int32
 	if src.MaxReplicas != nil {
-		maxReplicas = int32(*src.MaxReplicas)
+		//nolint:gosec
+		hpa.MaxReplicas = smoothoperatorutils.Pointer(int32(*src.MaxReplicas))
 	}
 
 	metrics := make([]autoscalingv2.MetricSpec, 0)
@@ -75,13 +76,10 @@ func ConvertAutoscaling(src Autoscaling) *pdoknlv3.HorizontalPodAutoscalerPatch 
 				},
 			},
 		})
+		hpa.Metrics = metrics
 	}
 
-	return &pdoknlv3.HorizontalPodAutoscalerPatch{
-		MinReplicas: minReplicas,
-		MaxReplicas: &maxReplicas,
-		Metrics:     metrics,
-	}
+	return hpa
 }
 
 func ConvertResources(src corev1.ResourceRequirements) corev1.PodSpec {

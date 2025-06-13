@@ -49,9 +49,9 @@ spec:
                       type: string
                       x-kubernetes-validations:
                         - message: a valid healthcheck contains 'Service=WFS'
-                          rule: self.contains('Service=WFS')
+                          rule: self.lowerAscii().contains('service=wfs')
                         - message: a valid healthcheck contains 'Request='
-                          rule: self.contains('Request=')
+                          rule: self.lowerAscii().contains('request=')
                   required:
                     - mimetype
                     - querystring
