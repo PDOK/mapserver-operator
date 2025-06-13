@@ -135,7 +135,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: noprefetch-wms-mapserver-thkgc6d66b
+  name: noprefetch-wms-mapserver-df94mb2d76
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
