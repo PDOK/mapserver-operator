@@ -5,8 +5,8 @@ default_mapserver.conf: |
     END
   END
 input: |
-  "Kadastralekaart" "standaard"                                                                                                                                                              │
-  "Kadastralekaart" "kwaliteit"                                                                                                                                                                                          │
+  "Kadastralekaart" "standaard"
+  "Kadastralekaart" "kwaliteit"
   "Kadastralekaart" "print"
   "Bebouwing" "standaard:bebouwing"
   "Bebouwing" "kwaliteit:bebouwing"
@@ -56,103 +56,6 @@ input: |
   "KadastraleGrens" "standaard:kadastralegrens"
   "KadastraleGrens" "kwaliteit:kadastralegrens"
   "KadastraleGrens" "print:kadastralegrens"
-#input2: |
-#  - layer: Bebouwing
-#    style: standaard:bebouwing
-#  - layer: Bebouwing
-#    style: kwaliteit:bebouwing
-#  - layer: Bebouwing
-#    style: print:bebouwing
-#  - layer: Bebouwingvlak
-#    style: standaard
-#  - layer: Bebouwingvlak
-#    style: kwaliteit
-#  - layer: Bebouwingvlak
-#    style: print
-#  - layer: Bebouwingvlak
-#    style: standaard:bebouwing
-#  - layer: Bebouwingvlak
-#    style: kwaliteit:bebouwing
-#  - layer: Bebouwingvlak
-#    style: print:bebouwing
-#  - layer: Nummeraanduidingreeks
-#    style: standaard
-#  - layer: Nummeraanduidingreeks
-#    style: kwaliteit
-#  - layer: Nummeraanduidingreeks
-#    style: print
-#  - layer: Nummeraanduidingreeks
-#    style: standaard:bebouwing
-#  - layer: Nummeraanduidingreeks
-#    style: kwaliteit:bebouwing
-#  - layer: Nummeraanduidingreeks
-#    style: print:bebouwing
-#  - layer: OpenbareRuimteNaam
-#    style: standaard
-#  - layer: OpenbareRuimteNaam
-#    style: kwaliteit
-#  - layer: OpenbareRuimteNaam
-#    style: print
-#  - layer: OpenbareRuimteNaam
-#    style: standaard:openbareruimtenaam
-#  - layer: OpenbareRuimteNaam
-#    style: kwaliteit:openbareruimtenaam
-#  - layer: OpenbareRuimteNaam
-#    style: print:openbareruimtenaam
-#  - layer: Perceel
-#    style: standaard:perceel
-#  - layer: Perceel
-#    style: kwaliteit:perceel
-#  - layer: Perceel
-#    style: print:perceel
-#  - layer: Perceelvlak
-#    style: standaard
-#  - layer: Perceelvlak
-#    style: kwaliteit
-#  - layer: Perceelvlak
-#    style: print
-#  - layer: Perceelvlak
-#    style: standaard:perceel
-#  - layer: Perceelvlak
-#    style: kwaliteit:perceel
-#  - layer: Perceelvlak
-#    style: print:perceel
-#  - layer: Label
-#    style: standaard
-#  - layer: Label
-#    style: standaard:perceel
-#  - layer: Label
-#    style: kwaliteit
-#  - layer: Label
-#    style: kwaliteit:perceel
-#  - layer: Label
-#    style: print
-#  - layer: Label
-#    style: print:perceel
-#  - layer: Bijpijling
-#    style: standaard
-#  - layer: Bijpijling
-#    style: kwaliteit
-#  - layer: Bijpijling
-#    style: print
-#  - layer: Bijpijling
-#    style: standaard:perceel
-#  - layer: Bijpijling
-#    style: kwaliteit:perceel
-#  - layer: Bijpijling
-#    style: print:perceel
-#  - layer: KadastraleGrens
-#    style: standaard
-#  - layer: KadastraleGrens
-#    style: kwaliteit
-#  - layer: KadastraleGrens
-#    style: print
-#  - layer: KadastraleGrens
-#    style: standaard:kadastralegrens
-#  - layer: KadastraleGrens
-#    style: kwaliteit:kadastralegrens
-#  - layer: KadastraleGrens
-#    style: print:kadastralegrens
 legend-fixer.sh: |-
   #!/usr/bin/env bash
   set -eo pipefail
@@ -215,3 +118,4 @@ remove: |
   "KadastraleGrens" "standaard"
   "KadastraleGrens" "kwaliteit"
   "KadastraleGrens" "print"
+  
