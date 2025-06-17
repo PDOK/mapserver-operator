@@ -236,7 +236,7 @@ spec:
         - emptyDir: {}
           name: data
         - configMap:
-            name: minimal-wfs-mapserver-49t5fd5c5d
+            name: minimal-wfs-mapserver-f5ch9b2bhh
             defaultMode: 420
           name: mapserver
         - configMap:

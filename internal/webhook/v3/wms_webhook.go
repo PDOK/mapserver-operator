@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+//nolint:dupl
 package v3
 
 import (
@@ -45,7 +46,7 @@ var wmsLog = logf.Log.WithName("wms-resource")
 // SetupWMSWebhookWithManager registers the webhook for WMS in the manager.
 func SetupWMSWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).For(&pdoknlv3.WMS{}).
-		WithValidator(&WMSCustomValidator{}).
+		WithValidator(&WMSCustomValidator{mgr.GetClient()}).
 		Complete()
 }
 

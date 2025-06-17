@@ -38,5 +38,5 @@ func TestGetConfigMapDataNoLegendFix(t *testing.T) {
 }
 
 func TestGetConfigMapDataLegendFix(t *testing.T) {
-	test(t, "no-legend-fix")
+	test(t, "legend-fix")
 }
