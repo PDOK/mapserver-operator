@@ -194,8 +194,11 @@ func createCRSFromEpsgString(epsgString string) (*wfs200.CRS, error) {
 		return nil, fmt.Errorf("could not determine EPSG code from EPSG string %s", epsgCodeString)
 	}
 
+	epsgUrn := "urn:ogc:def:crs:EPSG:"
+
 	return &wfs200.CRS{
-		Code: epsgCode,
+		Namespace: epsgUrn,
+		Code:      epsgCode,
 	}, nil
 }
 
