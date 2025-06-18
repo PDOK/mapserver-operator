@@ -35,10 +35,10 @@ echo 'generated fonts.list:';
 cat /srv/data/config/fonts/fonts.list;
 mkdir -p /var/www/legend/wms-gpkg-layer-1-name;
 rclone copyto blobs:/resources-bucket/key/gpkg-layer-1-legend.png /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png || exit 1;
-Copied legend gpkg-layer-1-legend.png to /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png;
+echo 'Copied legend gpkg-layer-1-legend.png to /var/www/legend/wms-gpkg-layer-1-name/wms-gpkg-style-1-name.png';
 mkdir -p /var/www/legend/wms-gpkg-layer-2-name;
 rclone copyto blobs:/resources-bucket/key/gpkg-layer-2-legend.png /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png || exit 1;
-Copied legend gpkg-layer-2-legend.png to /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png;
+echo 'Copied legend gpkg-layer-2-legend.png to /var/www/legend/wms-gpkg-layer-2-name/wms-gpkg-style-2-name.png';
 chown -R 999:999 /var/www/legend
 `
 
@@ -58,10 +58,10 @@ echo 'generated fonts.list:';
 cat /srv/data/config/fonts/fonts.list;
 mkdir -p /var/www/legend/wms-tif-layer-1-name;
 rclone copyto blobs:/resources-bucket/key/tif-layer-1-legend.png /var/www/legend/wms-tif-layer-1-name/wms-tif-style-1-name.png || exit 1;
-Copied legend tif-layer-1-legend.png to /var/www/legend/wms-tif-layer-1-name/wms-tif-style-1-name.png;
+echo 'Copied legend tif-layer-1-legend.png to /var/www/legend/wms-tif-layer-1-name/wms-tif-style-1-name.png';
 mkdir -p /var/www/legend/wms-tif-layer-2-name;
 rclone copyto blobs:/resources-bucket/key/tif-layer-2-legend.png /var/www/legend/wms-tif-layer-2-name/wms-tif-style-2-name.png || exit 1;
-Copied legend tif-layer-2-legend.png to /var/www/legend/wms-tif-layer-2-name/wms-tif-style-2-name.png;
+echo 'Copied legend tif-layer-2-legend.png to /var/www/legend/wms-tif-layer-2-name/wms-tif-style-2-name.png';
 chown -R 999:999 /var/www/legend
 `
 )

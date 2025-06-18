@@ -125,7 +125,7 @@ func ValidateEphemeralStorage(podSpecPatch v1.PodSpec, allErrs *field.ErrorList)
 	}
 }
 
-func ValidateInspire[O WMSWFS](obj O, allErrs *field.ErrorList) {
+func ValidateInspire[O WMSWFS](obj O, allErrs *field.ErrorList, allWarnings *[]string) {
 	if obj.Inspire() == nil {
 		return
 	}
@@ -134,11 +134,11 @@ func ValidateInspire[O WMSWFS](obj O, allErrs *field.ErrorList) {
 	spatialID := obj.Inspire().SpatialDatasetIdentifier
 
 	if slices.Contains(datasetIDs, spatialID) {
-		*allErrs = append(*allErrs, field.Invalid(
+		*allWarnings = append(*allWarnings, field.Invalid(
 			field.NewPath("spec").Child("service").Child("inspire").Child("spatialDatasetIdentifier"),
 			spatialID,
-			"spatialDatasetIdentifier cannot also be used as an datasetMetadataUrl.csw.metadataIdentifier",
-		))
+			"spatialDatasetIdentifier should not also be used as an datasetMetadataUrl.csw.metadataIdentifier",
+		).Error())
 	}
 
 	if serviceID := obj.Inspire().ServiceMetadataURL.CSW; serviceID != nil {

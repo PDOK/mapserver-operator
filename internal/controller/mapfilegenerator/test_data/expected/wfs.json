@@ -9,6 +9,7 @@
   "service_onlineresource": "https://service.pdok.nl",
   "service_path": "/datasetOwner/dataset/theme/wfs/v1_0",
   "service_metadata_id": "metameta-meta-meta-meta-metametameta",
+  "service_accessconstraints": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
   "automatic_casing": true,
   "data_epsg": "EPSG:28992",
   "service_debug_level": 0,

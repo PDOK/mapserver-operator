@@ -378,11 +378,11 @@ spec:
             name: complete-wms-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: complete-wms-capabilities-generator-29hk9fh674
+            name: complete-wms-capabilities-generator-ccc59c7dhm
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: complete-wms-mapfile-generator-bbd2gtdg2t
+            name: complete-wms-mapfile-generator-b4bbcf5kdk
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files

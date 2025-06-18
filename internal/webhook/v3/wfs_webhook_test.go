@@ -29,6 +29,8 @@ import (
 	"context"
 	"fmt"
 
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 
@@ -164,18 +166,18 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Should deny creation if SpatialID is also used as a featureType datasetMetadataID", func() {
+		It("Should warn on creation if SpatialID is also used as a featureType datasetMetadataID", func() {
 			Expect(obj.Inspire()).NotTo(BeNil())
 			Expect(obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL).NotTo(BeNil())
 			Expect(obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW).NotTo(BeNil())
 			obj.Spec.Service.Inspire.SpatialDatasetIdentifier = obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW.MetadataIdentifier
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+			Expect(err).To(BeNil())
+			Expect(warnings).To(Equal(admission.Warnings{field.Invalid(
 				field.NewPath("spec").Child("service").Child("inspire").Child("spatialDatasetIdentifier"),
 				obj.Spec.Service.Inspire.SpatialDatasetIdentifier,
-				"spatialDatasetIdentifier cannot also be used as an datasetMetadataUrl.csw.metadataIdentifier",
-			))))
-			Expect(warnings).To(BeEmpty())
+				"spatialDatasetIdentifier should not also be used as an datasetMetadataUrl.csw.metadataIdentifier",
+			).Error()}))
 		})
 
 		It("Should deny creation if serviceMetadataID is also used as a featureType datasetMetadataID", func() {

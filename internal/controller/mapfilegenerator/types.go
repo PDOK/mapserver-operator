@@ -10,21 +10,22 @@ import (
 
 //nolint:tagliatelle
 type BaseServiceInput struct {
-	Title           string   `json:"service_title"`
-	Abstract        string   `json:"service_abstract"`
-	Keywords        string   `json:"service_keywords"`
-	Extent          string   `json:"service_extent"`
-	NamespacePrefix string   `json:"service_namespace_prefix"`
-	NamespaceURI    string   `json:"service_namespace_uri"`
-	OnlineResource  string   `json:"service_onlineresource"`
-	Path            string   `json:"service_path"`
-	MetadataID      string   `json:"service_metadata_id"`
-	DatasetOwner    *string  `json:"dataset_owner,omitempty"`
-	AuthorityURL    *string  `json:"authority_url,omitempty"`
-	AutomaticCasing bool     `json:"automatic_casing"`
-	DataEPSG        string   `json:"data_epsg"`
-	EPSGList        []string `json:"epsg_list"`
-	DebugLevel      int      `json:"service_debug_level,omitempty"`
+	Title             string   `json:"service_title"`
+	Abstract          string   `json:"service_abstract"`
+	Keywords          string   `json:"service_keywords"`
+	Extent            string   `json:"service_extent"`
+	NamespacePrefix   string   `json:"service_namespace_prefix"`
+	NamespaceURI      string   `json:"service_namespace_uri"`
+	OnlineResource    string   `json:"service_onlineresource"`
+	Path              string   `json:"service_path"`
+	MetadataID        string   `json:"service_metadata_id"`
+	DatasetOwner      *string  `json:"dataset_owner,omitempty"`
+	AuthorityURL      *string  `json:"authority_url,omitempty"`
+	AutomaticCasing   bool     `json:"automatic_casing"`
+	DataEPSG          string   `json:"data_epsg"`
+	EPSGList          []string `json:"epsg_list"`
+	DebugLevel        int      `json:"service_debug_level,omitempty"`
+	AccessConstraints string   `json:"service_accessconstraints"`
 }
 
 //nolint:tagliatelle
@@ -37,18 +38,17 @@ type WFSInput struct {
 //nolint:tagliatelle
 type WMSInput struct {
 	BaseServiceInput
-	AccessConstraints string       `json:"service_accessconstraints"`
-	Layers            []WMSLayer   `json:"layers"`
-	GroupLayers       []GroupLayer `json:"group_layers"`
-	Symbols           []string     `json:"symbols"`
-	Fonts             *string      `json:"fonts,omitempty"`
-	Templates         string       `json:"templates,omitempty"`
-	OutputFormatJpg   string       `json:"outputformat_jpg"`
-	OutputFormatPng   string       `json:"outputformat_png8"`
-	MaxSize           string       `json:"maxSize"`
-	TopLevelName      string       `json:"top_level_name,omitempty"`
-	Resolution        string       `json:"resolution,omitempty"`
-	DefResolution     string       `json:"defresolution,omitempty"`
+	Layers          []WMSLayer   `json:"layers"`
+	GroupLayers     []GroupLayer `json:"group_layers"`
+	Symbols         []string     `json:"symbols"`
+	Fonts           *string      `json:"fonts,omitempty"`
+	Templates       string       `json:"templates,omitempty"`
+	OutputFormatJpg string       `json:"outputformat_jpg"`
+	OutputFormatPng string       `json:"outputformat_png8"`
+	MaxSize         string       `json:"maxSize"`
+	TopLevelName    string       `json:"top_level_name,omitempty"`
+	Resolution      string       `json:"resolution,omitempty"`
+	DefResolution   string       `json:"defresolution,omitempty"`
 }
 
 //nolint:tagliatelle
@@ -90,7 +90,7 @@ type WMSLayer struct {
 	GroupName                   string  `json:"group_name,omitempty"`
 	Styles                      []Style `json:"styles"`
 	Offsite                     string  `json:"offsite,omitempty"`
-	GetFeatureInfoIncludesClass bool    `json:"get_feature_info_includes_class,omitempty"`
+	GetFeatureInfoIncludesClass *bool   `json:"get_feature_info_includes_class,omitempty"`
 }
 
 type Column struct {
@@ -125,6 +125,7 @@ func SetDataFields[O pdoknlv3.WMSWFS](obj O, wmsLayer *WMSLayer, data pdoknlv3.D
 		}
 		wmsLayer.BaseLayer.Resample = &tif.Resample
 		wmsLayer.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
+		wmsLayer.GetFeatureInfoIncludesClass = &tif.GetFeatureInfoIncludesClass
 	case data.Postgis != nil:
 		postgis := data.Postgis
 		wmsLayer.Postgis = smoothoperatorutils.Pointer(true)

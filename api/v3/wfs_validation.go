@@ -62,7 +62,7 @@ func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 		}
 	}
 
-	ValidateInspire(wfs, allErrs)
+	ValidateInspire(wfs, allErrs, warnings)
 
 	if wfs.Spec.HorizontalPodAutoscalerPatch != nil {
 		ValidateHorizontalPodAutoscalerPatch(*wfs.Spec.HorizontalPodAutoscalerPatch, allErrs)
