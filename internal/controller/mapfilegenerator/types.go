@@ -90,7 +90,7 @@ type WMSLayer struct {
 	GroupName                   string  `json:"group_name,omitempty"`
 	Styles                      []Style `json:"styles"`
 	Offsite                     string  `json:"offsite,omitempty"`
-	GetFeatureInfoIncludesClass bool    `json:"get_feature_info_includes_class,omitempty"`
+	GetFeatureInfoIncludesClass *bool   `json:"get_feature_info_includes_class,omitempty"`
 }
 
 type Column struct {
@@ -125,6 +125,7 @@ func SetDataFields[O pdoknlv3.WMSWFS](obj O, wmsLayer *WMSLayer, data pdoknlv3.D
 		}
 		wmsLayer.BaseLayer.Resample = &tif.Resample
 		wmsLayer.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
+		wmsLayer.GetFeatureInfoIncludesClass = &tif.GetFeatureInfoIncludesClass
 	case data.Postgis != nil:
 		postgis := data.Postgis
 		wmsLayer.Postgis = smoothoperatorutils.Pointer(true)

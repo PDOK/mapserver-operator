@@ -506,11 +506,13 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 
 	// Map sublayers
 	for _, sublayer := range layer.Layers {
-		mapped, err := mapLayer(sublayer, canonicalURL, authorityURL, identifier, append(parentStyleNames, layerStyleNames...), bboxes)
-		if err != nil {
-			return nil, err
+		if sublayer.Visible {
+			mapped, err := mapLayer(sublayer, canonicalURL, authorityURL, identifier, append(parentStyleNames, layerStyleNames...), bboxes)
+			if err != nil {
+				return nil, err
+			}
+			l.Layer = append(l.Layer, mapped)
 		}
-		l.Layer = append(l.Layer, mapped)
 	}
 
 	return &l, nil

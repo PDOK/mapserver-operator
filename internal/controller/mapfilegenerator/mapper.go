@@ -289,10 +289,9 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			MaxScale:       serviceLayer.MaxScaleDenominator,
 			LabelNoClip:    serviceLayer.LabelNoClip,
 		},
-		GroupName:                   groupName,
-		Styles:                      []Style{},
-		Offsite:                     "",
-		GetFeatureInfoIncludesClass: false,
+		GroupName: groupName,
+		Styles:    []Style{},
+		Offsite:   "",
 	}
 
 	for _, style := range serviceLayer.Styles {

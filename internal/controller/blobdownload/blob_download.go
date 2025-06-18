@@ -41,20 +41,25 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images,
 			blobkeys = append(blobkeys, gpkg.BlobKey)
 		}
 	}
+
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "GEOPACKAGE_TARGET_PATH",
+			Value: "/srv/data/gpkg",
+		},
+	}
+	if len(blobkeys) > 0 {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "GEOPACKAGE_DOWNLOAD_LIST",
+			Value: strings.Join(blobkeys, ";"),
+		})
+	}
+
 	initContainer := corev1.Container{
 		Name:            constants.BlobDownloadName,
 		Image:           images.MultitoolImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Env: []corev1.EnvVar{
-			{
-				Name:  "GEOPACKAGE_TARGET_PATH",
-				Value: "/srv/data/gpkg",
-			},
-			{
-				Name:  "GEOPACKAGE_DOWNLOAD_LIST",
-				Value: strings.Join(blobkeys, ";"),
-			},
-		},
+		Env:             envVars,
 		EnvFrom: []corev1.EnvFromSource{
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, blobsConfigName),
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, blobsSecretName),
@@ -198,7 +203,7 @@ func downloadLegends(sb *strings.Builder, wms *pdoknlv3.WMS) error {
 				if err != nil {
 					return err
 				}
-				writeLine(sb, "Copied legend %s to %s/%s/%s.png;", fileName, legendPath, *layer.Name, style.Name)
+				writeLine(sb, "echo 'Copied legend %s to %s/%s/%s.png';", fileName, legendPath, *layer.Name, style.Name)
 			}
 		}
 		writeLine(sb, "chown -R 999:999 %s", legendPath)
