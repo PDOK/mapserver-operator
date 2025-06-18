@@ -44,8 +44,8 @@ import (
 // +kubebuilder:conversion:hub
 // +kubebuilder:subresource:status
 // versionName=v3
-// +kubebuilder:resource:categories=pdok
 // +kubebuilder:resource:path=wfs
+// +kubebuilder:resource:categories=pdok
 
 // WFS is the Schema for the wfs API.
 type WFS struct {
