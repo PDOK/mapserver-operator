@@ -261,10 +261,10 @@ spec:
             name: complete-wfs-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: complete-wfs-capabilities-generator-g57dmd6b78
+            name: complete-wfs-capabilities-generator-g7fh2dbt4m
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: complete-wfs-mapfile-generator-5gf58d5d55
+            name: complete-wfs-mapfile-generator-c4f5ctgfmb
             defaultMode: 420
           name: mapfile-generator-config

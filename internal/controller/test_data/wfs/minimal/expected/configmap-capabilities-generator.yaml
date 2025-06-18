@@ -11,7 +11,7 @@ metadata:
     pdok.nl/inspire: 'false'
     service-type: wfs
     service-version: v1_0
-  name: minimal-wfs-capabilities-generator-md7fhtmd4f
+  name: minimal-wfs-capabilities-generator-m46924mtk7
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

@@ -111,7 +111,7 @@ metadata:
     service-type: wfs
     service-version: v1_0
     theme: theme
-  name: complete-wfs-mapfile-generator-5gf58d5d55
+  name: complete-wfs-mapfile-generator-c4f5ctgfmb
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
