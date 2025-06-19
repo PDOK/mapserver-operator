@@ -127,14 +127,14 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 	ensureLabel(wms, "pdok.nl/service-type", "wms")
 
-	lgr.Info("creating resources for wms", "wms", wms)
+	lgr.Info("creating resources for wms", "wms", wms.Name)
 	operationResults, err := createOrUpdateAllForWMSWFS(ctx, r, wms, ownerInfo)
 	if err != nil {
-		lgr.Info("failed creating resources for wms", "wms", wms)
+		lgr.Info("failed creating resources for wms", "wms", wms.Name)
 		logAndUpdateStatusError(ctx, r, wms, err)
 		return result, err
 	}
-	lgr.Info("finished creating resources for wms", "wms", wms)
+	lgr.Info("finished creating resources for wms", "wms", wms.Name)
 	logAndUpdateStatusFinished(ctx, r, wms, operationResults)
 
 	return result, err
