@@ -62,19 +62,6 @@ func GetNamespaceURI(prefix string, ownerInfo *smoothoperatorv1.OwnerInfo) strin
 	return strings.ReplaceAll(*ownerInfo.Spec.NamespaceTemplate, "{{prefix}}", prefix)
 }
 
-func EscapeQuotes(s string) string {
-	return strings.ReplaceAll(s, "\"", "\\\"")
-}
-
-func GetLabelValueByKey(labels map[string]string, key string) *string {
-	for k, v := range labels {
-		if k == key {
-			return &v
-		}
-	}
-	return nil
-}
-
 func AnyMatch[S ~[]E, E any](slice S, eql func(E) bool) bool {
 	for _, elem := range slice {
 		if eql(elem) {

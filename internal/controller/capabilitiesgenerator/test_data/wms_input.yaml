@@ -31,7 +31,7 @@ services:
         onlineResource:
           xlink: null
           type: null
-          href: http://localhost
+          href: http://localhost/
         contactInformation:
           contactPersonPrimary:
             contactPerson: KlantContactCenter PDOK
@@ -63,7 +63,7 @@ services:
                     onlineResource:
                       xlink: http://www.w3.org/1999/xlink
                       type: null
-                      href: http://localhost/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0?
                   post: null
             getMap:
               format:
@@ -78,7 +78,7 @@ services:
                     onlineResource:
                       xlink: http://www.w3.org/1999/xlink
                       type: null
-                      href: http://localhost/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0?
                   post:
                     onlineResource:
                       xlink: http://www.w3.org/1999/xlink
@@ -99,7 +99,7 @@ services:
                     onlineResource:
                       xlink: http://www.w3.org/1999/xlink
                       type: null
-                      href: http://localhost/rws/nwbwegen/wms/v1_0
+                      href: http://localhost/rws/nwbwegen/wms/v1_0?
                   post:
                     onlineResource:
                       xlink: http://www.w3.org/1999/xlink
@@ -108,6 +108,7 @@ services:
           exception:
             format:
               - XML
+              - INIMAGE
               - BLANK
           extendedCapabilities:
             metadataUrl:
@@ -277,7 +278,7 @@ services:
                     onlineResource:
                       href: https://www.rijkswaterstaat.nl
                       type: null
-                      xlink: http://www.w3.org/1999/xlink
+                      xlink: null
                   identifier:
                     authority: rws
                     value: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff
@@ -380,7 +381,7 @@ services:
                     onlineResource:
                       href: https://www.rijkswaterstaat.nl
                       type: null
-                      xlink: http://www.w3.org/1999/xlink
+                      xlink: null
                   identifier:
                     authority: rws
                     value: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff

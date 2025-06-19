@@ -49,8 +49,8 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 
 					ServiceProvider: mapServiceProvider(&ownerInfo.Spec.WFS.ServiceProvider),
 					ServiceIdentification: wfs200.ServiceIdentification{
-						Title:             mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
-						Abstract:          mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
+						Title:             wfs.Spec.Service.Title,
+						Abstract:          wfs.Spec.Service.Abstract,
 						AccessConstraints: wfs.Spec.Service.AccessConstraints.String(),
 						Keywords: &wsc110.Keywords{
 							Keyword: wfs.Spec.Service.KeywordsIncludingInspireKeyword(),
@@ -163,8 +163,8 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 
 		featureType := wfs200.FeatureType{
 			Name:     wfs.Spec.Service.Prefix + ":" + fType.Name,
-			Title:    mapperutils.EscapeQuotes(fType.Title),
-			Abstract: mapperutils.EscapeQuotes(fType.Abstract),
+			Title:    fType.Title,
+			Abstract: fType.Abstract,
 			Keywords: &[]wsc110.Keywords{
 				{
 					Keyword: fType.Keywords,
@@ -272,8 +272,6 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 		return nil, err
 	}
 
-	abstract := mapperutils.EscapeQuotes(wms.Spec.Service.Abstract)
-
 	config := capabilitiesgenerator.Config{
 		Global: capabilitiesgenerator.Global{
 			// Prefix is unused for the WMS, but doesn't hurt to pass it
@@ -288,10 +286,10 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 				Wms130: wms130.GetCapabilitiesResponse{
 					WMSService: wms130.WMSService{
 						Name:               "WMS",
-						Title:              mapperutils.EscapeQuotes(wms.Spec.Service.Title),
-						Abstract:           &abstract,
+						Title:              wms.Spec.Service.Title,
+						Abstract:           &wms.Spec.Service.Abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
-						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(wms.URL().Scheme + "://" + wms.URL().Host)},
+						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(wms.URL().Scheme + "://" + wms.URL().Host + "/")},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               wms.Spec.Service.Fees,
 						AccessConstraints:  ptr.To(wms.Spec.Service.AccessConstraints.String()),
@@ -316,7 +314,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 									DCPType: getDcpType(canonicalServiceURL.String(), true),
 								},
 							},
-							Exception:            wms130.ExceptionType{Format: []string{"XML", "BLANK"}},
+							Exception:            wms130.ExceptionType{Format: []string{"XML", "INIMAGE", "BLANK"}},
 							ExtendedCapabilities: nil,
 							Layer:                layer,
 						},
@@ -400,13 +398,19 @@ func getDcpType(url string, fillPost bool) *wms130.DCPType {
 		OnlineResource: wms130.OnlineResource{
 			Xlink: smoothoperatorutils.Pointer(XLinkURL),
 			Type:  nil,
-			Href:  smoothoperatorutils.Pointer(url),
+			Href:  smoothoperatorutils.Pointer(url + "?"),
 		},
 	}
 
 	var post *wms130.Method
 	if fillPost {
-		post = &get
+		post = &wms130.Method{
+			OnlineResource: wms130.OnlineResource{
+				Xlink: smoothoperatorutils.Pointer(XLinkURL),
+				Type:  nil,
+				Href:  smoothoperatorutils.Pointer(url),
+			},
+		}
 	}
 
 	result := wms130.DCPType{
@@ -434,7 +438,7 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 		authorityURL = &wms130.AuthorityURL{
 			Name: layer.Authority.Name,
 			OnlineResource: wms130.OnlineResource{
-				Xlink: smoothoperatorutils.Pointer(XLinkURL),
+				Xlink: nil,
 				Type:  nil,
 				Href:  &layer.Authority.URL,
 			},
@@ -454,8 +458,8 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 		Queryable:               smoothoperatorutils.Pointer(1),
 		Opaque:                  nil,
 		Name:                    layer.Name,
-		Title:                   mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Title, "")),
-		Abstract:                smoothoperatorutils.Pointer(mapperutils.EscapeQuotes(smoothoperatorutils.PointerVal(layer.Abstract, ""))),
+		Title:                   smoothoperatorutils.PointerVal(layer.Title, ""),
+		Abstract:                smoothoperatorutils.Pointer(smoothoperatorutils.PointerVal(layer.Abstract, "")),
 		KeywordList:             &wms130.Keywords{Keyword: layer.Keywords},
 		CRS:                     crsses,
 		EXGeographicBoundingBox: exBbox,

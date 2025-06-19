@@ -349,7 +349,7 @@ spec:
             name: patches-wms-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: patches-wms-capabilities-generator-hbgd5m652m
+            name: patches-wms-capabilities-generator-89ft7hbhc4
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
