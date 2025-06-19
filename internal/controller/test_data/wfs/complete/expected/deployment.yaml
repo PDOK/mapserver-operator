@@ -258,7 +258,7 @@ spec:
           name: mapserver
         - configMap:
             defaultMode: 511
-            name: complete-wfs-init-scripts-dcmbkf564h
+            name: complete-wfs-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
             name: complete-wfs-capabilities-generator-g7fh2dbt4m
