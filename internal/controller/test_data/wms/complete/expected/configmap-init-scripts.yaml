@@ -179,7 +179,7 @@ metadata:
     service-type: wms
     service-version: v1_0
     theme: "2016"
-  name: complete-wms-init-scripts-fft29bbtdd
+  name: complete-wms-init-scripts-dcmbkf564h
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
