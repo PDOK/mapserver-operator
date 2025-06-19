@@ -178,7 +178,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: patches-wms-init-scripts-dcmbkf564h
+  name: patches-wms-init-scripts-fft29bbtdd
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

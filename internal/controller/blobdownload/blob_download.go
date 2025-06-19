@@ -42,24 +42,20 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images,
 		}
 	}
 
-	envVars := []corev1.EnvVar{
-		{
-			Name:  "GEOPACKAGE_TARGET_PATH",
-			Value: "/srv/data/gpkg",
-		},
-	}
-	if len(blobkeys) > 0 {
-		envVars = append(envVars, corev1.EnvVar{
-			Name:  "GEOPACKAGE_DOWNLOAD_LIST",
-			Value: strings.Join(blobkeys, ";"),
-		})
-	}
-
 	initContainer := corev1.Container{
 		Name:            constants.BlobDownloadName,
 		Image:           images.MultitoolImage,
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Env:             envVars,
+		Env: []corev1.EnvVar{
+			{
+				Name:  "GEOPACKAGE_TARGET_PATH",
+				Value: "/srv/data/gpkg",
+			},
+			{
+				Name:  "GEOPACKAGE_DOWNLOAD_LIST",
+				Value: strings.Join(blobkeys, ";"),
+			},
+		},
 		EnvFrom: []corev1.EnvFromSource{
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, blobsConfigName),
 			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, blobsSecretName),

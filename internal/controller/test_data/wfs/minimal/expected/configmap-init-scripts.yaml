@@ -11,7 +11,7 @@ metadata:
     pdok.nl/inspire: 'false'
     service-type: wfs
     service-version: v1_0
-  name: minimal-wfs-init-scripts-dcmbkf564h
+  name: minimal-wfs-init-scripts-fft29bbtdd
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
