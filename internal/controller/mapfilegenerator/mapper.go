@@ -43,8 +43,8 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 
 	input := WFSInput{
 		BaseServiceInput: BaseServiceInput{
-			Title:             mapperutils.EscapeQuotes(wfs.Spec.Service.Title),
-			Abstract:          mapperutils.EscapeQuotes(wfs.Spec.Service.Abstract),
+			Title:             wfs.Spec.Service.Title,
+			Abstract:          wfs.Spec.Service.Abstract,
 			Keywords:          strings.Join(wfs.Spec.Service.KeywordsIncludingInspireKeyword(), ","),
 			OnlineResource:    wfs.URL().Scheme + "://" + wfs.URL().Host,
 			Path:              wfs.URL().Path,
@@ -70,8 +70,8 @@ func getWFSLayers(service pdoknlv3.WFSService) (layers []WFSLayer) {
 		layer := WFSLayer{
 			BaseLayer: BaseLayer{
 				Name:           featureType.Name,
-				Title:          mapperutils.EscapeQuotes(featureType.Title),
-				Abstract:       mapperutils.EscapeQuotes(featureType.Abstract),
+				Title:          featureType.Title,
+				Abstract:       featureType.Abstract,
 				Keywords:       strings.Join(featureType.Keywords, ","),
 				Extent:         getWFSExtent(featureType, service),
 				MetadataID:     featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
