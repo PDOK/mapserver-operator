@@ -346,7 +346,7 @@ spec:
           name: ogc-webservice-proxy-config
         - configMap:
             defaultMode: 511
-            name: patches-wms-init-scripts-fft29bbtdd
+            name: patches-wms-init-scripts-dcmbkf564h
           name: init-scripts
         - configMap:
             name: patches-wms-capabilities-generator-hbgd5m652m

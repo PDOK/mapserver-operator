@@ -339,7 +339,7 @@ spec:
           name: ogc-webservice-proxy-config
         - configMap:
             defaultMode: 511
-            name: minimal-wms-init-scripts-fft29bbtdd
+            name: minimal-wms-init-scripts-dcmbkf564h
           name: init-scripts
         - configMap:
             name: minimal-wms-capabilities-generator-fbhc96kd2b

@@ -117,14 +117,16 @@ function download_all() {
 
     # Download all geopackages from GEOPACKAGE_DOWNLOAD_LIST
     # Example: GEOPACKAGE_DOWNLOAD_LIST=path/1/file.gpkg;path/3/other_file.gpkg
-    gpkgs=(${GEOPACKAGE_DOWNLOAD_LIST//;/ })
-    for gpkg_path in "${gpkgs[@]}"
-    do
-      filename=$(basename $gpkg_path)
-      download $gpkg_path $filename
-    done
+    if [ -n "$GEOPACKAGE_DOWNLOAD_LIST" ]; then
+      gpkgs=(${GEOPACKAGE_DOWNLOAD_LIST//;/ })
+      for gpkg_path in "${gpkgs[@]}"
+      do
+        filename=$(basename $gpkg_path)
+        download $gpkg_path $filename
+      done
 
-    echo msg=\"All GeoPackages downloaded\" total_time_seconds=$(expr $(date '+%s') - $start_time)
+      echo msg=\"All GeoPackages downloaded\" total_time_seconds=$(expr $(date '+%s') - $start_time)
+    fi
 }
 
 function rm_file_and_exit() {

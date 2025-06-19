@@ -178,7 +178,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: minimal-wms-init-scripts-fft29bbtdd
+  name: minimal-wms-init-scripts-dcmbkf564h
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
