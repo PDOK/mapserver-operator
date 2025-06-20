@@ -103,14 +103,88 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		if operationsMetadata == nil {
 			operationsMetadata = &wfs200.OperationsMetadata{}
 		}
-		operationsMetadata.Constraint = append(operationsMetadata.Constraint, wfs200.Constraint{
-			Name:         "CountDefault",
-			DefaultValue: smoothoperatorutils.Pointer(strconv.Itoa(*wfs.Spec.Service.CountDefault)),
-		})
+		operationsMetadata.Constraint = getConstraints(strconv.Itoa(*wfs.Spec.Service.CountDefault))
 		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = operationsMetadata
 	}
 
 	return &config, nil
+}
+
+func getConstraints(countDefault string) []wfs200.Constraint {
+	return []wfs200.Constraint{
+		{
+			Name:         "ImplementsBasicWFS",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "ImplementsTransactionalWFS",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsLockingWFS",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "KVPEncoding",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "XMLEncoding",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "SOAPEncoding",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsInheritance",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsRemoteResolve",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsResultPaging",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "ImplementsStandardJoins",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsSpatialJoins",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsTemporalJoins",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsFeatureVersioning",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ManageStoredQueries",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "PagingIsTransactionSafe",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "CountDefault",
+			DefaultValue: &countDefault,
+		},
+		{
+			Name: "QueryExpressions",
+			AllowedValues: &wfs200.AllowedValues{Value: []string{
+				"wfs:Query",
+				"wfs:StoredQuery",
+			},
+			},
+		},
+	}
 }
 
 func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*wfs200.FeatureTypeList, error) {
