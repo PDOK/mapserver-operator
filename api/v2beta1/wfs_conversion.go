@@ -89,9 +89,9 @@ func (src *WFS) ToV3(dst *pdoknlv3.WFS) error {
 	}
 
 	allOtherCrs := []string{
+		"EPSG:28992",
 		"EPSG:25831",
 		"EPSG:25832",
-		"EPSG:28992",
 		"EPSG:3034",
 		"EPSG:3035",
 		"EPSG:3857",
