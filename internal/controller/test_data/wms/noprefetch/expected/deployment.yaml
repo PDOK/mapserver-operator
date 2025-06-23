@@ -334,7 +334,7 @@ spec:
             defaultMode: 420
           name: ogc-webservice-proxy-config
         - configMap:
-            name: noprefetch-wms-capabilities-generator-4m84hh6f86
+            name: noprefetch-wms-capabilities-generator-865bt77thd
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:

@@ -378,7 +378,7 @@ spec:
             name: complete-wms-init-scripts-fft29bbtdd
           name: init-scripts
         - configMap:
-            name: complete-wms-capabilities-generator-gk8t45g7g2
+            name: complete-wms-capabilities-generator-b9kmb96877
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:

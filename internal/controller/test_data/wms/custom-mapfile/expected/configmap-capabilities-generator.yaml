@@ -139,7 +139,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: custom-mapfile-wms-capabilities-generator-4m84hh6f86
+  name: custom-mapfile-wms-capabilities-generator-865bt77thd
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

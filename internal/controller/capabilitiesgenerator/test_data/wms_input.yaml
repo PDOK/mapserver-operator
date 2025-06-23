@@ -31,7 +31,7 @@ services:
         onlineResource:
           xlink: null
           type: null
-          href: http://localhost/
+          href: https://www.pdok.nl
         contactInformation:
           contactPersonPrimary:
             contactPerson: KlantContactCenter PDOK

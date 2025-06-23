@@ -181,6 +181,10 @@ func TestInputForWMS(t *testing.T) {
 					HrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}",
 				},
 			},
+			ProviderSite: &smoothoperatorv1.ProviderSite{
+				Type: "simple",
+				Href: "https://www.pdok.nl",
+			},
 			WMS: &smoothoperatorv1.WMS{
 				ContactInformation: smoothoperatorv1.ContactInformation{
 					ContactPersonPrimary: &contactPersonPrimary,

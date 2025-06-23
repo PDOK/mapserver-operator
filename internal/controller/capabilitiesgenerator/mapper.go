@@ -47,7 +47,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 				Filename: wfsCapabilitiesFilename,
 				Wfs200: wfs200.GetCapabilitiesResponse{
 
-					ServiceProvider: mapServiceProvider(&ownerInfo.Spec.WFS.ServiceProvider),
+					ServiceProvider: mapServiceProvider(&ownerInfo.Spec.WFS.ServiceProvider, ownerInfo.Spec.ProviderSite),
 					ServiceIdentification: wfs200.ServiceIdentification{
 						Title:             wfs.Spec.Service.Title,
 						Abstract:          wfs.Spec.Service.Abstract,
@@ -281,15 +281,15 @@ func replaceMustacheTemplate(hrefTemplate string, identifier string) (string, er
 	return mustache.Render(hrefTemplate, templateVariable)
 }
 
-func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProvider wfs200.ServiceProvider) {
+func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider, providerSite *smoothoperatorv1.ProviderSite) (serviceProvider wfs200.ServiceProvider) {
 	if provider.ProviderName != nil {
 		serviceProvider.ProviderName = provider.ProviderName
 	}
 
-	if provider.ProviderSite != nil {
+	if providerSite != nil {
 		serviceProvider.ProviderSite = &wfs200.ProviderSite{
-			Type: provider.ProviderSite.Type,
-			Href: provider.ProviderSite.Href,
+			Type: providerSite.Type,
+			Href: providerSite.Href,
 		}
 	}
 
@@ -363,7 +363,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Title:              wms.Spec.Service.Title,
 						Abstract:           &wms.Spec.Service.Abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
-						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(wms.URL().Scheme + "://" + wms.URL().Host + "/")},
+						OnlineResource:     wms130.OnlineResource{Href: &ownerInfo.Spec.ProviderSite.Href},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               wms.Spec.Service.Fees,
 						AccessConstraints:  ptr.To(wms.Spec.Service.AccessConstraints.String()),
