@@ -26,7 +26,6 @@ package controller
 
 import (
 	"context"
-
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -131,5 +130,5 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *WFSReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return setWatches(ctrl.NewControllerManagedBy(mgr).For(&pdoknlv3.WFS{}).Named("wfs")).Complete(r)
+	return createControllerManager(mgr, &pdoknlv3.WFS{}).Complete(r)
 }

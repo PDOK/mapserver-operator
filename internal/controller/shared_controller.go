@@ -3,7 +3,9 @@ package controller
 import (
 	"context"
 	"fmt"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -25,6 +27,7 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorstatus "github.com/pdok/smooth-operator/pkg/status"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -35,8 +38,11 @@ const (
 	InspireLabelKey = "pdok.nl/inspire"
 )
 
-func setWatches(mgr *builder.TypedBuilder[reconcile.Request]) *builder.TypedBuilder[reconcile.Request] {
-	return mgr.Owns(&corev1.ConfigMap{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+func createControllerManager(mgr ctrl.Manager, obj client.Object) *builder.TypedBuilder[reconcile.Request] {
+	kind := obj.GetObjectKind().GroupVersionKind().Kind
+
+	controllerMgr := ctrl.NewControllerManagedBy(mgr).For(obj).Named(strings.ToLower(kind))
+	controllerMgr.Owns(&corev1.ConfigMap{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Service{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&traefikiov1alpha1.Middleware{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
@@ -44,6 +50,8 @@ func setWatches(mgr *builder.TypedBuilder[reconcile.Request]) *builder.TypedBuil
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&policyv1.PodDisruptionBudget{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&smoothoperatorv1.OwnerInfo{}, builder.WithPredicates(predicate.GenerationChangedPredicate{}))
+
+	return controllerMgr.Watches(&appsv1.ReplicaSet{}, smoothoperatorstatus.GetReplicaSetEventHandlerForObj(mgr, obj))
 }
 
 func ttlExpired[O pdoknlv3.WMSWFS](obj O) bool {

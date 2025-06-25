@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	smoothoperatorstatus "github.com/pdok/smooth-operator/pkg/status"
 	"time"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -70,6 +71,13 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 	case *pdoknlv3.WMS:
 		status = &any(obj).(*pdoknlv3.WMS).Status
 	}
+
+	ps, err := smoothoperatorstatus.GetPodSummary(ctx, obj)
+	if err != nil {
+		lgr.Error(err, "unable to get pod summary for status update")
+		return
+	}
+	status.PodSummary = ps
 
 	changed := false
 	for _, condition := range conditions {

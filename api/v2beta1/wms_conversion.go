@@ -97,8 +97,8 @@ func (src *WMS) ToV3(target *pdoknlv3.WMS) error {
 		Prefix:            src.Spec.General.Dataset,
 		URL:               *url,
 		OwnerInfoRef:      "pdok",
-		Title:             src.Spec.Service.Title,
-		Abstract:          src.Spec.Service.Abstract,
+		Title:             fixUnicode(src.Spec.Service.Title),
+		Abstract:          fixUnicode(src.Spec.Service.Abstract),
 		Keywords:          src.Spec.Service.Keywords,
 		AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints},
 	},
@@ -393,8 +393,8 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 		}
 
 		topLayer = &pdoknlv3.Layer{
-			Title:         &v2Service.Title,
-			Abstract:      &v2Service.Abstract,
+			Title:         smoothoperatorutils.Pointer(fixUnicode(v2Service.Title)),
+			Abstract:      smoothoperatorutils.Pointer(fixUnicode(v2Service.Abstract)),
 			Keywords:      v2Service.Keywords,
 			Layers:        []pdoknlv3.Layer{},
 			BoundingBoxes: getDefaultWMSLayerBoundingBoxes(bbox),
@@ -522,10 +522,14 @@ func getDefaultWMSLayerBoundingBoxes(defaultBbox *pdoknlv3.WMSBoundingBox) []pdo
 }
 
 func (v2Layer WMSLayer) MapToV3(v2Service WMSService) pdoknlv3.Layer {
+	var abstract *string
+	if v2Layer.Abstract != nil {
+		abstract = smoothoperatorutils.Pointer(fixUnicode(*v2Layer.Abstract))
+	}
 	layer := pdoknlv3.Layer{
 		Name:                &v2Layer.Name,
 		Title:               v2Layer.Title,
-		Abstract:            v2Layer.Abstract,
+		Abstract:            abstract,
 		Keywords:            v2Layer.Keywords,
 		LabelNoClip:         v2Layer.LabelNoClip,
 		Styles:              []pdoknlv3.Style{},
