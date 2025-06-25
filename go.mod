@@ -10,10 +10,10 @@ require (
 	github.com/cbroglie/mustache v1.4.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/pdok/featureinfo-generator v1.4.0-beta1
-	github.com/pdok/ogc-capabilities-generator v1.0.0-beta10
-	github.com/pdok/ogc-specifications v1.0.0-beta10
-	github.com/pdok/smooth-operator v1.0.0-rc1
+	github.com/pdok/featureinfo-generator v1.4.0
+	github.com/pdok/ogc-capabilities-generator v1.0.1
+	github.com/pdok/ogc-specifications v1.0.0
+	github.com/pdok/smooth-operator v1.0.0
 	github.com/peterbourgon/ff v1.7.1
 	github.com/stretchr/testify v1.10.0
 	github.com/traefik/traefik/v3 v3.4.1
