@@ -47,7 +47,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 				Filename: wfsCapabilitiesFilename,
 				Wfs200: wfs200.GetCapabilitiesResponse{
 
-					ServiceProvider: mapServiceProvider(&ownerInfo.Spec.WFS.ServiceProvider),
+					ServiceProvider: mapServiceProvider(&ownerInfo.Spec.WFS.ServiceProvider, ownerInfo.Spec.ProviderSite),
 					ServiceIdentification: wfs200.ServiceIdentification{
 						Title:             wfs.Spec.Service.Title,
 						Abstract:          wfs.Spec.Service.Abstract,
@@ -103,14 +103,88 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		if operationsMetadata == nil {
 			operationsMetadata = &wfs200.OperationsMetadata{}
 		}
-		operationsMetadata.Constraint = append(operationsMetadata.Constraint, wfs200.Constraint{
-			Name:         "CountDefault",
-			DefaultValue: smoothoperatorutils.Pointer(strconv.Itoa(*wfs.Spec.Service.CountDefault)),
-		})
+		operationsMetadata.Constraint = getConstraints(strconv.Itoa(*wfs.Spec.Service.CountDefault))
 		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = operationsMetadata
 	}
 
 	return &config, nil
+}
+
+func getConstraints(countDefault string) []wfs200.Constraint {
+	return []wfs200.Constraint{
+		{
+			Name:         "ImplementsBasicWFS",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "ImplementsTransactionalWFS",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsLockingWFS",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "KVPEncoding",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "XMLEncoding",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "SOAPEncoding",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsInheritance",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsRemoteResolve",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsResultPaging",
+			DefaultValue: ptr.To("TRUE"),
+		},
+		{
+			Name:         "ImplementsStandardJoins",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsSpatialJoins",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsTemporalJoins",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ImplementsFeatureVersioning",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "ManageStoredQueries",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "PagingIsTransactionSafe",
+			DefaultValue: ptr.To("FALSE"),
+		},
+		{
+			Name:         "CountDefault",
+			DefaultValue: &countDefault,
+		},
+		{
+			Name: "QueryExpressions",
+			AllowedValues: &wfs200.AllowedValues{Value: []string{
+				"wfs:Query",
+				"wfs:StoredQuery",
+			},
+			},
+		},
+	}
 }
 
 func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo) (*wfs200.FeatureTypeList, error) {
@@ -207,15 +281,15 @@ func replaceMustacheTemplate(hrefTemplate string, identifier string) (string, er
 	return mustache.Render(hrefTemplate, templateVariable)
 }
 
-func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider) (serviceProvider wfs200.ServiceProvider) {
+func mapServiceProvider(provider *smoothoperatorv1.ServiceProvider, providerSite *smoothoperatorv1.ProviderSite) (serviceProvider wfs200.ServiceProvider) {
 	if provider.ProviderName != nil {
 		serviceProvider.ProviderName = provider.ProviderName
 	}
 
-	if provider.ProviderSite != nil {
+	if providerSite != nil {
 		serviceProvider.ProviderSite = &wfs200.ProviderSite{
-			Type: provider.ProviderSite.Type,
-			Href: provider.ProviderSite.Href,
+			Type: providerSite.Type,
+			Href: providerSite.Href,
 		}
 	}
 
@@ -289,7 +363,7 @@ func MapWMSToCapabilitiesGeneratorInput(wms *pdoknlv3.WMS, ownerInfo *smoothoper
 						Title:              wms.Spec.Service.Title,
 						Abstract:           &wms.Spec.Service.Abstract,
 						KeywordList:        &wms130.Keywords{Keyword: wms.Spec.Service.KeywordsIncludingInspireKeyword()},
-						OnlineResource:     wms130.OnlineResource{Href: smoothoperatorutils.Pointer(wms.URL().Scheme + "://" + wms.URL().Host + "/")},
+						OnlineResource:     wms130.OnlineResource{Href: &ownerInfo.Spec.ProviderSite.Href},
 						ContactInformation: getContactInformation(ownerInfo),
 						Fees:               wms.Spec.Service.Fees,
 						AccessConstraints:  ptr.To(wms.Spec.Service.AccessConstraints.String()),
