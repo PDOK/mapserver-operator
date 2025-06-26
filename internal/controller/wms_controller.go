@@ -62,6 +62,7 @@ type WMSReconciler struct {
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo,verbs=get;list;watch
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo/status,verbs=
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=configmaps;services,verbs=watch;create;get;update;list;delete
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=watch;list;get
 // +kubebuilder:rbac:groups=traefik.io,resources=ingressroutes;middlewares,verbs=get;list;watch;create;update;delete

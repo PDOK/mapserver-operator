@@ -2,8 +2,9 @@ package controller
 
 import (
 	"context"
-	smoothoperatorstatus "github.com/pdok/smooth-operator/pkg/status"
 	"time"
+
+	smoothoperatorstatus "github.com/pdok/smooth-operator/pkg/status"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
@@ -72,14 +73,17 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 		status = &any(obj).(*pdoknlv3.WMS).Status
 	}
 
-	ps, err := smoothoperatorstatus.GetPodSummary(ctx, obj)
+	podSummary, err := smoothoperatorstatus.GetPodSummary(ctx, getReconcilerClient(r), obj)
 	if err != nil {
 		lgr.Error(err, "unable to get pod summary for status update")
 		return
 	}
-	status.PodSummary = ps
 
 	changed := false
+	if !equality.Semantic.DeepEqual(status.PodSummary, podSummary) {
+		status.PodSummary = podSummary
+		changed = true
+	}
 	for _, condition := range conditions {
 		if meta.SetStatusCondition(&status.Conditions, condition) {
 			changed = true

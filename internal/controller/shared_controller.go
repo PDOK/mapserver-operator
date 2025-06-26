@@ -3,10 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"strconv"
 	"strings"
 	"time"
+
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/pkg/errors"
 
@@ -39,12 +40,17 @@ const (
 )
 
 func createControllerManager(mgr ctrl.Manager, obj client.Object) *builder.TypedBuilder[reconcile.Request] {
-	kind := obj.GetObjectKind().GroupVersionKind().Kind
+	var kind string
+	switch any(obj).(type) {
+	case *pdoknlv3.WMS:
+		kind = "WMS"
+	case *pdoknlv3.WFS:
+		kind = "WFS"
+	}
 
 	controllerMgr := ctrl.NewControllerManagedBy(mgr).For(obj).Named(strings.ToLower(kind))
 	controllerMgr.Owns(&corev1.ConfigMap{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&appsv1.Deployment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{})).
 		Owns(&corev1.Service{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&traefikiov1alpha1.Middleware{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&traefikiov1alpha1.IngressRoute{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
@@ -52,7 +58,7 @@ func createControllerManager(mgr ctrl.Manager, obj client.Object) *builder.Typed
 		Owns(&policyv1.PodDisruptionBudget{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&smoothoperatorv1.OwnerInfo{}, builder.WithPredicates(predicate.GenerationChangedPredicate{}))
 
-	return controllerMgr.Watches(&appsv1.ReplicaSet{}, smoothoperatorstatus.GetReplicaSetEventHandlerForObj(mgr, obj))
+	return controllerMgr.Watches(&appsv1.ReplicaSet{}, smoothoperatorstatus.GetReplicaSetEventHandlerForObj(mgr, kind))
 }
 
 func ttlExpired[O pdoknlv3.WMSWFS](obj O) bool {

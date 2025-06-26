@@ -1,12 +1,13 @@
 package v2beta1
 
 import (
+	"net/url"
+	"strings"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
-	"net/url"
-	"strings"
 
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"

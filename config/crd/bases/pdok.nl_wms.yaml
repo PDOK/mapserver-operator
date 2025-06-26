@@ -1729,6 +1729,33 @@ spec:
                     type: string
                   description: The result of creating or updating of each derived resource for this Atom.
                   type: object
+                podSummary:
+                  description: Summary of status of pods that belong to this resource
+                  items:
+                    properties:
+                      available:
+                        format: int32
+                        type: integer
+                      generation:
+                        format: int32
+                        type: integer
+                      ready:
+                        format: int32
+                        type: integer
+                      total:
+                        format: int32
+                        type: integer
+                      unavailable:
+                        format: int32
+                        type: integer
+                    required:
+                      - available
+                      - generation
+                      - ready
+                      - total
+                      - unavailable
+                    type: object
+                  type: array
               type: object
           required:
             - spec
