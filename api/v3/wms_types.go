@@ -55,6 +55,9 @@ const (
 // versionName=v3
 // +kubebuilder:resource:path=wms
 // +kubebuilder:resource:categories=pdok
+// +kubebuilder:printcolumn:name="ReadyPods",type=integer,JSONPath=`.status.podSummary[0].ready`
+// +kubebuilder:printcolumn:name="DesiredPods",type=integer,JSONPath=`.status.podSummary[0].total`
+// +kubebuilder:printcolumn:name="ReconcileStatus",type=string,JSONPath=`.status.conditions[?(@.type == "Reconciled")].reason`
 
 // WMS is the Schema for the wms API.
 type WMS struct {
