@@ -59,6 +59,10 @@ type WFS struct {
 	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
 }
 
+func (wfs *WFS) OperatorStatus() *smoothoperatormodel.OperatorStatus {
+	return &wfs.Status
+}
+
 // +kubebuilder:object:root=true
 
 // WFSList contains a list of WFS.

@@ -33,6 +33,7 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/legendgenerator"
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorstatus "github.com/pdok/smooth-operator/pkg/status"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -115,7 +116,7 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	defer func() {
 		if rec := recover(); rec != nil {
 			err = recoveredPanicToError(rec)
-			logAndUpdateStatusError(ctx, r, wms, err)
+			smoothoperatorstatus.LogAndUpdateStatusError(ctx, r.Client, wms, err)
 		}
 	}()
 
@@ -132,11 +133,11 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	operationResults, err := createOrUpdateAllForWMSWFS(ctx, r, wms, ownerInfo)
 	if err != nil {
 		lgr.Info("failed creating resources for wms", "wms", wms.Name)
-		logAndUpdateStatusError(ctx, r, wms, err)
+		smoothoperatorstatus.LogAndUpdateStatusError(ctx, r.Client, wms, err)
 		return result, err
 	}
 	lgr.Info("finished creating resources for wms", "wms", wms.Name)
-	logAndUpdateStatusFinished(ctx, r, wms, operationResults)
+	smoothoperatorstatus.LogAndUpdateStatusFinished(ctx, r.Client, wms, operationResults)
 
 	return result, err
 }

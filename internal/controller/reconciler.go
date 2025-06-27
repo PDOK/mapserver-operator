@@ -6,12 +6,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	reconciledConditionType          = "Reconciled"
-	reconciledConditionReasonSuccess = "Success"
-	reconciledConditionReasonError   = "Error"
-)
-
 type Reconciler interface {
 	*WFSReconciler | *WMSReconciler
 	client.StatusClient

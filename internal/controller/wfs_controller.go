@@ -31,6 +31,7 @@ import (
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorstatus "github.com/pdok/smooth-operator/pkg/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -104,7 +105,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	defer func() {
 		if rec := recover(); rec != nil {
 			err = recoveredPanicToError(rec)
-			logAndUpdateStatusError(ctx, r, wfs, err)
+			smoothoperatorstatus.LogAndUpdateStatusError(ctx, r.Client, wfs, err)
 		}
 	}()
 
@@ -121,11 +122,11 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 	operationResults, err := createOrUpdateAllForWMSWFS(ctx, r, wfs, ownerInfo)
 	if err != nil {
 		lgr.Info("failed creating resources for wfs", "wfs", wfs.Name)
-		logAndUpdateStatusError(ctx, r, wfs, err)
+		smoothoperatorstatus.LogAndUpdateStatusError(ctx, r.Client, wfs, err)
 		return result, err
 	}
 	lgr.Info("finished creating resources for wfs", "wfs", wfs.Name)
-	logAndUpdateStatusFinished(ctx, r, wfs, operationResults)
+	smoothoperatorstatus.LogAndUpdateStatusFinished(ctx, r.Client, wfs, operationResults)
 
 	return result, err
 }
