@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	smoothoperatorstatus "github.com/pdok/smooth-operator/pkg/status"
+
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -71,7 +73,17 @@ func updateStatus[R Reconciler](ctx context.Context, r R, obj client.Object, con
 		status = &any(obj).(*pdoknlv3.WMS).Status
 	}
 
+	podSummary, err := smoothoperatorstatus.GetPodSummary(ctx, getReconcilerClient(r), obj)
+	if err != nil {
+		lgr.Error(err, "unable to get pod summary for status update")
+		return
+	}
+
 	changed := false
+	if !equality.Semantic.DeepEqual(status.PodSummary, podSummary) {
+		status.PodSummary = podSummary
+		changed = true
+	}
 	for _, condition := range conditions {
 		if meta.SetStatusCondition(&status.Conditions, condition) {
 			changed = true

@@ -2,6 +2,7 @@ package v2beta1
 
 import (
 	"net/url"
+	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
@@ -11,6 +12,10 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 )
+
+func fixUnicode(val string) string {
+	return strings.ReplaceAll(val, "\\xF6", "ö")
+}
 
 func ConvertOptionsV2ToV3(src *WMSWFSOptions) *pdoknlv3.Options {
 	defaults := pdoknlv3.GetDefaultOptions()

@@ -51,6 +51,7 @@ type WFSReconciler struct {
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo,verbs=get;list;watch
 // +kubebuilder:rbac:groups=pdok.nl,resources=ownerinfo/status,verbs=get
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=configmaps;services,verbs=watch;create;get;update;list;delete
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=watch;list;get
 // +kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=watch;create;get;update;list;delete
@@ -131,5 +132,5 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *WFSReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return setWatches(ctrl.NewControllerManagedBy(mgr).For(&pdoknlv3.WFS{}).Named("wfs")).Complete(r)
+	return createControllerManager(mgr, &pdoknlv3.WFS{}).Complete(r)
 }

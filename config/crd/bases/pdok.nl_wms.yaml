@@ -16,7 +16,17 @@ spec:
     singular: wms
   scope: Namespaced
   versions:
-    - name: v3
+    - additionalPrinterColumns:
+        - jsonPath: .status.podSummary[0].ready
+          name: ReadyPods
+          type: integer
+        - jsonPath: .status.podSummary[0].total
+          name: DesiredPods
+          type: integer
+        - jsonPath: .status.conditions[?(@.type == "Reconciled")].reason
+          name: ReconcileStatus
+          type: string
+      name: v3
       schema:
         openAPIV3Schema:
           description: WMS is the Schema for the wms API.
@@ -1721,6 +1731,33 @@ spec:
                     type: string
                   description: The result of creating or updating of each derived resource for this Atom.
                   type: object
+                podSummary:
+                  description: Summary of status of pods that belong to this resource
+                  items:
+                    properties:
+                      available:
+                        format: int32
+                        type: integer
+                      generation:
+                        format: int32
+                        type: integer
+                      ready:
+                        format: int32
+                        type: integer
+                      total:
+                        format: int32
+                        type: integer
+                      unavailable:
+                        format: int32
+                        type: integer
+                    required:
+                      - available
+                      - generation
+                      - ready
+                      - total
+                      - unavailable
+                    type: object
+                  type: array
               type: object
           required:
             - spec
