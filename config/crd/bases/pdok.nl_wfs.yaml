@@ -700,10 +700,6 @@ spec:
                         Whether to prefetch data from blob storage, and store it on the local filesystem.
                         If `false`, the data will be served directly out of blob storage
                       type: boolean
-                  required:
-                    - automaticCasing
-                    - includeIngress
-                    - prefetchData
                   type: object
                 podSpecPatch:
                   description: Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.

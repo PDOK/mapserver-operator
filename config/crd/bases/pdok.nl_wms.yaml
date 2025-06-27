@@ -743,14 +743,6 @@ spec:
                       default: true
                       description: ValidateRequests enables request validation against the service schema.
                       type: boolean
-                  required:
-                    - automaticCasing
-                    - disableWebserviceProxy
-                    - includeIngress
-                    - prefetchData
-                    - rewriteGroupToDataLayers
-                    - validateChildStyleNameEqual
-                    - validateRequests
                   type: object
                 podSpecPatch:
                   description: Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.

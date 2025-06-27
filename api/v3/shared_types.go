@@ -70,15 +70,18 @@ type Mapfile struct {
 type BaseOptions struct {
 	// IncludeIngress dictates whether to deploy an Ingress or ensure none exists.
 	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
 	IncludeIngress bool `json:"includeIngress"`
 
 	// AutomaticCasing enables automatic conversion from snake_case to camelCase.
 	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
 	AutomaticCasing bool `json:"automaticCasing"`
 
 	// Whether to prefetch data from blob storage, and store it on the local filesystem.
 	// If `false`, the data will be served directly out of blob storage
 	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
 	PrefetchData bool `json:"prefetchData"`
 }
 
