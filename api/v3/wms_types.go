@@ -312,18 +312,22 @@ type WMSOptions struct {
 
 	// ValidateRequests enables request validation against the service schema.
 	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
 	ValidateRequests bool `json:"validateRequests"`
 
 	// RewriteGroupToDataLayers merges group layers into individual data layers.
 	// +kubebuilder:default:=false
+	// +kubebuilder:validation:Optional
 	RewriteGroupToDataLayers bool `json:"rewriteGroupToDataLayers"`
 
 	// DisableWebserviceProxy disables the built-in proxy for external web services.
 	// +kubebuilder:default:=false
+	// +kubebuilder:validation:Optional
 	DisableWebserviceProxy bool `json:"disableWebserviceProxy"`
 
 	// ValidateChildStyleNameEqual ensures child style names match the parent style.
 	// +kubebuilder:default=false
+	// +kubebuilder:validation:Optional
 	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual"`
 }
 
