@@ -2,8 +2,16 @@ apiVersion: pdok.nl/v3
 kind: WMS
 metadata:
   name: sample
+  labels:
+    pdok.nl/owner-id: pdok
+    pdok.nl/dataset-id: sample
 spec:
-  podSpecPatch: {}
+  podSpecPatch:
+    containers:
+      - name: mapserver
+        resources:
+          limits:
+            ephemeral-storage: 1m
   service:
     prefix: "prefix"
     url: "https://test.test/path"
@@ -11,7 +19,7 @@ spec:
     abstract: "abstract"
     keywords:
       - "keyword"
-    ownerInfoRef: "owner"
+    ownerInfoRef: pdok
     dataEPSG: "EPSG:28992"
     stylingAssets:
       configMapRefs:
@@ -24,6 +32,13 @@ spec:
       keywords:
         - "keyword"
       visible: true
+      boundingBoxes:
+        - bbox:
+            maxx: "280000"
+            maxy: "860000"
+            minx: "-25000"
+            miny: "250000"
+          crs: EPSG:28992
       layers:
         - name: "visible"
           visible: true
@@ -41,6 +56,7 @@ spec:
           styles:
             - name: "name"
               title: "title"
+              visualization: file.symbol
         - name: "not visible"
           visible: false
           data:
@@ -51,3 +67,4 @@ spec:
               tableName: "table"
           styles:
             - name: "name"
+              visualization: file.symbol
