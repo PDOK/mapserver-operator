@@ -3,7 +3,8 @@ kind: WFS
 metadata:
   name: sample
   labels:
-    sample: sample
+    pdok.nl/owner-id: pdok
+    pdok.nl/dataset-id: sample
 spec:
   podSpecPatch:
     containers:
