@@ -568,7 +568,7 @@ var _ = Describe("WMS Webhook", func() {
 			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
 			Expect(err).To(Equal(getValidationError(obj, field.Forbidden(
 				field.NewPath("spec").Child("service").Child("url"),
-				"is immutable",
+				"is immutable, add the old and new urls to spec.ingressRouteUrls in order to change this field",
 			))))
 			Expect(warnings).To(BeEmpty())
 		})

@@ -1665,11 +1665,11 @@ spec:
                 - messageExpression: '''ingressRouteUrls should include service.url ''+self.service.url'
                   rule: '!has(self.ingressRouteUrls) || self.ingressRouteUrls.exists_one(x, x.url == self.service.url)'
             status:
-              description: OperatorStatus defines the observed state of an Atom/WFS/WMS/....
+              description: OperatorStatus defines the observed state of an Atom/WFS/WMS/OGCAPI/...
               properties:
                 conditions:
                   description: |-
-                    Each condition contains details for one aspect of the current state of this Atom.
+                    Each condition contains details for one aspect of the current state of this CR.
                     Known .status.conditions.type are: "Reconciled"
                   items:
                     description: Condition contains details for one aspect of the current state of this API Resource.
@@ -1729,10 +1729,10 @@ spec:
                   additionalProperties:
                     description: OperationResult is the action result of a CreateOrUpdate or CreateOrPatch call.
                     type: string
-                  description: The result of creating or updating of each derived resource for this Atom.
+                  description: The result of creating or updating of each derived resource for this CR.
                   type: object
                 podSummary:
-                  description: Summary of status of pods that belong to this resource
+                  description: Summary of status of pods that belong to this CR
                   items:
                     properties:
                       available:
