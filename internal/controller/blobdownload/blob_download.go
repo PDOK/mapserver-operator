@@ -33,7 +33,7 @@ func GetScript() string {
 	return GpkgDownloadScript
 }
 
-func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, blobsConfigName, blobsSecretName string) (*corev1.Container, error) {
+func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*corev1.Container, error) {
 	blobkeys := []string{}
 	for _, gpkg := range obj.GeoPackages() {
 		// Deduplicate blobkeys to prevent double downloads
@@ -55,10 +55,6 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images,
 				Name:  "GEOPACKAGE_DOWNLOAD_LIST",
 				Value: strings.Join(blobkeys, ";"),
 			},
-		},
-		EnvFrom: []corev1.EnvFromSource{
-			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, blobsConfigName),
-			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, blobsSecretName),
 		},
 		Resources: corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{

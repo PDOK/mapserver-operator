@@ -28,17 +28,36 @@ spec:
     minReplicas: 1
   options: {}
   podSpecPatch:
+    initContainers:
+      - name: blob-download
+        envFrom:
+          - configMapRef:
+              name: blobs-testtest
+          - secretRef:
+              name: blobs-testtest
+      - name: mapfile-generator
+        envFrom:
+          - configMapRef:
+              name: postgres-testtest
+          - secretRef:
+              name: postgres-testtest
     containers:
-    - name: mapserver
-      resources:
-        limits:
-          cpu: "2"
-          ephemeral-storage: 11G
-          memory: 500M
-        requests:
-          cpu: "1"
-          ephemeral-storage: 11G
-          memory: 250M
+      - name: mapserver
+        env:
+          - name: AZURE_STORAGE_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                key: AZURE_STORAGE_CONNECTION_STRING
+                name: blobs-testtest
+        resources:
+          limits:
+            cpu: "2"
+            ephemeral-storage: 11G
+            memory: 500M
+          requests:
+            cpu: "1"
+            ephemeral-storage: 11G
+            memory: 250M
   service:
     abstract: some "Service" abstract
     accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl

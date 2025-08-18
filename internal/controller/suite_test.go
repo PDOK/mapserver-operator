@@ -133,7 +133,7 @@ var _ = BeforeSuite(func() {
 	// Deploy blob configmap + secret
 	blobConfig := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      blobsConfigPrefix + "testtest",
+			Name:      "blobs-testtest",
 			Namespace: metav1.NamespaceDefault,
 		},
 	}
@@ -142,7 +142,7 @@ var _ = BeforeSuite(func() {
 
 	blobSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      blobsSecretPrefix + "testtest",
+			Name:      "blobs-testtest",
 			Namespace: metav1.NamespaceDefault,
 		},
 	}
@@ -152,7 +152,7 @@ var _ = BeforeSuite(func() {
 	// Deploy postgres configmap + secret
 	postgresConfig := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      postgisConfigPrefix + "testtest",
+			Name:      "postgres-testtest",
 			Namespace: metav1.NamespaceDefault,
 		},
 	}
@@ -161,7 +161,7 @@ var _ = BeforeSuite(func() {
 
 	postgresSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      postgisSecretPrefix + "testtest",
+			Name:      "postgres-testtest",
 			Namespace: metav1.NamespaceDefault,
 		},
 	}

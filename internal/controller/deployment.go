@@ -14,7 +14,6 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
-	"github.com/pdok/smooth-operator/pkg/k8s"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,13 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
-)
-
-const (
-	blobsConfigPrefix   = "blobs-"
-	blobsSecretPrefix   = "blobs-"
-	postgisConfigPrefix = "postgres-"
-	postgisSecretPrefix = "postgres-"
 )
 
 var storageClassName string
@@ -65,11 +57,6 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 		},
 	}
 
-	blobsSecret, err := k8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), blobsSecretPrefix, make(map[string]string))
-	if err != nil {
-		return err
-	}
-
 	initContainers, err := getInitContainerForDeployment(r, obj)
 	if err != nil {
 		return err
@@ -77,7 +64,7 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 	setTerminationMessage(initContainers)
 
 	images := getReconcilerImages(r)
-	containers, err := getContainers(obj, images, blobsSecret)
+	containers, err := getContainers(obj, images)
 	if err != nil {
 		return err
 	}
@@ -140,18 +127,9 @@ func getPodAnnotations(deployment *appsv1.Deployment) map[string]string {
 }
 
 func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) ([]corev1.Container, error) {
-	blobsConfig, err := k8s.GetConfigMap(getReconcilerClient(r), obj.GetNamespace(), blobsConfigPrefix, make(map[string]string))
-	if err != nil {
-		return nil, err
-	}
-
-	blobsSecret, err := k8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), blobsSecretPrefix, make(map[string]string))
-	if err != nil {
-		return nil, err
-	}
 
 	images := getReconcilerImages(r)
-	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, *images, blobsConfig.Name, blobsSecret.Name)
+	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, *images)
 	if err != nil {
 		return nil, err
 	}
@@ -166,16 +144,7 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 	}
 
 	if obj.Mapfile() == nil {
-		postgresConfig, err := k8s.GetConfigMap(getReconcilerClient(r), obj.GetNamespace(), postgisConfigPrefix, make(map[string]string))
-		if err != nil {
-			return nil, err
-		}
-
-		postgresSecret, err := k8s.GetSecret(getReconcilerClient(r), obj.GetNamespace(), postgisSecretPrefix, make(map[string]string))
-		if err != nil {
-			return nil, err
-		}
-		mapfileGeneratorInitContainer, err := mapfilegenerator.GetMapfileGeneratorInitContainer(obj, *images, postgresConfig.Name, postgresSecret.Name)
+		mapfileGeneratorInitContainer, err := mapfilegenerator.GetMapfileGeneratorInitContainer(obj, *images)
 		if err != nil {
 			return nil, err
 		}
@@ -204,8 +173,8 @@ func getInitContainerForDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O) 
 	return initContainers, nil
 }
 
-func getContainers[O pdoknlv3.WMSWFS](obj O, images *types.Images, blobsSecret *corev1.Secret) ([]corev1.Container, error) {
-	mapserverContainer, err := mapserver.GetMapserverContainer(obj, *images, blobsSecret.Name)
+func getContainers[O pdoknlv3.WMSWFS](obj O, images *types.Images) ([]corev1.Container, error) {
+	mapserverContainer, err := mapserver.GetMapserverContainer(obj, *images)
 	if err != nil {
 		return nil, err
 	}

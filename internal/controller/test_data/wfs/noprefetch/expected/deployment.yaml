@@ -52,17 +52,17 @@ spec:
     spec:
       containers:
         - env:
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  key: AZURE_STORAGE_CONNECTION_STRING
+                  name: blobs-testtest
             - name: SERVICE_TYPE
               value: WFS
             - name: MAPSERVER_CONFIG_FILE
               value: "/srv/mapserver/config/default_mapserver.conf"
             - name: MS_MAPFILE
               value: /srv/data/config/mapfile/service.map
-            - name: AZURE_STORAGE_CONNECTION_STRING
-              valueFrom:
-                secretKeyRef:
-                  key: AZURE_STORAGE_CONNECTION_STRING
-                  name: blobs-testtest
           image: test.test/image:test3
           imagePullPolicy: IfNotPresent
           terminationMessagePath: /dev/termination-log
