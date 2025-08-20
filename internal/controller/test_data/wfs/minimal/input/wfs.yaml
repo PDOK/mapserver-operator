@@ -11,8 +11,21 @@ metadata:
 spec:
   options: {}
   podSpecPatch:
+    initContainers:
+    - name: blob-download
+      envFrom:
+      - configMapRef:
+          name: blobs-testtest
+      - secretRef:
+          name: blobs-testtest
     containers:
     - name: mapserver
+      env:
+      - name: AZURE_STORAGE_CONNECTION_STRING
+        valueFrom:
+          secretKeyRef:
+            key: AZURE_STORAGE_CONNECTION_STRING
+            name: blobs-testtest
       resources:
         limits:
           ephemeral-storage: 100M

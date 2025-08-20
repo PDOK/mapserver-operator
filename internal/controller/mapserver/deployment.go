@@ -17,7 +17,7 @@ import (
 
 const mimeTextXML = "text/xml"
 
-func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, blobsSecretName string) (*corev1.Container, error) {
+func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*corev1.Container, error) {
 	livenessProbe, readinessProbe, startupProbe, err := getProbes(obj)
 	if err != nil {
 		return nil, err
@@ -38,15 +38,6 @@ func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, blobsS
 				Value: "/srv/mapserver/config/default_mapserver.conf",
 			},
 			GetMapfileEnvVar(obj),
-			{
-				Name: "AZURE_STORAGE_CONNECTION_STRING",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{Name: blobsSecretName},
-						Key:                  "AZURE_STORAGE_CONNECTION_STRING",
-					},
-				},
-			},
 		},
 		VolumeMounts: getVolumeMounts(obj.Mapfile() != nil),
 		Resources: corev1.ResourceRequirements{

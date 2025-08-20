@@ -15,7 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images, postgisConfigName, postgisSecretName string) (*corev1.Container, error) {
+func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*corev1.Container, error) {
 	initContainer := corev1.Container{
 		Name:            constants.MapfileGeneratorName,
 		Image:           images.MapfileGeneratorImage,
@@ -37,13 +37,7 @@ func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Ima
 		stylingFilesVolMount := corev1.VolumeMount{Name: constants.ConfigMapStylingFilesVolumeName, MountPath: "/styling", ReadOnly: true}
 		initContainer.VolumeMounts = append(initContainer.VolumeMounts, stylingFilesVolMount)
 	}
-	// Additional mapfile-generator configuration
-	if obj.HasPostgisData() {
-		initContainer.EnvFrom = []corev1.EnvFromSource{
-			utils.NewEnvFromSource(utils.EnvFromSourceTypeConfigMap, postgisConfigName),
-			utils.NewEnvFromSource(utils.EnvFromSourceTypeSecret, postgisSecretName),
-		}
-	}
+
 	return &initContainer, nil
 }
 

@@ -128,6 +128,11 @@ spec:
         image: patch.patch/image:patch
     initContainers:
       - name: blob-download
+        envFrom:
+          - configMapRef:
+              name: blobs-testtest
+          - secretRef:
+              name: blobs-testtest
         resources:
           requests:
             cpu: '3'

@@ -14,11 +14,24 @@ spec:
   options:
     prefetchData: false
   podSpecPatch:
+    initContainers:
+      - name: blob-download
+        envFrom:
+          - configMapRef:
+              name: blobs-testtest
+          - secretRef:
+              name: blobs-testtest
     containers:
-    - name: mapserver
-      resources:
-        limits:
-          ephemeral-storage: 100m
+      - name: mapserver
+        env:
+          - name: AZURE_STORAGE_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                key: AZURE_STORAGE_CONNECTION_STRING
+                name: blobs-testtest
+        resources:
+          limits:
+            ephemeral-storage: 100m
   service:
     prefix: dataset
     abstract: service-abstract
