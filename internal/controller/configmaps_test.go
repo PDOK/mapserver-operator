@@ -23,6 +23,7 @@ func TestMapserverConfigMaps(t *testing.T) {
 
 	expectedConfigMap := v1.ConfigMap{}
 	expectedBytes, err := os.ReadFile("test_data/wfs/complete/expected/configmap-mapserver.yaml")
+	assert.NoError(t, err)
 	err = yaml.Unmarshal(expectedBytes, &expectedConfigMap)
 	assert.NoError(t, err)
 
