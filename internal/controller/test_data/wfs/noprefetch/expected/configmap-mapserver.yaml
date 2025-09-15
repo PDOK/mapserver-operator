@@ -15,7 +15,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wfs
     service-version: v1_0
-  name: noprefetch-wfs-mapserver-mgt56bcd8d
+  name: noprefetch-wfs-mapserver-f5ch9b2bhh
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

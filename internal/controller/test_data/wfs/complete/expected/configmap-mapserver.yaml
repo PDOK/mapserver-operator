@@ -18,9 +18,9 @@ data:
 
     url.rewrite-once = (
       "/datasetOwner/dataset/theme/wfs/v1_0/legend(.*)" => "/legend$1",
-      "/datasetOwner/dataset/theme/wfs/v1_0/(.*)" => "/mapserver$1",
+      "/datasetOwner/dataset/theme/wfs/v1_0(.*)" => "/mapserver$1",
       "/other/path/legend(.*)" => "/legend$1",
-      "/other/path/(.*)" => "/mapserver$1"
+      "/other/path(.*)" => "/mapserver$1"
     )
 
     magnet.attract-raw-url-to += ( "/srv/mapserver/config/ogc.lua" )
@@ -132,7 +132,7 @@ metadata:
     service-type: wfs
     service-version: v1_0
     theme: theme
-  name: complete-wfs-mapserver-2t9g82kkt6
+  name: complete-wfs-mapserver-bfcm4d47kh
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

@@ -137,7 +137,7 @@ func updateConfigMapWithStaticFiles[O pdoknlv3.WMSWFS](configMap *corev1.ConfigM
 			rewriteRules := make([]string, 0)
 			for _, ingressRouteUrl := range ingressRouteUrls {
 				rewriteRules = append(rewriteRules, fmt.Sprintf("  \"%s/legend(.*)\" => \"/legend$1\"", ingressRouteUrl.URL.Path))
-				rewriteRules = append(rewriteRules, fmt.Sprintf("  \"%s/(.*)\" => \"/mapserver$1\"", ingressRouteUrl.URL.Path))
+				rewriteRules = append(rewriteRules, fmt.Sprintf("  \"%s(.*)\" => \"/mapserver$1\"", ingressRouteUrl.URL.Path))
 			}
 
 			content = []byte(strings.ReplaceAll(string(content), "{{ rewrite_rules }}", strings.Join(rewriteRules, ",\n")))
