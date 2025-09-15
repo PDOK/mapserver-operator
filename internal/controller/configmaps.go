@@ -117,6 +117,18 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 	configMap.Data = map[string]string{}
 
+	updateConfigMapWithStaticFiles(configMap, obj)
+
+	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, configMap, configMap); err != nil {
+		return err
+	}
+	if err := ctrl.SetControllerReference(obj, configMap, getReconcilerScheme(r)); err != nil {
+		return err
+	}
+	return smoothoperatorutils.AddHashSuffix(configMap)
+}
+
+func updateConfigMapWithStaticFiles[O pdoknlv3.WMSWFS](configMap *corev1.ConfigMap, obj O) {
 	staticFileName, contents := static.GetStaticFiles()
 	for _, name := range staticFileName {
 		content := contents[name]
@@ -132,12 +144,4 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 		}
 		configMap.Data[name] = string(content)
 	}
-
-	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, configMap, configMap); err != nil {
-		return err
-	}
-	if err := ctrl.SetControllerReference(obj, configMap, getReconcilerScheme(r)); err != nil {
-		return err
-	}
-	return smoothoperatorutils.AddHashSuffix(configMap)
 }
