@@ -312,7 +312,7 @@ spec:
         - emptyDir: {}
           name: data
         - configMap:
-            name: custom-mapfile-wms-mapserver-df94mb2d76
+            name: custom-mapfile-wms-mapserver-7hd85t8f98
             defaultMode: 420
           name: mapserver
         - configMap:

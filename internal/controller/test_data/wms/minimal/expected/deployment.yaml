@@ -330,7 +330,7 @@ spec:
         - emptyDir: {}
           name: data
         - configMap:
-            name: minimal-wms-mapserver-df94mb2d76
+            name: minimal-wms-mapserver-7hd85t8f98
             defaultMode: 420
           name: mapserver
         - configMap:

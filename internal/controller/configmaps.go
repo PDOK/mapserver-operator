@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -120,7 +121,14 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 	for _, name := range staticFileName {
 		content := contents[name]
 		if name == "include.conf" {
-			content = []byte(strings.ReplaceAll(string(content), "/{{ service_path }}", obj.URL().Path))
+			ingressRouteUrls := obj.IngressRouteURLs(true)
+			rewriteRules := make([]string, 0)
+			for _, ingressRouteUrl := range ingressRouteUrls {
+				rewriteRules = append(rewriteRules, fmt.Sprintf("  \"%s/legend(.*)\" => \"/legend$1\"", ingressRouteUrl.URL.Path))
+				rewriteRules = append(rewriteRules, fmt.Sprintf("  \"%s/(.*)\" => \"/mapserver$1\"", ingressRouteUrl.URL.Path))
+			}
+
+			content = []byte(strings.ReplaceAll(string(content), "{{ rewrite_rules }}", strings.Join(rewriteRules, ",\n")))
 		}
 		configMap.Data[name] = string(content)
 	}

@@ -15,7 +15,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wfs
     service-version: v1_0
-  name: minimal-wfs-mapserver-f5ch9b2bhh
+  name: minimal-wfs-mapserver-mgt56bcd8d
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

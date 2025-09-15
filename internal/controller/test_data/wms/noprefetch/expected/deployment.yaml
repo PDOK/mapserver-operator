@@ -326,7 +326,7 @@ spec:
         - emptyDir: {}
           name: data
         - configMap:
-            name: noprefetch-wms-mapserver-df94mb2d76
+            name: noprefetch-wms-mapserver-7hd85t8f98
             defaultMode: 420
           name: mapserver
         - configMap:

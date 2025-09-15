@@ -135,7 +135,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: minimal-wms-mapserver-df94mb2d76
+  name: minimal-wms-mapserver-7hd85t8f98
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
