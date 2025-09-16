@@ -9,7 +9,7 @@ data:
         MAP "/srv/data/config/mapfile/service.map"
       END
     END
-  include.conf: |-
+  include.conf: |
     server.modules += ( "mod_status" )
 
     $HTTP["remoteip"] =~ "^(127\.0\.0\.1|172\.(1[6-9]|2[0-9]|3[01])\.|10\.|192\.168\.)" {
@@ -18,7 +18,9 @@ data:
 
     url.rewrite-once = (
       "/datasetOwner/dataset/theme/wfs/v1_0/legend(.*)" => "/legend$1",
-      "/datasetOwner/dataset/theme/wfs/v1_0(.*)" => "/mapserver$1"
+      "/datasetOwner/dataset/theme/wfs/v1_0(.*)" => "/mapserver$1",
+      "/other/path/legend(.*)" => "/legend$1",
+      "/other/path(.*)" => "/mapserver$1"
     )
 
     magnet.attract-raw-url-to += ( "/srv/mapserver/config/ogc.lua" )
@@ -110,7 +112,7 @@ data:
             end
         end
     end
-  scraping-error.xml: |-
+  scraping-error.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
     <ows:ExceptionReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" version="2.0.0" xml:lang="en-US" xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd">
         <ows:Exception exceptionCode="InvalidParameterValue" locator="typename">
@@ -130,7 +132,7 @@ metadata:
     service-type: wfs
     service-version: v1_0
     theme: theme
-  name: complete-wfs-mapserver-4dm5625f45
+  name: complete-wfs-mapserver-bfcm4d47kh
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

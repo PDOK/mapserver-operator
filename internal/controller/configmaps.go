@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"strings"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -116,14 +117,7 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 	configMap.Data = map[string]string{}
 
-	staticFileName, contents := static.GetStaticFiles()
-	for _, name := range staticFileName {
-		content := contents[name]
-		if name == "include.conf" {
-			content = []byte(strings.ReplaceAll(string(content), "/{{ service_path }}", obj.URL().Path))
-		}
-		configMap.Data[name] = string(content)
-	}
+	updateConfigMapWithStaticFiles(configMap, obj)
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, configMap, configMap); err != nil {
 		return err
@@ -132,4 +126,22 @@ func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *cor
 		return err
 	}
 	return smoothoperatorutils.AddHashSuffix(configMap)
+}
+
+func updateConfigMapWithStaticFiles[O pdoknlv3.WMSWFS](configMap *corev1.ConfigMap, obj O) {
+	staticFileName, contents := static.GetStaticFiles()
+	for _, name := range staticFileName {
+		content := contents[name]
+		if name == "include.conf" {
+			ingressRouteUrls := obj.IngressRouteURLs(true)
+			rewriteRules := make([]string, 0)
+			for _, ingressRouteURL := range ingressRouteUrls {
+				rewriteRules = append(rewriteRules, fmt.Sprintf("  \"%s/legend(.*)\" => \"/legend$1\"", ingressRouteURL.URL.Path))
+				rewriteRules = append(rewriteRules, fmt.Sprintf("  \"%s(.*)\" => \"/mapserver$1\"", ingressRouteURL.URL.Path))
+			}
+
+			content = []byte(strings.ReplaceAll(string(content), "{{ rewrite_rules }}", strings.Join(rewriteRules, ",\n")))
+		}
+		configMap.Data[name] = string(content)
+	}
 }
