@@ -144,6 +144,7 @@ spec:
               mountPath: /patch
             - name: base
               mountPath: /srv/data
+              readOnly: true
             - name: data
               mountPath: /var/www
             - mountPath: /srv/mapserver/config/include.conf
