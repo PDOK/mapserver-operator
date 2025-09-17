@@ -27,7 +27,7 @@ func GetFeatureinfoGeneratorInitContainer(images types.Images) (*corev1.Containe
 			"feature-info",
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			utils.GetBaseVolumeMount(),
+			utils.GetBaseVolumeMount(false),
 			utils.GetConfigVolumeMount(constants.ConfigMapFeatureinfoGeneratorVolumeName),
 		},
 	}

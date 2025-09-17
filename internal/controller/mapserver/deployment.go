@@ -63,7 +63,7 @@ func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*core
 
 func getVolumeMounts(customMapfile bool) []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
-		utils.GetBaseVolumeMount(),
+		utils.GetBaseVolumeMount(true),
 		utils.GetDataVolumeMount(),
 	}
 
