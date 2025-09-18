@@ -63,7 +63,7 @@ func GetBlobDownloadInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Images)
 		},
 		Command: []string{"/bin/sh", "-c"},
 		VolumeMounts: []corev1.VolumeMount{
-			utils.GetBaseVolumeMount(),
+			utils.GetBaseVolumeMount(false),
 			utils.GetDataVolumeMount(),
 		},
 	}
