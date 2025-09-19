@@ -28,7 +28,7 @@ func GetMapfileGeneratorInitContainer[O pdoknlv3.WMSWFS](obj O, images types.Ima
 			"/srv/data/config/mapfile",
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			utils.GetBaseVolumeMount(false),
+			utils.GetBaseVolumeMount(),
 			utils.GetConfigVolumeMount(constants.ConfigMapMapfileGeneratorVolumeName),
 		},
 	}

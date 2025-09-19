@@ -122,7 +122,7 @@ spec:
           volumeMounts:
             - mountPath: /srv/data
               name: base
-              readOnly: true
+              readOnly: false
             - mountPath: /var/www
               name: data
               readOnly: false
@@ -241,7 +241,7 @@ spec:
           name: mapserver
         - configMap:
             defaultMode: 511
-            name: minimal-wfs-init-scripts-fft29bbtdd
+            name: minimal-wfs-init-scripts-f8k8ffgmgh
           name: init-scripts
         - configMap:
             name: minimal-wfs-capabilities-generator-m46924mtk7

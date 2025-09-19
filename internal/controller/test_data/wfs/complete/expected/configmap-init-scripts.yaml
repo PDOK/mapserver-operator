@@ -179,7 +179,7 @@ metadata:
     service-type: wfs
     service-version: v1_0
     theme: theme
-  name: complete-wfs-init-scripts-fft29bbtdd
+  name: complete-wfs-init-scripts-f8k8ffgmgh
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

@@ -41,8 +41,8 @@ func NewEnvFromSource(t EnvFromSourceType, name string) corev1.EnvFromSource {
 	}
 }
 
-func GetBaseVolumeMount(readOnly bool) corev1.VolumeMount {
-	return corev1.VolumeMount{Name: constants.BaseVolumeName, MountPath: "/srv/data", ReadOnly: readOnly}
+func GetBaseVolumeMount() corev1.VolumeMount {
+	return corev1.VolumeMount{Name: constants.BaseVolumeName, MountPath: "/srv/data"}
 }
 
 func GetDataVolumeMount() corev1.VolumeMount {
