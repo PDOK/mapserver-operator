@@ -103,6 +103,8 @@ function download() {
         echo "No hash found for $file in blob storage, skipping checksum."
     fi
 
+    # After successful download set the GPKG to readonly
+    chmod -wx $file
     echo "done"
 }
 
