@@ -40,7 +40,7 @@ exit $exit_code;
 `,
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			utils.GetBaseVolumeMount(false),
+			utils.GetBaseVolumeMount(),
 			utils.GetDataVolumeMount(),
 			{Name: constants.MapserverName, MountPath: "/srv/mapserver/config/default_mapserver.conf", SubPath: "default_mapserver.conf"},
 		},

@@ -1,7 +1,7 @@
 volumeMounts:
 - mountPath: /srv/data
   name: base
-  readOnly: true
+  readOnly: false
 - mountPath: /var/www
   name: data
 - mountPath: /srv/mapserver/config/include.conf

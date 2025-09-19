@@ -113,7 +113,7 @@ spec:
         volumeMounts:
           - mountPath: /srv/data/patch
             name: base
-            readOnly: true
+            readOnly: false
           - mountPath: /var/www/patch
             name: data
             readOnly: false

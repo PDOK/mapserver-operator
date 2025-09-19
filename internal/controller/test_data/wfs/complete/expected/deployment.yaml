@@ -126,7 +126,7 @@ spec:
           volumeMounts:
             - mountPath: /srv/data
               name: base
-              readOnly: true
+              readOnly: false
             - mountPath: /var/www
               name: data
               readOnly: false

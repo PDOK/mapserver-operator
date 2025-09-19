@@ -135,7 +135,7 @@ spec:
           volumeMounts:
             - mountPath: /srv/data/patch
               name: base
-              readOnly: true
+              readOnly: false
             - mountPath: /var/www/patch
               name: data
               readOnly: false
@@ -144,7 +144,7 @@ spec:
               mountPath: /patch
             - name: base
               mountPath: /srv/data
-              readOnly: true
+              readOnly: false
             - name: data
               mountPath: /var/www
             - mountPath: /srv/mapserver/config/include.conf
