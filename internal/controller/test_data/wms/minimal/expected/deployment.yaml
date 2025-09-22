@@ -131,7 +131,7 @@ spec:
           volumeMounts:
             - mountPath: /srv/data
               name: base
-              readOnly: true
+              readOnly: false
             - mountPath: /var/www
               name: data
               readOnly: false
@@ -339,7 +339,7 @@ spec:
           name: ogc-webservice-proxy-config
         - configMap:
             defaultMode: 511
-            name: minimal-wms-init-scripts-fft29bbtdd
+            name: minimal-wms-init-scripts-f8k8ffgmgh
           name: init-scripts
         - configMap:
             name: minimal-wms-capabilities-generator-865bt77thd

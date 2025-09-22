@@ -178,7 +178,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: custom-mapfile-wms-init-scripts-fft29bbtdd
+  name: custom-mapfile-wms-init-scripts-f8k8ffgmgh
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
