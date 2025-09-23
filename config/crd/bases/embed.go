@@ -15,8 +15,7 @@ var wfsCRD []byte
 var wmsCRD []byte
 
 func init() {
-	wms := v1.CustomResourceDefinition{}
-	err := yaml.Unmarshal(wmsCRD, &wms)
+	wms, err := GetWmsCRD()
 	if err != nil {
 		panic(err)
 	}
@@ -26,8 +25,7 @@ func init() {
 		panic(err)
 	}
 
-	wfs := v1.CustomResourceDefinition{}
-	err = yaml.Unmarshal(wfsCRD, &wfs)
+	wfs, err := GetWfsCRD()
 	if err != nil {
 		panic(err)
 	}
@@ -36,4 +34,18 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func GetWmsCRD() (v1.CustomResourceDefinition, error) {
+	crd := v1.CustomResourceDefinition{}
+	err := yaml.Unmarshal(wmsCRD, &crd)
+
+	return crd, err
+}
+
+func GetWfsCRD() (v1.CustomResourceDefinition, error) {
+	crd := v1.CustomResourceDefinition{}
+	err := yaml.Unmarshal(wfsCRD, &crd)
+
+	return crd, err
 }
