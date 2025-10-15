@@ -25,5 +25,3 @@ go.work
 *.swp
 *.swo
 *~
-
-prod-manifests/
