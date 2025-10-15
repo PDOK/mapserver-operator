@@ -53,16 +53,7 @@ import (
 )
 
 const (
-	defaultMultitoolImage             = "acrpdokprodman.azurecr.io/pdok/docker-multitool:0.9.4"
-	defaultMapfileGeneratorImage      = "acrpdokprodman.azurecr.io/pdok/mapfile-generator:1.9.5"
-	defaultMapserverImage             = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/mapserver:8.4.1-rc1-nl"
-	defaultCapabilitiesGeneratorImage = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/ogc-capabilities-generator:1.0.1"
-	defaultFeatureinfoGeneratorImage  = "acrpdokprodman.azurecr.io/mirror/docker.io/pdok/featureinfo-generator:1.4.0"
-	defaultOgcWebserviceProxyImage    = "acrpdokprodman.azurecr.io/pdok/ogc-webservice-proxy:0.1.8"
-	defaultApacheExporterImage        = "acrpdokprodman.azurecr.io/mirror/docker.io/lusotycoon/apache-exporter:v0.7.0"
-
 	EnvFalse = "false"
-	EnvTrue  = "true"
 )
 
 var (
@@ -106,13 +97,13 @@ func main() {
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
 	flag.StringVar(&host, "baseurl", "", "The host which is used in the mapserver service.")
-	flag.StringVar(&multitoolImage, "multitool-image", defaultMultitoolImage, "The image to use in the blob download init-container.")
-	flag.StringVar(&mapfileGeneratorImage, "mapfile-generator-image", defaultMapfileGeneratorImage, "The image to use in the mapfile generator init-container.")
-	flag.StringVar(&mapserverImage, "mapserver-image", defaultMapserverImage, "The image to use in the mapserver container.")
-	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", defaultCapabilitiesGeneratorImage, "The image to use in the capabilities generator init-container.")
-	flag.StringVar(&featureinfoGeneratorImage, "featureinfo-generator-image", defaultFeatureinfoGeneratorImage, "The image to use in the featureinfo generator init-container.")
-	flag.StringVar(&ogcWebserviceProxyImage, "ogc-webservice-proxy-image", defaultOgcWebserviceProxyImage, "The image to use in the ogc webservice proxy container.")
-	flag.StringVar(&apacheExporterImage, "apache-exporter-image", defaultApacheExporterImage, "The image to use in the apache-exporter container.")
+	flag.StringVar(&multitoolImage, "multitool-image", "", "The image to use in the blob download init-container.")
+	flag.StringVar(&mapfileGeneratorImage, "mapfile-generator-image", "", "The image to use in the mapfile generator init-container.")
+	flag.StringVar(&mapserverImage, "mapserver-image", "", "The image to use in the mapserver container.")
+	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", "", "The image to use in the capabilities generator init-container.")
+	flag.StringVar(&featureinfoGeneratorImage, "featureinfo-generator-image", "", "The image to use in the featureinfo generator init-container.")
+	flag.StringVar(&ogcWebserviceProxyImage, "ogc-webservice-proxy-image", "", "The image to use in the ogc webservice proxy container.")
+	flag.StringVar(&apacheExporterImage, "apache-exporter-image", "", "The image to use in the apache-exporter container.")
 	flag.IntVar(&mapserverDebugLevel, "mapserver-debug-level", 0, "Debug level for the mapserver container, between 0 (error only) and 5 (very very verbose).")
 	flag.StringVar(&slackWebhookURL, "slack-webhook-url", "", "The webhook url for sending slack messages. Disabled if left empty")
 	flag.IntVar(&logLevel, "log-level", 0, "The zapcore loglevel. 0 = info, 1 = warn, 2 = error")
@@ -135,9 +126,21 @@ func main() {
 	logrLogger := zapr.NewLogger(zapLogger)
 	ctrl.SetLogger(logrLogger)
 
-	if host == "" {
-		setupLog.Error(errors.New("baseURL is required"), "A value for baseURL must be specified.")
-		os.Exit(1)
+	reqFlags := make(map[string]string)
+	reqFlags["baseurl"] = host
+	reqFlags["multitool-image"] = multitoolImage
+	reqFlags["mapfile-generator-image"] = mapfileGeneratorImage
+	reqFlags["mapserver-image"] = mapserverImage
+	reqFlags["capabilities-generator-image"] = capabilitiesGeneratorImage
+	reqFlags["featureinfo-generator-image"] = featureinfoGeneratorImage
+	reqFlags["ogc-webservice-proxy-image"] = ogcWebserviceProxyImage
+	reqFlags["apache-exporter-image"] = apacheExporterImage
+
+	for reqFlag, val := range reqFlags {
+		if val == "" {
+			setupLog.Error(errors.New(reqFlag+" is a required flag"), "A value for "+reqFlag+" must be specified.")
+			os.Exit(1)
+		}
 	}
 
 	pdoknlv3.SetHost(host)
@@ -179,7 +182,7 @@ func main() {
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
+		// speeds up voluntary leader transitions as the new leader don"t have to wait
 		// LeaseDuration time first.
 		//
 		// In the default scaffold provided, the program ends immediately after
