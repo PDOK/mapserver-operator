@@ -28,6 +28,7 @@ SOFTWARE.
 package v3
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
@@ -41,4 +42,14 @@ var (
 
 	// AddToScheme adds the types in this group-version to the given scheme.
 	AddToScheme = SchemeBuilder.AddToScheme
+
+	TypeMetaWFS = metav1.TypeMeta{
+		Kind:       "WFS",
+		APIVersion: GroupVersion.String(),
+	}
+
+	TypeMetaWMS = metav1.TypeMeta{
+		Kind:       "WMS",
+		APIVersion: GroupVersion.String(),
+	}
 )
