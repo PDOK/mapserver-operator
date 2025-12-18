@@ -1,4 +1,4 @@
-apiVersion: pdok.nl/v2beta1
+apiVersion: pdok.nl/v3
 kind: WMS
 metadata:
   annotations:
