@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/pdok/mapserver-operator/api/v2beta1"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
 
@@ -74,13 +73,9 @@ func testWMS(t *testing.T, filenameWithoutExt string) {
 
 	input, err := os.ReadFile("test_data/input/" + filenameWithoutExt + ".yaml")
 	assert.NoError(t, err)
-	v2wms := &v2beta1.WMS{}
-	err = yaml.Unmarshal(input, v2wms)
-	assert.NoError(t, err)
 	var wms pdoknlv3.WMS
-	err = v2wms.ToV3(&wms)
+	err = yaml.Unmarshal(input, &wms)
 	assert.NoError(t, err)
-
 	inputStruct, err := MapWMSToMapfileGeneratorInput(&wms, ownerInfo)
 	assert.NoError(t, err)
 	expected, err := readExpectedWMS(filenameWithoutExt + ".json")

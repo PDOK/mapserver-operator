@@ -1,30 +1,39 @@
-apiVersion: pdok.nl/v2beta1
+apiVersion: pdok.nl/v3
 kind: WMS
 metadata:
-  name: v1-0 # name set with namePrefix in base/kustomization.yaml
+  annotations:
+    pdok.nl/wms-service-metadata-uuid: fa069f74-9837-4d63-b2ac-b337b5de86b1
+  creationTimestamp: null
   labels:
     dataset: terugmeldingen
     dataset-owner: brt
-    service-version: v1_0
     service-type: wms
+    service-version: v1_0
+  name: v1-0
 spec:
-  general:
-    datasetOwner: brt
-    dataset: terugmeldingen
-    serviceVersion: v1_0
-  kubernetes:
-    resources:
-      limits:
-        ephemeralStorage: 20Mi
   options:
     automaticCasing: true
     disableWebserviceProxy: false
     includeIngress: true
+    prefetchData: true
+    rewriteGroupToDataLayers: false
+    validateChildStyleNameEqual: false
     validateRequests: true
+  podSpecPatch:
+    containers:
+      - name: mapserver
+        resources:
+          limits:
+            ephemeral-storage: 20Mi
   service:
-    inspire: false
-    title: BRT Terugmeldingen WMS
-    abstract: De BRT terugmeldingenservice bevat alle recente meldingen op BRT objecten waar twijfel over de juistheid bestaat. Zowel terugmeldingen op de TOP10 als meldingen die gemaakt zijn op de gegeneraliseerde kaartproducten (TOP25, TOP50, TOP100, TOP250) worden hierin geregistreerd. Daarnaast kan je de inhoud en status van de meldingen inzien. Ook een vermoedelijke fout geconstateerd? Doe een melding op https://verbeterdekaart.kadaster.nl
+    abstract: De BRT terugmeldingenservice bevat alle recente meldingen op BRT objecten
+      waar twijfel over de juistheid bestaat. Zowel terugmeldingen op de TOP10 als
+      meldingen die gemaakt zijn op de gegeneraliseerde kaartproducten (TOP25, TOP50,
+      TOP100, TOP250) worden hierin geregistreerd. Daarnaast kan je de inhoud en status
+      van de meldingen inzien. Ook een vermoedelijke fout geconstateerd? Doe een melding
+      op https://verbeterdekaart.kadaster.nl
+    accessConstraints: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
+    dataEPSG: EPSG:28992
     keywords:
       - Basisregistratie Topografie
       - BRT
@@ -37,18 +46,128 @@ spec:
       - in onderzoek register
       - verbeter de kaart
       - verbeterdekaart
-    metadataIdentifier: fa069f74-9837-4d63-b2ac-b337b5de86b1
-    authority:
-      name: brt
-      url: http://www.brt.nl
-    dataEPSG: EPSG:28992
-    extent: -7000 289000 300000 629000
+    layer:
+      abstract: De BRT terugmeldingenservice bevat alle recente meldingen op BRT objecten
+        waar twijfel over de juistheid bestaat. Zowel terugmeldingen op de TOP10 als
+        meldingen die gemaakt zijn op de gegeneraliseerde kaartproducten (TOP25, TOP50,
+        TOP100, TOP250) worden hierin geregistreerd. Daarnaast kan je de inhoud en
+        status van de meldingen inzien. Ook een vermoedelijke fout geconstateerd?
+        Doe een melding op https://verbeterdekaart.kadaster.nl
+      boundingBoxes:
+        - bbox:
+            maxx: "300000"
+            maxy: "629000"
+            minx: "-7000"
+            miny: "289000"
+          crs: EPSG:28992
+        - bbox:
+            maxx: "795163"
+            maxy: "6181970"
+            minx: "-470271"
+            miny: "5562310"
+          crs: EPSG:25831
+        - bbox:
+            maxx: "397827"
+            maxy: "6190420"
+            minx: "62461.6"
+            miny: "5565550"
+          crs: EPSG:25832
+        - bbox:
+            maxx: "3220070"
+            maxy: "3840030"
+            minx: "2613360"
+            miny: "3509000"
+          crs: EPSG:3034
+        - bbox:
+            maxx: "3644850"
+            maxy: "4155860"
+            minx: "3016760"
+            miny: "3812640"
+          crs: EPSG:3035
+        - bbox:
+            maxx: "820873"
+            maxy: "7503110"
+            minx: "281318"
+            miny: "6483220"
+          crs: EPSG:3857
+        - bbox:
+            maxx: "55.7212"
+            maxy: "7.37403"
+            minx: "50.2129"
+            miny: "2.52713"
+          crs: EPSG:4258
+        - bbox:
+            maxx: "55.7212"
+            maxy: "7.37403"
+            minx: "50.2129"
+            miny: "2.52713"
+          crs: EPSG:4326
+        - bbox:
+            maxx: "7.37403"
+            maxy: "55.7212"
+            minx: "2.52713"
+            miny: "50.2129"
+          crs: CRS:84
+      keywords:
+        - Basisregistratie Topografie
+        - BRT
+        - terugmeldingen
+        - TOP10NL
+        - TOP25
+        - TOP50
+        - TOP100
+        - TOP250
+        - in onderzoek register
+        - verbeter de kaart
+        - verbeterdekaart
+      layers:
+        - abstract: Alle recente BRT terugmeldingen gedaan door BRT gebruikers.
+          authority:
+            name: brt
+            spatialDatasetIdentifier: 07c7d650-cdb1-11dd-ad8b-0800200c9a60
+            url: http://www.brt.nl
+          boundingBoxes:
+            - bbox:
+                maxx: "300000"
+                maxy: "629000"
+                minx: "-7000"
+                miny: "289000"
+              crs: EPSG:28992
+          data:
+            postgis:
+              columns:
+                - name: meldingsnummer_volledig
+                - name: tijdstip_registratie
+                - name: status
+                - name: omschrijving
+                - name: bronhoudercode
+                - name: bronhoudernaam
+                - name: tijdstip_statuswijziging
+                - name: toelichting
+                - name: objectid
+                - name: objecttype
+                - name: hoogte_vanaf_maaiveld
+              geometryType: Point
+              tableName: brtterugmeldingen.brtterugmeldingen_v1
+          datasetMetadataUrl:
+            csw:
+              metadataIdentifier: 7a84c4de-4ec0-4202-a8d0-792fb7d39d1f
+          keywords:
+            - brtterugmeldingen
+          name: brtterugmeldingen
+          styles:
+            - legend:
+                blobKey: ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/terugmeldingen-legend.png
+              name: brtterugmeldingen:terugmeldingen
+              title: Terugmeldingen
+              visualization: terugmeldingen.style
+          title: BRT Terugmeldingen
+          visible: true
+      title: BRT Terugmeldingen WMS
+      visible: true
+    ownerInfoRef: pdok
+    prefix: terugmeldingen
     stylingAssets:
-      configMapRefs:
-        - name: includes
-          keys:
-            - terugmeldingen.symbol
-            - terugmeldingen.style
       blobKeys:
         - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/afgerond-blauw.png
         - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/afgewezen-rood.png
@@ -57,34 +176,10 @@ spec:
         - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/goedgekeurd-groen.png
         - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/nieuw-geel.png
         - ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/onderzoek-oranje.png
-    layers:
-      - name: brtterugmeldingen
-        visible: true
-        title: BRT Terugmeldingen
-        abstract: Alle recente BRT terugmeldingen gedaan door BRT gebruikers.
-        keywords:
-          - brtterugmeldingen
-        datasetMetadataIdentifier: 7a84c4de-4ec0-4202-a8d0-792fb7d39d1f
-        sourceMetadataIdentifier: 07c7d650-cdb1-11dd-ad8b-0800200c9a60
-        styles:
-          - title: Terugmeldingen
-            name: brtterugmeldingen:terugmeldingen
-            visualization: terugmeldingen.style
-            legendFile:
-              blobKey: ${BLOBS_RESOURCES_BUCKET}/images/terugmeldingen/terugmeldingen-legend.png
-        data:
-          postgis:
-            table: brtterugmeldingen.brtterugmeldingen_v1
-            geometryType: Point
-            columns:
-              - meldingsnummer_volledig
-              - tijdstip_registratie
-              - status
-              - omschrijving
-              - bronhoudercode
-              - bronhoudernaam
-              - tijdstip_statuswijziging
-              - toelichting
-              - objectid
-              - objecttype
-              - hoogte_vanaf_maaiveld
+      configMapRefs:
+        - keys:
+            - terugmeldingen.symbol
+            - terugmeldingen.style
+          name: includes
+    title: BRT Terugmeldingen WMS
+    url: https://service.pdok.nl/brt/terugmeldingen/wms/v1_0
