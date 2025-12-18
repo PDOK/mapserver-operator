@@ -255,7 +255,7 @@ type TIF struct {
 	// results in slower web responses, optional
 	// +kubebuilder:validation:Pattern="^-?[0-9]+([.][0-9]*)?$"
 	// +kubebuilder:default=2.5
-	OversampleRatio string `json:"oversample_ratio,omitempty"`
+	OversampleRatio string `json:"oversampleRatio,omitempty"`
 
 	// Sets the color index to treat as transparent for raster layers, optional, hex or rgb
 	// +kubebuilder:validation:Pattern=`(#[0-9A-F]{6}([0-9A-F]{2})?)|([0-9]{1,3}\s[0-9]{1,3}\s[0-9]{1,3})`
