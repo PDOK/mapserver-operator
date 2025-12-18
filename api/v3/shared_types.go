@@ -254,7 +254,7 @@ type TIF struct {
 	// Controls the smoothing of the image on a certain point. Bigger value gives a smoother/better picture but
 	// results in slower web responses, optional
 	// +kubebuilder:validation:Pattern="^-?[0-9]+([.][0-9]*)?$"
-	// +kubebuilder:default=2.5
+	// +kubebuilder:default="2.5"
 	OversampleRatio string `json:"oversampleRatio,omitempty"`
 
 	// Sets the color index to treat as transparent for raster layers, optional, hex or rgb
