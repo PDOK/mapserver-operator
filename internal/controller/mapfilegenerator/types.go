@@ -53,22 +53,23 @@ type WMSInput struct {
 
 //nolint:tagliatelle
 type BaseLayer struct {
-	Name           string   `json:"name"`
-	Title          string   `json:"title"`
-	Abstract       string   `json:"abstract"`
-	Keywords       string   `json:"keywords"`
-	Extent         string   `json:"layer_extent"`
-	MetadataID     string   `json:"dataset_metadata_id"`
-	Columns        []Column `json:"columns,omitempty"`
-	GeometryType   *string  `json:"geometry_type,omitempty"`
-	GeopackagePath *string  `json:"gpkg_path,omitempty"`
-	TableName      *string  `json:"tablename,omitempty"`
-	Postgis        *bool    `json:"postgis,omitempty"`
-	MinScale       *string  `json:"minscale,omitempty"`
-	MaxScale       *string  `json:"maxscale,omitempty"`
-	TifPath        *string  `json:"tif_path,omitempty"`
-	Resample       *string  `json:"resample,omitempty"`
-	LabelNoClip    bool     `json:"label_no_clip,omitempty"`
+	Name            string   `json:"name"`
+	Title           string   `json:"title"`
+	Abstract        string   `json:"abstract"`
+	Keywords        string   `json:"keywords"`
+	Extent          string   `json:"layer_extent"`
+	MetadataID      string   `json:"dataset_metadata_id"`
+	Columns         []Column `json:"columns,omitempty"`
+	GeometryType    *string  `json:"geometry_type,omitempty"`
+	GeopackagePath  *string  `json:"gpkg_path,omitempty"`
+	TableName       *string  `json:"tablename,omitempty"`
+	Postgis         *bool    `json:"postgis,omitempty"`
+	MinScale        *string  `json:"minscale,omitempty"`
+	MaxScale        *string  `json:"maxscale,omitempty"`
+	TifPath         *string  `json:"tif_path,omitempty"`
+	Resample        *string  `json:"resample,omitempty"`
+	OversampleRatio *string  `json:"oversample_ratio,omitempty"`
+	LabelNoClip     bool     `json:"label_no_clip,omitempty"`
 }
 
 type WFSLayer struct {
@@ -124,6 +125,7 @@ func SetDataFields[O pdoknlv3.WMSWFS](obj O, wmsLayer *WMSLayer, data pdoknlv3.D
 			wmsLayer.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join("/vsiaz", reReplace.ReplaceAllString(tif.BlobKey, "")))
 		}
 		wmsLayer.BaseLayer.Resample = &tif.Resample
+		wmsLayer.BaseLayer.OversampleRatio = &tif.OversampleRatio
 		wmsLayer.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
 		wmsLayer.GetFeatureInfoIncludesClass = &tif.GetFeatureInfoIncludesClass
 	case data.Postgis != nil:
