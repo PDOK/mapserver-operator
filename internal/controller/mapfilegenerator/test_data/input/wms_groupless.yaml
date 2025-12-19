@@ -1,51 +1,56 @@
-apiVersion: pdok.nl/v2beta1
+apiVersion: pdok.nl/v3
 kind: WMS
 metadata:
-  name: rws-nwbwegen-v1-0
-  labels:
-    dataset-owner: rws
-    dataset: nwbwegen
-    service-version: v1_0
-    service-type: wms
   annotations:
     lifecycle-phase: prod
     service-bundle-id: b39c152b-393b-52f5-a50c-e1ffe904b6fb
-spec:
-  general:
-    datasetOwner: rws
+  creationTimestamp: null
+  labels:
     dataset: nwbwegen
-    serviceVersion: v1_0
-  kubernetes:
-    healthCheck:
-      boundingbox: 135134.89,457152.55,135416.03,457187.82
-    resources:
-      limits:
-        ephemeralStorage: 1535Mi
-        memory: 4G
-      requests:
-        cpu: 2000m
-        ephemeralStorage: 1535Mi
-        memory: 4G
+    dataset-owner: rws
+    service-type: wms
+    service-version: v1_0
+  name: rws-nwbwegen-v1-0
+spec:
+  healthCheck:
+    boundingbox:
+      maxx: "135416.03"
+      maxy: "457187.82"
+      minx: "135134.89"
+      miny: "457152.55"
   options:
     automaticCasing: true
     disableWebserviceProxy: false
     includeIngress: true
+    prefetchData: true
+    rewriteGroupToDataLayers: false
+    validateChildStyleNameEqual: false
     validateRequests: true
+  podSpecPatch:
+    containers:
+      - name: mapserver
+        resources:
+          limits:
+            ephemeral-storage: 1535Mi
+            memory: 4G
+          requests:
+            cpu: "2"
+            ephemeral-storage: 1535Mi
+            memory: 4G
   service:
-    title: NWB - Wegen WMS
-    abstract:
-      Dit is de web map service van het Nationaal Wegen Bestand (NWB) - wegen.
+    abstract: Dit is de web map service van het Nationaal Wegen Bestand (NWB) - wegen.
       Deze dataset bevat alleen de wegvakken en hectometerpunten. Het Nationaal Wegen
       Bestand - Wegen is een digitaal geografisch bestand van alle wegen in Nederland.
       Opgenomen zijn alle wegen die worden beheerd door wegbeheerders als het Rijk,
       provincies, gemeenten en waterschappen, echter alleen voor zover deze zijn voorzien
       van een straatnaam of nummer.
-    authority:
-      name: rws
-      url: https://www.rijkswaterstaat.nl
+    accessConstraints: https://creativecommons.org/publicdomain/zero/1.0/deed.nl
     dataEPSG: EPSG:28992
-    extent: -59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961
-    inspire: true
+    inspire:
+      language: dut
+      serviceMetadataUrl:
+        csw:
+          metadataIdentifier: f2437a92-ddd3-4777-a1bc-fdf4b4a7fcb8
     keywords:
       - Vervoersnetwerken
       - Menselijke gezondheid en veiligheid
@@ -57,137 +62,237 @@ spec:
       - Hectometerpunten
       - HVD
       - Mobiliteit
+    layer:
+      abstract: Dit is de web map service van het Nationaal Wegen Bestand (NWB) -
+        wegen. Deze dataset bevat alleen de wegvakken en hectometerpunten. Het Nationaal
+        Wegen Bestand - Wegen is een digitaal geografisch bestand van alle wegen in
+        Nederland. Opgenomen zijn alle wegen die worden beheerd door wegbeheerders
+        als het Rijk, provincies, gemeenten en waterschappen, echter alleen voor zover
+        deze zijn voorzien van een straatnaam of nummer.
+      boundingBoxes:
+        - bbox:
+            maxx: "308126.88473339565"
+            maxy: "858328.516489961"
+            minx: "-59188.44333693248"
+            miny: "304984.64144318487"
+          crs: EPSG:28992
+        - bbox:
+            maxx: "795163"
+            maxy: "6181970"
+            minx: "-470271"
+            miny: "5562310"
+          crs: EPSG:25831
+        - bbox:
+            maxx: "397827"
+            maxy: "6190420"
+            minx: "62461.6"
+            miny: "5565550"
+          crs: EPSG:25832
+        - bbox:
+            maxx: "3220070"
+            maxy: "3840030"
+            minx: "2613360"
+            miny: "3509000"
+          crs: EPSG:3034
+        - bbox:
+            maxx: "3644850"
+            maxy: "4155860"
+            minx: "3016760"
+            miny: "3812640"
+          crs: EPSG:3035
+        - bbox:
+            maxx: "820873"
+            maxy: "7503110"
+            minx: "281318"
+            miny: "6483220"
+          crs: EPSG:3857
+        - bbox:
+            maxx: "55.7212"
+            maxy: "7.37403"
+            minx: "50.2129"
+            miny: "2.52713"
+          crs: EPSG:4258
+        - bbox:
+            maxx: "55.7212"
+            maxy: "7.37403"
+            minx: "50.2129"
+            miny: "2.52713"
+          crs: EPSG:4326
+        - bbox:
+            maxx: "7.37403"
+            maxy: "55.7212"
+            minx: "2.52713"
+            miny: "50.2129"
+          crs: CRS:84
+      keywords:
+        - Vervoersnetwerken
+        - Menselijke gezondheid en veiligheid
+        - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
+        - Nationaal
+        - Voertuigen
+        - Verkeer
+        - Wegvakken
+        - Hectometerpunten
+        - HVD
+        - Mobiliteit
+      layers:
+        - abstract: Deze laag bevat de wegvakken uit het Nationaal Wegen bestand (NWB)
+            en geeft gedetailleerde informatie per wegvak zoals straatnaam, wegnummer,
+            routenummer, wegbeheerder, huisnummers, enz. weer.
+          authority:
+            name: rws
+            spatialDatasetIdentifier: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff
+            url: https://www.rijkswaterstaat.nl
+          boundingBoxes:
+            - bbox:
+                maxx: "308126.88473339565"
+                maxy: "858328.516489961"
+                minx: "-59188.44333693248"
+                miny: "304984.64144318487"
+              crs: EPSG:28992
+          data:
+            gpkg:
+              blobKey: geopackages/rws/nwbwegen/410a6d1e-e767-41b4-ba8d-9e1e955dd013/1/nwb_wegen.gpkg
+              columns:
+                - name: objectid
+                - name: wvk_id
+                - name: wvk_begdat
+                - name: jte_id_beg
+                - name: jte_id_end
+                - name: wegbehsrt
+                - name: wegnummer
+                - name: wegdeelltr
+                - name: hecto_lttr
+                - name: bst_code
+                - name: rpe_code
+                - name: admrichtng
+                - name: rijrichtng
+                - name: stt_naam
+                - name: stt_bron
+                - name: wpsnaam
+                - name: gme_id
+                - name: gme_naam
+                - name: hnrstrlnks
+                - name: hnrstrrhts
+                - name: e_hnr_lnks
+                - name: e_hnr_rhts
+                - name: l_hnr_lnks
+                - name: l_hnr_rhts
+                - name: begafstand
+                - name: endafstand
+                - name: beginkm
+                - name: eindkm
+                - name: pos_tv_wol
+                - name: wegbehcode
+                - name: wegbehnaam
+                - name: distrcode
+                - name: distrnaam
+                - name: dienstcode
+                - name: dienstnaam
+                - name: wegtype
+                - name: wgtype_oms
+                - name: routeltr
+                - name: routenr
+                - name: routeltr2
+                - name: routenr2
+                - name: routeltr3
+                - name: routenr3
+                - name: routeltr4
+                - name: routenr4
+                - name: wegnr_aw
+                - name: wegnr_hmp
+                - name: geobron_id
+                - name: geobron_nm
+                - name: bronjaar
+                - name: openlr
+                - name: bag_orl
+                - name: frc
+                - name: fow
+                - name: alt_naam
+                - name: alt_nr
+                - name: rel_hoogte
+                - name: st_lengthshape
+              geometryType: MultiLineString
+              tableName: wegvakken
+          datasetMetadataUrl:
+            csw:
+              metadataIdentifier: a9b7026e-0a81-4813-93bd-ba49e6f28502
+          keywords:
+            - Vervoersnetwerken
+            - Menselijke gezondheid en veiligheid
+            - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
+            - Nationaal
+            - Voertuigen
+            - Verkeer
+            - Wegvakken
+          maxscaledenominator: "50000"
+          minscaledenominator: "1"
+          name: wegvakken
+          styles:
+            - name: wegvakken
+              title: NWB - Wegvakken
+              visualization: wegvakken.style
+          title: Wegvakken
+          visible: true
+        - abstract: Deze laag bevat de hectopunten uit het Nationaal Wegen Bestand (NWB)
+            en geeft gedetailleerde informatie per hectopunt zoals hectometrering, afstand,
+            zijde en hectoletter weer.
+          authority:
+            name: rws
+            spatialDatasetIdentifier: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff
+            url: https://www.rijkswaterstaat.nl
+          boundingBoxes:
+            - bbox:
+                maxx: "308126.88473339565"
+                maxy: "858328.516489961"
+                minx: "-59188.44333693248"
+                miny: "304984.64144318487"
+              crs: EPSG:28992
+          data:
+            gpkg:
+              blobKey: geopackages/rws/nwbwegen/410a6d1e-e767-41b4-ba8d-9e1e955dd013/1/nwb_wegen.gpkg
+              columns:
+                - name: objectid
+                - name: hectomtrng
+                - name: afstand
+                - name: wvk_id
+                - name: wvk_begdat
+                - name: zijde
+                - name: hecto_lttr
+              geometryType: MultiPoint
+              tableName: hectopunten
+          datasetMetadataUrl:
+            csw:
+              metadataIdentifier: a9b7026e-0a81-4813-93bd-ba49e6f28502
+          keywords:
+            - Vervoersnetwerken
+            - Menselijke gezondheid en veiligheid
+            - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
+            - Nationaal
+            - Voertuigen
+            - Verkeer
+            - Hectometerpunten
+          maxscaledenominator: "50000"
+          minscaledenominator: "1"
+          name: hectopunten
+          styles:
+            - name: hectopunten
+              title: NWB - Hectopunten
+              visualization: hectopunten.style
+          title: Hectopunten
+          visible: true
+      title: NWB - Wegen WMS
+      visible: true
+    ownerInfoRef: pdok
+    prefix: nwbwegen
     stylingAssets:
+      blobKeys:
+        - resources/fonts/liberation-sans.ttf
       configMapRefs:
-        - name: includes
-          keys:
+        - keys:
             - nwb_wegen_hectopunten.symbol
             - hectopunten.style
             - wegvakken.style
-      blobKeys:
-        - resources/fonts/liberation-sans.ttf
-    layers:
-      - abstract:
-          Deze laag bevat de wegvakken uit het Nationaal Wegen bestand (NWB)
-          en geeft gedetailleerde informatie per wegvak zoals straatnaam, wegnummer,
-          routenummer, wegbeheerder, huisnummers, enz. weer.
-        data:
-          gpkg:
-            columns:
-              - objectid
-              - wvk_id
-              - wvk_begdat
-              - jte_id_beg
-              - jte_id_end
-              - wegbehsrt
-              - wegnummer
-              - wegdeelltr
-              - hecto_lttr
-              - bst_code
-              - rpe_code
-              - admrichtng
-              - rijrichtng
-              - stt_naam
-              - stt_bron
-              - wpsnaam
-              - gme_id
-              - gme_naam
-              - hnrstrlnks
-              - hnrstrrhts
-              - e_hnr_lnks
-              - e_hnr_rhts
-              - l_hnr_lnks
-              - l_hnr_rhts
-              - begafstand
-              - endafstand
-              - beginkm
-              - eindkm
-              - pos_tv_wol
-              - wegbehcode
-              - wegbehnaam
-              - distrcode
-              - distrnaam
-              - dienstcode
-              - dienstnaam
-              - wegtype
-              - wgtype_oms
-              - routeltr
-              - routenr
-              - routeltr2
-              - routenr2
-              - routeltr3
-              - routenr3
-              - routeltr4
-              - routenr4
-              - wegnr_aw
-              - wegnr_hmp
-              - geobron_id
-              - geobron_nm
-              - bronjaar
-              - openlr
-              - bag_orl
-              - frc
-              - fow
-              - alt_naam
-              - alt_nr
-              - rel_hoogte
-              - st_lengthshape
-            geometryType: MultiLineString
-            blobKey: geopackages/rws/nwbwegen/410a6d1e-e767-41b4-ba8d-9e1e955dd013/1/nwb_wegen.gpkg
-            table: wegvakken
-        datasetMetadataIdentifier: a9b7026e-0a81-4813-93bd-ba49e6f28502
-        keywords:
-          - Vervoersnetwerken
-          - Menselijke gezondheid en veiligheid
-          - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
-          - Nationaal
-          - Voertuigen
-          - Verkeer
-          - Wegvakken
-        maxScale: 50000.0
-        minScale: 1.0
-        name: wegvakken
-        sourceMetadataIdentifier: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff
-        styles:
-          - name: wegvakken
-            title: NWB - Wegvakken
-            visualization: wegvakken.style
-        title: Wegvakken
-        visible: true
-      - abstract:
-          Deze laag bevat de hectopunten uit het Nationaal Wegen Bestand (NWB)
-          en geeft gedetailleerde informatie per hectopunt zoals hectometrering, afstand,
-          zijde en hectoletter weer.
-        data:
-          gpkg:
-            columns:
-              - objectid
-              - hectomtrng
-              - afstand
-              - wvk_id
-              - wvk_begdat
-              - zijde
-              - hecto_lttr
-            geometryType: MultiPoint
-            blobKey: geopackages/rws/nwbwegen/410a6d1e-e767-41b4-ba8d-9e1e955dd013/1/nwb_wegen.gpkg
-            table: hectopunten
-        datasetMetadataIdentifier: a9b7026e-0a81-4813-93bd-ba49e6f28502
-        keywords:
-          - Vervoersnetwerken
-          - Menselijke gezondheid en veiligheid
-          - Geluidsbelasting hoofdwegen (Richtlijn Omgevingslawaai)
-          - Nationaal
-          - Voertuigen
-          - Verkeer
-          - Hectometerpunten
-        maxScale: 50000.0
-        minScale: 1.0
-        name: hectopunten
-        sourceMetadataIdentifier: 8f0497f0-dbd7-4bee-b85a-5fdec484a7ff
-        styles:
-          - name: hectopunten
-            title: NWB - Hectopunten
-            visualization: hectopunten.style
-        title: Hectopunten
-        visible: true
-    metadataIdentifier: f2437a92-ddd3-4777-a1bc-fdf4b4a7fcb8
+          name: includes
+    title: NWB - Wegen WMS
+    url: https://service.pdok.nl/rws/nwbwegen/wms/v1_0
