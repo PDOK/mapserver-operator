@@ -133,6 +133,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/100pixkm_luforoads/100pixkm_luforoads.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -159,6 +160,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/200pixkm_luforoads/200pixkm_luforoads.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "2.0"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -185,6 +187,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/400pixkm_luforoads/400pixkm_luforoads.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "2.5"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -211,6 +214,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/800pixkm_luforoads/800pixkm_luforoads.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -237,6 +241,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/1600pixkm_luforoads/1600pixkm_luforoads.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -263,6 +268,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/100pixkm_lufolabels/100pixkm_lufolabels.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -289,6 +295,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/200pixkm_lufolabels/200pixkm_lufolabels.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -315,6 +322,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/400pixkm_lufolabels/400pixkm_lufolabels.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -341,6 +349,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/800pixkm_lufolabels/800pixkm_lufolabels.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -367,6 +376,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/1600pixkm_lufolabels/1600pixkm_lufolabels.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
@@ -393,6 +403,7 @@ spec:
                   blobKey: tifs/bzk/luchtfotolabels/${GPKG_VERSION}/3200pixkm_lufolabels/3200pixkm_lufolabels.vrt
                   offsite: '#978E97'
                   resample: BILINEAR
+                  oversampleRatio: "1"
               datasetMetadataUrl:
                 csw:
                   metadataIdentifier: 6ca22f53-b072-42f4-b920-104c7c83cd28
