@@ -31,6 +31,12 @@ func (src *WMS) ConvertTo(dstRaw conversion.Hub) error {
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
 
 	// TODO(user): Implement conversion logic from v2beta1 to v3
+	// Example: Copying Spec fields
+	// dst.Spec.Size = src.Spec.Replicas
+
+	// Copy ObjectMeta to preserve name, namespace, labels, etc.
+	dst.ObjectMeta = src.ObjectMeta
+
 	return nil
 }
 
@@ -41,5 +47,11 @@ func (dst *WMS) ConvertFrom(srcRaw conversion.Hub) error {
 		"source: %s/%s, target: %s/%s", src.Namespace, src.Name, dst.Namespace, dst.Name)
 
 	// TODO(user): Implement conversion logic from v3 to v2beta1
+	// Example: Copying Spec fields
+	// dst.Spec.Replicas = src.Spec.Size
+
+	// Copy ObjectMeta to preserve name, namespace, labels, etc.
+	dst.ObjectMeta = src.ObjectMeta
+
 	return nil
 }

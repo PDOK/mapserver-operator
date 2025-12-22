@@ -43,8 +43,7 @@ func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 // TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
-// Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
+// NOTE: If you want to customise the 'path', use the flags '--defaulting-path' or '--validation-path'.
 // +kubebuilder:webhook:path=/validate-pdok-nl-v3-wfs,mutating=false,failurePolicy=fail,sideEffects=None,groups=pdok.nl,resources=wfs,verbs=create;update,versions=v3,name=vwfs-v3.kb.io,admissionReviewVersions=v1
 
 // WFSCustomValidator struct is responsible for validating the WFS resource
@@ -59,7 +58,7 @@ type WFSCustomValidator struct {
 var _ webhook.CustomValidator = &WFSCustomValidator{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *WFSCustomValidator) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	wfs, ok := obj.(*pdoknlv3.WFS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
@@ -72,7 +71,7 @@ func (v *WFSCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Obj
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *WFSCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	wfs, ok := newObj.(*pdoknlv3.WFS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object for the newObj but got %T", newObj)
