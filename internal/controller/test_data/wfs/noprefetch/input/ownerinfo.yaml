@@ -1,0 +1,23 @@
+apiVersion: pdok.nl/v1
+kind: OwnerInfo
+metadata:
+  name: owner
+  namespace: default
+spec:
+  metadataUrls:
+    csw:
+      hrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}"
+      type: alternate
+    openSearch:
+      hrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/opensearch/dut/{{identifier}}/OpenSearchDescription.xml"
+      type: alternate
+    html:
+      hrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/catalog.search#/metadata/{{identifier}}"
+      type: alternate
+  namespaceTemplate: "http://{{prefix}}.geonovum.nl"
+  providerSite:
+    type: simple
+    href: https://pdok.nl
+  wfs:
+    serviceProvider:
+      providerName: PDOK

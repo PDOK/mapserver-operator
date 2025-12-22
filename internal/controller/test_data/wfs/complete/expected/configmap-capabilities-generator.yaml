@@ -1,0 +1,118 @@
+apiVersion: v1
+data:
+  input.yaml: |-
+    global:
+      additionalschemalocations: http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd
+      namespace: http://dataset.geonovum.nl
+      onlineresourceurl: http://localhost
+      path: /datasetOwner/dataset/theme
+      prefix: dataset
+      version: v1_0
+    services:
+      wfs200:
+        definition:
+          capabilities:
+            featuretypelist:
+              featuretype:
+              - abstract: feature "1" abstract
+                defaultcrs: urn:ogc:def:crs:EPSG::28992
+                keywords:
+                - keyword:
+                  - featuretype-1-keyword-1
+                  - featuretype-1-keyword-2
+                metadataurl:
+                  href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
+                name: dataset:featuretype-1-name
+                othercrs:
+                - urn:ogc:def:crs:EPSG::25831
+                - urn:ogc:def:crs:EPSG::25832
+                - urn:ogc:def:crs:EPSG::3034
+                - urn:ogc:def:crs:EPSG::3035
+                - urn:ogc:def:crs:EPSG::3857
+                - urn:ogc:def:crs:EPSG::4258
+                - urn:ogc:def:crs:EPSG::4326
+                title: feature "1" title
+              - abstract: feature "2" abstract
+                defaultcrs: urn:ogc:def:crs:EPSG::28992
+                keywords:
+                - keyword:
+                  - featuretype-2-keyword-1
+                  - featuretype-2-keyword-2
+                metadataurl:
+                  href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
+                name: dataset:featuretype-2-name
+                othercrs:
+                - urn:ogc:def:crs:EPSG::25831
+                - urn:ogc:def:crs:EPSG::25832
+                - urn:ogc:def:crs:EPSG::3034
+                - urn:ogc:def:crs:EPSG::3035
+                - urn:ogc:def:crs:EPSG::3857
+                - urn:ogc:def:crs:EPSG::4258
+                - urn:ogc:def:crs:EPSG::4326
+                title: feature "2" title
+              - abstract: featuretype-3-abstract
+                defaultcrs: urn:ogc:def:crs:EPSG::28992
+                keywords:
+                - keyword:
+                  - featuretype-3-keyword-1
+                  - featuretype-3-keyword-2
+                metadataurl:
+                  href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
+                name: dataset:featuretype-3-name
+                othercrs:
+                - urn:ogc:def:crs:EPSG::25831
+                - urn:ogc:def:crs:EPSG::25832
+                - urn:ogc:def:crs:EPSG::3034
+                - urn:ogc:def:crs:EPSG::3035
+                - urn:ogc:def:crs:EPSG::3857
+                - urn:ogc:def:crs:EPSG::4258
+                - urn:ogc:def:crs:EPSG::4326
+                title: featuretype-3-title
+            operationsmetadata:
+              extendedcapabilities:
+                extendedcapabilities:
+                  metadataurl:
+                    mediatype: application/vnd.ogc.csw.GetRecordByIdResponse_xml
+                    url: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=metameta-meta-meta-meta-metametameta
+                  responselanguage:
+                    language: dut
+                  spatialdatasetidentifier:
+                    code: bronbron-bron-bron-bron-bronbronbron
+                  supportedlanguages:
+                    defaultlanguage:
+                      language: dut
+          serviceidentification:
+            abstract: some "Service" abstract
+            accessconstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+            keywords:
+              keyword:
+              - service-keyword-1
+              - service-keyword-2
+              - infoFeatureAccessService
+            title: some Service title
+          serviceprovider:
+            providersite:
+              href: http://localhost
+              type: simple
+        filename: /var/www/config/capabilities_wfs_200.xml
+
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: true
+    service-type: wfs
+    service-version: v1_0
+    theme: theme
+  name: complete-wfs-capabilities-generator-mfbh8cgh5c
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

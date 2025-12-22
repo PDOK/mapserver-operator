@@ -2,11 +2,13 @@ name: E2E Tests
 
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 jobs:
   test-e2e:
-    name: Run on Ubuntu
+    name: End-2-End on Ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Clone the code

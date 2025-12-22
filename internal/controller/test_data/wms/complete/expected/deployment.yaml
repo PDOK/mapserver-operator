@@ -1,0 +1,404 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: "true"
+    service-type: wms
+    service-version: v1_0
+    theme: '2016'
+  name: complete-wms-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      pdok.nl/app: mapserver
+      dataset: dataset
+      dataset-owner: datasetOwner
+      pdok.nl/inspire: "true"
+      service-type: wms
+      service-version: v1_0
+      theme: '2016'
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: 'true'
+        kubectl.kubernetes.io/default-container: mapserver
+        match-regex.version-checker.io/mapserver: ^\d\.\d\.\d.*$
+        prometheus.io/port: '9117'
+        prometheus.io/scrape: 'true'
+        priority.version-checker.io/mapserver: "4"
+        priority.version-checker.io/ogc-webservice-proxy: "4"
+      labels:
+        pdok.nl/app: mapserver
+        dataset: dataset
+        dataset-owner: datasetOwner
+        pdok.nl/inspire: "true"
+        service-type: wms
+        service-version: v1_0
+        theme: '2016'
+    spec:
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+      containers:
+        - env:
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  key: AZURE_STORAGE_CONNECTION_STRING
+                  name: blobs-testtest
+            - name: SERVICE_TYPE
+              value: WMS
+            - name: MAPSERVER_CONFIG_FILE
+              value: "/srv/mapserver/config/default_mapserver.conf"
+            - name: MS_MAPFILE
+              value: /srv/data/config/mapfile/service.map
+          image: test.test/image:test3
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sleep
+                  - '15'
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WMS&request=GetCapabilities''
+              2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/xml'''
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+          name: mapserver
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=11,22,33,44&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=gpkg-layer-name&STYLES=&FORMAT=image/png''
+              2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: image/png'''
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: '4'
+              memory: 100M
+            requests:
+              cpu: '2'
+              memory: 50M
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=11,22,33,44&CRS=EPSG:28992&WIDTH=100&HEIGHT=100&LAYERS=top-layer-name,group-layer-name,gpkg-layer-name,postgis-layer-name,tif-layer-name&STYLES=&FORMAT=image/png''
+              2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: image/png'''
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - mountPath: /srv/mapserver/config/include.conf
+              name: mapserver
+              subPath: include.conf
+            - mountPath: /srv/mapserver/config/ogc.lua
+              name: mapserver
+              subPath: ogc.lua
+            - name: mapserver
+              mountPath: /srv/mapserver/config/default_mapserver.conf
+              subPath: default_mapserver.conf
+            - mountPath: /srv/mapserver/config/scraping-error.xml
+              name: mapserver
+              subPath: scraping-error.xml
+        - args:
+            - --scrape_uri=http://localhost/server-status?auto
+          image: test.test/image:test7
+          imagePullPolicy: IfNotPresent
+          name: apache-exporter
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          ports:
+            - containerPort: 9117
+              protocol: TCP
+          resources:
+            limits:
+              memory: 48M
+            requests:
+              cpu: '0.02'
+        - command:
+            - /ogc-webservice-proxy
+            - -h=http://127.0.0.1/
+            - -t=wms
+            - -s=/input/service-config.yaml
+            - -v
+            - -r
+            - -d=15
+          image: test.test/image:test6
+          imagePullPolicy: IfNotPresent
+          name: ogc-webservice-proxy
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          ports:
+            - containerPort: 9111
+          resources:
+            limits:
+              memory: 200M
+            requests:
+              cpu: '0.05'
+          volumeMounts:
+            - mountPath: /input
+              name: ogc-webservice-proxy-config
+              readOnly: true
+      initContainers:
+        - args:
+            - |
+              set -e;
+              mkdir -p /srv/data/config/;
+              rclone config create --non-interactive --obscure blobs azureblob endpoint $BLOBS_ENDPOINT account $BLOBS_ACCOUNT key $BLOBS_KEY use_emulator true;
+              bash /srv/scripts/gpkg_download.sh;
+              rclone copyto blobs:/${BLOBS_TIF_BUCKET}/key/file.tif /srv/data/tif/file.tif || exit 1;
+              rclone copyto blobs:/${BLOBS_RESOURCES_BUCKET}/key/tif-symbol.png /srv/data/images/tif-symbol.png || exit 1;
+              rclone copyto blobs:/${BLOBS_RESOURCES_BUCKET}/key/gpkg-symbol.png /srv/data/images/gpkg-symbol.png || exit 1;
+              rclone copyto blobs:/${BLOBS_RESOURCES_BUCKET}/key/symbol.svg /srv/data/images/symbol.svg || exit 1;
+              rclone copyto blobs:/${BLOBS_RESOURCES_BUCKET}/key/font-1.ttf /srv/data/config/fonts/font-1.ttf || exit 1;
+              echo font-1 font-1.ttf >> /srv/data/config/fonts/fonts.list;
+              rclone copyto blobs:/${BLOBS_RESOURCES_BUCKET}/key/font-2.ttf /srv/data/config/fonts/font-2.ttf || exit 1;
+              echo font-2 font-2.ttf >> /srv/data/config/fonts/fonts.list;
+              echo 'generated fonts.list:';
+              cat /srv/data/config/fonts/fonts.list;
+          command:
+            - /bin/sh
+            - -c
+          env:
+            - name: GEOPACKAGE_TARGET_PATH
+              value: /srv/data/gpkg
+            - name: GEOPACKAGE_DOWNLOAD_LIST
+              value: ${BLOBS_GEOPACKAGES_BUCKET}/key/file.gpkg
+          envFrom:
+            - configMapRef:
+                name: blobs-testtest
+            - secretRef:
+                name: blobs-testtest
+          image: test.test/image:test1
+          imagePullPolicy: IfNotPresent
+          name: blob-download
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          resources:
+            requests:
+              cpu: '0.15'
+            limits:
+              cpu: '1'
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - name: data
+              mountPath: /var/www
+              readOnly: false
+            - mountPath: /srv/scripts
+              name: init-scripts
+              readOnly: true
+        - env:
+            - name: SERVICECONFIG
+              value: /input/input.yaml
+          image: test.test/image:test4
+          imagePullPolicy: IfNotPresent
+          name: capabilities-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - mountPath: /input
+              name: capabilities-generator-config
+              readOnly: true
+        - args:
+            - --not-include
+            - wms
+            - /input/input.json
+            - /srv/data/config/mapfile
+          command:
+            - generate-mapfile
+          envFrom:
+            - configMapRef:
+                name: postgres-testtest
+            - secretRef:
+                name: postgres-testtest
+          image: test.test/image:test2
+          imagePullPolicy: IfNotPresent
+          name: mapfile-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /input
+              name: mapfile-generator-config
+              readOnly: true
+            - mountPath: /styling
+              name: styling-files
+              readOnly: true
+        - args:
+            - --input-path
+            - /input/input.json
+            - --dest-folder
+            - /srv/data/config/templates
+            - --file-name
+            - feature-info
+          command:
+            - featureinfo-generator
+          image: test.test/image:test5
+          imagePullPolicy: IfNotPresent
+          name: featureinfo-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /input
+              name: featureinfo-generator-config
+              readOnly: true
+        - command:
+            - bash
+            - -c
+            - |
+              set -eu;
+              exit_code=0;
+              cat /input/input | xargs -n 2 echo | while read layer style; do
+              echo Generating legend for layer: $layer, style: $style;
+              mkdir -p /var/www/legend/$layer;
+              mapserv -nh 'QUERY_STRING=SERVICE=WMS&language=dut&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer='$layer'&format=image/png&STYLE='$style'' > /var/www/legend/$layer/${style}.png;
+              magic_bytes=$(head -c 4 /var/www/legend/$layer/${style}.png | tail -c 3);
+              if [[ $magic_bytes != 'PNG' ]]; then
+              echo [4T2O9] file /var/www/legend/$layer/${style}.png appears to not be a png file;
+              exit_code=1;
+              fi;
+              done;
+              exit $exit_code;
+          env:
+            - name: MAPSERVER_CONFIG_FILE
+              value: "/srv/mapserver/config/default_mapserver.conf"
+            - name: MS_MAPFILE
+              value: /srv/data/config/mapfile/service.map
+          image: test.test/image:test3
+          imagePullPolicy: IfNotPresent
+          name: legend-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - name: mapserver
+              mountPath: /srv/mapserver/config/default_mapserver.conf
+              subPath: default_mapserver.conf
+            - mountPath: /input
+              name: legend-generator-config
+              readOnly: true
+        - command:
+            - /bin/bash
+            - /input/legend-fixer.sh
+          image: test.test/image:test1
+          imagePullPolicy: IfNotPresent
+          name: legend-fixer
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - mountPath: /input
+              name: legend-generator-config
+              readOnly: true
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                storageClassName: test-storage
+                resources:
+                  requests:
+                    storage: 11G
+          name: base
+        - emptyDir: {}
+          name: data
+        - configMap:
+            name: complete-wms-mapserver-88ckd472mk
+            defaultMode: 420
+          name: mapserver
+        - configMap:
+            name: complete-wms-ogc-webservice-proxy-8d98h664bh
+            defaultMode: 420
+          name: ogc-webservice-proxy-config
+        - configMap:
+            defaultMode: 511
+            name: complete-wms-init-scripts-f8k8ffgmgh
+          name: init-scripts
+        - configMap:
+            name: complete-wms-capabilities-generator-b9kmb96877
+            defaultMode: 420
+          name: capabilities-generator-config
+        - configMap:
+            name: complete-wms-mapfile-generator-gh2fg6ccm9
+            defaultMode: 420
+          name: mapfile-generator-config
+        - name: styling-files
+          projected:
+            sources:
+              - configMap:
+                  name: gpkg-styling
+              - configMap:
+                  name: tif-styling
+              - configMap:
+                  name: postgis-styling
+        - configMap:
+            name: complete-wms-featureinfo-generator-257f6m6228
+            defaultMode: 420
+          name: featureinfo-generator-config
+        - configMap:
+            name: complete-wms-legend-generator-bmg7f9t24k
+            defaultMode: 420
+          name: legend-generator-config

@@ -1,0 +1,75 @@
+apiVersion: pdok.nl/v3
+kind: WMS
+metadata:
+  name: sample
+  namespace: default
+  labels:
+    sample: sample
+spec:
+  podSpecPatch:
+    containers:
+      - name: mapserver
+        resources:
+          limits:
+            ephemeral-storage: 1G
+  ingressRouteUrls:
+    - url: "https://test.test/path"
+  service:
+    prefix: "prefix"
+    url: "https://test.test/path"
+    title: "title"
+    abstract: "abstract"
+    keywords:
+      - "keyword"
+    ownerInfoRef: "owner"
+    dataEPSG: "EPSG:28992"
+    stylingAssets:
+      configMapRefs:
+        - name: configmap
+          keys:
+            - file.style
+    layer:
+      title: "title"
+      abstract: "abstract"
+      keywords:
+        - "keyword"
+      visible: true
+      layers:
+        - name: "visible"
+          visible: true
+          title: "title"
+          abstract: "abstract"
+          keywords:
+            - keyword
+          data:
+            gpkg:
+              blobKey: "container/path/file.gpkg"
+              columns:
+                - name: "column"
+              geometryType: "Point"
+              tableName: "table"
+          styles:
+            - name: "name"
+              title: "title"
+              visualization: "file.style"
+        - name: "visible Group Layer"
+          visible: true
+          title: title
+          abstract: abstract
+          keywords:
+              - keyword
+          styles:
+            - name: style
+              title: style
+          layers:
+            - name: "not visible"
+              visible: false
+              data:
+                postgis:
+                  columns:
+                    - name: "column"
+                  geometryType: "Point"
+                  tableName: "table"
+              styles:
+                - name: "style"
+                  visualization: "file.style"

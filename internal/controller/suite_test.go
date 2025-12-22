@@ -1,31 +1,52 @@
 /*
-Copyright 2025.
+MIT License
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Copyright (c) 2024 Publieke Dienstverlening op de Kaart
 
-    http://www.apache.org/licenses/LICENSE-2.0
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */
 
 package controller
 
+//nolint:revive // Complains about the dot imports
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
+
+	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"golang.org/x/tools/go/packages"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -56,18 +77,43 @@ func TestControllers(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
+	//nolint:fatcontext
 	ctx, cancel = context.WithCancel(context.TODO())
+	scheme := runtime.NewScheme()
 
 	var err error
-	err = pdoknlv3.AddToScheme(scheme.Scheme)
+	err = pdoknlv2beta1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = pdoknlv3.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = traefikiov1alpha1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = smoothoperatorv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = clientgoscheme.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme
 
 	By("bootstrapping test environment")
+	traefikCRDPath := must(getTraefikCRDPath())
+	ownerInfoCRDPath := must(getOwnerInfoCRDPath())
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
+		CRDInstallOptions: envtest.CRDInstallOptions{
+			Scheme: scheme,
+			Paths: []string{
+				filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wfs.yaml"),
+				filepath.Join("..", "..", "config", "crd", "bases", "pdok.nl_wms.yaml"),
+				traefikCRDPath,
+				ownerInfoCRDPath,
+			},
+			ErrorIfPathMissing: true,
+		},
 	}
 
 	// Retrieve the first found binary directory to allow running tests from IDEs
@@ -80,9 +126,56 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	// Deploy blob configmap + secret
+	blobConfig := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "blobs-testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, blobConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	blobSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "blobs-testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, blobSecret)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Deploy postgres configmap + secret
+	postgresConfig := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "postgres-testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, postgresConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	postgresSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "postgres-testtest",
+			Namespace: metav1.NamespaceDefault,
+		},
+	}
+	err = k8sClient.Create(ctx, postgresSecret)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Load CRD schemas
+	err = smoothoperatorvalidation.LoadSchemasForCRD(cfg, "default", "wfs.pdok.nl")
+	Expect(err).NotTo(HaveOccurred())
+	err = smoothoperatorvalidation.LoadSchemasForCRD(cfg, "default", "wms.pdok.nl")
+	Expect(err).NotTo(HaveOccurred())
+
+	pdoknlv3.SetHost("http://localhost:32788")
+	SetStorageClassName("test-storage")
 })
 
 var _ = AfterSuite(func() {
@@ -113,4 +206,43 @@ func getFirstFoundEnvTestBinaryDir() string {
 		}
 	}
 	return ""
+}
+
+func getOwnerInfoCRDPath() (string, error) {
+	smoothOperatorModule, err := getModule("github.com/pdok/smooth-operator")
+	if err != nil {
+		return "", err
+	}
+	if smoothOperatorModule.Dir == "" {
+		return "", errors.New("cannot find path for smooth-operator module")
+	}
+	return filepath.Join(smoothOperatorModule.Dir, "config", "crd", "bases", "pdok.nl_ownerinfo.yaml"), nil
+}
+
+func getTraefikCRDPath() (string, error) {
+	traefikModule, err := getModule("github.com/traefik/traefik/v3")
+	if err != nil {
+		return "", err
+	}
+	if traefikModule.Dir == "" {
+		return "", errors.New("cannot find path for traefik module")
+	}
+	return filepath.Join(traefikModule.Dir, "integration", "fixtures", "k8s", "01-traefik-crd.yml"), nil
+}
+
+func getModule(name string) (module *packages.Module, err error) {
+	out, err := exec.Command("go", "list", "-json", "-m", name).Output()
+	if err != nil {
+		return
+	}
+	module = &packages.Module{}
+	err = json.Unmarshal(out, module)
+	return
+}
+
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

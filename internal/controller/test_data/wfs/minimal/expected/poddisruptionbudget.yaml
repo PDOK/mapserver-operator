@@ -1,0 +1,29 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: 'false'
+    service-type: wfs
+    service-version: v1_0
+  name: minimal-wfs-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: minimal
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      pdok.nl/app: mapserver
+      dataset: dataset
+      dataset-owner: datasetOwner
+      pdok.nl/inspire: 'false'
+      service-type: wfs
+      service-version: v1_0

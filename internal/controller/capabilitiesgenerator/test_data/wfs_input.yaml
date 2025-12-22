@@ -1,0 +1,78 @@
+global:
+  prefix: prefix
+  namespace: http://prefix.geonovum.nl
+  onlineResourceUrl: http://localhost
+  path: /datasetOwner/dataset/theme/wfs/v1_0
+  additionalSchemaLocations: http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd
+services:
+  wfs200:
+    filename: /var/www/config/capabilities_wfs_200.xml
+    definition:
+      serviceIdentification:
+        title: some Service title
+        abstract: 'some "Service" abstract'
+        keywords:
+          keyword:
+            - service-keyword-1
+            - service-keyword-2
+            - infoFeatureAccessService
+        accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+      serviceProvider:
+        providerName: PDOK
+      capabilities:
+        operationsMetadata:
+          extendedCapabilities:
+            extendedCapabilities:
+              metadataUrl:
+                url: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=metameta-meta-meta-meta-metametameta
+                mediaType: application/vnd.ogc.csw.GetRecordByIdResponse_xml
+              supportedLanguages:
+                defaultLanguage:
+                  language: dut
+              responseLanguage:
+                language: dut
+              spatialDataSetIdentifier:
+                code: datadata-data-data-data-datadatadata
+        featureTypeList:
+          featureType:
+            - name: prefix:featuretype-1-name
+              title: featuretype-1-title
+              abstract: 'feature "1" abstract'
+              keywords:
+                - keyword:
+                    - featuretype-1-keyword-1
+                    - featuretype-1-keyword-2
+              defaultCrs: urn:ogc:def:crs:EPSG::28992
+              otherCrs:
+                - urn:ogc:def:crs:EPSG::28992
+                - urn:ogc:def:crs:EPSG::25831
+                - urn:ogc:def:crs:EPSG::25832
+                - urn:ogc:def:crs:EPSG::3034
+                - urn:ogc:def:crs:EPSG::3035
+                - urn:ogc:def:crs:EPSG::3857
+                - urn:ogc:def:crs:EPSG::4258
+                - urn:ogc:def:crs:EPSG::4326
+              wgs84BoundingBox:
+                lowerCorner: "-180 -90"
+                upperCorner: "180 90"
+              metadataUrl:
+                href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
+            - name: prefix:featuretype-2-name
+              title: featuretype-2-title
+              abstract: 'feature "2" abstract'
+              keywords:
+                - keyword:
+                    - featuretype-2-keyword-1
+                    - featuretype-2-keyword-2
+              defaultCrs: urn:ogc:def:crs:EPSG::28992
+              otherCrs:
+                - urn:ogc:def:crs:EPSG::28992
+                - urn:ogc:def:crs:EPSG::25831
+                - urn:ogc:def:crs:EPSG::25832
+                - urn:ogc:def:crs:EPSG::3034
+                - urn:ogc:def:crs:EPSG::3035
+                - urn:ogc:def:crs:EPSG::3857
+                - urn:ogc:def:crs:EPSG::4258
+                - urn:ogc:def:crs:EPSG::4326
+              metadataUrl:
+                href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata

@@ -1,9 +1,63 @@
 apiVersion: pdok.nl/v2beta1
 kind: WFS
 metadata:
+  name: sample-v2
   labels:
     app.kubernetes.io/name: mapserver-operator
     app.kubernetes.io/managed-by: kustomize
-  name: wfs-sample
+    dataset: dataset
+    dataset-owner: eigenaar
+    service-version: v1_0
+    service-type: wfs
+  annotations:
+    lifecycle-phase: prod
+    service-bundle-id: e9f89184-d8c3-5600-8502-08e8e9bc9d2f
 spec:
-  # TODO(user): Add fields here
+  general:
+    datasetOwner: eigenaar
+    serviceVersion: v1_0
+    dataset: dataset
+  kubernetes:
+    resources:
+      limits:
+        ephemeralStorage: 20Mi
+  options:
+    automaticCasing: true
+    includeIngress: true
+  service:
+    inspire: true
+    title: Dataset
+    abstract: "Dataset beschrijving..."
+    keywords:
+      - keyword1
+      - keyword2
+    accessConstraints: none
+    metadataIdentifier: 68a42961-ed55-436b-a412-cc7424fd2a6e
+    authority:
+      name: eigenaar
+      url: https://www.rijksoverheid.nl/ministeries/ministerie-van-economische-zaken-en-klimaat
+    dataEPSG: "EPSG:28992"
+    extent: "0 300000 280000 625000"
+    featureTypes:
+      - name: "feature1"
+        title: "feature1"
+        abstract: "Feature 1 beschrijving..."
+        keywords:
+          - keyword1
+          - keyword2
+        datasetMetadataIdentifier: "07d73b60-dfd6-4c54-9c82-9fac70c6c48e"
+        sourceMetadataIdentifier: "07d73b60-dfd6-4c54-9c82-9fac70c6c48e" # TODO
+        data:
+          gpkg:
+            blobKey: eigenaar/dataset/data.gpkg
+            table: "table1"
+            geometryType: "MultiPolygon"
+            columns:
+              - "naam"
+              - "gebiedsnum"
+              - "besluitnum"
+              - "besluitdat"
+            aliases:
+              gebiedsnum: gebiedsnummer
+              besluitdat: datum
+

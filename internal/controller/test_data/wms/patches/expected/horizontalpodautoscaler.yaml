@@ -1,0 +1,49 @@
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: "false"
+    service-type: wms
+    service-version: v1_0
+  name: patches-wms-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: patches
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  behavior:
+    scaleDown:
+      policies:
+        - periodSeconds: 30
+          type: Pods
+          value: 1
+      selectPolicy: Min
+      stabilizationWindowSeconds: 50
+    scaleUp:
+      policies:
+        - periodSeconds: 60
+          type: Pods
+          value: 20
+      selectPolicy: Max
+      stabilizationWindowSeconds: 0
+  maxReplicas: 10
+  metrics:
+    - resource:
+        name: memory
+        target:
+          averageUtilization: 90
+          type: Utilization
+      type: Resource
+  minReplicas: 5
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: patches-wms-mapserver

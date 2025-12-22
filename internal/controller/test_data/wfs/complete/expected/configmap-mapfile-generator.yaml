@@ -1,0 +1,122 @@
+apiVersion: v1
+data:
+  input.json: |-
+    {
+        "service_title": "some Service title",
+        "service_abstract": "some \"Service\" abstract",
+        "service_keywords": "service-keyword-1,service-keyword-2,infoFeatureAccessService",
+        "service_accessconstraints": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl",
+        "service_extent": "service-extent",
+        "service_wfs_maxfeatures": "1000",
+        "service_namespace_prefix": "dataset",
+        "service_namespace_uri": "http://dataset.geonovum.nl",
+        "service_onlineresource": "http://localhost",
+        "service_path": "/datasetOwner/dataset/theme/wfs/v1_0",
+        "service_metadata_id": "metameta-meta-meta-meta-metametameta",
+        "dataset_owner": "authority",
+        "authority_url": "https://authority-url",
+        "automatic_casing": true,
+        "data_epsg": "EPSG:28992",
+        "epsg_list": [
+            "EPSG:28992",
+            "EPSG:25831",
+            "EPSG:25832",
+            "EPSG:3034",
+            "EPSG:3035",
+            "EPSG:3857",
+            "EPSG:4258",
+            "EPSG:4326"
+        ],
+        "layers": [
+            {
+                "name": "featuretype-1-name",
+                "title": "feature \"1\" title",
+                "abstract": "feature \"1\" abstract",
+                "keywords": "featuretype-1-keyword-1,featuretype-1-keyword-2",
+                "layer_extent": "featuretype-1-extent",
+                "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+                "dataset_source_id": "bronbron-bron-bron-bron-bronbronbron",
+                "columns": [
+                    {
+                        "name": "fuuid"
+                    },
+                    {
+                        "name": "featuretype-1-column-1"
+                    },
+                    {
+                        "name": "featuretype-1-column-2"
+                    }
+                ],
+                "geometry_type": "Point",
+                "gpkg_path": "/srv/data/gpkg/file-1.gpkg",
+                "tablename": "featuretype-1"
+            },
+            {
+                "name": "featuretype-2-name",
+                "title": "feature \"2\" title",
+                "abstract": "feature \"2\" abstract",
+                "keywords": "featuretype-2-keyword-1,featuretype-2-keyword-2",
+                "layer_extent": "featuretype-2-extent",
+                "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+                "dataset_source_id": "bronbron-bron-bron-bron-bronbronbron",
+                "columns": [
+                    {
+                        "name": "fuuid"
+                    },
+                    {
+                        "name": "featuretype-2-column-1",
+                        "alias": "ALIAS_featuretype-2-column-1"
+                    },
+                    {
+                        "name": "featuretype-2-column-2"
+                    }
+                ],
+                "geometry_type": "MultiLine",
+                "gpkg_path": "/srv/data/gpkg/file-2.gpkg",
+                "tablename": "featuretype-2"
+            },
+            {
+                "name": "featuretype-3-name",
+                "title": "featuretype-3-title",
+                "abstract": "featuretype-3-abstract",
+                "keywords": "featuretype-3-keyword-1,featuretype-3-keyword-2",
+                "layer_extent": "featuretype-3-extent",
+                "dataset_metadata_id": "datadata-data-data-data-datadatadata",
+                "dataset_source_id": "bronbron-bron-bron-bron-bronbronbron",
+                "tablename": "featuretype-3",
+                "geometry_type": "MultiLine",
+                "columns": [
+                    {
+                        "name": "fuuid"
+                    },
+                    {
+                        "name": "featuretype-3-column-1"
+                    },
+                    {
+                        "name": "featuretype-3-column-2"
+                    }
+                ],
+                "postgis": true
+            }
+        ]
+    }
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: true
+    service-type: wfs
+    service-version: v1_0
+    theme: theme
+  name: complete-wfs-mapfile-generator-dkmmf7b5hf
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: complete
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
