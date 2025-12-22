@@ -2,7 +2,7 @@ module github.com/pdok/mapserver-operator
 
 go 1.25
 
-godebug default=go1.23
+godebug default=go1.25
 
 require (
 	github.com/cbroglie/mustache v1.4.0
