@@ -1,0 +1,52 @@
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: "false"
+    service-type: wfs
+    service-version: v1_0
+  name: noprefetch-wfs-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: noprefetch
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  behavior:
+    scaleDown:
+      policies:
+        - periodSeconds: 600
+          type: Percent
+          value: 10
+        - periodSeconds: 600
+          type: Pods
+          value: 1
+      selectPolicy: Max
+      stabilizationWindowSeconds: 3600
+    scaleUp:
+      policies:
+        - periodSeconds: 60
+          type: Pods
+          value: 20
+      selectPolicy: Max
+      stabilizationWindowSeconds: 300
+  maxReplicas: 30
+  metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 90
+          type: Utilization
+      type: Resource
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: noprefetch-wfs-mapserver

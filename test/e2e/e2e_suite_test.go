@@ -19,6 +19,7 @@ limitations under the License.
 
 package e2e
 
+//nolint:revive // Complains about the dot imports
 import (
 	"fmt"
 	"os"
@@ -57,7 +58,7 @@ func TestE2E(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	By("building the manager(Operator) image")
-	cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
+	cmd := exec.Command("make", "docker-build", "IMG="+projectImage)
 	_, err := utils.Run(cmd)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to build the manager(Operator) image")
 

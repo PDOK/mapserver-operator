@@ -1,0 +1,150 @@
+---
+apiVersion: v1
+data:
+  input.yaml: >-
+    global:
+      additionalschemalocations: http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd
+        http://inspire.ec.europa.eu/schemas/common/1.0 http://inspire.ec.europa.eu/schemas/common/1.0/common.xsd
+      namespace: http://dataset.geonovum.nl
+      onlineresourceurl: http://localhost
+      path: /datasetOwner/dataset
+      prefix: dataset
+      version: v1_0
+    services:
+      wms130:
+        definition:
+          capability:
+            wmscapabilities:
+              layer:
+                - abstract: service-abstract
+                  keywordlist:
+                    keyword:
+                      - service-keyword
+                  layer:
+                    - abstract: layer-abstract
+                      authorityurl:
+                        name: authority-name
+                        onlineresource:
+                          href: http://authority-url
+                      identifier:
+                        authority: authority-name
+                        value: bronbron-bron-bron-bron-bronbronbron
+                      keywordlist:
+                        keyword:
+                          - layer-keyword
+                      metadataurl:
+                        - format: text/plain
+                          onlineresource:
+                            href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
+                            type: simple
+                            xlink: http://www.w3.org/1999/xlink
+                          type: TC211
+                      name: layer-name
+                      queryable: 1
+                      style:
+                        - legendurl:
+                            format: image/png
+                            height: 20
+                            onlineresource:
+                              href: http://localhost/datasetOwner/dataset/wms/v1_0/legend/layer-name/layer-style-name.png
+                              type: simple
+                              xlink: http://www.w3.org/1999/xlink
+                            width: 78
+                          name: layer-style-name
+                          title: layer-style-title
+                      title: layer-title
+                    - abstract: group
+                      authorityurl:
+                        name: authority-name
+                        onlineresource:
+                          href: http://authority-url
+                      identifier:
+                        authority: authority-name
+                        value: src-md-id
+                      keywordlist:
+                        keyword: []
+                      layer:
+                        - abstract: group-child
+                          authorityurl:
+                            name: authority-name
+                            onlineresource:
+                              href: http://authority-url
+                          identifier:
+                            authority: authority-name
+                            value: src-md-id
+                          keywordlist:
+                            keyword: []
+                          metadataurl:
+                            - format: text/plain
+                              onlineresource:
+                                href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
+                                type: simple
+                                xlink: http://www.w3.org/1999/xlink
+                              type: TC211
+                          name: group-child
+                          queryable: 1
+                          style:
+                            - legendurl:
+                                format: image/png
+                                height: 20
+                                onlineresource:
+                                  href: http://localhost/datasetOwner/dataset/wms/v1_0/legend/group-child/group-child.png
+                                  type: simple
+                                  xlink: http://www.w3.org/1999/xlink
+                                width: 78
+                              name: group-child
+                              title: group-child
+                          title: group-child
+                      metadataurl:
+                        - format: text/plain
+                          onlineresource:
+                            href: https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id=datadata-data-data-data-datadatadata
+                            type: simple
+                            xlink: http://www.w3.org/1999/xlink
+                          type: TC211
+                      name: group
+                      queryable: 1
+                      style:
+                        - legendurl:
+                            format: image/png
+                            height: 20
+                            onlineresource:
+                              href: http://localhost/datasetOwner/dataset/wms/v1_0/legend/group/group.png
+                              type: simple
+                              xlink: http://www.w3.org/1999/xlink
+                            width: 78
+                          name: group
+                          title: group
+                      title: group
+                  queryable: 1
+                  title: service-title
+          service:
+            abstract: service-abstract
+            accessconstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+            keywordlist:
+              keyword:
+                - service-keyword
+            optionalconstraints:
+              maxheight: 4000
+              maxwidth: 4000
+            title: service-title
+        filename: /var/www/config/capabilities_wms_130.xml
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: "false"
+    service-type: wms
+    service-version: v1_0
+  name: minimal-wms-capabilities-generator-865bt77thd
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: minimal
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

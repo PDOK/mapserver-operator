@@ -1,0 +1,22 @@
+apiVersion: v1
+data:
+  input.yaml: "..."
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: 'false'
+    service-type: wfs
+    service-version: v1_0
+  name: minimal-wfs-capabilities-generator-m46924mtk7
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: minimal
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true

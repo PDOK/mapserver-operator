@@ -1,0 +1,245 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: 'false'
+    service-type: wfs
+    service-version: v1_0
+  name: noprefetch-wfs-mapserver
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WFS
+      name: noprefetch
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
+spec:
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      pdok.nl/app: mapserver
+      dataset: dataset
+      dataset-owner: datasetOwner
+      pdok.nl/inspire: 'false'
+      service-type: wfs
+      service-version: v1_0
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: 'true'
+        kubectl.kubernetes.io/default-container: mapserver
+        match-regex.version-checker.io/mapserver: ^\d\.\d\.\d.*$
+        prometheus.io/port: '9117'
+        prometheus.io/scrape: 'true'
+        priority.version-checker.io/mapserver: "4"
+        priority.version-checker.io/ogc-webservice-proxy: "4"
+      labels:
+        pdok.nl/app: mapserver
+        dataset: dataset
+        dataset-owner: datasetOwner
+        pdok.nl/inspire: 'false'
+        service-type: wfs
+        service-version: v1_0
+    spec:
+      containers:
+        - env:
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  key: AZURE_STORAGE_CONNECTION_STRING
+                  name: blobs-testtest
+            - name: SERVICE_TYPE
+              value: WFS
+            - name: MAPSERVER_CONFIG_FILE
+              value: "/srv/mapserver/config/default_mapserver.conf"
+            - name: MS_MAPFILE
+              value: /srv/data/config/mapfile/service.map
+          image: test.test/image:test3
+          imagePullPolicy: IfNotPresent
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sleep
+                  - '15'
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WFS&request=GetCapabilities''
+              2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/xml'''
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+          name: mapserver
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=featuretype-name&STARTINDEX=0&COUNT=1''
+              2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/xml'''
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+          resources:
+            limits:
+              ephemeral-storage: 200M
+              memory: 800M
+            requests:
+              cpu: '0.15'
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'wget -SO- -T 10 -t 2 ''http://127.0.0.1:80/mapserver?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=featuretype-name&STARTINDEX=0&COUNT=1''
+              2>&1 | egrep -aiA10 ''HTTP/1.1 200'' | egrep -i ''Content-Type: text/xml'''
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - mountPath: /srv/mapserver/config/include.conf
+              name: mapserver
+              subPath: include.conf
+            - mountPath: /srv/mapserver/config/ogc.lua
+              name: mapserver
+              subPath: ogc.lua
+            - name: mapserver
+              mountPath: /srv/mapserver/config/default_mapserver.conf
+              subPath: default_mapserver.conf
+            - mountPath: /srv/mapserver/config/scraping-error.xml
+              name: mapserver
+              subPath: scraping-error.xml
+        - args:
+            - --scrape_uri=http://localhost/server-status?auto
+          image: test.test/image:test5
+          imagePullPolicy: IfNotPresent
+          name: apache-exporter
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          ports:
+            - containerPort: 9117
+              protocol: TCP
+          resources:
+            limits:
+              memory: 48M
+            requests:
+              cpu: '0.02'
+      initContainers:
+        - args:
+            - |
+              set -e;
+              mkdir -p /srv/data/config/;
+              rclone config create --non-interactive --obscure blobs azureblob endpoint $BLOBS_ENDPOINT account $BLOBS_ACCOUNT key $BLOBS_KEY use_emulator true;
+          command:
+            - /bin/sh
+            - -c
+          env:
+            - name: GEOPACKAGE_TARGET_PATH
+              value: /srv/data/gpkg
+            - name: GEOPACKAGE_DOWNLOAD_LIST
+              value: ${BLOBS_GEOPACKAGES_BUCKET}/key/file.gpkg
+          envFrom:
+            - configMapRef:
+                name: blobs-testtest
+            - secretRef:
+                name: blobs-testtest
+          image: test.test/image:test1
+          imagePullPolicy: IfNotPresent
+          name: blob-download
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          resources:
+            requests:
+              cpu: '0.15'
+            limits:
+              cpu: '0.2'
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - name: data
+              mountPath: /var/www
+              readOnly: false
+        - env:
+            - name: SERVICECONFIG
+              value: /input/input.yaml
+          image: test.test/image:test4
+          imagePullPolicy: IfNotPresent
+          name: capabilities-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/www
+              name: data
+              readOnly: false
+            - mountPath: /input
+              name: capabilities-generator-config
+              readOnly: true
+        - args:
+            - --not-include
+            - wfs
+            - /input/input.json
+            - /srv/data/config/mapfile
+          command:
+            - generate-mapfile
+          image: test.test/image:test2
+          imagePullPolicy: IfNotPresent
+          name: mapfile-generator
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /srv/data
+              name: base
+              readOnly: false
+            - mountPath: /input
+              name: mapfile-generator-config
+              readOnly: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      dnsPolicy: ClusterFirst
+      volumes:
+        - emptyDir: {}
+          name: base
+        - emptyDir: {}
+          name: data
+        - configMap:
+            name: noprefetch-wfs-mapserver-f5ch9b2bhh
+            defaultMode: 420
+          name: mapserver
+        - configMap:
+            name: noprefetch-wfs-capabilities-generator-m46924mtk7
+            defaultMode: 420
+          name: capabilities-generator-config
+        - configMap:
+            name: noprefetch-wfs-mapfile-generator-cdchdd74m7
+            defaultMode: 420
+          name: mapfile-generator-config

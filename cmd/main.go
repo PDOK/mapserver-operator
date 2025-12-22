@@ -18,8 +18,21 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"flag"
 	"os"
+
+	"github.com/pdok/mapserver-operator/internal/controller/types"
+
+	"github.com/go-logr/zapr"
+	"github.com/pdok/smooth-operator/pkg/integrations/logging"
+	"github.com/peterbourgon/ff"
+	"go.uber.org/zap/zapcore"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/pdok/mapserver-operator/internal/controller/mapfilegenerator"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -30,16 +43,17 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	pdoknlv2beta1 "github.com/pdok/mapserver-operator/api/v2beta1"
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller"
-	webhookv3 "github.com/pdok/mapserver-operator/internal/webhook/v3"
+	webhookpdoknlv3 "github.com/pdok/mapserver-operator/internal/webhook/v3"
 	// +kubebuilder:scaffold:imports
+)
+
+const (
+	EnvFalse = "false"
 )
 
 var (
@@ -49,23 +63,29 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
+	utilruntime.Must(traefikiov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(smoothoperatorv1.AddToScheme(scheme))
 	utilruntime.Must(pdoknlv3.AddToScheme(scheme))
-	utilruntime.Must(pdoknlv2beta1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
-// nolint:gocyclo
+//nolint:funlen
 func main() {
 	var metricsAddr string
-	var metricsCertPath, metricsCertName, metricsCertKey string
-	var webhookCertPath, webhookCertName, webhookCertKey string
+	var certDir string
 	var enableLeaderElection bool
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
+	var host string
+	var mapserverDebugLevel int
+	var multitoolImage, mapfileGeneratorImage, mapserverImage, capabilitiesGeneratorImage, featureinfoGeneratorImage, ogcWebserviceProxyImage, apacheExporterImage string
+	var slackWebhookURL string
+	var logLevel int
+	var setUptimeOperatorAnnotations bool
+	var storageClassName string
+	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -73,22 +93,60 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&secureMetrics, "metrics-secure", true,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
-	flag.StringVar(&webhookCertPath, "webhook-cert-path", "", "The directory that contains the webhook certificate.")
-	flag.StringVar(&webhookCertName, "webhook-cert-name", "tls.crt", "The name of the webhook certificate file.")
-	flag.StringVar(&webhookCertKey, "webhook-cert-key", "tls.key", "The name of the webhook key file.")
-	flag.StringVar(&metricsCertPath, "metrics-cert-path", "",
-		"The directory that contains the metrics server certificate.")
-	flag.StringVar(&metricsCertName, "metrics-cert-name", "tls.crt", "The name of the metrics server certificate file.")
-	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
+	flag.StringVar(&certDir, "cert-dir", "", "CertDir contains the webhook server key and certificate. Defaults to <temp-dir>/k8s-webhook-server/serving-certs.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.StringVar(&host, "baseurl", "", "The host which is used in the mapserver service.")
+	flag.StringVar(&multitoolImage, "multitool-image", "", "The image to use in the blob download init-container.")
+	flag.StringVar(&mapfileGeneratorImage, "mapfile-generator-image", "", "The image to use in the mapfile generator init-container.")
+	flag.StringVar(&mapserverImage, "mapserver-image", "", "The image to use in the mapserver container.")
+	flag.StringVar(&capabilitiesGeneratorImage, "capabilities-generator-image", "", "The image to use in the capabilities generator init-container.")
+	flag.StringVar(&featureinfoGeneratorImage, "featureinfo-generator-image", "", "The image to use in the featureinfo generator init-container.")
+	flag.StringVar(&ogcWebserviceProxyImage, "ogc-webservice-proxy-image", "", "The image to use in the ogc webservice proxy container.")
+	flag.StringVar(&apacheExporterImage, "apache-exporter-image", "", "The image to use in the apache-exporter container.")
+	flag.IntVar(&mapserverDebugLevel, "mapserver-debug-level", 0, "Debug level for the mapserver container, between 0 (error only) and 5 (very very verbose).")
+	flag.StringVar(&slackWebhookURL, "slack-webhook-url", "", "The webhook url for sending slack messages. Disabled if left empty")
+	flag.IntVar(&logLevel, "log-level", 0, "The zapcore loglevel. 0 = info, 1 = warn, 2 = error")
+	flag.BoolVar(&setUptimeOperatorAnnotations, "set-uptime-operator-annotations", true, "When enabled IngressRoutes get annotations that are used by the pdok/uptime-operator.")
+	flag.StringVar(&storageClassName, "storage-class-name", "", "The name of the storage class to use when using an ephemeral volume.")
+
 	opts := zap.Options{
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	if err := ff.Parse(flag.CommandLine, os.Args[1:], ff.WithEnvVarNoPrefix()); err != nil {
+		setupLog.Error(err, "unable to parse flags")
+		os.Exit(1)
+	}
+
+	//nolint:gosec
+	levelEnabler := zapcore.Level(logLevel)
+	zapLogger, _ := logging.SetupLogger("mapserver-operator", slackWebhookURL, levelEnabler)
+	logrLogger := zapr.NewLogger(zapLogger)
+	ctrl.SetLogger(logrLogger)
+
+	reqFlags := make(map[string]string)
+	reqFlags["baseurl"] = host
+	reqFlags["multitool-image"] = multitoolImage
+	reqFlags["mapfile-generator-image"] = mapfileGeneratorImage
+	reqFlags["mapserver-image"] = mapserverImage
+	reqFlags["capabilities-generator-image"] = capabilitiesGeneratorImage
+	reqFlags["featureinfo-generator-image"] = featureinfoGeneratorImage
+	reqFlags["ogc-webservice-proxy-image"] = ogcWebserviceProxyImage
+	reqFlags["apache-exporter-image"] = apacheExporterImage
+
+	for reqFlag, val := range reqFlags {
+		if val == "" {
+			setupLog.Error(errors.New(reqFlag+" is a required flag"), "A value for "+reqFlag+" must be specified.")
+			os.Exit(1)
+		}
+	}
+
+	pdoknlv3.SetHost(host)
+	mapfilegenerator.SetDebugLevel(mapserverDebugLevel)
+	controller.SetUptimeOperatorAnnotations(setUptimeOperatorAnnotations)
+	controller.SetStorageClassName(storageClassName)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -105,61 +163,18 @@ func main() {
 		tlsOpts = append(tlsOpts, disableHTTP2)
 	}
 
-	// Initial webhook TLS options
-	webhookTLSOpts := tlsOpts
-	webhookServerOptions := webhook.Options{
-		TLSOpts: webhookTLSOpts,
-	}
-
-	if len(webhookCertPath) > 0 {
-		setupLog.Info("Initializing webhook certificate watcher using provided certificates",
-			"webhook-cert-path", webhookCertPath, "webhook-cert-name", webhookCertName, "webhook-cert-key", webhookCertKey)
-
-		webhookServerOptions.CertDir = webhookCertPath
-		webhookServerOptions.CertName = webhookCertName
-		webhookServerOptions.KeyName = webhookCertKey
-	}
-
-	webhookServer := webhook.NewServer(webhookServerOptions)
-
-	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
-	// More info:
-	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.22.4/pkg/metrics/server
-	// - https://book.kubebuilder.io/reference/metrics.html
-	metricsServerOptions := metricsserver.Options{
-		BindAddress:   metricsAddr,
-		SecureServing: secureMetrics,
-		TLSOpts:       tlsOpts,
-	}
-
-	if secureMetrics {
-		// FilterProvider is used to protect the metrics endpoint with authn/authz.
-		// These configurations ensure that only authorized users and service accounts
-		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
-		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.22.4/pkg/metrics/filters#WithAuthenticationAndAuthorization
-		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
-	}
-
-	// If the certificate is not specified, controller-runtime will automatically
-	// generate self-signed certificates for the metrics server. While convenient for development and testing,
-	// this setup is not recommended for production.
-	//
-	// TODO(user): If you enable certManager, uncomment the following lines:
-	// - [METRICS-WITH-CERTS] at config/default/kustomization.yaml to generate and use certificates
-	// managed by cert-manager for the metrics server.
-	// - [PROMETHEUS-WITH-CERTS] at config/prometheus/kustomization.yaml for TLS certification.
-	if len(metricsCertPath) > 0 {
-		setupLog.Info("Initializing metrics certificate watcher using provided certificates",
-			"metrics-cert-path", metricsCertPath, "metrics-cert-name", metricsCertName, "metrics-cert-key", metricsCertKey)
-
-		metricsServerOptions.CertDir = metricsCertPath
-		metricsServerOptions.CertName = metricsCertName
-		metricsServerOptions.KeyName = metricsCertKey
-	}
+	webhookServer := webhook.NewServer(webhook.Options{
+		CertDir: certDir,
+		TLSOpts: tlsOpts,
+	})
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsServerOptions,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress:   metricsAddr,
+			SecureServing: secureMetrics,
+			TLSOpts:       tlsOpts,
+		},
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
@@ -181,34 +196,51 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := (&controller.WMSReconciler{
+	if err = (&controller.WMSReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Images: types.Images{
+			MultitoolImage:             multitoolImage,
+			MapfileGeneratorImage:      mapfileGeneratorImage,
+			MapserverImage:             mapserverImage,
+			CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
+			FeatureinfoGeneratorImage:  featureinfoGeneratorImage,
+			OgcWebserviceProxyImage:    ogcWebserviceProxyImage,
+			ApacheExporterImage:        apacheExporterImage,
+		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WMS")
 		os.Exit(1)
 	}
-	if err := (&controller.WFSReconciler{
+	if err = (&controller.WFSReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Images: types.Images{
+			MultitoolImage:             multitoolImage,
+			MapfileGeneratorImage:      mapfileGeneratorImage,
+			MapserverImage:             mapserverImage,
+			CapabilitiesGeneratorImage: capabilitiesGeneratorImage,
+			ApacheExporterImage:        apacheExporterImage,
+		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "WFS")
 		os.Exit(1)
 	}
-	// nolint:goconst
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err := webhookv3.SetupWMSWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "WMS")
-			os.Exit(1)
-		}
-	}
-	// nolint:goconst
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err := webhookv3.SetupWFSWebhookWithManager(mgr); err != nil {
+
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
+		if err = webhookpdoknlv3.SetupWFSWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "WFS")
 			os.Exit(1)
 		}
 	}
+
+	if os.Getenv("ENABLE_WEBHOOKS") != EnvFalse {
+		if err = webhookpdoknlv3.SetupWMSWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "WMS")
+			os.Exit(1)
+		}
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

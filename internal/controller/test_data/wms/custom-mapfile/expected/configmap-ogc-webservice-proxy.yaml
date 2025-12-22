@@ -1,0 +1,31 @@
+apiVersion: v1
+data:
+  service-config.yaml: |-
+    grouplayers:
+      group-layer-name:
+      - gpkg-layer-name
+      - postgis-layer-name
+      top-layer-name:
+      - gpkg-layer-name
+      - postgis-layer-name
+      - tif-layer-name
+
+immutable: true
+kind: ConfigMap
+metadata:
+  labels:
+    pdok.nl/app: mapserver
+    dataset: dataset
+    dataset-owner: datasetOwner
+    pdok.nl/inspire: 'false'
+    service-type: wms
+    service-version: v1_0
+  name: custom-mapfile-wms-ogc-webservice-proxy-22tb5878f7
+  namespace: default
+  ownerReferences:
+    - apiVersion: pdok.nl/v3
+      kind: WMS
+      name: custom-mapfile
+      uid: ""
+      blockOwnerDeletion: true
+      controller: true
