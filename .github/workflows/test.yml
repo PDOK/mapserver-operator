@@ -2,13 +2,11 @@ name: Tests
 
 on:
   push:
-    branches:
-      - master
   pull_request:
 
 jobs:
   test:
-    name: Testing on Ubuntu
+    name: Run on Ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Clone the code

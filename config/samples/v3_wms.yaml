@@ -1,70 +1,9 @@
 apiVersion: pdok.nl/v3
 kind: WMS
 metadata:
-  name: sample
   labels:
-    pdok.nl/owner-id: pdok
-    pdok.nl/dataset-id: sample
+    app.kubernetes.io/name: mapserver-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: wms-sample
 spec:
-  podSpecPatch:
-    containers:
-      - name: mapserver
-        resources:
-          limits:
-            ephemeral-storage: 1m
-  service:
-    prefix: "prefix"
-    url: "https://test.test/path"
-    title: "title"
-    abstract: "abstract"
-    keywords:
-      - "keyword"
-    ownerInfoRef: pdok
-    dataEPSG: "EPSG:28992"
-    stylingAssets:
-      configMapRefs:
-        - name: configmap
-          keys:
-            - file.symbol
-    layer:
-      title: "title"
-      abstract: "abstract"
-      keywords:
-        - "keyword"
-      visible: true
-      boundingBoxes:
-        - bbox:
-            maxx: "280000"
-            maxy: "860000"
-            minx: "-25000"
-            miny: "250000"
-          crs: EPSG:28992
-      layers:
-        - name: "visible"
-          visible: true
-          title: "title"
-          abstract: "abstract"
-          keywords:
-            - keyword
-          data:
-            gpkg:
-              blobKey: "container/path/file.gpkg"
-              columns:
-                - name: "column"
-              geometryType: "Point"
-              tableName: "table"
-          styles:
-            - name: "name"
-              title: "title"
-              visualization: file.symbol
-        - name: "not visible"
-          visible: false
-          data:
-            postgis:
-              columns:
-                - name: "column"
-              geometryType: "Point"
-              tableName: "table"
-          styles:
-            - name: "name"
-              visualization: file.symbol
+  # TODO(user): Add fields here

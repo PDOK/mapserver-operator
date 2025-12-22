@@ -1,42 +1,9 @@
 apiVersion: pdok.nl/v3
 kind: WFS
 metadata:
-  name: sample
   labels:
-    pdok.nl/owner-id: pdok
-    pdok.nl/dataset-id: sample
+    app.kubernetes.io/name: mapserver-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: wfs-sample
 spec:
-  podSpecPatch:
-    containers:
-      - name: mapserver
-        resources:
-          limits:
-            ephemeral-storage: 2G
-  service:
-    inspire:
-      language: dut
-      serviceMetadataUrl:
-        csw:
-          metadataIdentifier: 655549bd-8c05-4c69-950b-ad1e346dcac9
-      spatialDatasetIdentifier: 90af202c-de3a-4fbf-901c-82ae703904e3
-    title: "title"
-    abstract: "abstract"
-    defaultCrs: "EPSG:28992"
-    keywords:
-      - "keyword"
-    ownerInfoRef: "owner"
-    prefix: "prefix"
-    url: "http://host/path"
-    featureTypes:
-      - name: "name"
-        title: "title"
-        abstract: "abstract"
-        keywords:
-          - "word"
-        data:
-          gpkg:
-            blobKey: "container/prefix/file.gpkg"
-            columns:
-              - name: "column"
-            geometryType: "Point"
-            tableName: "table"
+  # TODO(user): Add fields here

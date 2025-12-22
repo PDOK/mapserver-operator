@@ -1,35 +1,24 @@
 /*
-MIT License
+Copyright 2025.
 
-Copyright (c) 2024 Publieke Dienstverlening op de Kaart
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+    http://www.apache.org/licenses/LICENSE-2.0
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
-//nolint:dupl
 package v3
 
 import (
 	"context"
 	"fmt"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,15 +29,18 @@ import (
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 )
 
+// nolint:unused
 // log is for logging in this package.
-var wfsLog = logf.Log.WithName("wfs-resource")
+var wfslog = logf.Log.WithName("wfs-resource")
 
 // SetupWFSWebhookWithManager registers the webhook for WFS in the manager.
 func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).For(&pdoknlv3.WFS{}).
-		WithValidator(&WFSCustomValidator{mgr.GetClient()}).
+		WithValidator(&WFSCustomValidator{}).
 		Complete()
 }
+
+// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
@@ -61,44 +53,44 @@ func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 // NOTE: The +kubebuilder:object:generate=false marker prevents controller-gen from generating DeepCopy methods,
 // as this struct is used only for temporary operations and does not need to be deeply copied.
 type WFSCustomValidator struct {
-	Client client.Client
+	// TODO(user): Add more fields as needed for validation
 }
 
 var _ webhook.CustomValidator = &WFSCustomValidator{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *WFSCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	wfs, ok := obj.(*pdoknlv3.WFS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
 	}
-	wfsLog.Info("Validation for WFS upon creation", "name", wfs.GetName())
+	wfslog.Info("Validation for WFS upon creation", "name", wfs.GetName())
 
-	return wfs.ValidateCreate(v.Client)
+	// TODO(user): fill in your validation logic upon object creation.
+
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *WFSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	wfs, ok := newObj.(*pdoknlv3.WFS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object for the newObj but got %T", newObj)
 	}
-	wfsOld, ok := oldObj.(*pdoknlv3.WFS)
-	if !ok {
-		return nil, fmt.Errorf("expected a WFS object for the oldObj but got %T", newObj)
-	}
-	wfsLog.Info("Validation for WFS upon update", "name", wfs.GetName())
+	wfslog.Info("Validation for WFS upon update", "name", wfs.GetName())
 
-	return wfs.ValidateUpdate(v.Client, wfsOld)
+	// TODO(user): fill in your validation logic upon object update.
+
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *WFSCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	wfs, ok := obj.(*pdoknlv3.WFS)
 	if !ok {
 		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
 	}
-	wfsLog.Info("Validation for WFS upon deletion", "name", wfs.GetName())
+	wfslog.Info("Validation for WFS upon deletion", "name", wfs.GetName())
 
 	// TODO(user): fill in your validation logic upon object deletion.
 

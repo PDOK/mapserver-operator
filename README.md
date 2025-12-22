@@ -1,20 +1,13 @@
 # mapserver-operator
-_Kubernetes controller/operator to serve WFS and WMS instances._
-
-[![Build](https://github.com/PDOK/mapserver-operator/actions/workflows/build-and-publish-image.yml/badge.svg)](https://github.com/PDOK/mapserver-operator/actions/workflows/build-and-publish-image.yml)
-[![Lint (go)](https://github.com/PDOK/mapserver-operator/actions/workflows/lint.yml/badge.svg)](https://github.com/PDOK/mapserver-operator/actions/workflows/lint.yml)
-[![GitHub license](https://img.shields.io/github/license/PDOK/mapserver-operator)](https://github.com/PDOK/mapserver-operator/blob/master/LICENSE)
+// TODO(user): Add simple overview of use/purpose
 
 ## Description
-This Kubernetes controller cq operator (an operator could be described as a specialized controller)
-ensures that the necessary resources are created or kept up-to-date in a cluster
-to deploy instances of the [Web Map Service](https://www.ogc.org/standards/wms/)(WMS) and [Web Features Service](https://www.ogc.org/standards/wfs/)(WFS). This repository is a complete solution to deploy WMS and WFS services according to CR schemas.
-This operator uses two Custom Resources(CR) called _WMS_ and _WFS_ as the input for the deployment, which is also defined in this repository.
+// TODO(user): An in-depth paragraph about your project and overview of use
 
 ## Getting Started
 
 ### Prerequisites
-- go version v1.24.0+
+- go version v1.23.0+
 - docker version 17.03+.
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -73,54 +66,70 @@ make uninstall
 make undeploy
 ```
 
-## Develop
+## Project Distribution
 
-The project is written in Go and scaffolded with [kubebuilder](https://kubebuilder.io).
+Following the options to release and provide this solution to the users.
 
-### kubebuilder
+### By providing a bundle with all YAML files
 
-Read the manual when you want/need to make changes.
-E.g. run `make test` before committing.
+1. Build the installer for the image built and published in the registry:
 
-### Linting
-
-Install [golangci-lint](https://golangci-lint.run/usage/install/) and run `golangci-lint run`
-from the root.
-(Don't run `make lint`, it uses an old version of golangci-lint.)
-
-# Contributing
-
-### How to contribute
-Mapserver-operator is solely developed by PDOK. Contributions are however always welcome. If you have any questions or suggestions you can create an issue in the issue tracker.
-
-### Contact
-The maintainers can be contacted through the issue tracker.
-
-# Authors
-This project is developed by [PDOK](https://www.pdok.nl/), a platform for publication of geographic datasets of Dutch governmental institutions.
-
-# License
-
+```sh
+make build-installer IMG=<some-registry>/mapserver-operator:tag
 ```
-MIT License
 
-Copyright (c) 2024-2025 Publieke Dienstverlening op de Kaart
+**NOTE:** The makefile target mentioned above generates an 'install.yaml'
+file in the dist directory. This file contains all the resources built
+with Kustomize, which are necessary to install this project without its
+dependencies.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+2. Using the installer
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Users can just run 'kubectl apply -f <URL for YAML BUNDLE>' to install
+the project, i.e.:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+```sh
+kubectl apply -f https://raw.githubusercontent.com/<org>/mapserver-operator/<tag or branch>/dist/install.yaml
 ```
+
+### By providing a Helm Chart
+
+1. Build the chart using the optional helm plugin
+
+```sh
+kubebuilder edit --plugins=helm/v1-alpha
+```
+
+2. See that a chart was generated under 'dist/chart', and users
+can obtain this solution from there.
+
+**NOTE:** If you change the project, you need to update the Helm Chart
+using the same command above to sync the latest changes. Furthermore,
+if you create webhooks, you need to use the above command with
+the '--force' flag and manually ensure that any custom configuration
+previously added to 'dist/chart/values.yaml' or 'dist/chart/manager/manager.yaml'
+is manually re-applied afterwards.
+
+## Contributing
+// TODO(user): Add detailed information on how you would like others to contribute to this project
+
+**NOTE:** Run `make help` for more information on all potential `make` targets
+
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+
+## License
+
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
