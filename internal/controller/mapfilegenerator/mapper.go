@@ -228,13 +228,13 @@ func mapLayers(wms *pdoknlv3.WMS, extent string, result *WMSInput) {
 			result.Layers = append(result.Layers, layer)
 		} else if annotatedLayer.IsGroupLayer && !annotatedLayer.IsTopLayer {
 			groupLayer := GroupLayer{
-				Name:       *annotatedLayer.Layer.Name,
-				Title:      smoothoperatorutils.PointerVal(annotatedLayer.Layer.Title, ""),
-				Abstract:   smoothoperatorutils.PointerVal(annotatedLayer.Layer.Abstract, ""),
+				Name:       *annotatedLayer.Name,
+				Title:      smoothoperatorutils.PointerVal(annotatedLayer.Title, ""),
+				Abstract:   smoothoperatorutils.PointerVal(annotatedLayer.Abstract, ""),
 				StyleName:  "",
 				StyleTitle: "",
 			}
-			if len(annotatedLayer.Layer.Styles) > 0 {
+			if len(annotatedLayer.Styles) > 0 {
 				groupLayer.StyleName = annotatedLayer.Layer.Styles[0].Name
 				groupLayer.StyleTitle = smoothoperatorutils.PointerVal(annotatedLayer.Layer.Styles[0].Title, "")
 			}

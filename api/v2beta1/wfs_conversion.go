@@ -207,7 +207,7 @@ func (dst *WFS) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.ObjectMeta = src.ObjectMeta
 
-	dst.Spec.General = LabelsToV2General(src.ObjectMeta.Labels)
+	dst.Spec.General = LabelsToV2General(src.Labels)
 
 	dst.Spec.Kubernetes = NewV2KubernetesObject(src.Spec.Lifecycle, src.Spec.PodSpecPatch, src.Spec.HorizontalPodAutoscalerPatch)
 

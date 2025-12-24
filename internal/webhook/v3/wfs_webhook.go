@@ -51,8 +51,7 @@ func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
-// Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
+// NOTE: If you want to customise the 'path', use the flags '--defaulting-path' or '--validation-path'.
 // +kubebuilder:webhook:path=/validate-pdok-nl-v3-wfs,mutating=false,failurePolicy=fail,sideEffects=None,groups=pdok.nl,resources=wfs,verbs=create;update,versions=v3,name=vwfs-v3.kb.io,admissionReviewVersions=v1
 
 // WFSCustomValidator struct is responsible for validating the WFS resource

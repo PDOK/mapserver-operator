@@ -87,7 +87,7 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 	// Fetch the WMS instance
 	wms := &pdoknlv3.WMS{}
-	if err = r.Client.Get(ctx, req.NamespacedName, wms); err != nil {
+	if err = r.Get(ctx, req.NamespacedName, wms); err != nil {
 		if apierrors.IsNotFound(err) {
 			lgr.Info("WMS resource not found", "name", req.NamespacedName)
 		} else {
@@ -103,7 +103,7 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		Namespace: wms.Namespace,
 		Name:      wms.Spec.Service.OwnerInfoRef,
 	}
-	if err := r.Client.Get(ctx, objectKey, ownerInfo); err != nil {
+	if err := r.Get(ctx, objectKey, ownerInfo); err != nil {
 		if apierrors.IsNotFound(err) {
 			lgr.Info("OwnerInfo resource not found", "name", req.NamespacedName)
 		} else {
@@ -122,7 +122,7 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 	// Check TTL, delete if expired
 	if ttlExpired(wms) {
-		err = r.Client.Delete(ctx, wms)
+		err = r.Delete(ctx, wms)
 
 		return result, err
 	}

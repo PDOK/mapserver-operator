@@ -78,7 +78,7 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Creates the WMS from the sample", func() {
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -94,10 +94,10 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should deny Create when URL not in IngressRouteURLs", func() {
 			url, err := smoothoperatormodel.ParseURL("http://changed/changed")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: smoothoperatormodel.URL{URL: url}}}
 			url, err = smoothoperatormodel.ParseURL("http://sample/sample")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -112,7 +112,7 @@ var _ = Describe("WMS Webhook", func() {
 		It("Warns when the name contains WMS", func() {
 			obj.Name += "-wms"
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("metadata").Child("name"),
@@ -125,7 +125,7 @@ var _ = Describe("WMS Webhook", func() {
 			withMapfile(obj)
 			obj.Spec.Service.Resolution = ptr.To(int32(5))
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("spec").Child("service").Child("resolution"),
@@ -138,7 +138,7 @@ var _ = Describe("WMS Webhook", func() {
 			withMapfile(obj)
 			obj.Spec.Service.DefResolution = ptr.To(int32(5))
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("spec").Child("service").Child("defResolution"),
@@ -222,7 +222,7 @@ var _ = Describe("WMS Webhook", func() {
 				BBox: smoothoperatormodel.BBox{},
 			}}
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("spec").Child("service").Child("layer").Child("boundingBoxes"),
@@ -254,7 +254,7 @@ var _ = Describe("WMS Webhook", func() {
 			}}
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("spec").Child("service").Child("layer").Child("layers").Index(0).Child("data").Child("tif").Child("getFeatureInfoIncludesClass"),
@@ -298,7 +298,7 @@ var _ = Describe("WMS Webhook", func() {
 			obj.Spec.Service.Layer.Layers[0].Styles[0].Abstract = ptr.To("abstract")
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("spec").Child("service").Child("layer").Child("layers").Index(0).Child("styles").Index(0).Child("abstract"),
@@ -527,7 +527,7 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should deny update if a ingressRouteURL was removed", func() {
 			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			oldObj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{
 				{URL: obj.URL()},
 				{URL: smoothoperatormodel.URL{URL: url}},
@@ -544,7 +544,7 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should accept update if a url was changed when it's in ingressRouteUrls", func() {
 			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			oldObj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{
 				{URL: obj.URL()},
 				{URL: smoothoperatormodel.URL{URL: url}},
@@ -554,13 +554,13 @@ var _ = Describe("WMS Webhook", func() {
 			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
 
 			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should deny update if a url was changed and ingressRouteUrls = nil", func() {
 			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
 			obj.Spec.IngressRouteURLs = nil
 			oldObj.Spec.IngressRouteURLs = nil

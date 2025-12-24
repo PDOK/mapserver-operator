@@ -220,6 +220,6 @@ func getRootFromFilename(fileName string) (string, error) {
 	return fileName[:index], nil
 }
 
-func writeLine(sb *strings.Builder, format string, a ...any) {
+func writeLine(sb *strings.Builder, format string, a ...any) { //nolint:goprintffuncname
 	sb.WriteString(fmt.Sprintf(format, a...) + "\n")
 }

@@ -81,7 +81,7 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 			metadataURL.MediaType = wfs.Spec.Service.Inspire.ServiceMetadataURL.Custom.Type
 		}
 
-		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = &wfs200.OperationsMetadata{
+		config.Services.WFS200Config.Wfs200.OperationsMetadata = &wfs200.OperationsMetadata{
 			ExtendedCapabilities: &wfs200.ExtendedCapabilities{
 				ExtendedCapabilities: wfs200.NestedExtendedCapabilities{
 					MetadataURL: metadataURL,
@@ -99,12 +99,12 @@ func MapWFSToCapabilitiesGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoper
 		}
 	}
 	if wfs.Spec.Service.CountDefault != nil {
-		operationsMetadata := config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata
+		operationsMetadata := config.Services.WFS200Config.Wfs200.OperationsMetadata
 		if operationsMetadata == nil {
 			operationsMetadata = &wfs200.OperationsMetadata{}
 		}
 		operationsMetadata.Constraint = getConstraints(strconv.Itoa(*wfs.Spec.Service.CountDefault))
-		config.Services.WFS200Config.Wfs200.Capabilities.OperationsMetadata = operationsMetadata
+		config.Services.WFS200Config.Wfs200.OperationsMetadata = operationsMetadata
 	}
 
 	return &config, nil

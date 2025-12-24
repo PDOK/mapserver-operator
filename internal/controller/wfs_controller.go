@@ -76,7 +76,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 	// Fetch the WFS instance
 	wfs := &pdoknlv3.WFS{}
-	if err = r.Client.Get(ctx, req.NamespacedName, wfs); err != nil {
+	if err = r.Get(ctx, req.NamespacedName, wfs); err != nil {
 		if apierrors.IsNotFound(err) {
 			lgr.Info("WFS resource not found", "name", req.NamespacedName)
 		} else {
@@ -92,7 +92,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 		Namespace: wfs.Namespace,
 		Name:      wfs.Spec.Service.OwnerInfoRef,
 	}
-	if err := r.Client.Get(ctx, objectKey, ownerInfo); err != nil {
+	if err := r.Get(ctx, objectKey, ownerInfo); err != nil {
 		if apierrors.IsNotFound(err) {
 			lgr.Info("OwnerInfo resource not found", "name", req.NamespacedName)
 		} else {
@@ -111,7 +111,7 @@ func (r *WFSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 
 	// Check TTL, delete if expired
 	if ttlExpired(wfs) {
-		err = r.Client.Delete(ctx, wfs)
+		err = r.Delete(ctx, wfs)
 
 		return result, err
 	}

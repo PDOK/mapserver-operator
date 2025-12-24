@@ -56,7 +56,7 @@ var _ = Describe("WFS Webhook", func() {
 
 		sample := &pdoknlv3.WFS{}
 		err := readSample(sample)
-		Expect(err).To(BeNil(), "Reading and parsing the WFS V3 sample failed")
+		Expect(err).ToNot(HaveOccurred(), "Reading and parsing the WFS V3 sample failed")
 
 		obj = sample.DeepCopy()
 		oldObj = sample.DeepCopy()
@@ -81,7 +81,7 @@ var _ = Describe("WFS Webhook", func() {
 
 		It("Creates the WFS from the sample", func() {
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(BeEmpty())
 		})
 
@@ -97,10 +97,10 @@ var _ = Describe("WFS Webhook", func() {
 
 		It("Should deny Create when URL not in IngressRouteURLs", func() {
 			url, err := smoothoperatormodel.ParseURL("http://changed/changed")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			obj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{{URL: smoothoperatormodel.URL{URL: url}}}
 			url, err = smoothoperatormodel.ParseURL("http://sample/sample")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -115,7 +115,7 @@ var _ = Describe("WFS Webhook", func() {
 		It("Warns if the name contains WFS", func() {
 			obj.Name += "-wfs"
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("metadata").Child("name"),
@@ -141,7 +141,7 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(obj.Spec.Service.Bbox).NotTo(BeNil())
 			obj.Spec.Service.Mapfile = &pdoknlv3.Mapfile{}
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("spec").Child("service").Child("featureTypes").Index(0).Child("bbox").Child("defaultCrs"),
@@ -172,7 +172,7 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW).NotTo(BeNil())
 			obj.Spec.Service.Inspire.SpatialDatasetIdentifier = obj.Spec.Service.FeatureTypes[0].DatasetMetadataURL.CSW.MetadataIdentifier
 			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(admission.Warnings{field.Invalid(
 				field.NewPath("spec").Child("service").Child("inspire").Child("spatialDatasetIdentifier"),
 				obj.Spec.Service.Inspire.SpatialDatasetIdentifier,
@@ -324,7 +324,7 @@ var _ = Describe("WFS Webhook", func() {
 
 		It("Should deny update if a ingressRouteURL was removed", func() {
 			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			oldObj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{
 				{URL: obj.URL()},
 				{URL: smoothoperatormodel.URL{URL: url}},
@@ -341,7 +341,7 @@ var _ = Describe("WFS Webhook", func() {
 
 		It("Should accept update if a url was changed when it's in ingressRouteUrls", func() {
 			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			oldObj.Spec.IngressRouteURLs = []smoothoperatormodel.IngressRouteURL{
 				{URL: obj.URL()},
 				{URL: smoothoperatormodel.URL{URL: url}},
@@ -351,13 +351,13 @@ var _ = Describe("WFS Webhook", func() {
 			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
 
 			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should deny update if a url was changed and ingressRouteUrls = nil", func() {
 			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			obj.Spec.Service.URL = smoothoperatormodel.URL{URL: url}
 			obj.Spec.IngressRouteURLs = nil
 			oldObj.Spec.IngressRouteURLs = nil

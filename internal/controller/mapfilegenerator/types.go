@@ -119,13 +119,13 @@ func SetDataFields[O pdoknlv3.WMSWFS](obj O, wmsLayer *WMSLayer, data pdoknlv3.D
 	case data.TIF != nil:
 		tif := data.TIF
 		wmsLayer.GeometryType = smoothoperatorutils.Pointer("Raster")
-		wmsLayer.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join(tifPath, path.Base(tif.BlobKey)))
+		wmsLayer.TifPath = smoothoperatorutils.Pointer(path.Join(tifPath, path.Base(tif.BlobKey)))
 		if !obj.Options().PrefetchData {
 			reReplace := regexp.MustCompile(`$[a-zA-Z0-9_]*]/`)
-			wmsLayer.BaseLayer.TifPath = smoothoperatorutils.Pointer(path.Join("/vsiaz", reReplace.ReplaceAllString(tif.BlobKey, "")))
+			wmsLayer.TifPath = smoothoperatorutils.Pointer(path.Join("/vsiaz", reReplace.ReplaceAllString(tif.BlobKey, "")))
 		}
-		wmsLayer.BaseLayer.Resample = &tif.Resample
-		wmsLayer.BaseLayer.OversampleRatio = &tif.OversampleRatio
+		wmsLayer.Resample = &tif.Resample
+		wmsLayer.OversampleRatio = &tif.OversampleRatio
 		wmsLayer.Offsite = smoothoperatorutils.PointerVal(tif.Offsite, "")
 		wmsLayer.GetFeatureInfoIncludesClass = &tif.GetFeatureInfoIncludesClass
 	case data.Postgis != nil:
