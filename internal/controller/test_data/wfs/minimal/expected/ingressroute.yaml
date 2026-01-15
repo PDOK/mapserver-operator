@@ -14,7 +14,7 @@ metadata:
   annotations:
     uptime.pdok.nl/id: b333bf07fbf71b3ca2e55750b75d8a72309b9564
     uptime.pdok.nl/name: MINIMAL WFS
-    uptime.pdok.nl/tags: public-stats,wfs
+    uptime.pdok.nl/tags: dataset,datasetOwner,public-stats,v1_0,wfs
     uptime.pdok.nl/url: http://localhost:32788/datasetOwner/dataset/wfs/v1_0?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=featuretype-name&STARTINDEX=0&COUNT=1
   ownerReferences:
     - apiVersion: pdok.nl/v3

@@ -4,11 +4,9 @@ import (
 	"regexp"
 	"strings"
 
-	smoothoperatormodel "github.com/pdok/smooth-operator/model"
-
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
-
-	"github.com/pdok/mapserver-operator/internal/controller/utils"
+	smoothoperatormodel "github.com/pdok/smooth-operator/model"
+	uptimeutils "github.com/pdok/smooth-operator/pkg/uptime-utils"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -41,25 +39,20 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 		return err
 	}
 
-	annotations := smoothoperatorutils.CloneOrEmptyMap(obj.GetAnnotations())
 	if setUptimeOperatorAnnotations {
-		tags := []string{"public-stats", strings.ToLower(string(obj.Type()))}
-
-		if obj.Inspire() != nil {
-			tags = append(tags, "inspire")
-		}
 
 		queryString, _, err := obj.ReadinessQueryString()
 		if err != nil {
 			return err
 		}
-
-		annotations["uptime.pdok.nl/id"] = utils.Sha1Hash(obj.TypedName())
-		annotations["uptime.pdok.nl/name"] = getUptimeName(obj)
-		annotations["uptime.pdok.nl/url"] = obj.URL().String() + "?" + queryString
-		annotations["uptime.pdok.nl/tags"] = strings.Join(tags, ",")
+		ingressRoute.Annotations = uptimeutils.GetUptimeAnnotations(
+			obj.GetAnnotations(),
+			obj.TypedName(),
+			getUptimeName(obj),
+			obj.URL().String()+"?"+queryString,
+			obj.GetLabels(),
+		)
 	}
-	ingressRoute.SetAnnotations(annotations)
 
 	mapserverService := traefikiov1alpha1.Service{
 		LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
