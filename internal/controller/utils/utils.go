@@ -2,10 +2,6 @@ package utils //nolint:revive
 
 import (
 	//nolint:gosec
-	"crypto/sha1"
-	"encoding/hex"
-	"io"
-
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
 	corev1 "k8s.io/api/core/v1"
@@ -55,12 +51,4 @@ func GetConfigVolumeMount(volumeName string) corev1.VolumeMount {
 
 func GetMapfileVolumeMount() corev1.VolumeMount {
 	return corev1.VolumeMount{Name: constants.ConfigMapCustomMapfileVolumeName, MountPath: "/srv/data/config/mapfile"}
-}
-
-func Sha1Hash(v string) string {
-	//nolint:gosec
-	s := sha1.New()
-	_, _ = io.WriteString(s, v)
-
-	return hex.EncodeToString(s.Sum(nil))
 }
