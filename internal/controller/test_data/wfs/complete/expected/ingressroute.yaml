@@ -21,7 +21,7 @@ metadata:
   annotations:
     uptime.pdok.nl/id: fbe1241d4fed04fb85d2135f182427861156f692
     uptime.pdok.nl/name: COMPLETE INSPIRE WFS
-    uptime.pdok.nl/tags: public-stats,wfs,inspire
+    uptime.pdok.nl/tags: dataset,datasetOwner,public-stats,theme,v1_0,wfs
     uptime.pdok.nl/url: http://localhost:32788/datasetOwner/dataset/theme/wfs/v1_0?Service=WFS&Request=GetCapabilities
 spec:
   routes:

@@ -1,7 +1,6 @@
 package utils //nolint:revive
 
 import (
-	//nolint:gosec
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
 	corev1 "k8s.io/api/core/v1"
