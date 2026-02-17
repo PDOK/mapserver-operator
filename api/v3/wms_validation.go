@@ -19,6 +19,16 @@ func (wms *WMS) ValidateUpdate(c client.Client, wmsOld *WMS) ([]string, error) {
 	return ValidateUpdate(c, wms, wmsOld, ValidateWMS)
 }
 
+// ValidateCreateWMS validates WMS creation without k8s client
+func ValidateCreateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
+	validateCreateWMSWFS(nil, wms, warnings, allErrs, ValidateWMS)
+}
+
+// ValidateUpdateWMS validates WMS update without k8s client
+func ValidateUpdateWMS(wms *WMS, wmsOld *WMS, warnings *[]string, allErrs *field.ErrorList) {
+	validateUpdateWMSWFS(nil, wms, wmsOld, warnings, allErrs, ValidateWMS)
+}
+
 func ValidateWMS(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wms.GetName(), "wms") {
 		sharedValidation.AddWarning(

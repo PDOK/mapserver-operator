@@ -19,18 +19,7 @@ func ValidateCreate[W WMSWFS](c client.Client, obj W, validate func(W, *[]string
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
-	err := sharedValidation.ValidateLabelsOnCreate(obj.GetLabels())
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(obj.IngressRouteURLs(false), obj.URL(), nil)
-	if err != nil {
-		allErrs = append(allErrs, err)
-	}
-
-	validate(obj, &warnings, &allErrs)
-	ValidateOwnerInfo(c, obj, &allErrs)
+	validateCreateWMSWFS(c, obj, &warnings, &allErrs, validate)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
@@ -41,43 +30,30 @@ func ValidateCreate[W WMSWFS](c client.Client, obj W, validate func(W, *[]string
 		obj.GetName(), allErrs)
 }
 
+func validateCreateWMSWFS[W WMSWFS](c client.Client, obj W, warnings *[]string, allErrs *field.ErrorList, validate func(W, *[]string, *field.ErrorList)) {
+	err := sharedValidation.ValidateLabelsOnCreate(obj.GetLabels())
+	if err != nil {
+		*allErrs = append(*allErrs, err)
+	}
+
+	err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(obj.IngressRouteURLs(false), obj.URL(), nil)
+	if err != nil {
+		*allErrs = append(*allErrs, err)
+	}
+
+	validate(obj, warnings, allErrs)
+
+	// Only validate ower info if k8s client is available
+	if c != nil {
+		ValidateOwnerInfo(c, obj, allErrs)
+	}
+}
+
 func ValidateUpdate[W WMSWFS](c client.Client, newW, oldW W, validate func(W, *[]string, *field.ErrorList)) ([]string, error) {
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 
-	// Make sure no ingressRouteURLs have been removed
-	sharedValidation.ValidateIngressRouteURLsNotRemoved(oldW.IngressRouteURLs(false), newW.IngressRouteURLs(true), &allErrs, nil)
-
-	if len(newW.IngressRouteURLs(false)) == 0 {
-		// There are no ingressRouteURLs given, spec.service.url is immutable is that case.
-		path := field.NewPath("spec").Child("service").Child("url")
-		sharedValidation.CheckURLImmutability(
-			oldW.URL(),
-			newW.URL(),
-			&allErrs,
-			path,
-		)
-	} else if oldW.URL().String() != newW.URL().String() {
-		// Make sure both the old spec.service.url and the new one are included in the ingressRouteURLs list.
-		err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(true), oldW.URL(), nil)
-		if err != nil {
-			allErrs = append(allErrs, err)
-		}
-
-		err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(true), newW.URL(), nil)
-		if err != nil {
-			allErrs = append(allErrs, err)
-		}
-	}
-
-	sharedValidation.ValidateLabelsOnUpdate(oldW.GetLabels(), newW.GetLabels(), &allErrs)
-
-	if (newW.Inspire() == nil && oldW.Inspire() != nil) || (newW.Inspire() != nil && oldW.Inspire() == nil) {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))
-	}
-
-	validate(newW, &warnings, &allErrs)
-	ValidateOwnerInfo(c, newW, &allErrs)
+	validateUpdateWMSWFS(c, newW, oldW, &warnings, &allErrs, validate)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
@@ -85,6 +61,46 @@ func ValidateUpdate[W WMSWFS](c client.Client, newW, oldW W, validate func(W, *[
 	return warnings, apierrors.NewInvalid(
 		newW.GroupKind(),
 		newW.GetName(), allErrs)
+}
+
+func validateUpdateWMSWFS[W WMSWFS](c client.Client, newW, oldW W, warnings *[]string, allErrs *field.ErrorList, validate func(W, *[]string, *field.ErrorList)) {
+	// Make sure no ingressRouteURLs have been removed
+	sharedValidation.ValidateIngressRouteURLsNotRemoved(oldW.IngressRouteURLs(false), newW.IngressRouteURLs(true), allErrs, nil)
+
+	if len(newW.IngressRouteURLs(false)) == 0 {
+		// There are no ingressRouteURLs given, spec.service.url is immutable is that case.
+		path := field.NewPath("spec").Child("service").Child("url")
+		sharedValidation.CheckURLImmutability(
+			oldW.URL(),
+			newW.URL(),
+			allErrs,
+			path,
+		)
+	} else if oldW.URL().String() != newW.URL().String() {
+		// Make sure both the old spec.service.url and the new one are included in the ingressRouteURLs list.
+		err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(true), oldW.URL(), nil)
+		if err != nil {
+			*allErrs = append(*allErrs, err)
+		}
+
+		err = sharedValidation.ValidateIngressRouteURLsContainsBaseURL(newW.IngressRouteURLs(true), newW.URL(), nil)
+		if err != nil {
+			*allErrs = append(*allErrs, err)
+		}
+	}
+
+	sharedValidation.ValidateLabelsOnUpdate(oldW.GetLabels(), newW.GetLabels(), allErrs)
+
+	if (newW.Inspire() == nil && oldW.Inspire() != nil) || (newW.Inspire() != nil && oldW.Inspire() == nil) {
+		*allErrs = append(*allErrs, field.Forbidden(field.NewPath("spec").Child("service").Child("inspire"), "cannot change from inspire to not inspire or the other way around"))
+	}
+
+	validate(newW, warnings, allErrs)
+
+	// Only validate owner info if k8s client is available
+	if c != nil {
+		ValidateOwnerInfo(c, newW, allErrs)
+	}
 }
 
 func ValidateHorizontalPodAutoscalerPatch(patch HorizontalPodAutoscalerPatch, allErrs *field.ErrorList) {
