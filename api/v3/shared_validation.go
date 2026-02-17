@@ -43,7 +43,7 @@ func validateCreateWMSWFS[W WMSWFS](c client.Client, obj W, warnings *[]string, 
 
 	validate(obj, warnings, allErrs)
 
-	// Only validate ower info if k8s client is available
+	// Only validate owner info if k8s client is available
 	if c != nil {
 		ValidateOwnerInfo(c, obj, allErrs)
 	}
