@@ -159,6 +159,8 @@ spec:
             - mountPath: /srv/mapserver/config/scraping-error.xml
               name: mapserver
               subPath: scraping-error.xml
+            - mountPath: /srv/data/config/styles
+              name: styling-files
         - args:
             - "patch"
           image: patch.patch/image:patch
@@ -328,6 +330,8 @@ spec:
             - mountPath: /input
               name: legend-generator-config
               readOnly: true
+            - mountPath: /srv/data/config/styles
+              name: styling-files
       terminationGracePeriodSeconds: 600
       volumes:
         - emptyDir: {}
