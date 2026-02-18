@@ -17,7 +17,7 @@ var expectedVolumeMountsYaml []byte
 
 func TestGetVolumeMounts(t *testing.T) {
 	pdoknlv3.SetHost("https://service.pdok.nl")
-	result := getVolumeMounts(false)
+	result := getVolumeMounts(false, false)
 
 	var expectedVolumeMounts struct{ VolumeMounts []corev1.VolumeMount }
 	err := yaml.Unmarshal(expectedVolumeMountsYaml, &expectedVolumeMounts)
