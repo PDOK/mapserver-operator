@@ -39,7 +39,7 @@ func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*core
 			},
 			GetMapfileEnvVar(obj),
 		},
-		VolumeMounts: getVolumeMounts(obj.Mapfile() != nil),
+		VolumeMounts: getVolumeMounts(obj.Mapfile() != nil, obj.Type() == pdoknlv3.ServiceTypeWMS),
 		Resources: corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
 				corev1.ResourceMemory: resource.MustParse("800M"),
@@ -61,7 +61,7 @@ func GetMapserverContainer[O pdoknlv3.WMSWFS](obj O, images types.Images) (*core
 	return &container, nil
 }
 
-func getVolumeMounts(customMapfile bool) []corev1.VolumeMount {
+func getVolumeMounts(customMapfile bool, wms bool) []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
 		utils.GetBaseVolumeMount(),
 		utils.GetDataVolumeMount(),
@@ -77,6 +77,11 @@ func getVolumeMounts(customMapfile bool) []corev1.VolumeMount {
 	}
 	if customMapfile {
 		volumeMounts = append(volumeMounts, utils.GetMapfileVolumeMount())
+	}
+
+	// maps all the found style files for generic SLD inclusion
+	if wms {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{Name: constants.ConfigMapStylingFilesVolumeName, MountPath: "/srv/data/config/styles"})
 	}
 
 	return volumeMounts

@@ -52,6 +52,8 @@ exit $exit_code;
 
 	// Adding config volumemount here to get the same order as in the old ansible operator
 	initContainer.VolumeMounts = append(initContainer.VolumeMounts, utils.GetConfigVolumeMount(constants.ConfigMapLegendGeneratorVolumeName))
+	// For mounting the possible stylingfiles that are included
+	initContainer.VolumeMounts = append(initContainer.VolumeMounts, corev1.VolumeMount{Name: constants.ConfigMapStylingFilesVolumeName, MountPath: "/srv/data/config/styles"})
 
 	return &initContainer, nil
 }
