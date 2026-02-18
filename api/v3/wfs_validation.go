@@ -19,6 +19,16 @@ func (wfs *WFS) ValidateUpdate(c client.Client, wfsOld *WFS) ([]string, error) {
 	return ValidateUpdate(c, wfs, wfsOld, ValidateWFS)
 }
 
+// ValidateCreateWFS validates WFS creation without k8s client
+func ValidateCreateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
+	validateCreateWMSWFS(nil, wfs, warnings, allErrs, ValidateWFS)
+}
+
+// ValidateUpdateWFS validates WFS update without k8s client
+func ValidateUpdateWFS(wfs *WFS, wfsOld *WFS, warnings *[]string, allErrs *field.ErrorList) {
+	validateUpdateWMSWFS(nil, wfs, wfsOld, warnings, allErrs, ValidateWFS)
+}
+
 func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wfs.GetName(), "wfs") {
 		sharedValidation.AddWarning(
