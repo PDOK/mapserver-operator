@@ -337,7 +337,6 @@ spec:
           name: capabilities-generator-config
         - projected:
             sources: []
-            defaultMode: 420
           name: styling-files
         - configMap:
             name: custom-mapfile-wms-featureinfo-generator-668mmh48cc
