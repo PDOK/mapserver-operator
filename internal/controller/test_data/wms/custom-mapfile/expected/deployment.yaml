@@ -343,3 +343,5 @@ spec:
             name: custom-mapfile-wms-legend-generator-82hh8mg962
             defaultMode: 420
           name: legend-generator-config
+        - emptyDir: {}
+          name: styling-files
