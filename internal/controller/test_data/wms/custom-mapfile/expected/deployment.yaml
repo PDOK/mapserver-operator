@@ -335,6 +335,9 @@ spec:
             name: custom-mapfile-wms-capabilities-generator-865bt77thd
             defaultMode: 420
           name: capabilities-generator-config
+        - projected:
+            sources: []
+          name: styling-files
         - configMap:
             name: custom-mapfile-wms-featureinfo-generator-668mmh48cc
             defaultMode: 420

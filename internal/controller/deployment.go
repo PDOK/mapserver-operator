@@ -273,6 +273,12 @@ func getVolumes[O pdoknlv3.WMSWFS](obj O, configMapNames types.HashedConfigMapNa
 				Name:         constants.ConfigMapStylingFilesVolumeName,
 				VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: volumeProjections}},
 			})
+		} else {
+			// If there is a custom mapfile, we still want a styling-files volume, even if it is empty
+			volumes = append(volumes, corev1.Volume{
+				Name:         constants.ConfigMapStylingFilesVolumeName,
+				VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: []corev1.VolumeProjection{}}},
+			})
 		}
 
 		volumes = append(
