@@ -67,6 +67,10 @@ func MapWFSToMapfileGeneratorInput(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv
 
 func getWFSLayers(service pdoknlv3.WFSService) (layers []WFSLayer) {
 	for _, featureType := range service.FeatureTypes {
+		metadataID := ""
+		if featureType.DatasetMetadataURL != nil && featureType.DatasetMetadataURL.CSW != nil {
+			metadataID = featureType.DatasetMetadataURL.CSW.MetadataIdentifier
+		}
 		layer := WFSLayer{
 			BaseLayer: BaseLayer{
 				Name:           featureType.Name,
@@ -74,7 +78,7 @@ func getWFSLayers(service pdoknlv3.WFSService) (layers []WFSLayer) {
 				Abstract:       featureType.Abstract,
 				Keywords:       strings.Join(featureType.Keywords, ","),
 				Extent:         getWFSExtent(featureType, service),
-				MetadataID:     featureType.DatasetMetadataURL.CSW.MetadataIdentifier,
+				MetadataID:     metadataID,
 				Columns:        getColumns(featureType.Data),
 				TableName:      featureType.Data.GetTableName(),
 				GeometryType:   featureType.Data.GetGeometryType(),
