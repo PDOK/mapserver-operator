@@ -114,6 +114,14 @@ func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string,
 		*layerNames = append(*layerNames, layerName)
 	}
 
+	if layer.Name == nil && len(layer.Styles) > 0 {
+		*allErrs = append(*allErrs, field.Invalid(
+			path.Child("layer"),
+			nil,
+			fmt.Sprintf("layer with styles must have name. Layer name is empty and the name of the first style is: %s.", layer.Styles[0].Name),
+		))
+	}
+
 	if layer.IsGroupLayer && layer.Data != nil {
 		*allErrs = append(*allErrs, field.Invalid(
 			path.Child("data"),
