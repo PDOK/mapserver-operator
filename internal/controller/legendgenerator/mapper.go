@@ -40,7 +40,7 @@ func addLayerInput(wms *pdoknlv3.WMS, data map[string]string) {
 
 	sb := strings.Builder{}
 	for _, reference := range legendReferences {
-		sb.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", reference.Layer, reference.Style))
+		fmt.Fprintf(&sb, "\"%s\" \"%s\"\n", reference.Layer, reference.Style)
 	}
 
 	data["input"] = sb.String()
@@ -101,7 +101,7 @@ func addLegendFixerConfig(wms *pdoknlv3.WMS, data map[string]string) {
 
 	sb := strings.Builder{}
 	for _, reference := range legendReferences {
-		sb.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", reference.Layer, reference.Style))
+		fmt.Fprintf(&sb, "\"%s\" \"%s\"\n", reference.Layer, reference.Style)
 	}
 
 	data["remove"] = sb.String()

@@ -95,25 +95,8 @@ func validateLayers(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	}
 }
 
-func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string, layerNames *[]string, hasVisibleLayer *bool, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
-	service := wms.Spec.Service
-
+func validateAndGetLayerName(layer AnnotatedLayer, path *field.Path, layerNames *[]string, allErrs *field.ErrorList) {
 	var layerName string
-	if layer.IsTopLayer && layer.Name == nil {
-		layerName = "unnamed: " + TopLayer
-	} else {
-		layerName = *layer.Name
-	}
-
-	if slices.Contains(*layerNames, layerName) {
-		*allErrs = append(*allErrs, field.Duplicate(
-			path.Child("name"),
-			layerName,
-		))
-	} else {
-		*layerNames = append(*layerNames, layerName)
-	}
-
 	if layer.Name == nil && len(layer.Styles) > 0 {
 		*allErrs = append(*allErrs, field.Invalid(
 			path.Child("layer"),
@@ -129,6 +112,26 @@ func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string,
 			"must not be set on a GroupLayer",
 		))
 	}
+	if layer.IsTopLayer && layer.Name == nil {
+		layerName = "unnamed: " + TopLayer
+	} else {
+		layerName = *layer.Name
+	}
+
+	if slices.Contains(*layerNames, layerName) {
+		*allErrs = append(*allErrs, field.Duplicate(
+			path.Child("name"),
+			layerName,
+		))
+	} else {
+		*layerNames = append(*layerNames, layerName)
+	}
+}
+
+func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string, layerNames *[]string, hasVisibleLayer *bool, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
+	service := wms.Spec.Service
+
+	validateAndGetLayerName(layer, path, layerNames, allErrs)
 
 	validateLayerWithMapfile(layer, path, wms, warnings, allErrs)
 

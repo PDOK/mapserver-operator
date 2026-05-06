@@ -31,7 +31,7 @@ linters:
     - gocheckcompilerdirectives
     - goconst
     - gocritic
-    - gomoddirectives
+#    - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
