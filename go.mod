@@ -1,6 +1,6 @@
 module github.com/pdok/mapserver-operator
 
-go 1.25.0
+go 1.25.5
 
 godebug default=go1.25
 
