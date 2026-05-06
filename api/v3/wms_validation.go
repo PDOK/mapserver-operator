@@ -95,7 +95,7 @@ func validateLayers(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	}
 }
 
-func validateAndGetLayerName(layer AnnotatedLayer, path *field.Path, layerNames *[]string, allErrs *field.ErrorList) {
+func validateLayerName(layer AnnotatedLayer, path *field.Path, layerNames *[]string, allErrs *field.ErrorList) {
 	var layerName string
 	if layer.Name == nil && len(layer.Styles) > 0 {
 		*allErrs = append(*allErrs, field.Invalid(
@@ -131,7 +131,7 @@ func validateAndGetLayerName(layer AnnotatedLayer, path *field.Path, layerNames 
 func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string, layerNames *[]string, hasVisibleLayer *bool, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	service := wms.Spec.Service
 
-	validateAndGetLayerName(layer, path, layerNames, allErrs)
+	validateLayerName(layer, path, layerNames, allErrs)
 
 	validateLayerWithMapfile(layer, path, wms, warnings, allErrs)
 
