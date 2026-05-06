@@ -51,6 +51,7 @@ var _ = Describe("WMS Webhook", func() {
 
 	Context("When creating or updating WMS under Conversion Webhook", func() {
 		ctx := context.Background()
+		visualization := "file.style"
 
 		It("Creates the WMS from the sample", func() {
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -378,7 +379,6 @@ var _ = Describe("WMS Webhook", func() {
 			obj.Spec.Service.Layer.Name = ptr.To("Top-layer")
 			obj.Spec.Service.Layer.Layers[0].Name = ptr.To("layer-0")
 			obj.Spec.Service.Layer.Layers[0].Styles = []pdoknlv3.Style{{Name: "style-0", Title: ptr.To("title")}}
-			visualization := "file.style"
 			obj.Spec.Service.Layer.Layers[0].Styles[0].Visualization = &visualization
 			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).ToNot(HaveOccurred())
@@ -389,7 +389,6 @@ var _ = Describe("WMS Webhook", func() {
 			obj.Spec.Service.Layer.Name = ptr.To("Top-layer")
 			obj.Spec.Service.Layer.Layers[0].Name = nil
 			obj.Spec.Service.Layer.Layers[0].Styles = []pdoknlv3.Style{{Name: "style-0", Title: ptr.To("title")}}
-			visualization := "file.style"
 			obj.Spec.Service.Layer.Layers[0].Styles[0].Visualization = &visualization
 			warnings, err := validator.ValidateCreate(ctx, obj)
 
@@ -403,7 +402,6 @@ var _ = Describe("WMS Webhook", func() {
 		})
 
 		It("Should deny Create when a GroupLayer Style has visualization", func() {
-			visualization := "file.style"
 			obj.Spec.Service.Layer.Layers[1].Styles[0].Visualization = &visualization
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -416,7 +414,6 @@ var _ = Describe("WMS Webhook", func() {
 		})
 
 		It("Should deny Create when a Style has a visualization while a custom mapfile is configured", func() {
-			visualization := "file.style"
 			withMapfile(obj)
 			obj.Spec.Service.Layer.Layers[0].Styles[0].Visualization = &visualization
 
