@@ -99,7 +99,7 @@ func validateLayerName(layer AnnotatedLayer, path *field.Path, layerNames *[]str
 	var layerName string
 	if layer.Name == nil && len(layer.Styles) > 0 {
 		*allErrs = append(*allErrs, field.Invalid(
-			path.Child("layer"),
+			field.NewPath("spec").Child("service").Child("layer").Child("layers[*]").Child("name"),
 			nil,
 			fmt.Sprintf("layer with styles must have name. Layer name is empty and the name of the first style is: %s.", layer.Styles[0].Name),
 		))
@@ -114,7 +114,7 @@ func validateLayerName(layer AnnotatedLayer, path *field.Path, layerNames *[]str
 	}
 	if layer.IsTopLayer && layer.Name == nil {
 		layerName = "unnamed: " + TopLayer
-	} else {
+	} else if layer.Name != nil {
 		layerName = *layer.Name
 	}
 
