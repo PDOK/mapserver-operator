@@ -82,6 +82,7 @@ linters:
     gomoddirectives:
       replace-allow-list:
         - github.com/abbot/go-http-auth
+        - nhooyr.io/websocket
     nestif:
       min-complexity: 6
   exclusions:

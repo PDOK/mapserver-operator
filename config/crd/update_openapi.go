@@ -21,12 +21,15 @@ func main() {
 
 func updateWMSV3(crdDir string) {
 	path := filepath.Join(crdDir, "pdok.nl_wms.yaml")
+	cleanPath := filepath.Clean(path)
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	// #nosec G703 -- path is internal and sanitized
+	if _, err := os.Stat(cleanPath); os.IsNotExist(err) {
 		panic(errors.Wrap(err, "WMS v3 manifest not found"))
 	}
 
-	content, _ := os.ReadFile(path)
+	// #nosec G703 -- path is internal and sanitized
+	content, _ := os.ReadFile(cleanPath)
 	crd := &v1.CustomResourceDefinition{}
 	err := kyaml.Unmarshal(content, &crd)
 	if err != nil {
@@ -53,7 +56,8 @@ func updateWMSV3(crdDir string) {
 	_ = goyaml.Unmarshal(updatedContent, &rawData)
 	delete(rawData, "status")
 
-	f, _ := os.OpenFile(path, os.O_TRUNC|os.O_WRONLY, 0644)
+	// #nosec G703 -- path is internal and sanitized
+	f, _ := os.OpenFile(cleanPath, os.O_TRUNC|os.O_WRONLY, 0644)
 	defer f.Close()
 
 	enc := goyaml.NewEncoder(f)
@@ -117,12 +121,15 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 
 func updateWFSV3(crdDir string) {
 	path := filepath.Join(crdDir, "pdok.nl_wfs.yaml")
+	cleanPath := filepath.Clean(path)
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	// #nosec G703 -- path is internal and sanitized
+	if _, err := os.Stat(cleanPath); os.IsNotExist(err) {
 		panic(errors.Wrap(err, "WFS v3 manifest not found"))
 	}
 
-	content, _ := os.ReadFile(path)
+	// #nosec G703 -- path is internal and sanitized
+	content, _ := os.ReadFile(cleanPath)
 	crd := &v1.CustomResourceDefinition{}
 	err := kyaml.Unmarshal(content, &crd)
 	if err != nil {
@@ -148,7 +155,8 @@ func updateWFSV3(crdDir string) {
 	_ = goyaml.Unmarshal(updatedContent, &rawData)
 	delete(rawData, "status")
 
-	f, _ := os.OpenFile(path, os.O_TRUNC|os.O_WRONLY, 0644)
+	// #nosec G703 -- path is internal and sanitized
+	f, _ := os.OpenFile(cleanPath, os.O_TRUNC|os.O_WRONLY, 0644)
 	defer f.Close()
 
 	enc := goyaml.NewEncoder(f)

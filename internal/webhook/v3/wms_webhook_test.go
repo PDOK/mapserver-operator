@@ -51,6 +51,7 @@ var _ = Describe("WMS Webhook", func() {
 
 	Context("When creating or updating WMS under Conversion Webhook", func() {
 		ctx := context.Background()
+		visualization := "file.style"
 
 		It("Creates the WMS from the sample", func() {
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -357,9 +358,12 @@ var _ = Describe("WMS Webhook", func() {
 
 		It("Should deny Create when a GroupLayer Style uses the same name as a Style from a parent Layer", func() {
 			styleName := "duplicate"
+			obj.Spec.Service.Layer.Name = ptr.To("Top-layer")
 			obj.Spec.Service.Layer.Styles = []pdoknlv3.Style{{Name: styleName, Title: ptr.To("title")}}
 			obj.Spec.Service.Layer.Layers[1].Styles = []pdoknlv3.Style{{Name: styleName, Title: ptr.To("title")}}
+			obj.Spec.Service.Layer.Layers[0].Name = ptr.To("layer-0")
 			obj.Spec.Service.Layer.Layers[0].Styles[0].Name = styleName
+			obj.Spec.Service.Layer.Layers[1].Name = ptr.To("layer-1")
 			obj.Spec.Service.Layer.Layers[1].Layers[0].Styles[0].Name = styleName
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -371,8 +375,33 @@ var _ = Describe("WMS Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
+		It("Should Create correctly when 1 top layer with child layer with one style ", func() {
+			obj.Spec.Service.Layer.Name = ptr.To("Top-layer")
+			obj.Spec.Service.Layer.Layers[0].Name = ptr.To("layer-0")
+			obj.Spec.Service.Layer.Layers[0].Styles = []pdoknlv3.Style{{Name: "style-0", Title: ptr.To("title")}}
+			obj.Spec.Service.Layer.Layers[0].Styles[0].Visualization = &visualization
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should deny Create when child layer with one style has no name", func() {
+			obj.Spec.Service.Layer.Name = ptr.To("Top-layer")
+			obj.Spec.Service.Layer.Layers[0].Name = nil
+			obj.Spec.Service.Layer.Layers[0].Styles = []pdoknlv3.Style{{Name: "style-0", Title: ptr.To("title")}}
+			obj.Spec.Service.Layer.Layers[0].Styles[0].Visualization = &visualization
+			warnings, err := validator.ValidateCreate(ctx, obj)
+
+			Expect(err).To(Equal(getValidationError(obj, field.Invalid(
+				field.NewPath("spec").Child("service").Child("layer").Child("layers[*]").Child("name"),
+				nil,
+				"layer with styles must have name. Layer name is empty and the name of the first style is: style-0.",
+			))))
+
+			Expect(warnings).To(BeEmpty())
+		})
+
 		It("Should deny Create when a GroupLayer Style has visualization", func() {
-			visualization := "file.style"
 			obj.Spec.Service.Layer.Layers[1].Styles[0].Visualization = &visualization
 
 			warnings, err := validator.ValidateCreate(ctx, obj)
@@ -385,7 +414,6 @@ var _ = Describe("WMS Webhook", func() {
 		})
 
 		It("Should deny Create when a Style has a visualization while a custom mapfile is configured", func() {
-			visualization := "file.style"
 			withMapfile(obj)
 			obj.Spec.Service.Layer.Layers[0].Styles[0].Visualization = &visualization
 

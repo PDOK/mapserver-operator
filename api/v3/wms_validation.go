@@ -95,13 +95,26 @@ func validateLayers(wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	}
 }
 
-func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string, layerNames *[]string, hasVisibleLayer *bool, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
-	service := wms.Spec.Service
-
+func validateLayerName(layer AnnotatedLayer, path *field.Path, layerNames *[]string, allErrs *field.ErrorList) {
 	var layerName string
+	if layer.Name == nil && len(layer.Styles) > 0 {
+		*allErrs = append(*allErrs, field.Invalid(
+			field.NewPath("spec").Child("service").Child("layer").Child("layers[*]").Child("name"),
+			nil,
+			fmt.Sprintf("layer with styles must have name. Layer name is empty and the name of the first style is: %s.", layer.Styles[0].Name),
+		))
+	}
+
+	if layer.IsGroupLayer && layer.Data != nil {
+		*allErrs = append(*allErrs, field.Invalid(
+			path.Child("data"),
+			layer.Data,
+			"must not be set on a GroupLayer",
+		))
+	}
 	if layer.IsTopLayer && layer.Name == nil {
 		layerName = "unnamed: " + TopLayer
-	} else {
+	} else if layer.Name != nil {
 		layerName = *layer.Name
 	}
 
@@ -113,14 +126,12 @@ func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string,
 	} else {
 		*layerNames = append(*layerNames, layerName)
 	}
+}
 
-	if layer.IsGroupLayer && layer.Data != nil {
-		*allErrs = append(*allErrs, field.Invalid(
-			path.Child("data"),
-			layer.Data,
-			"must not be set on a GroupLayer",
-		))
-	}
+func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string, layerNames *[]string, hasVisibleLayer *bool, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
+	service := wms.Spec.Service
+
+	validateLayerName(layer, path, layerNames, allErrs)
 
 	validateLayerWithMapfile(layer, path, wms, warnings, allErrs)
 
