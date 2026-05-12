@@ -22,13 +22,14 @@ spec:
       miny: "22"
   horizontalPodAutoscalerPatch:
     maxReplicas: 50
-    metrics:
-    - resource:
-        name: cpu
-        target:
-          averageUtilization: 20
-          type: Utilization
-      type: Resource
+    behavior:
+      scaleUp:
+        policies:
+          - periodSeconds: 600
+            type: Pods
+            value: 20
+        selectPolicy: Max
+        stabilizationWindowSeconds: 300
     minReplicas: 1
   lifecycle:
     ttlInDays: 730000
