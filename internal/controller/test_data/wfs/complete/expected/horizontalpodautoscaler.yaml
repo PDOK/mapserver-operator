@@ -22,21 +22,21 @@ spec:
   behavior:
     scaleDown:
       policies:
-        - periodSeconds: 600
+        - periodSeconds: 120
           type: Percent
-          value: 10
-        - periodSeconds: 600
+          value: 25
+        - periodSeconds: 120
           type: Pods
           value: 1
       selectPolicy: Max
-      stabilizationWindowSeconds: 3600
+      stabilizationWindowSeconds: 300
     scaleUp:
       policies:
         - periodSeconds: 60
           type: Pods
-          value: 20
+          value: 5
       selectPolicy: Max
-      stabilizationWindowSeconds: 300
+      stabilizationWindowSeconds: 0
   maxReplicas: 50
   metrics:
     - resource:

@@ -32,6 +32,8 @@ spec:
         resources:
           limits:
             ephemeral-storage: 100m
+          requests:
+            cpu: "0.5"
   service:
     prefix: dataset
     abstract: service-abstract

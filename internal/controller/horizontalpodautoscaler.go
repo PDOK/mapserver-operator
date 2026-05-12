@@ -8,6 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -27,48 +28,46 @@ func mutateHorizontalPodAutoscaler[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, 
 		Name:       getSuffixedName(obj, constants.MapserverName),
 	}
 
-	var averageCPU int32 = 90
+	var averageCPU = resource.MustParse("500m")
 	if cpu := mapperutils.GetContainerResourceRequest(obj, constants.MapserverName, corev1.ResourceCPU); cpu != nil {
-		averageCPU = 80
+		if (cpu.MilliValue() * 3) > averageCPU.MilliValue() {
+			averageCPU = *cpu
+			averageCPU.Mul(3)
+		}
 	}
 	autoscaler.Spec.Metrics = []autoscalingv2.MetricSpec{{
 		Type: autoscalingv2.ResourceMetricSourceType,
 		Resource: &autoscalingv2.ResourceMetricSource{
 			Name: corev1.ResourceCPU,
 			Target: autoscalingv2.MetricTarget{
-				Type:               autoscalingv2.UtilizationMetricType,
-				AverageUtilization: &averageCPU,
+				Type:         autoscalingv2.AverageValueMetricType,
+				AverageValue: &averageCPU,
 			},
 		},
 	}}
 
-	var behaviourStabilizationWindowSeconds int32
-	if obj.Type() == pdoknlv3.ServiceTypeWFS {
-		behaviourStabilizationWindowSeconds = 300
-	}
-
 	autoscaler.Spec.Behavior = &autoscalingv2.HorizontalPodAutoscalerBehavior{
 		ScaleUp: &autoscalingv2.HPAScalingRules{
-			StabilizationWindowSeconds: &behaviourStabilizationWindowSeconds,
+			StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(0)),
 			Policies: []autoscalingv2.HPAScalingPolicy{{
 				Type:          autoscalingv2.PodsScalingPolicy,
-				Value:         20,
+				Value:         5,
 				PeriodSeconds: 60,
 			}},
 			SelectPolicy: smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),
 		},
 		ScaleDown: &autoscalingv2.HPAScalingRules{
-			StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(3600)),
+			StabilizationWindowSeconds: smoothoperatorutils.Pointer(int32(300)),
 			Policies: []autoscalingv2.HPAScalingPolicy{
 				{
 					Type:          autoscalingv2.PercentScalingPolicy,
-					Value:         10,
-					PeriodSeconds: 600,
+					Value:         25,
+					PeriodSeconds: 120,
 				},
 				{
 					Type:          autoscalingv2.PodsScalingPolicy,
 					Value:         1,
-					PeriodSeconds: 600,
+					PeriodSeconds: 120,
 				},
 			},
 			SelectPolicy: smoothoperatorutils.Pointer(autoscalingv2.MaxChangePolicySelect),

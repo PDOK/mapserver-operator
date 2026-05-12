@@ -113,7 +113,7 @@ spec:
               ephemeral-storage: 200M
               memory: 800M
             requests:
-              cpu: "0.1"
+              cpu: "0.5"
           startupProbe:
             exec:
               command:
