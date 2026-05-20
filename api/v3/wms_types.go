@@ -68,6 +68,10 @@ type WMS struct {
 	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
 }
 
+func (wms *WMS) Title() string {
+	return wms.Spec.Service.Title
+}
+
 func (wms *WMS) OperatorStatus() *smoothoperatormodel.OperatorStatus {
 	return &wms.Status
 }
