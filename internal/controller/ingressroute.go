@@ -112,9 +112,27 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 	return ctrl.SetControllerReference(obj, ingressRoute, getReconcilerScheme(r))
 }
 
-// getUptimeName transforms the CR name into a uptime.pdok.nl/name value
-// owner-dataset-v1-0 -> OWNER dataset v1_0 [INSPIRE] [WMS|WFS]
+// getUptimeName returns the title with the type added if not already done so
 func getUptimeName[O pdoknlv3.WMSWFS](obj O) string {
+	crType := obj.Type()
+	title := obj.Title()
+	if crType == pdoknlv3.ServiceTypeWMS {
+		extension := "WMS"
+		if strings.HasSuffix(title, extension) {
+			return title
+		}
+
+		return title + " " + extension
+	} else if crType == pdoknlv3.ServiceTypeWFS {
+		extension := "WFS"
+		if strings.HasSuffix(title, extension) {
+			return title
+		}
+
+		return title + " " + extension
+	}
+
+	// This shouldn't happen but is a known and safe fallback
 	// Extract the version from the CR name, owner-dataset-v1-0 -> owner-dataset + v1-0
 	versionMatcher := regexp.MustCompile("^(.*)(?:-(v?[1-9](?:-[0-9])?))?$")
 	match := versionMatcher.FindStringSubmatch(obj.GetName())
