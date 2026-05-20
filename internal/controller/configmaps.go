@@ -22,6 +22,7 @@ const (
 	capabilitiesGeneratorInput = "input.yaml"
 )
 
+//nolint:dupl
 func mutateConfigMapCapabilitiesGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
 	reconcilerClient := getReconcilerClient(r)
 
@@ -48,6 +49,7 @@ func mutateConfigMapCapabilitiesGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, 
 	return smoothoperatorutils.AddHashSuffix(configMap)
 }
 
+//nolint:dupl
 func mutateConfigMapMapfileGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
 	reconcilerClient := getReconcilerClient(r)
 

@@ -186,6 +186,7 @@ func validateLayer(layer AnnotatedLayer, path *field.Path, groupStyles []string,
 
 }
 
+//nolint:goconst
 func validateLayerWithMapfile(layer AnnotatedLayer, path *field.Path, wms *WMS, warnings *[]string, allErrs *field.ErrorList) {
 	service := wms.Spec.Service
 	hasCustomMapfile := service.Mapfile != nil

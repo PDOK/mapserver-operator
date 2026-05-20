@@ -29,6 +29,7 @@ func ValidateUpdateWFS(wfs *WFS, wfsOld *WFS, warnings *[]string, allErrs *field
 	validateUpdateWMSWFS(nil, wfs, wfsOld, warnings, allErrs, ValidateWFS)
 }
 
+//nolint:goconst
 func ValidateWFS(wfs *WFS, warnings *[]string, allErrs *field.ErrorList) {
 	if strings.Contains(wfs.GetName(), "wfs") {
 		sharedValidation.AddWarning(

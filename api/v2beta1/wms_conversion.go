@@ -425,6 +425,7 @@ func (v2Service WMSService) MapLayersToV3() pdoknlv3.Layer {
 	return *topLayer
 }
 
+//nolint:goconst
 func getDefaultWMSLayerBoundingBoxes(defaultBbox *pdoknlv3.WMSBoundingBox) []pdoknlv3.WMSBoundingBox {
 	defaultBboxes := []pdoknlv3.WMSBoundingBox{
 		{

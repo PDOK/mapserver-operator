@@ -12,7 +12,7 @@ var defaultWMSBoundingBox = wms130.EXGeographicBoundingBox{
 	NorthBoundLatitude: 55.7212,
 }
 
-//nolint:unused
+//nolint:unused,goconst
 func getDefaultWMSCRSes() []wms130.CRS {
 	return []wms130.CRS{{
 		Namespace: "EPSG",
@@ -44,7 +44,7 @@ func getDefaultWMSCRSes() []wms130.CRS {
 	}}
 }
 
-//nolint:unused
+//nolint:unused,goconst
 func getDefaultWMSLayerBoundingBoxes() []*wms130.LayerBoundingBox {
 	return []*wms130.LayerBoundingBox{
 		{

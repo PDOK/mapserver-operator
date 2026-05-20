@@ -39,6 +39,7 @@ const (
 	InspireLabelKey = "pdok.nl/inspire"
 )
 
+//nolint:goconst
 func createControllerManager(mgr ctrl.Manager, obj client.Object) *builder.TypedBuilder[reconcile.Request] {
 	var kind string
 	switch any(obj).(type) {
