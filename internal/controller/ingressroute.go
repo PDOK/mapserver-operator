@@ -116,15 +116,15 @@ func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRout
 func getUptimeName[O pdoknlv3.WMSWFS](obj O) string {
 	crType := obj.Type()
 	title := obj.Title()
-	if crType == pdoknlv3.ServiceTypeWMS {
-		extension := "WMS"
+	if crType == pdoknlv3.ServiceTypeWMS { //nolint:staticcheck
+		extension := string(pdoknlv3.ServiceTypeWMS)
 		if strings.HasSuffix(title, extension) {
 			return title
 		}
 
 		return title + " " + extension
 	} else if crType == pdoknlv3.ServiceTypeWFS {
-		extension := "WFS"
+		extension := string(pdoknlv3.ServiceTypeWFS)
 		if strings.HasSuffix(title, extension) {
 			return title
 		}
