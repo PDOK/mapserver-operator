@@ -338,7 +338,6 @@ type WMSOptions struct {
 	ValidateChildStyleNameEqual bool `json:"validateChildStyleNameEqual"`
 }
 
-//nolint:goconst
 func (wmsService *WMSService) GetBoundingBox() WMSBoundingBox {
 	var boundingBox *WMSBoundingBox
 
