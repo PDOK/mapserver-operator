@@ -2,15 +2,13 @@ module github.com/pdok/mapserver-operator
 
 go 1.26.3
 
-godebug default=go1.25
-
 require (
 	github.com/cbroglie/mustache v1.4.0
 	github.com/onsi/ginkgo/v2 v2.28.3
 	github.com/onsi/gomega v1.40.0
 	github.com/pdok/featureinfo-generator v1.5.0
 	github.com/pdok/ogc-capabilities-generator v1.0.3
-	github.com/pdok/ogc-specifications v1.0.1
+	github.com/pdok/ogc-specifications v1.0.0
 	github.com/pdok/smooth-operator v1.2.9
 	github.com/peterbourgon/ff v1.7.1
 	github.com/stretchr/testify v1.11.1
