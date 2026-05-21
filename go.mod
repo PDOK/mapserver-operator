@@ -8,7 +8,7 @@ require (
 	github.com/onsi/gomega v1.40.0
 	github.com/pdok/featureinfo-generator v1.5.0
 	github.com/pdok/ogc-capabilities-generator v1.0.3
-	github.com/pdok/ogc-specifications v1.0.0
+	github.com/pdok/ogc-specifications v1.0.5
 	github.com/pdok/smooth-operator v1.2.9
 	github.com/peterbourgon/ff v1.7.1
 	github.com/stretchr/testify v1.11.1
