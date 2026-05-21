@@ -13,7 +13,7 @@ metadata:
   namespace: default
   annotations:
     uptime.pdok.nl/id: 7bd64fef831d74baee2ef9158b98f786511e1bc6
-    uptime.pdok.nl/name: NOPREFETCH WFS
+    uptime.pdok.nl/name: service-title WFS
     uptime.pdok.nl/tags: dataset,datasetOwner,public-stats,v1_0,wfs
     uptime.pdok.nl/url: http://localhost:32788/datasetOwner/dataset/wfs/v1_0?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=featuretype-name&STARTINDEX=0&COUNT=1
   ownerReferences:

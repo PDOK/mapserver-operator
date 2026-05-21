@@ -59,6 +59,10 @@ type WFS struct {
 	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
 }
 
+func (wfs *WFS) Title() string {
+	return wfs.Spec.Service.Title
+}
+
 func (wfs *WFS) OperatorStatus() *smoothoperatormodel.OperatorStatus {
 	return &wfs.Status
 }
