@@ -22,17 +22,10 @@ func getBarePodDisruptionBudget[O pdoknlv3.WMSWFS](obj O) *policyv1.PodDisruptio
 func mutatePodDisruptionBudget[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, podDisruptionBudget *policyv1.PodDisruptionBudget) error {
 	reconcilerClient := getReconcilerClient(r)
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, podDisruptionBudget, labels); err != nil {
-		return err
-	}
-
-	matchLabels := smoothoperatorutils.CloneOrEmptyMap(labels)
+	podDisruptionBudget.Labels = getObjectLabels(obj, podDisruptionBudget.Labels)
 	podDisruptionBudget.Spec = policyv1.PodDisruptionBudgetSpec{
 		MaxUnavailable: &intstr.IntOrString{Type: intstr.Int, IntVal: 1},
-		Selector: &metav1.LabelSelector{
-			MatchLabels: matchLabels,
-		},
+		Selector:       getLabelSelector(obj),
 	}
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, podDisruptionBudget, podDisruptionBudget); err != nil {

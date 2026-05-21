@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/pkg/errors"
@@ -94,20 +95,21 @@ func getSuffixedName[O pdoknlv3.WMSWFS](obj O, suffix string) string {
 	return obj.TypedName() + "-" + suffix
 }
 
-func addCommonLabels[O pdoknlv3.WMSWFS](obj O, labels map[string]string) map[string]string {
-	labels[AppLabelKey] = constants.MapserverName
-
-	inspire := false
-	switch any(obj).(type) {
-	case *pdoknlv3.WFS:
-		inspire = any(obj).(*pdoknlv3.WFS).Spec.Service.Inspire != nil
-	case *pdoknlv3.WMS:
-		inspire = any(obj).(*pdoknlv3.WMS).Spec.Service.Inspire != nil
+func defaultLabels(inspire bool) map[string]string {
+	return map[string]string{
+		AppLabelKey:     constants.MapserverName,
+		InspireLabelKey: strconv.FormatBool(inspire),
 	}
+}
 
-	labels[InspireLabelKey] = strconv.FormatBool(inspire)
+func getLabelSelector[O pdoknlv3.WMSWFS](obj O) *metav1.LabelSelector {
+	return &metav1.LabelSelector{
+		MatchLabels: smoothoperatorutils.CombineLabels(obj.GetLabels(), defaultLabels(obj.Inspire() != nil)),
+	}
+}
 
-	return labels
+func getObjectLabels[O pdoknlv3.WMSWFS](obj O, objLabels map[string]string) map[string]string {
+	return smoothoperatorutils.CombineLabels(objLabels, obj.GetLabels(), defaultLabels(obj.Inspire() != nil))
 }
 
 func createOrUpdateAllForWMSWFS[R Reconciler, O pdoknlv3.WMSWFS](ctx context.Context, r R, obj O, ownerInfo *smoothoperatorv1.OwnerInfo) (operationResults map[string]controllerutil.OperationResult, err error) {

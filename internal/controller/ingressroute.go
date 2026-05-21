@@ -34,10 +34,7 @@ func getBareIngressRoute[O pdoknlv3.WMSWFS](obj O) *traefikiov1alpha1.IngressRou
 func mutateIngressRoute[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, ingressRoute *traefikiov1alpha1.IngressRoute) error {
 	reconcilerClient := getReconcilerClient(r)
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
-		return err
-	}
+	ingressRoute.Labels = getObjectLabels(obj, ingressRoute.Labels)
 
 	if setUptimeOperatorAnnotations {
 
