@@ -166,10 +166,10 @@ github.com/pdok/featureinfo-generator v1.5.0 h1:Rn1/U9+oEroItcoWNvkAS93koNWZcKdx
 github.com/pdok/featureinfo-generator v1.5.0/go.mod h1:Ps7lUd+lbKngaxIRMS8M6aTgWDSRGULSVf6B6JMzq14=
 github.com/pdok/ogc-capabilities-generator v1.0.4 h1:SPTQjlITPK7xrOU6Y6bLK4I1MSkLjanDgMOMIIIWTTw=
 github.com/pdok/ogc-capabilities-generator v1.0.4/go.mod h1:/ryq2/xD1ulgop21OwPVtXYHgKEcRQQ+64HYo20ZHWs=
-github.com/pdok/ogc-specifications v1.0.5 h1:F3qaWhiwG0ExOpbzS2tMNhiS7csfrzxn1CmPmhF6L8A=
-github.com/pdok/ogc-specifications v1.0.5/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
-github.com/pdok/smooth-operator v1.2.9 h1:LPm10VDR1/rPjiuV9g13Oer3reGfLqKZIUdwWy9EPdA=
-github.com/pdok/smooth-operator v1.2.9/go.mod h1:Z87CdfxCKTvb7lkd19w1q+bGK0XaqHfa/ppDD8Zpnq0=
+github.com/pdok/ogc-specifications v1.0.6 h1:MOaSxrRVQMwjygJfcPIbknh/QJt2ZAU0nu2lHPDfUGI=
+github.com/pdok/ogc-specifications v1.0.6/go.mod h1:uKZkhRfzYzaMM3h4idtPdvd7F92keMv041KqlBIOojc=
+github.com/pdok/smooth-operator v1.2.10 h1:X3B+WsRFOsbDg3xexlr1BsPOx5/GcqBhLnFaGRRoLJ0=
+github.com/pdok/smooth-operator v1.2.10/go.mod h1:Z87CdfxCKTvb7lkd19w1q+bGK0XaqHfa/ppDD8Zpnq0=
 github.com/pelletier/go-toml v1.6.0/go.mod h1:5N711Q9dKgbdkxHL+MEfF31hpT7l0S0s/t2kKREewys=
 github.com/peterbourgon/ff v1.7.1 h1:xt1lxTG+Nr2+tFtysY7abFgPoH3Lug8CwYJMOmJRXhk=
 github.com/peterbourgon/ff v1.7.1/go.mod h1:fYI5YA+3RDqQRExmFbHnBjEeWzh9TrS8rnRpEq7XIg0=
