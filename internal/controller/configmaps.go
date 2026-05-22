@@ -25,10 +25,7 @@ const (
 func mutateConfigMapCapabilitiesGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
 	reconcilerClient := getReconcilerClient(r)
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(obj, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		input, err := capabilitiesgenerator.GetInput(obj, ownerInfo)
@@ -51,10 +48,7 @@ func mutateConfigMapCapabilitiesGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, 
 func mutateConfigMapMapfileGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap, ownerInfo *smoothoperatorv1.OwnerInfo) error {
 	reconcilerClient := getReconcilerClient(r)
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(obj, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		mapfileGeneratorConfig, err := mapfilegenerator.GetConfig(obj, ownerInfo)
@@ -77,10 +71,7 @@ func mutateConfigMapMapfileGenerator[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O
 func mutateConfigMapBlobDownload[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap) error {
 	reconcilerClient := getReconcilerClient(r)
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(obj, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		downloadScript := blobdownload.GetScript()
@@ -109,10 +100,7 @@ func getBareConfigMap[O pdoknlv3.WMSWFS](obj O, name string) *corev1.ConfigMap {
 func mutateConfigMap[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, configMap *corev1.ConfigMap) error {
 	reconcilerClient := getReconcilerClient(r)
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(obj, configMap.Labels)
 
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 	configMap.Data = map[string]string{}

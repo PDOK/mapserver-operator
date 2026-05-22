@@ -41,12 +41,9 @@ func getBareDeployment[O pdoknlv3.WMSWFS](obj O) *appsv1.Deployment {
 
 func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
 	reconcilerClient := getReconcilerClient(r)
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, deployment, labels); err != nil {
-		return err
-	}
+	deployment.Labels = getObjectLabels(obj, deployment.Labels)
 
-	deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: labels}
+	deployment.Spec.Selector = getLabelSelector(obj)
 
 	deployment.Spec.RevisionHistoryLimit = smoothoperatorutils.Pointer(int32(1))
 	deployment.Spec.Strategy = appsv1.DeploymentStrategy{
@@ -75,7 +72,7 @@ func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *a
 	podTemplateSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: getPodAnnotations(deployment),
-			Labels:      labels,
+			Labels:      getObjectLabels(obj, deployment.Spec.Template.Labels),
 		},
 		Spec: corev1.PodSpec{
 			RestartPolicy:                 corev1.RestartPolicyAlways,

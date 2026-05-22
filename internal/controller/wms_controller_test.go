@@ -188,6 +188,43 @@ var _ = Describe("Testing WMS Controller", func() {
 			}, "10s", "1s").Should(BeTrue())
 		})
 
+		It("should maintain labels added externally after a reconcile", func() {
+			controllerReconciler := getWFSReconciler()
+
+			By("Getting the original Deployment")
+			deployment := getBareDeployment(clusterWMS)
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
+				return Expect(err).NotTo(HaveOccurred())
+			}, "10s", "1s").Should(BeTrue())
+			externalLabel := "external"
+			_, ok := deployment.Labels[externalLabel]
+			Expect(ok).To(BeFalse())
+
+			By("Adding new label to deployment")
+			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, []byte(
+				fmt.Sprintf(`{"metadata": {"labels": {"%s": "%s"}}}`, externalLabel, externalLabel))))
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Verifying that the Deployment was altered")
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
+				val, ok := deployment.Labels[externalLabel]
+				return Expect(err).NotTo(HaveOccurred()) && Expect(ok).To(BeTrue()) && Expect(val).To(Equal(externalLabel))
+			}, "10s", "1s").Should(BeTrue())
+
+			By("Reconciling the Atom again")
+			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: objectKeyWMS})
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Verifying that Deployment still has the external label")
+			Eventually(func() bool {
+				err = k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
+				val, ok := deployment.Labels[externalLabel]
+				return Expect(err).NotTo(HaveOccurred()) && Expect(ok).To(BeTrue()) && Expect(val).To(Equal(externalLabel))
+			}, "10s", "1s").Should(BeTrue())
+		})
+
 		It("Respects the TTL of the WMS", func() {
 			By("Creating a new resource for the Kind WMS")
 

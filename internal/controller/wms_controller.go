@@ -143,10 +143,7 @@ func (r *WMSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result
 }
 
 func mutateConfigMapLegendGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, configMap *corev1.ConfigMap) error {
-	labels := addCommonLabels(wms, smoothoperatorutils.CloneOrEmptyMap(wms.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(wms, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		configMap.Data = legendgenerator.GetConfigMapData(wms)
@@ -164,10 +161,7 @@ func mutateConfigMapLegendGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, configM
 }
 
 func mutateConfigMapFeatureinfoGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, configMap *corev1.ConfigMap) error {
-	labels := addCommonLabels(wms, smoothoperatorutils.CloneOrEmptyMap(wms.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(wms, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		input, err := featureinfogenerator.GetInput(wms)
@@ -189,10 +183,7 @@ func mutateConfigMapFeatureinfoGenerator(r *WMSReconciler, wms *pdoknlv3.WMS, co
 
 func mutateConfigMapOgcWebserviceProxy(r *WMSReconciler, wms *pdoknlv3.WMS, configMap *corev1.ConfigMap) error {
 
-	labels := addCommonLabels(wms, smoothoperatorutils.CloneOrEmptyMap(wms.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(r.Client, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(wms, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		input, err := ogcwebserviceproxy.GetConfig(wms)

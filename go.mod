@@ -8,8 +8,8 @@ require (
 	github.com/onsi/gomega v1.40.0
 	github.com/pdok/featureinfo-generator v1.5.0
 	github.com/pdok/ogc-capabilities-generator v1.0.4
-	github.com/pdok/ogc-specifications v1.0.5
-	github.com/pdok/smooth-operator v1.2.9
+	github.com/pdok/ogc-specifications v1.0.6
+	github.com/pdok/smooth-operator v1.2.10
 	github.com/peterbourgon/ff v1.7.1
 	github.com/stretchr/testify v1.11.1
 	github.com/traefik/traefik/v3 v3.6.3
