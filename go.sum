@@ -164,8 +164,8 @@ github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaR
 github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/pdok/featureinfo-generator v1.5.0 h1:Rn1/U9+oEroItcoWNvkAS93koNWZcKdxFPNOKd4UxI8=
 github.com/pdok/featureinfo-generator v1.5.0/go.mod h1:Ps7lUd+lbKngaxIRMS8M6aTgWDSRGULSVf6B6JMzq14=
-github.com/pdok/ogc-capabilities-generator v1.0.3 h1:MENc3Th2nQj292CuAIc2J51NKsWHMratCD2kJ5Wrmxc=
-github.com/pdok/ogc-capabilities-generator v1.0.3/go.mod h1:/ryq2/xD1ulgop21OwPVtXYHgKEcRQQ+64HYo20ZHWs=
+github.com/pdok/ogc-capabilities-generator v1.0.4 h1:SPTQjlITPK7xrOU6Y6bLK4I1MSkLjanDgMOMIIIWTTw=
+github.com/pdok/ogc-capabilities-generator v1.0.4/go.mod h1:/ryq2/xD1ulgop21OwPVtXYHgKEcRQQ+64HYo20ZHWs=
 github.com/pdok/ogc-specifications v1.0.5 h1:F3qaWhiwG0ExOpbzS2tMNhiS7csfrzxn1CmPmhF6L8A=
 github.com/pdok/ogc-specifications v1.0.5/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
 github.com/pdok/smooth-operator v1.2.9 h1:LPm10VDR1/rPjiuV9g13Oer3reGfLqKZIUdwWy9EPdA=
