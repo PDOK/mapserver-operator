@@ -230,9 +230,12 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 			}
 		}
 
-		metadataURL, err := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
-		if err != nil {
-			return nil, err
+		var metadataURL string
+		if fType.DatasetMetadataURL != nil && fType.DatasetMetadataURL.CSW != nil {
+			metadataURL, err = replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		featureType := wfs200.FeatureType{

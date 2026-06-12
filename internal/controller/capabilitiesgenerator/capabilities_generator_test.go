@@ -22,6 +22,9 @@ import (
 //go:embed test_data/wfs_input.yaml
 var WFSInput string
 
+//go:embed test_data/wfs_input_no_dataset_metadata_rec.yaml
+var WFSInputNoDatasetMetadataRecord string
+
 //go:embed test_data/wms_input.yaml
 var WMSInput string
 
@@ -133,6 +136,100 @@ func TestGetInputForWFS(t *testing.T) {
 			wantInput: WFSInput,
 			wantErr:   false,
 		},
+		{
+			name: "GetInputForWFSNoDatasetMetadata",
+			args: args{
+				WFS: &pdoknlv3.WFS{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"dataset":         "dataset",
+							"dataset-owner":   "datasetOwner",
+							"theme":           "theme",
+							"service-version": "v1_0",
+						},
+					},
+					Spec: pdoknlv3.WFSSpec{
+						Service: pdoknlv3.WFSService{BaseService: pdoknlv3.BaseService{
+							URL:               smoothoperatormodel.URL{URL: url},
+							Prefix:            "prefix",
+							Title:             "some Service title",
+							Abstract:          "some \"Service\" abstract",
+							Keywords:          []string{"service-keyword-1", "service-keyword-2", "infoFeatureAccessService"},
+							AccessConstraints: smoothoperatormodel.URL{URL: accessConstraints}},
+							Inspire: &pdoknlv3.WFSInspire{Inspire: pdoknlv3.Inspire{
+								ServiceMetadataURL: pdoknlv3.MetadataURL{
+									CSW: &pdoknlv3.Metadata{
+										MetadataIdentifier: "metameta-meta-meta-meta-metametameta",
+									},
+								},
+								Language: "dut"},
+								SpatialDatasetIdentifier: "datadata-data-data-data-datadatadata",
+							},
+							DefaultCrs: "EPSG:28992",
+							OtherCrs: []string{
+								"EPSG:28992",
+								"EPSG:25831",
+								"EPSG:25832",
+								"EPSG:3034",
+								"EPSG:3035",
+								"EPSG:3857",
+								"EPSG:4258",
+								"EPSG:4326",
+							},
+							FeatureTypes: []pdoknlv3.FeatureType{
+								{
+									Name:     "featuretype-1-name",
+									Title:    "featuretype-1-title",
+									Abstract: "feature \"1\" abstract",
+									Keywords: []string{"featuretype-1-keyword-1", "featuretype-1-keyword-2"},
+									//DatasetMetadataURL: &pdoknlv3.MetadataURL{
+									//	CSW: &pdoknlv3.Metadata{
+									//		MetadataIdentifier: "datadata-data-data-data-datadatadata",
+									//	},
+									//},
+									Bbox: &pdoknlv3.FeatureBbox{
+										WGS84: &smoothoperatormodel.BBox{
+											MinX: "-180",
+											MaxX: "180",
+											MinY: "-90",
+											MaxY: "90",
+										},
+									},
+								},
+								{
+									Name:     "featuretype-2-name",
+									Title:    "featuretype-2-title",
+									Abstract: "feature \"2\" abstract",
+									Keywords: []string{"featuretype-2-keyword-1", "featuretype-2-keyword-2"},
+									//DatasetMetadataURL: &pdoknlv3.MetadataURL{
+									//	CSW: &pdoknlv3.Metadata{
+									//		MetadataIdentifier: "datadata-data-data-data-datadatadata",
+									//	},
+									//},
+								},
+							},
+						},
+					},
+				},
+				ownerInfo: &smoothoperatorv1.OwnerInfo{
+					Spec: smoothoperatorv1.OwnerInfoSpec{
+						NamespaceTemplate: smoothoperatorutils.Pointer("http://{{prefix}}.geonovum.nl"),
+						MetadataUrls: &smoothoperatorv1.MetadataUrls{
+							CSW: &smoothoperatorv1.MetadataURL{
+								HrefTemplate: "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/csw?service=CSW&version=2.0.2&request=GetRecordById&outputschema=http://www.isotc211.org/2005/gmd&elementsetname=full&id={{identifier}}",
+							},
+						},
+						WFS: &smoothoperatorv1.WFS{
+							ServiceProvider: smoothoperatorv1.ServiceProvider{
+								ProviderName: smoothoperatorutils.Pointer("PDOK"),
+							},
+						},
+					},
+				},
+			},
+			wantInput: WFSInputNoDatasetMetadataRecord,
+			wantErr:   false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -144,7 +241,7 @@ func TestGetInputForWFS(t *testing.T) {
 
 			wantMap := capabilitiesgenerator.Config{}
 			gotMap := capabilitiesgenerator.Config{}
-			err = yamlv3.Unmarshal([]byte(WFSInput), &wantMap)
+			err = yamlv3.Unmarshal([]byte(tt.wantInput), &wantMap)
 			assert.NoError(t, err)
 			err = yamlv3.Unmarshal([]byte(gotInput), &gotMap)
 			assert.NoError(t, err)
