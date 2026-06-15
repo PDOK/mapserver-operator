@@ -1,0 +1,152 @@
+global:
+  prefix: ""
+  namespace: http://.geonovum.nl
+  onlineResourceUrl: http://localhost
+  path: /datasetOwner/dataset/theme/wms/v1_0
+  version: ""
+  additionalSchemaLocations: ""
+services:
+  wms130:
+    filename: /var/www/config/capabilities_wms_130.xml
+    definition:
+      wmsCapabilities:
+        space: ""
+        local: ""
+      service:
+        name: WMS
+        title: BRO - Geologisch booronderzoek (BHR-G) - Geologie (INSPIRE geharmoniseerd) WMS
+        abstract: ""
+        keywordList:
+          keyword: []
+        onlineResource:
+          xlink: null
+          type: null
+          href: https://www.pdok.nl
+        contactInformation:
+          contactPersonPrimary:
+            contactPerson: KlantContactCenter PDOK
+            contactOrganization: PDOK
+          contactPosition: pointOfContact
+          contactAddress:
+            addressType: Work
+            address: ""
+            city: Apeldoorn
+            stateOrProvince: ""
+            postalCode: ""
+            country: The Netherlands
+          contactVoiceTelephone: null
+          contactFacsimileTelephone: null
+          contactElectronicMailAddress: BeheerPDOK@kadaster.nl
+        fees: null
+        accessConstraints: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+        optionalConstraints:
+          maxWidth: 4000
+          maxHeight: 4000
+      capability:
+        wmsCapabilities:
+          request:
+            getCapabilities:
+              format:
+                - text/xml
+              dcpType:
+                http:
+                  get:
+                    onlineResource:
+                      xlink: http://www.w3.org/1999/xlink
+                      type: null
+                      href: http://localhost/datasetOwner/dataset/theme/wms/v1_0?
+                  post: null
+            getMap:
+              format:
+                - image/png
+                - image/jpeg
+                - image/png; mode=8bit
+                - image/vnd.jpeg-png
+                - image/vnd.jpeg-png8
+              dcpType:
+                http:
+                  get:
+                    onlineResource:
+                      xlink: http://www.w3.org/1999/xlink
+                      type: null
+                      href: http://localhost/datasetOwner/dataset/theme/wms/v1_0?
+                  post:
+                    onlineResource:
+                      xlink: http://www.w3.org/1999/xlink
+                      type: null
+                      href: http://localhost/datasetOwner/dataset/theme/wms/v1_0
+            getFeatureInfo:
+              format:
+                - application/json
+                - application/json; subtype=geojson
+                - application/vnd.ogc.gml
+                - text/html
+                - text/plain
+                - text/xml
+                - text/xml; subtype=gml/3.1.1
+              dcpType:
+                http:
+                  get:
+                    onlineResource:
+                      xlink: http://www.w3.org/1999/xlink
+                      type: null
+                      href: http://localhost/datasetOwner/dataset/theme/wms/v1_0?
+                  post:
+                    onlineResource:
+                      xlink: http://www.w3.org/1999/xlink
+                      type: null
+                      href: http://localhost/datasetOwner/dataset/theme/wms/v1_0
+          exception:
+            format:
+              - XML
+              - INIMAGE
+              - BLANK
+          layer:
+            - queryable: 1
+              title: BRO - Geologisch booronderzoek (...) WMS
+              abstract: Deze dataset bevat de gegevens over Geologische booronderzoeken...
+              keywordList:
+                keyword:
+                  - BHR-G
+                  - Geologie
+                  - Hydrologie
+                  - Bodemonderzoek
+                  - Bodemprofiel
+                  - Booronderzoek
+                  - Grondonderzoek
+                  - Nationaal
+              crs:
+                - EPSG:4258
+              boundingBox:
+                - crs: EPSG:4258
+                  minx: 2.35417303
+                  miny: 50.71447164
+                  maxx: 7.5553525
+                  maxy: 55.66948102
+              layer:
+                - queryable: 1
+                  name: GE.Borehole
+                  title: Boorgaten
+                  abstract: Een boorgat is de algemene term...
+                  keywordList:
+                    keyword:
+                      - Boorgat
+                  crs:
+                    - EPSG:4258
+                  boundingBox:
+                    - crs: EPSG:4258
+                      minx: 2.35417303
+                      miny: 50.71447164
+                      maxx: 7.5553525
+                      maxy: 55.66948102
+                  style:
+                    - name: GE.Borehole
+                      title: Boreholes - geologicalSurvey
+                      legendUrl:
+                        width: 78
+                        height: 20
+                        format: image/png
+                        onlineResource:
+                          xlink: http://www.w3.org/1999/xlink
+                          type: simple
+                          href: http://localhost/datasetOwner/dataset/theme/wms/v1_0/legend/GE.Borehole/GE.Borehole.png
