@@ -188,11 +188,11 @@ func TestGetInputForWFS(t *testing.T) {
 									Title:    "featuretype-1-title",
 									Abstract: "feature \"1\" abstract",
 									Keywords: []string{"featuretype-1-keyword-1", "featuretype-1-keyword-2"},
-									//DatasetMetadataURL: &pdoknlv3.MetadataURL{
-									//	CSW: &pdoknlv3.Metadata{
-									//		MetadataIdentifier: "datadata-data-data-data-datadatadata",
-									//	},
-									//},
+									// DatasetMetadataURL: &pdoknlv3.MetadataURL{
+									// 	CSW: &pdoknlv3.Metadata{
+									// 		MetadataIdentifier: "datadata-data-data-data-datadatadata",
+									// 	},
+									// },
 									Bbox: &pdoknlv3.FeatureBbox{
 										WGS84: &smoothoperatormodel.BBox{
 											MinX: "-180",
@@ -207,11 +207,11 @@ func TestGetInputForWFS(t *testing.T) {
 									Title:    "featuretype-2-title",
 									Abstract: "feature \"2\" abstract",
 									Keywords: []string{"featuretype-2-keyword-1", "featuretype-2-keyword-2"},
-									//DatasetMetadataURL: &pdoknlv3.MetadataURL{
-									//	CSW: &pdoknlv3.Metadata{
-									//		MetadataIdentifier: "datadata-data-data-data-datadatadata",
-									//	},
-									//},
+									// DatasetMetadataURL: &pdoknlv3.MetadataURL{
+									// 	CSW: &pdoknlv3.Metadata{
+									// 		MetadataIdentifier: "datadata-data-data-data-datadatadata",
+									// 	},
+									// },
 								},
 							},
 						},
