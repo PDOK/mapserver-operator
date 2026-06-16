@@ -170,6 +170,8 @@ github.com/pdok/ogc-specifications v1.0.5 h1:F3qaWhiwG0ExOpbzS2tMNhiS7csfrzxn1Cm
 github.com/pdok/ogc-specifications v1.0.5/go.mod h1:YDngwkwrWOfc5MYnEYseiv97K1Y9bZXlVzwi/8EaIl8=
 github.com/pdok/ogc-specifications v1.0.6 h1:MOaSxrRVQMwjygJfcPIbknh/QJt2ZAU0nu2lHPDfUGI=
 github.com/pdok/ogc-specifications v1.0.6/go.mod h1:uKZkhRfzYzaMM3h4idtPdvd7F92keMv041KqlBIOojc=
+github.com/pdok/ogc-specifications v1.0.7 h1:ZWmDr7mjfhvCT5okKYNl7MqSm9k2zkJRnPLj/bnbMUY=
+github.com/pdok/ogc-specifications v1.0.7/go.mod h1:GYFKRtWDDKS/elBRXQvGoMLL97yrtdRqyCFmnb4iPTA=
 github.com/pdok/smooth-operator v1.2.10 h1:X3B+WsRFOsbDg3xexlr1BsPOx5/GcqBhLnFaGRRoLJ0=
 github.com/pdok/smooth-operator v1.2.10/go.mod h1:Z87CdfxCKTvb7lkd19w1q+bGK0XaqHfa/ppDD8Zpnq0=
 github.com/pelletier/go-toml v1.6.0/go.mod h1:5N711Q9dKgbdkxHL+MEfF31hpT7l0S0s/t2kKREewys=
