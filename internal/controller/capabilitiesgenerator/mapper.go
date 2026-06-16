@@ -1,6 +1,7 @@
 package capabilitiesgenerator
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -230,9 +231,12 @@ func getFeatureTypeList(wfs *pdoknlv3.WFS, ownerInfo *smoothoperatorv1.OwnerInfo
 			}
 		}
 
-		metadataURL, err := replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
-		if err != nil {
-			return nil, err
+		var metadataURL string
+		if fType.DatasetMetadataURL != nil && fType.DatasetMetadataURL.CSW != nil {
+			metadataURL, err = replaceMustacheTemplate(ownerInfo.Spec.MetadataUrls.CSW.HrefTemplate, fType.DatasetMetadataURL.CSW.MetadataIdentifier)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		featureType := wfs200.FeatureType{
@@ -528,6 +532,11 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 		return nil, err
 	}
 
+	styles, err := getLayerStyles(layer, canonicalURL, parentStyleNames)
+	if err != nil {
+		return nil, err
+	}
+
 	l := wms130.Layer{
 		Queryable:               smoothoperatorutils.Pointer(1),
 		Opaque:                  nil,
@@ -544,7 +553,7 @@ func mapLayer(layer pdoknlv3.Layer, canonicalURL string, authorityURL *wms130.Au
 		Identifier:              identifier,
 		DataURL:                 nil,
 		FeatureListURL:          nil,
-		Style:                   getLayerStyles(layer, canonicalURL, parentStyleNames),
+		Style:                   styles,
 		Layer:                   []*wms130.Layer{},
 	}
 
@@ -663,8 +672,11 @@ func mapBBoxes(layerBBoxes []pdoknlv3.WMSBoundingBox, parentBBoxes []*wms130.Lay
 	return crsses, exBbox, bboxes, nil
 }
 
-func getLayerStyles(layer pdoknlv3.Layer, canonicalURL string, parentStyleNames []string) (styles []*wms130.Style) {
+func getLayerStyles(layer pdoknlv3.Layer, canonicalURL string, parentStyleNames []string) (styles []*wms130.Style, err error) {
 	for _, style := range layer.Styles {
+		if layer.Name == nil {
+			return nil, errors.New("layer with styles and without name is not allowed")
+		}
 		if slices.Contains(parentStyleNames, style.Name) {
 			continue
 		}
