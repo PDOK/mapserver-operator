@@ -374,7 +374,7 @@ spec:
             defaultMode: 420
           name: mapserver
         - configMap:
-            name: complete-wms-ogc-webservice-proxy-8d98h664bh
+            name: complete-wms-ogc-webservice-proxy-527f8545k9
             defaultMode: 420
           name: ogc-webservice-proxy-config
         - configMap:

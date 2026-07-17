@@ -21,7 +21,7 @@ metadata:
     service-type: wms
     service-version: v1_0
     theme: '2016'
-  name: complete-wms-ogc-webservice-proxy-8d98h664bh
+  name: complete-wms-ogc-webservice-proxy-527f8545k9
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3
