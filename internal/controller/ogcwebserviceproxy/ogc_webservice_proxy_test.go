@@ -11,7 +11,7 @@ import (
 )
 
 func TestGetConfig(t *testing.T) {
-	tests := []string{"named-toplayer", "unnamed-toplayer"}
+	tests := []string{"named-toplayer", "unnamed-toplayer", "named-toplayer-varied-depth"}
 
 	for _, tt := range tests {
 		input, err := os.ReadFile("test_data/input/" + tt + ".yaml")

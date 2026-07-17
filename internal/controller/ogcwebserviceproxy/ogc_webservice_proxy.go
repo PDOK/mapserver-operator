@@ -68,7 +68,7 @@ func GetConfig(wms *pdoknlv3.WMS) (config string, err error) {
 func MapWMSToOgcWebserviceProxyConfig(wms *pdoknlv3.WMS) (config Config, err error) {
 	dataLayersForGroupLayer := func(l pdoknlv3.Layer) []string {
 		var dataLayers []string
-		for _, childLayer := range l.GetAllSublayers() {
+		for _, childLayer := range l.GetAllSublayersDepthFirst() {
 			if childLayer.IsDataLayer() {
 				dataLayers = append(dataLayers, *childLayer.Name)
 			}
