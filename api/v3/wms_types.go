@@ -438,6 +438,18 @@ func (layer *Layer) GetAllSublayers() []Layer {
 	return layers
 }
 
+// GetAllSublayersDepthFirst - get all sublayers of a layer depth first, the result does not include the layer itself
+func (layer *Layer) GetAllSublayersDepthFirst() []Layer {
+	layers := make([]Layer, 0)
+
+	for _, childLayer := range layer.Layers {
+		layers = append(layers, childLayer)
+		layers = append(layers, childLayer.GetAllSublayersDepthFirst()...)
+	}
+
+	return layers
+}
+
 func (wmsService *WMSService) GetParentLayer(layer Layer) *Layer {
 	if wmsService.Layer.Layers == nil {
 		return nil
