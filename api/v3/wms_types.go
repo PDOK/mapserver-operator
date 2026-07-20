@@ -444,7 +444,7 @@ func (layer *Layer) GetAllSublayersDepthFirst() []Layer {
 
 	for _, childLayer := range layer.Layers {
 		layers = append(layers, childLayer)
-		layers = append(layers, childLayer.GetAllSublayers()...)
+		layers = append(layers, childLayer.GetAllSublayersDepthFirst()...)
 	}
 
 	return layers
