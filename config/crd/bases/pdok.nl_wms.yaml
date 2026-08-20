@@ -1350,6 +1350,12 @@ spec:
                                       description: The minimum scale at which this layer functions
                                       pattern: ^[0-9]+(.[0-9]+)?$
                                       type: string
+                                    filterColumn:
+                                      description: The maximum scale at which this layer functions
+                                      type: string
+                                    filterValue:
+                                      description: The minimum scale at which this layer functions
+                                      type: string
                                     name:
                                       description: Name of the layer, required for layers on the 2nd or 3rd level
                                       minLength: 1
@@ -1426,6 +1432,13 @@ spec:
                               minscaledenominator:
                                 description: The minimum scale at which this layer functions
                                 pattern: ^[0-9]+(.[0-9]+)?$
+                                type: string
+
+                              filterColumn:
+                                description: The maximum scale at which this layer functions
+                                type: string
+                              filterValue:
+                                description: The minimum scale at which this layer functions
                                 type: string
                               name:
                                 description: Name of the layer, required for layers on the 2nd or 3rd level
@@ -1505,6 +1518,12 @@ spec:
                         minscaledenominator:
                           description: The minimum scale at which this layer functions
                           pattern: ^[0-9]+(.[0-9]+)?$
+                          type: string
+                        filterColumn:
+                          description: The maximum scale at which this layer functions
+                          type: string
+                        filterValue:
+                          description: The minimum scale at which this layer functions
                           type: string
                         name:
                           description: Name of the layer, required for layers on the 2nd or 3rd level

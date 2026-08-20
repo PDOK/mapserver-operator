@@ -291,6 +291,8 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 			Postgis:        nil,
 			MinScale:       serviceLayer.MinScaleDenominator,
 			MaxScale:       serviceLayer.MaxScaleDenominator,
+			FilterColumn:   serviceLayer.FilterColumn,
+			FilterValue:    serviceLayer.FilterValue,
 			LabelNoClip:    serviceLayer.LabelNoClip,
 		},
 		GroupName: groupName,
