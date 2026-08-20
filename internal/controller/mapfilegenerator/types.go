@@ -66,8 +66,8 @@ type BaseLayer struct {
 	Postgis         *bool    `json:"postgis,omitempty"`
 	MinScale        *string  `json:"minscale,omitempty"`
 	MaxScale        *string  `json:"maxscale,omitempty"`
-	FilterColumn    *string  `json:"filter_column,omitempty"`
-	FilterValue     *string  `json:"filter_value,omitempty"`
+	FilterColumn    *string  `json:"filtercolumn,omitempty"`
+	FilterValue     *string  `json:"filtervalue,omitempty"`
 	TifPath         *string  `json:"tif_path,omitempty"`
 	Resample        *string  `json:"resample,omitempty"`
 	OversampleRatio *string  `json:"oversample_ratio,omitempty"`

@@ -86,7 +86,9 @@
             "keywords": "Hydroobject,Waterbody,Watercourse,River,Stream,Lake,Reservoir",
             "layer_extent": "-59188.44333693248 304984.64144318487 308126.88473339565 858328.516489961",
             "maxscale": "50000",
-            "minscale": "1",
+            "minscale": "2",
+            "filtercolumn": "gml_id",
+            "filtervalue": "1",
             "name": "HY.PhysicalWaters.Waterbodies",
             "styles": [
                 {
