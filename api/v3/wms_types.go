@@ -244,10 +244,10 @@ type Layer struct {
 	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)?$`
 	MaxScaleDenominator *string `json:"maxscaledenominator,omitempty"`
 
-	//The column where the data needs te get filtered
+	// The column where the data needs te get filtered
 	FilterColumn *string `json:"filterColumn,omitempty"`
 
-	//The value where the data needs to get filtered
+	// The value where the data needs to get filtered
 	FilterValue *string `json:"filterValue,omitempty"`
 
 	// List of styles used by the layer
