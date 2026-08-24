@@ -912,7 +912,7 @@ spec:
                             - message: metadataUrl should have exactly 1 of csw or custom
                               rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                         filterColumn:
-                          description: The column where the data needs te get filtered
+                          description: The column where the data needs to get filtered
                           type: string
                         filterValue:
                           description: The value where the data needs to get filtered
@@ -1127,7 +1127,7 @@ spec:
                                   - message: metadataUrl should have exactly 1 of csw or custom
                                     rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                               filterColumn:
-                                description: The column where the data needs te get filtered
+                                description: The column where the data needs to get filtered
                                 type: string
                               filterValue:
                                 description: The value where the data needs to get filtered
@@ -1345,7 +1345,7 @@ spec:
                                         - message: metadataUrl should have exactly 1 of csw or custom
                                           rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
                                     filterColumn:
-                                      description: The column where the data needs te get filtered
+                                      description: The column where the data needs to get filtered
                                       type: string
                                     filterValue:
                                       description: The value where the data needs to get filtered
