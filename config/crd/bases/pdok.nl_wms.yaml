@@ -911,6 +911,12 @@ spec:
                           x-kubernetes-validations:
                             - message: metadataUrl should have exactly 1 of csw or custom
                               rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
+                        filterColumn:
+                          description: The column where the data needs to get filtered
+                          type: string
+                        filterValue:
+                          description: The value where the data needs to get filtered
+                          type: string
                         keywords:
                           description: Keywords of the layer, required if the layer is visible
                           items:
@@ -1120,6 +1126,12 @@ spec:
                                 x-kubernetes-validations:
                                   - message: metadataUrl should have exactly 1 of csw or custom
                                     rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
+                              filterColumn:
+                                description: The column where the data needs to get filtered
+                                type: string
+                              filterValue:
+                                description: The value where the data needs to get filtered
+                                type: string
                               keywords:
                                 description: Keywords of the layer, required if the layer is visible
                                 items:
@@ -1332,6 +1344,12 @@ spec:
                                       x-kubernetes-validations:
                                         - message: metadataUrl should have exactly 1 of csw or custom
                                           rule: (has(self.csw) || has(self.custom)) && !(has(self.csw) && has(self.custom))
+                                    filterColumn:
+                                      description: The column where the data needs to get filtered
+                                      type: string
+                                    filterValue:
+                                      description: The value where the data needs to get filtered
+                                      type: string
                                     keywords:
                                       description: Keywords of the layer, required if the layer is visible
                                       items:

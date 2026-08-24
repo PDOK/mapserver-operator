@@ -171,7 +171,9 @@ spec:
             - Lake
             - Reservoir
           maxscaledenominator: "50000"
-          minscaledenominator: "1"
+          minscaledenominator: "2"
+          filter_column: "gml_id"
+          filter_value: "1"
           name: HY.PhysicalWaters.Waterbodies
           styles:
             - name: HY.PhysicalWaters.Waterbodies.Default

@@ -626,6 +626,16 @@ func (in *Layer) DeepCopyInto(out *Layer) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.FilterColumn != nil {
+		in, out := &in.FilterColumn, &out.FilterColumn
+		*out = new(string)
+		**out = **in
+	}
+	if in.FilterValue != nil {
+		in, out := &in.FilterValue, &out.FilterValue
+		*out = new(string)
+		**out = **in
+	}
 	if in.Styles != nil {
 		in, out := &in.Styles, &out.Styles
 		*out = make([]Style, len(*in))
