@@ -300,8 +300,6 @@ spec:
                 - Vastedam
                 - Waterkering
                 - Sluis.
-              maxscaledenominator: "50000"
-              minscaledenominator: "1"
               name: HY.PhysicalWaters.ManMadeObject.lock
               styles:
                 - name: HY.PhysicalWaters.ManMadeObject.Default
@@ -348,8 +346,7 @@ spec:
                 - Vastedam
                 - Waterkering
                 - Sluis.
-              maxscaledenominator: "50000"
-              minscaledenominator: "1"
+              minscaledenominator: "2"
               name: HY.PhysicalWaters.ManMadeObject.crossingpoint
               styles:
                 - name: HY.PhysicalWaters.ManMadeObject.Default
@@ -395,8 +392,7 @@ spec:
                 - Vastedam
                 - Waterkering
                 - Sluis.
-              maxscaledenominator: "50000"
-              minscaledenominator: "1"
+              maxscaledenominator: "25000"
               name: HY.PhysicalWaters.ManMadeObject.sluice
               styles:
                 - name: HY.PhysicalWaters.ManMadeObject.Default

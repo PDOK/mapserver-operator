@@ -676,7 +676,6 @@ spec:
           keywords:
             - Grens
             - Kadastrale grenzen
-          maxscaledenominator: "6001"
           minscaledenominator: "50"
           name: KadastraleGrens
           styles:
