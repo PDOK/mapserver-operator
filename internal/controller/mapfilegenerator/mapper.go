@@ -257,7 +257,7 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	groupName := ""
 	parent := wms.Spec.Service.GetParentLayer(serviceLayer)
 	// If the layer falls directly under the toplayer, the groupname is omitted
-	if !parent.IsTopLayer() && parent.IsGroupLayer() && parent.Name != nil && parent.Visible {
+	if parent != nil && !parent.IsTopLayer() && parent.IsGroupLayer() && parent.Name != nil && parent.Visible {
 		groupName = *parent.Name
 	}
 
@@ -298,6 +298,16 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 		GroupName: groupName,
 		Styles:    []Style{},
 		Offsite:   "",
+	}
+
+	// Let child Layers inherit Scale denominators from their parent if not explicitly set.
+	if parent != nil {
+		if result.MinScale == nil {
+			result.MinScale = parent.MinScaleDenominator
+		}
+		if result.MaxScale == nil {
+			result.MaxScale = parent.MaxScaleDenominator
+		}
 	}
 
 	for _, style := range serviceLayer.Styles {
