@@ -4,13 +4,12 @@ import (
 	_ "embed"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/pdok/mapserver-operator/internal/controller/constants"
 
 	"github.com/pdok/mapserver-operator/internal/controller/types"
-
-	"k8s.io/utils/strings/slices"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
 	"github.com/pdok/mapserver-operator/internal/controller/mapperutils"

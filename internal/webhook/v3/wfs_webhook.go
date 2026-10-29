@@ -3,14 +3,11 @@ package v3
 
 import (
 	"context"
-	"fmt"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	pdoknlv3 "github.com/pdok/mapserver-operator/api/v3"
@@ -21,7 +18,7 @@ var wfsLog = logf.Log.WithName("wfs-resource")
 
 // SetupWFSWebhookWithManager registers the webhook for WFS in the manager.
 func SetupWFSWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(&pdoknlv3.WFS{}).
+	return ctrl.NewWebhookManagedBy(mgr, &pdoknlv3.WFS{}).
 		WithValidator(&WFSCustomValidator{mgr.GetClient()}).
 		Complete()
 }
@@ -39,40 +36,24 @@ type WFSCustomValidator struct {
 	Client client.Client
 }
 
-var _ webhook.CustomValidator = &WFSCustomValidator{}
+var _ admission.Validator[*pdoknlv3.WFS] = &WFSCustomValidator{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	wfs, ok := obj.(*pdoknlv3.WFS)
-	if !ok {
-		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
-	}
+func (v *WFSCustomValidator) ValidateCreate(_ context.Context, wfs *pdoknlv3.WFS) (admission.Warnings, error) {
 	wfsLog.Info("Validation for WFS upon creation", "name", wfs.GetName())
 
 	return wfs.ValidateCreate(v.Client)
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	wfs, ok := newObj.(*pdoknlv3.WFS)
-	if !ok {
-		return nil, fmt.Errorf("expected a WFS object for the newObj but got %T", newObj)
-	}
-	wfsOld, ok := oldObj.(*pdoknlv3.WFS)
-	if !ok {
-		return nil, fmt.Errorf("expected a WFS object for the oldObj but got %T", newObj)
-	}
+func (v *WFSCustomValidator) ValidateUpdate(_ context.Context, wfsOld, wfs *pdoknlv3.WFS) (admission.Warnings, error) {
 	wfsLog.Info("Validation for WFS upon update", "name", wfs.GetName())
 
 	return wfs.ValidateUpdate(v.Client, wfsOld)
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type WFS.
-func (v *WFSCustomValidator) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	wfs, ok := obj.(*pdoknlv3.WFS)
-	if !ok {
-		return nil, fmt.Errorf("expected a WFS object but got %T", obj)
-	}
+func (v *WFSCustomValidator) ValidateDelete(_ context.Context, wfs *pdoknlv3.WFS) (admission.Warnings, error) {
 	wfsLog.Info("Validation for WFS upon deletion", "name", wfs.GetName())
 
 	// TODO(user): fill in your validation logic upon object deletion.
