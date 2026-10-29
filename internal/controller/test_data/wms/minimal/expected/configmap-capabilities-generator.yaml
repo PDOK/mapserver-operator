@@ -139,7 +139,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: minimal-wms-capabilities-generator-865bt77thd
+  name: minimal-wms-capabilities-generator-2hdkd2c88f
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

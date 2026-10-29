@@ -165,8 +165,7 @@ var _ = Describe("Testing WMS Controller", func() {
 			Expect(originalRevisionHistoryLimit).Should(Not(Equal(expectedRevisionHistoryLimit)))
 
 			By("Altering the Deployment")
-			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, []byte(
-				fmt.Sprintf(`{"spec": {"revisionHistoryLimit": %d}}`, expectedRevisionHistoryLimit))))
+			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, fmt.Appendf(nil, `{"spec": {"revisionHistoryLimit": %d}}`, expectedRevisionHistoryLimit)))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Verifying that the Deployment was altered")
@@ -202,8 +201,7 @@ var _ = Describe("Testing WMS Controller", func() {
 			Expect(ok).To(BeFalse())
 
 			By("Adding new label to deployment")
-			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, []byte(
-				fmt.Sprintf(`{"metadata": {"labels": {"%s": "%s"}}}`, externalLabel, externalLabel))))
+			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, fmt.Appendf(nil, `{"metadata": {"labels": {"%s": "%s"}}}`, externalLabel, externalLabel)))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Verifying that the Deployment was altered")

@@ -80,9 +80,11 @@ linters:
     funlen:
       lines: 100
     gomoddirectives:
+      replace-local: true
       replace-allow-list:
         - github.com/abbot/go-http-auth
         - nhooyr.io/websocket
+        - github.com/traefik/traefik/dynamic/ext
     nestif:
       min-complexity: 6
   exclusions:

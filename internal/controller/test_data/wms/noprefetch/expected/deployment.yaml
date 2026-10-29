@@ -338,11 +338,11 @@ spec:
             defaultMode: 420
           name: ogc-webservice-proxy-config
         - configMap:
-            name: noprefetch-wms-capabilities-generator-865bt77thd
+            name: noprefetch-wms-capabilities-generator-2hdkd2c88f
             defaultMode: 420
           name: capabilities-generator-config
         - configMap:
-            name: noprefetch-wms-mapfile-generator-bcd2255b7k
+            name: noprefetch-wms-mapfile-generator-9kdhc5t754
             defaultMode: 420
           name: mapfile-generator-config
         - name: styling-files

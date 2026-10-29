@@ -61,6 +61,7 @@ data:
                 "dataset_metadata_id": "datadata-data-data-data-datadatadata",
                 "dataset_source_id": "bronbron-bron-bron-bron-bronbronbron",
                 "layer_extent": "-25000 250000 280000 860000",
+                "maxscale": "15000000",
                 "styles": [
                     {
                         "title": "layer-style-title",
@@ -88,6 +89,7 @@ data:
                 "dataset_metadata_id": "datadata-data-data-data-datadatadata",
                 "dataset_source_id": "src-md-id",
                 "layer_extent": "-25000 250000 280000 860000",
+                "maxscale": "15000000",
                 "styles": [
                     {
                         "title": "group-child",
@@ -107,7 +109,7 @@ metadata:
     pdok.nl/inspire: "false"
     service-type: wms
     service-version: v1_0
-  name: minimal-wms-mapfile-generator-2t677hd4f7
+  name: minimal-wms-mapfile-generator-mm5m9c6mct
   namespace: default
   ownerReferences:
     - apiVersion: pdok.nl/v3

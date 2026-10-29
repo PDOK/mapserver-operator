@@ -2,13 +2,13 @@ package v3
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	sharedValidation "github.com/pdok/smooth-operator/pkg/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/strings/slices"
 )
 
 func (wms *WMS) ValidateCreate(c client.Client) ([]string, error) {
