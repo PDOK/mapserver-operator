@@ -220,5 +220,6 @@ func getRootFromFilename(fileName string) (string, error) {
 }
 
 func writeLine(sb *strings.Builder, format string, a ...any) { //nolint:goprintffuncname
-	sb.WriteString(fmt.Sprintf(format, a...) + "\n")
+	fmt.Fprintf(sb, format, a...)
+	sb.WriteByte('\n')
 }
