@@ -240,7 +240,8 @@ type Layer struct {
 	// +kubebuilder:validation:Pattern:=`^[0-9]+(.[0-9]+)?$`
 	MinScaleDenominator *string `json:"minscaledenominator,omitempty"`
 
-	// The maximum scale at which this layer functions
+	// The maximum scale at which this layer functions, defaults to 15000000
+	// +kubebuilder:default:="15000000"
 	// +kubebuilder:validation:Pattern:=`^[1-9][0-9]*(.[0-9]+)?$`
 	MaxScaleDenominator *string `json:"maxscaledenominator,omitempty"`
 
