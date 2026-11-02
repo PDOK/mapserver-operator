@@ -253,6 +253,7 @@ func mapLayers(wms *pdoknlv3.WMS, extent string, result *WMSInput) {
 	result.EPSGList = epsgs
 }
 
+//nolint:cyclop
 func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv3.WMS) WMSLayer {
 	groupName := ""
 	parent := wms.Spec.Service.GetParentLayer(serviceLayer)
