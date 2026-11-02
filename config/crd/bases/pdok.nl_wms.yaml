@@ -171,8 +171,8 @@ spec:
                                 and scale-down and scale-up tolerances of 5% and 1% respectively, scaling will be
                                 triggered when the actual consumption falls below 95Mi or exceeds 101Mi.
 
-                                This is an alpha field and requires enabling the HPAConfigurableTolerance
-                                feature gate.
+                                This is an beta field and requires the HPAConfigurableTolerance feature
+                                gate to be enabled.
                               pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                               x-kubernetes-int-or-string: true
                           type: object
@@ -244,8 +244,8 @@ spec:
                                 and scale-down and scale-up tolerances of 5% and 1% respectively, scaling will be
                                 triggered when the actual consumption falls below 95Mi or exceeds 101Mi.
 
-                                This is an alpha field and requires enabling the HPAConfigurableTolerance
-                                feature gate.
+                                This is an beta field and requires the HPAConfigurableTolerance feature
+                                gate to be enabled.
                               pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                               x-kubernetes-int-or-string: true
                           type: object
@@ -1361,8 +1361,7 @@ spec:
                                       description: Mapfile setting, sets "LABEL_NO_CLIP=ON"
                                       type: boolean
                                     maxscaledenominator:
-                                      default: "15000000"
-                                      description: The maximum scale at which this layer functions, defaults to 15000000
+                                      description: 'The maximum scale at which this layer functions, inherited from its parent when omitted (top-layer default: 15000000)'
                                       pattern: ^[1-9][0-9]*(.[0-9]+)?$
                                       type: string
                                     minscaledenominator:
@@ -1439,8 +1438,7 @@ spec:
                                 minItems: 1
                                 type: array
                               maxscaledenominator:
-                                default: "15000000"
-                                description: The maximum scale at which this layer functions, defaults to 15000000
+                                description: 'The maximum scale at which this layer functions, inherited from its parent when omitted (top-layer default: 15000000)'
                                 pattern: ^[1-9][0-9]*(.[0-9]+)?$
                                 type: string
                               minscaledenominator:
@@ -1520,7 +1518,7 @@ spec:
                           type: array
                         maxscaledenominator:
                           default: "15000000"
-                          description: The maximum scale at which this layer functions, defaults to 15000000
+                          description: 'The maximum scale at which this layer functions, inherited from its parent when omitted (top-layer default: 15000000)'
                           pattern: ^[1-9][0-9]*(.[0-9]+)?$
                           type: string
                         minscaledenominator:

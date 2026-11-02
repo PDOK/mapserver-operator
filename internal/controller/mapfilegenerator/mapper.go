@@ -301,12 +301,12 @@ func getWMSLayer(serviceLayer pdoknlv3.Layer, serviceExtent string, wms *pdoknlv
 	}
 
 	// Let child Layers inherit Scale denominators from their parent if not explicitly set.
-	if parent != nil {
+	for ancestor := parent; ancestor != nil && (result.MinScale == nil || result.MaxScale == nil); ancestor = wms.Spec.Service.GetParentLayer(*ancestor) {
 		if result.MinScale == nil {
-			result.MinScale = parent.MinScaleDenominator
+			result.MinScale = ancestor.MinScaleDenominator
 		}
 		if result.MaxScale == nil {
-			result.MaxScale = parent.MaxScaleDenominator
+			result.MaxScale = ancestor.MaxScaleDenominator
 		}
 	}
 

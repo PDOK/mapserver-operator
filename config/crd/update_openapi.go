@@ -73,8 +73,13 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 	service := spec.Properties["service"]
 	layer := service.Properties["layer"]
 
+	inheritedLayer := layer.DeepCopy()
+	maxScale := inheritedLayer.Properties["maxscaledenominator"]
+	maxScale.Default = nil
+	inheritedLayer.Properties["maxscaledenominator"] = maxScale
+
 	// Level 3
-	layerSpecLevel3 := layer.DeepCopy()
+	layerSpecLevel3 := inheritedLayer.DeepCopy()
 	layerSpecLevel3.Required = append(layerSpecLevel3.Required, "name")
 	layerSpecLevel3.Required = append(layerSpecLevel3.Required, "styles")
 	delete(layerSpecLevel3.Properties, "layers")
@@ -87,7 +92,7 @@ func updateLayersV3(version *v1.CustomResourceDefinitionVersion) {
 	layerSpecLevel3.XValidations = xvals
 
 	// Level 2
-	layerSpecLevel2 := layer.DeepCopy()
+	layerSpecLevel2 := inheritedLayer.DeepCopy()
 	layerSpecLevel2.Required = append(layerSpecLevel2.Required, "name")
 	layerSpecLevel2.Required = append(layerSpecLevel2.Required, "styles")
 	bottomLayers := layerSpecLevel2.Properties["layers"]
