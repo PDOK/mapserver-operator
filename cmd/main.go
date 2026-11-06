@@ -26,6 +26,7 @@ import (
 
 	"github.com/go-logr/zapr"
 	"github.com/pdok/smooth-operator/pkg/integrations/logging"
+	"github.com/pdok/smooth-operator/pkg/reloader"
 	"github.com/peterbourgon/ff"
 	"go.uber.org/zap/zapcore"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -108,6 +109,7 @@ func main() {
 	flag.StringVar(&slackWebhookURL, "slack-webhook-url", "", "The webhook url for sending slack messages. Disabled if left empty")
 	flag.IntVar(&logLevel, "log-level", 0, "The zapcore loglevel. 0 = info, 1 = warn, 2 = error")
 	flag.BoolVar(&setUptimeOperatorAnnotations, "set-uptime-operator-annotations", true, "When enabled IngressRoutes get annotations that are used by the pdok/uptime-operator.")
+	reloader.BindFlag(flag.CommandLine)
 	flag.StringVar(&storageClassName, "storage-class-name", "", "The name of the storage class to use when using an ephemeral volume.")
 
 	opts := zap.Options{

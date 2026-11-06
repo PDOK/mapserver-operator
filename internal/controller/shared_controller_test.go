@@ -17,6 +17,7 @@ import (
 	"github.com/pdok/mapserver-operator/api/v2beta1"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
+	"github.com/pdok/smooth-operator/pkg/reloader"
 	smoothoperatorvalidation "github.com/pdok/smooth-operator/pkg/validation"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v2 "k8s.io/api/autoscaling/v2"
@@ -323,6 +324,26 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 		testMutate("Deployment", getBareDeployment(resource), outputPath+"deployment.yaml", func(d *appsv1.Deployment) error {
 			return mutateDeployment(reconcilerFn(), resource, d, configMapNames)
 		})
+	})
+
+	It("Should set or remove the Deployment Reloader annotation according to the flag", func() {
+		originalEnabled := reloader.IsEnabled()
+		DeferCleanup(func() {
+			reloader.SetReloaderAnnotations(originalEnabled)
+		})
+		deployment := getBareDeployment(resource)
+
+		for _, enabled := range []bool{false, true, false} {
+			By(fmt.Sprintf("Mutating the Deployment with Reloader annotations enabled: %t", enabled))
+			reloader.SetReloaderAnnotations(enabled)
+			Expect(mutateDeployment(reconcilerFn(), resource, deployment, configMapNames)).To(Succeed())
+
+			if enabled {
+				Expect(deployment.Annotations).To(HaveKeyWithValue(reloader.AutoAnnotation, reloader.AutoAnnotationValue))
+			} else {
+				Expect(deployment.Annotations).NotTo(HaveKey(reloader.AutoAnnotation))
+			}
+		}
 	})
 
 	It("Should generate a correct Service", func() {

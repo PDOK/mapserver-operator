@@ -14,6 +14,7 @@ import (
 	"github.com/pdok/mapserver-operator/internal/controller/mapserver"
 	"github.com/pdok/mapserver-operator/internal/controller/ogcwebserviceproxy"
 	"github.com/pdok/mapserver-operator/internal/controller/types"
+	"github.com/pdok/smooth-operator/pkg/reloader"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -42,6 +43,7 @@ func getBareDeployment[O pdoknlv3.WMSWFS](obj O) *appsv1.Deployment {
 func mutateDeployment[R Reconciler, O pdoknlv3.WMSWFS](r R, obj O, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
 	reconcilerClient := getReconcilerClient(r)
 	deployment.Labels = getObjectLabels(obj, deployment.Labels)
+	reloader.SetAnnotation(deployment)
 
 	deployment.Spec.Selector = getLabelSelector(obj)
 
