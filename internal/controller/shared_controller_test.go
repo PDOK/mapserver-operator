@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"slices"
@@ -331,17 +332,25 @@ func testMutates[R Reconciler, O pdoknlv3.WMSWFS](reconcilerFn func() R, resourc
 		DeferCleanup(func() {
 			reloader.SetReloaderAnnotations(originalEnabled)
 		})
+		flags := flag.NewFlagSet("reloader", flag.ContinueOnError)
+		reloader.BindFlag(flags)
 		deployment := getBareDeployment(resource)
 
-		for _, enabled := range []bool{false, true, false} {
-			By(fmt.Sprintf("Mutating the Deployment with Reloader annotations enabled: %t", enabled))
-			reloader.SetReloaderAnnotations(enabled)
+		const legacyAutoMode = "true"
+		for _, mode := range []string{"false", legacyAutoMode, "search", "auto", "false"} {
+			By("Mutating the Deployment with Reloader annotation mode: " + mode)
+			Expect(flags.Parse([]string{"--" + reloader.FlagName + "=" + mode})).To(Succeed())
 			Expect(mutateDeployment(reconcilerFn(), resource, deployment, configMapNames)).To(Succeed())
 
-			if enabled {
+			if mode == legacyAutoMode || mode == "auto" {
 				Expect(deployment.Annotations).To(HaveKeyWithValue(reloader.AutoAnnotation, reloader.AutoAnnotationValue))
 			} else {
 				Expect(deployment.Annotations).NotTo(HaveKey(reloader.AutoAnnotation))
+			}
+			if mode == "search" {
+				Expect(deployment.Annotations).To(HaveKeyWithValue(reloader.SearchAnnotation, reloader.SearchAnnotationValue))
+			} else {
+				Expect(deployment.Annotations).NotTo(HaveKey(reloader.SearchAnnotation))
 			}
 		}
 	})

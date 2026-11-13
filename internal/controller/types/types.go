@@ -1,4 +1,4 @@
-package types //nolint:revive
+package types
 
 type HashedConfigMapNames struct {
 	Mapserver             string
