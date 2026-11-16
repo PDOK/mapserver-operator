@@ -1,4 +1,5 @@
 # mapserver-operator
+
 _Kubernetes controller/operator to serve WFS and WMS instances._
 
 [![Build](https://github.com/PDOK/mapserver-operator/actions/workflows/build-and-publish-image.yml/badge.svg)](https://github.com/PDOK/mapserver-operator/actions/workflows/build-and-publish-image.yml)
@@ -6,6 +7,7 @@ _Kubernetes controller/operator to serve WFS and WMS instances._
 [![GitHub license](https://img.shields.io/github/license/PDOK/mapserver-operator)](https://github.com/PDOK/mapserver-operator/blob/master/LICENSE)
 
 ## Description
+
 This Kubernetes controller cq operator (an operator could be described as a specialized controller)
 ensures that the necessary resources are created or kept up-to-date in a cluster
 to deploy instances of the [Web Map Service](https://www.ogc.org/standards/wms/)(WMS) and [Web Features Service](https://www.ogc.org/standards/wfs/)(WFS). This repository is a complete solution to deploy WMS and WFS services according to CR schemas.
@@ -14,12 +16,14 @@ This operator uses two Custom Resources(CR) called _WMS_ and _WFS_ as the input 
 ## Getting Started
 
 ### Prerequisites
+
 - go version v1.26.0+
 - docker version 17.03+.
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
 
 ### To Deploy on the cluster
+
 **Build and push your image to the location specified by `IMG`:**
 
 ```sh
@@ -55,6 +59,7 @@ kubectl apply -k config/samples/
 >**NOTE**: Ensure that the samples has default values to test it out.
 
 ### To Uninstall
+
 **Delete the instances (CRs) from the cluster:**
 
 ```sh
@@ -73,6 +78,17 @@ make uninstall
 make undeploy
 ```
 
+## Command-line flags
+
+### Reloader annotations
+
+Use `--set-reloader-annotations=search` to set `reloader.stakater.com/search=true` on Deployments.
+Search mode requires `reloader.stakater.com/match=true` on the referenced ConfigMaps or Secrets.
+Use `=auto` to set `reloader.stakater.com/auto=true` instead.
+For backwards compatibility, the bare flag and `=true` still select auto mode.
+The default (`=false`) disables both annotations; switching modes removes the other annotation.
+The equivalent environment variable is `SET_RELOADER_ANNOTATIONS`.
+
 ## Develop
 
 The project is written in Go and scaffolded with [kubebuilder](https://kubebuilder.io).
@@ -83,6 +99,7 @@ Read the manual when you want/need to make changes.
 E.g. run `make test` before committing.
 
 To update the scaffolding:
+
 - Install the latest version of kubebuilder globally on your machine;
 - Run: `kubebuilder alpha update --from-branch master`
 
@@ -92,13 +109,16 @@ Install [golangci-lint](https://golangci-lint.run/usage/install/) and run `golan
 from the root.
 (Don't run `make lint`, it uses an old version of golangci-lint.)
 
-# Contributing
+## Contributing
 
 ### How to contribute
+
 Mapserver-operator is solely developed by PDOK. Contributions are however always welcome. If you have any questions or suggestions you can create an issue in the issue tracker.
 
 ### Contact
+
 The maintainers can be contacted through the issue tracker.
 
-# Authors
+## Authors
+
 This project is developed by [PDOK](https://www.pdok.nl/), a platform for publication of geographic datasets of Dutch governmental institutions.
